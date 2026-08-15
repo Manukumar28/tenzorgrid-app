@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up — TenzorGrid</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="logo" style="margin-bottom:22px;justify-content:center;"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div>
+    <h2 style="margin:0 0 4px;font-size:19px;">Create your account</h2>
+    <p style="margin:0 0 20px;font-size:13.5px;color:var(--text-soft);">Takes under a minute.</p>
+    <div class="error-box" id="err"></div>
+    <form id="signupForm">
+      <div class="field"><label>Email</label><input type="email" id="email" required></div>
+      <div class="field"><label>Password</label><input type="password" id="password" minlength="8" required>
+        <div class="hint">At least 8 characters.</div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Create account</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);">
+      Already have an account? <a href="/login.html" style="color:var(--primary);font-weight:600;">Log in</a>
+    </div>
+  </div>
+</div>
+<script>
+const form = document.getElementById('signupForm');
+const errBox = document.getElementById('err');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errBox.classList.remove('show');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Creating account…';
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+    window.location.href = '/onboarding.html';
+  } catch (err) {
+    errBox.textContent = err.message;
+    errBox.classList.add('show');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create account';
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "tenzorgrid-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TenzorGrid Career Growth — real signup, onboarding, and profile dashboard. Zero external dependencies (built on Node's built-in http server and node:sqlite).",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}

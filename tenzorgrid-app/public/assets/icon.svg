@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="badgeGrad" x1="20" y1="10" x2="380" y2="390" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2138"/>
+      <stop offset="55" stop-color="#0B0E19"/>
+      <stop offset="100" stop-color="#040509"/>
+    </linearGradient>
+    <linearGradient id="letterGrad" x1="70" y1="90" x2="330" y2="310" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="40" stop-color="#C7CEDD"/>
+      <stop offset="70" stop-color="#8D96AE"/>
+      <stop offset="100" stop-color="#C7CEDD"/>
+    </linearGradient>
+    <radialGradient id="rimLight" cx="22%" cy="14%" r="55%">
+      <stop offset="0%" stop-color="#8B93FF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B93FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aoCorner" cx="88%" cy="90%" r="55%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="bevel" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4.5" result="blur"/>
+      <feSpecularLighting in="blur" surfaceScale="6" specularConstant="0.9" specularExponent="17" lighting-color="#ffffff" result="spec">
+        <fePointLight x="90" y="55" z="170"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specClip"/>
+      <feComposite in="SourceGraphic" in2="specClip" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit"/>
+      <feDropShadow in="lit" dx="0" dy="11" stdDeviation="11" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    <clipPath id="clip"><rect x="10" y="10" width="380" height="380" rx="84"/></clipPath>
+  </defs>
+
+  <rect x="10" y="10" width="380" height="380" rx="84" fill="url(#badgeGrad)"/>
+  <g clip-path="url(#clip)">
+    <rect x="10" y="10" width="380" height="380" fill="url(#rimLight)"/>
+    <rect x="10" y="10" width="380" height="380" fill="url(#aoCorner)"/>
+    <path d="M10,50 C130,4 270,4 390,50 L390,10 L10,10 Z" fill="#ffffff" opacity="0.09"/>
+
+    <g filter="url(#bevel)">
+      <text x="200" y="262" font-family="Arial, Helvetica Neue, Helvetica, sans-serif" font-weight="900"
+            font-size="190" text-anchor="middle" fill="url(#letterGrad)" letter-spacing="-8">TG</text>
+    </g>
+
+    <circle cx="308" cy="98" r="6.4" fill="#34D399" opacity="0.95"/>
+    <circle cx="332" cy="98" r="6.4" fill="#34D399" opacity="0.62"/>
+    <circle cx="308" cy="122" r="6.4" fill="#34D399" opacity="0.62"/>
+    <circle cx="332" cy="122" r="6.4" fill="#34D399" opacity="0.32"/>
+  </g>
+  <rect x="10" y="10" width="380" height="380" rx="84" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.6"/>
+</svg>

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 100">
+  <title>TenzorGrid — Midnight Platinum, horizontal lockup for light backgrounds</title>
+  <defs>
+    <linearGradient id="badgeGradHL" x1="4" y1="4" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2138"/>
+      <stop offset="0.55" stop-color="#0B0E19"/>
+      <stop offset="1" stop-color="#040509"/>
+    </linearGradient>
+    <linearGradient id="letterGradHL" x1="18" y1="22" x2="82" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="0.4" stop-color="#C7CEDD"/>
+      <stop offset="0.7" stop-color="#8D96AE"/>
+      <stop offset="1" stop-color="#C7CEDD"/>
+    </linearGradient>
+    <radialGradient id="rimLightHL" cx="22%" cy="14%" r="55%">
+      <stop offset="0%" stop-color="#8B93FF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B93FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aoCornerHL" cx="88%" cy="90%" r="55%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wordAccentLight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0EA575"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="bevelHL" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" result="blur"/>
+      <feSpecularLighting in="blur" surfaceScale="2.4" specularConstant="0.9" specularExponent="17" lighting-color="#ffffff" result="spec">
+        <fePointLight x="22" y="14" z="42"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specClip"/>
+      <feComposite in="SourceGraphic" in2="specClip" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="lit"/>
+      <feDropShadow in="lit" dx="0" dy="2.6" stdDeviation="2.6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <clipPath id="clipHL"><rect x="2.5" y="2.5" width="95" height="95" rx="21"/></clipPath>
+  </defs>
+
+  <rect x="2.5" y="2.5" width="95" height="95" rx="21" fill="url(#badgeGradHL)"/>
+  <g clip-path="url(#clipHL)">
+    <rect x="2.5" y="2.5" width="95" height="95" fill="url(#rimLightHL)"/>
+    <rect x="2.5" y="2.5" width="95" height="95" fill="url(#aoCornerHL)"/>
+    <path d="M2.5,14 C34,2 66,2 97.5,14 L97.5,2.5 L2.5,2.5 Z" fill="#ffffff" opacity="0.09"/>
+    <g filter="url(#bevelHL)">
+      <text x="50" y="66" font-family="Arial, Helvetica Neue, Helvetica, sans-serif" font-weight="900"
+            font-size="48" text-anchor="middle" fill="url(#letterGradHL)" letter-spacing="-2">TG</text>
+    </g>
+    <circle cx="77" cy="24" r="1.6" fill="#10B981" opacity="0.95"/>
+    <circle cx="83" cy="24" r="1.6" fill="#10B981" opacity="0.62"/>
+    <circle cx="77" cy="30" r="1.6" fill="#10B981" opacity="0.62"/>
+    <circle cx="83" cy="30" r="1.6" fill="#10B981" opacity="0.32"/>
+  </g>
+  <rect x="2.5" y="2.5" width="95" height="95" rx="21" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.4"/>
+
+  <text x="128" y="63" font-family="Arial, Helvetica Neue, Helvetica, sans-serif" font-weight="800" font-size="38" letter-spacing="-0.6">
+    <tspan fill="#0F172A">Tenzor</tspan><tspan fill="url(#wordAccentLight)">Grid</tspan>
+  </text>
+</svg>

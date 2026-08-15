@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — TenzorGrid</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-header">
+  <div class="container nav">
+    <div class="logo"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div>
+    <div class="user-chip">
+      <div class="avatar" id="miniAvatar">?</div>
+      <span id="miniName">Loading…</span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-wrap">
+  <div class="portfolio-hero" id="heroSkeleton">
+    <div class="skeleton" style="width:100%;height:140px;"></div>
+  </div>
+
+  <div id="heroReal" style="display:none;" class="portfolio-hero">
+    <div>
+      <div class="avatar avatar-lg" id="heroAvatar" style="width:64px;height:64px;font-size:22px;">?</div>
+      <h1 id="heroName">—</h1>
+      <div class="role-line" id="heroRole">—</div>
+      <div class="skills-row" id="heroSkills"></div>
+    </div>
+    <div style="text-align:right;">
+      <div class="salary-box">
+        <div><div class="amt" id="heroCurrentSalary">—</div><div class="lbl">CURRENT</div></div>
+        <div><div class="amt" id="heroExpectedSalary">—</div><div class="lbl">EXPECTED</div></div>
+      </div>
+      <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="margin-top:14px;color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
+    </div>
+  </div>
+
+  <div class="section-title"><h3>Your role</h3><a href="/onboarding.html" style="font-size:13.5px;color:var(--primary);font-weight:600;">Edit profile →</a></div>
+  <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
+
+  <div class="section-title"><h3>Matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
+  <div id="jobsList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div><div class="skeleton" style="height:60px;"></div></div>
+</div>
+
+<script>
+function initials(name) {
+  return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+}
+function fmtINR(n) {
+  if (!n) return '—';
+  return '₹' + Number(n).toLocaleString('en-IN');
+}
+function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low'; }
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+async function load() {
+  const me = await fetch('/api/me').then((r) => r.json());
+  if (!me.authenticated) { window.location.href = '/login.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
+
+  const p = me.profile;
+  document.getElementById('miniName').textContent = p.name;
+  document.getElementById('miniAvatar').textContent = initials(p.name);
+
+  document.getElementById('heroAvatar').textContent = initials(p.name);
+  document.getElementById('heroName').textContent = p.name;
+  document.getElementById('heroRole').textContent = p.role + (p.experienceYears ? ' · ' + p.experienceYears + ' yrs experience' : '');
+  document.getElementById('heroSkills').innerHTML = (p.skills || []).map((s) => '<span class="skill-pill">' + s + '</span>').join('') || '<span class="skill-pill">No skills added yet</span>';
+  document.getElementById('heroCurrentSalary').textContent = fmtINR(p.currentSalary);
+  document.getElementById('heroExpectedSalary').textContent = fmtINR(p.expectedSalary);
+  if (p.hasCv) document.getElementById('cvDownloadLink').style.display = 'inline-flex';
+
+  document.getElementById('heroSkeleton').style.display = 'none';
+  document.getElementById('heroReal').style.display = 'flex';
+
+  document.getElementById('expCards').innerHTML = `
+    <div class="exp-card">
+      <div class="org">${p.role || 'Your current role'}</div>
+      <div class="role">Current role · ${p.experienceYears || 0} yrs experience</div>
+      <div class="skills-row" style="margin-bottom:10px;">${(p.skills || []).map((s) => '<span class="tag">' + s + '</span>').join('') || '<span class="tag">Add skills in your profile</span>'}</div>
+      <div style="font-size:12.5px;color:var(--text-soft);">Current salary: ${fmtINR(p.currentSalary)} · Expected: ${fmtINR(p.expectedSalary)}</div>
+    </div>`;
+
+  const jobsData = await fetch('/api/jobs').then((r) => r.json());
+  const jobs = jobsData.jobs || [];
+  if (jobs.length === 0) {
+    document.getElementById('jobsList').innerHTML = '<div class="empty-note">No jobs available yet.</div>';
+  } else {
+    document.getElementById('jobsList').innerHTML = jobs.slice(0, 8).map((j) => `
+      <div class="job-row">
+        <div class="jinfo">
+          <b>${j.title}</b>
+          <span>${j.company} · ${j.portal}${j.location ? ' · ' + j.location : ''}</span>
+        </div>
+        <span class="match-badge ${matchClass(j.matchScore)}">${j.matchScore}% match</span>
+      </div>`).join('');
+  }
+}
+
+load().catch((e) => { console.error(e); });
+</script>
+</body>
+</html>

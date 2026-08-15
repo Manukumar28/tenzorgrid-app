@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build your profile — TenzorGrid</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-header"><div class="container nav"><div class="logo"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div></div></div>
+
+<div class="onboard-wrap">
+  <div class="onboard-progress"><div class="bar"><i id="onboard-bar" style="width:33%"></i></div><span id="onboard-step-label">Step 1 of 3</span></div>
+  <div class="error-box" id="err"></div>
+
+  <div class="card" id="step-1">
+    <h2 style="margin:0 0 6px;">Upload your CV (optional)</h2>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. You can skip this and fill things in manually.</div>
+    <div class="cv-drop" id="cvDrop">
+      <div style="font-size:26px;">📄</div>
+      <div style="font-weight:600;margin-top:6px;">Click to upload your CV</div>
+      <div class="cv-status" id="cvStatus">No file selected</div>
+    </div>
+    <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display:none">
+    <div class="step-actions">
+      <span></span>
+      <button class="btn btn-primary" onclick="goStep(2)">Continue →</button>
+    </div>
+  </div>
+
+  <div class="card" id="step-2" style="display:none;">
+    <h2 style="margin:0 0 6px;">A few quick basics</h2>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">This builds your profile and dashboard.</div>
+    <div class="grid-2">
+      <div class="field"><label>Full name</label><input id="f-name" placeholder="Jane Doe" required></div>
+      <div class="field"><label>Current role</label><input id="f-role" placeholder="Software Engineer" required></div>
+      <div class="field"><label>Years of experience</label><input id="f-exp" type="number" min="0" step="0.5" placeholder="4"></div>
+      <div class="field"><label>Current salary (₹/yr)</label><input id="f-salary" type="number" min="0" placeholder="1200000"></div>
+    </div>
+    <div class="field">
+      <label>Skills</label>
+      <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter"></div>
+    </div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="validateStep2AndGo(3)">Continue →</button>
+    </div>
+  </div>
+
+  <div class="card" id="step-3" style="display:none;">
+    <h2 style="margin:0 0 6px;">What are you aiming for?</h2>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">Helps prioritize the right matches.</div>
+    <div class="grid-2">
+      <div class="field"><label>Expected salary (₹/yr)</label><input id="f-expected" type="number" min="0" placeholder="1800000"></div>
+      <div class="field"><label>Open to relocation?</label>
+        <select id="f-relocate"><option>No</option><option>Yes</option><option>Remote only</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Anything else? (optional)</label><textarea id="f-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" id="finishBtn" onclick="finishOnboarding()">Build my profile →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let skills = [];
+let cvPayload = null; // { filename, mime, dataBase64 }
+
+(async function guard() {
+  const me = await fetch('/api/me').then(r => r.json());
+  if (!me.authenticated) { window.location.href = '/login.html'; return; }
+  if (me.hasProfile) { window.location.href = '/dashboard.html'; return; }
+})();
+
+function showError(msg) {
+  const box = document.getElementById('err');
+  box.textContent = msg;
+  box.classList.add('show');
+  window.scrollTo(0, 0);
+}
+function clearError() {
+  document.getElementById('err').classList.remove('show');
+}
+
+function goStep(n) {
+  clearError();
+  [1, 2, 3].forEach((i) => { document.getElementById('step-' + i).style.display = (i === n) ? 'block' : 'none'; });
+  document.getElementById('onboard-bar').style.width = (n * 33) + '%';
+  document.getElementById('onboard-step-label').textContent = 'Step ' + n + ' of 3';
+}
+function validateStep2AndGo(n) {
+  if (!document.getElementById('f-name').value.trim()) return showError('Please enter your name.');
+  if (!document.getElementById('f-role').value.trim()) return showError('Please enter your current role.');
+  goStep(n);
+}
+
+document.getElementById('cvDrop').addEventListener('click', () => document.getElementById('cvFile').click());
+document.getElementById('cvFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (!allowed.includes(file.type)) { showError('Please upload a PDF or Word document.'); return; }
+  if (file.size > 8 * 1024 * 1024) { showError('CV must be under 8MB.'); return; }
+  clearError();
+  document.getElementById('cvStatus').textContent = 'Reading "' + file.name + '"…';
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    const base64 = dataUrl.split(',')[1];
+    cvPayload = { filename: file.name, mime: file.type, dataBase64: base64 };
+    document.getElementById('cvDrop').classList.add('filled');
+    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+  };
+  reader.readAsDataURL(file);
+});
+
+const chipBox = document.getElementById('chip-box');
+const chipInput = document.getElementById('chip-input');
+chipBox.addEventListener('click', () => chipInput.focus());
+chipInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = chipInput.value.trim();
+    if (val && !skills.includes(val)) { skills.push(val); renderChips(); }
+    chipInput.value = '';
+  }
+});
+function renderChips() {
+  chipBox.querySelectorAll('.chip').forEach((c) => c.remove());
+  skills.forEach((s) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    const safe = s.replace(/'/g, "\\'");
+    chip.innerHTML = s + ' <button type="button" onclick="removeChip(\'' + safe + '\')">×</button>';
+    chipBox.insertBefore(chip, chipInput);
+  });
+}
+function removeChip(s) { skills = skills.filter((x) => x !== s); renderChips(); }
+
+async function finishOnboarding() {
+  clearError();
+  const btn = document.getElementById('finishBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('f-name').value.trim(),
+        role: document.getElementById('f-role').value.trim(),
+        experienceYears: document.getElementById('f-exp').value,
+        currentSalary: document.getElementById('f-salary').value,
+        expectedSalary: document.getElementById('f-expected').value,
+        relocation: document.getElementById('f-relocate').value,
+        notes: document.getElementById('f-notes').value,
+        skills,
+        cv: cvPayload,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+    window.location.href = '/dashboard.html';
+  } catch (err) {
+    showError(err.message);
+    btn.disabled = false;
+    btn.textContent = 'Build my profile →';
+  }
+}
+</script>
+</body>
+</html>
