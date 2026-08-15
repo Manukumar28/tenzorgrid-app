@@ -15,7 +15,7 @@
 
   <div class="card" id="step-1">
     <h2 style="margin:0 0 6px;">Upload your CV (optional)</h2>
-    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. You can skip this and fill things in manually.</div>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. We'll try to pull your name, role, experience, and skills from it automatically — you can skip this and fill everything in manually instead.</div>
     <div class="cv-drop" id="cvDrop">
       <div style="font-size:26px;">📄</div>
       <div style="font-weight:600;margin-top:6px;">Click to upload your CV</div>
@@ -30,16 +30,21 @@
 
   <div class="card" id="step-2" style="display:none;">
     <h2 style="margin:0 0 6px;">A few quick basics</h2>
-    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">This builds your profile and dashboard.</div>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:10px;">This builds your profile and dashboard.</div>
+    <div class="cv-status" id="autofillNote" style="display:none;margin-bottom:14px;color:#067a55;font-weight:600;"></div>
     <div class="grid-2">
       <div class="field"><label>Full name</label><input id="f-name" placeholder="Jane Doe" required></div>
       <div class="field"><label>Current role</label><input id="f-role" placeholder="Software Engineer" required></div>
       <div class="field"><label>Years of experience</label><input id="f-exp" type="number" min="0" step="0.5" placeholder="4"></div>
-      <div class="field"><label>Current salary (₹/yr)</label><input id="f-salary" type="number" min="0" placeholder="1200000"></div>
+      <div class="field"><label>Current salary (₹/yr)</label><input id="f-salary" type="number" min="0" placeholder="1200000">
+        <div class="hint">We don't pull this from your CV — please enter it manually.</div>
+      </div>
     </div>
     <div class="field">
       <label>Skills</label>
-      <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter"></div>
+      <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter" list="skills-datalist" autocomplete="off"></div>
+      <datalist id="skills-datalist"></datalist>
+      <div class="hint">Start typing for suggestions from our skills list, or add your own.</div>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
@@ -67,12 +72,23 @@
 <script>
 let skills = [];
 let cvPayload = null; // { filename, mime, dataBase64 }
+let autofillApplied = false;
 
 (async function guard() {
   const me = await fetch('/api/me').then(r => r.json());
   if (!me.authenticated) { window.location.href = '/login.html'; return; }
   if (me.hasProfile) { window.location.href = '/dashboard.html'; return; }
 })();
+
+// Populate the skills autosuggestion datalist from the bundled skills list.
+fetch('/api/skills').then(r => r.json()).then(data => {
+  const list = document.getElementById('skills-datalist');
+  (data.skills || []).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    list.appendChild(opt);
+  });
+}).catch(() => {});
 
 function showError(msg) {
   const box = document.getElementById('err');
@@ -106,15 +122,50 @@ document.getElementById('cvFile').addEventListener('change', (e) => {
   clearError();
   document.getElementById('cvStatus').textContent = 'Reading "' + file.name + '"…';
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     const dataUrl = reader.result;
     const base64 = dataUrl.split(',')[1];
     cvPayload = { filename: file.name, mime: file.type, dataBase64: base64 };
     document.getElementById('cvDrop').classList.add('filled');
     document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+
+    // Best-effort auto-fill: send the CV for parsing and pre-fill step 2 fields.
+    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' — reading details from your CV…';
+    try {
+      const res = await fetch('/api/cv-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cv: cvPayload }),
+      });
+      const data = await res.json();
+      applyAutofill(data);
+      document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+    } catch (err) {
+      document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+    }
   };
   reader.readAsDataURL(file);
 });
+
+function applyAutofill(data) {
+  if (!data) return;
+  let filled = [];
+  if (data.name) { document.getElementById('f-name').value = data.name; filled.push('name'); }
+  if (data.role) { document.getElementById('f-role').value = data.role; filled.push('role'); }
+  if (data.experienceYears) { document.getElementById('f-exp').value = data.experienceYears; filled.push('experience'); }
+  if (Array.isArray(data.skills) && data.skills.length) {
+    data.skills.forEach((s) => { if (s && !skills.includes(s)) skills.push(s); });
+    renderChips();
+    filled.push('skills');
+  }
+  if (filled.length) {
+    autofillApplied = true;
+    const note = document.getElementById('autofillNote');
+    const aiTag = data.source === 'ai' ? ' (AI-assisted)' : '';
+    note.textContent = '✓ Pre-filled ' + filled.join(', ') + ' from your CV' + aiTag + ' — please double-check before continuing.';
+    note.style.display = 'block';
+  }
+}
 
 const chipBox = document.getElementById('chip-box');
 const chipInput = document.getElementById('chip-input');
@@ -126,6 +177,11 @@ chipInput.addEventListener('keydown', (e) => {
     if (val && !skills.includes(val)) { skills.push(val); renderChips(); }
     chipInput.value = '';
   }
+});
+chipInput.addEventListener('change', () => {
+  // Fires on datalist option selection too.
+  const val = chipInput.value.trim();
+  if (val && !skills.includes(val)) { skills.push(val); renderChips(); chipInput.value = ''; }
 });
 function renderChips() {
   chipBox.querySelectorAll('.chip').forEach((c) => c.remove());

@@ -4,11 +4,13 @@ const crypto = require('node:crypto');
 const { db, UPLOADS_DIR, cryptoRandomId } = require('./db');
 
 const MAX_CV_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024; // 1.5MB
 const ALLOWED_CV_MIME = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+const ALLOWED_PHOTO_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 function getProfile(userId) {
   const row = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId);
@@ -24,8 +26,39 @@ function getProfile(userId) {
     skills: row.skills_json ? JSON.parse(row.skills_json) : [],
     cvFilename: row.cv_filename,
     hasCv: Boolean(row.cv_stored_name),
+    photoUrl: row.photo_data_url || null,
     updatedAt: row.updated_at,
   };
+}
+
+function savePhoto(userId, photo) {
+  // photo: { mime, dataBase64 }
+  if (!photo || !photo.dataBase64) {
+    const err = new Error('No photo data provided.');
+    err.code = 'BAD_PHOTO';
+    throw err;
+  }
+  if (!ALLOWED_PHOTO_MIME.has(photo.mime)) {
+    const err = new Error('Photo must be a PNG, JPG, or WEBP image.');
+    err.code = 'BAD_PHOTO_TYPE';
+    throw err;
+  }
+  const buffer = Buffer.from(photo.dataBase64, 'base64');
+  if (buffer.length > MAX_PHOTO_BYTES) {
+    const err = new Error('Photo is too large (max 1.5MB).');
+    err.code = 'PHOTO_TOO_LARGE';
+    throw err;
+  }
+  const existing = db.prepare('SELECT user_id FROM profiles WHERE user_id = ?').get(userId);
+  if (!existing) {
+    const err = new Error('Complete your profile before adding a photo.');
+    err.code = 'NO_PROFILE';
+    throw err;
+  }
+  const dataUrl = `data:${photo.mime};base64,${photo.dataBase64}`;
+  db.prepare('UPDATE profiles SET photo_data_url = ?, updated_at = ? WHERE user_id = ?')
+    .run(dataUrl, new Date().toISOString(), userId);
+  return dataUrl;
 }
 
 function saveCvFile(userId, cv) {
@@ -123,4 +156,4 @@ function computeMatches(userSkills) {
   }).sort((a, b) => b.matchScore - a.matchScore);
 }
 
-module.exports = { getProfile, upsertProfile, computeMatches, UPLOADS_DIR };
+module.exports = { getProfile, upsertProfile, computeMatches, savePhoto, UPLOADS_DIR };

@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   password_salt TEXT NOT NULL,
+  dob TEXT,
+  gender TEXT,
+  profession TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -49,8 +52,22 @@ CREATE TABLE IF NOT EXISTS profiles (
   cv_filename TEXT,
   cv_stored_name TEXT,
   cv_mime TEXT,
+  photo_data_url TEXT,
   created_at TEXT,
   updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS experiences (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization TEXT NOT NULL,
+  role TEXT NOT NULL,
+  achievements TEXT,
+  start_year INTEGER,
+  end_year INTEGER,
+  is_current INTEGER NOT NULL DEFAULT 0,
+  salary REAL,
+  created_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS jobs (
@@ -65,6 +82,22 @@ CREATE TABLE IF NOT EXISTS jobs (
   posted_at TEXT
 );
 `);
+
+// Safe migration helper for columns added after the DB was first created
+// (e.g. on the live Railway volume, which already has a users/profiles table
+// without these columns). SQLite errors if the column already exists — we
+// just ignore that specific case.
+function ensureColumn(table, column, declaration) {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${declaration}`);
+  } catch (e) {
+    if (!/duplicate column name/i.test(e.message)) throw e;
+  }
+}
+ensureColumn('users', 'dob', 'TEXT');
+ensureColumn('users', 'gender', 'TEXT');
+ensureColumn('users', 'profession', 'TEXT');
+ensureColumn('profiles', 'photo_data_url', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

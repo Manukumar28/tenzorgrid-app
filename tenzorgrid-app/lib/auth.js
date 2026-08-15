@@ -17,7 +17,8 @@ function verifyPassword(password, salt, expectedHash) {
   return crypto.timingSafeEqual(a, b);
 }
 
-function createUser(email, password) {
+function createUser(email, password, extra) {
+  extra = extra || {};
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
   if (existing) {
     const err = new Error('An account with this email already exists.');
@@ -27,8 +28,8 @@ function createUser(email, password) {
   const { hash, salt } = hashPassword(password);
   const id = cryptoRandomId();
   db.prepare(
-    'INSERT INTO users (id, email, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, email, hash, salt, new Date().toISOString());
+    'INSERT INTO users (id, email, password_hash, password_salt, dob, gender, profession, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, email, hash, salt, extra.dob || null, extra.gender || null, extra.profession || null, new Date().toISOString());
   return { id, email };
 }
 
@@ -69,6 +70,12 @@ function destroySession(token) {
   db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
 }
 
+function getUserExtras(userId) {
+  const row = db.prepare('SELECT dob, gender, profession FROM users WHERE id = ?').get(userId);
+  if (!row) return { dob: null, gender: null, profession: null };
+  return row;
+}
+
 function parseCookies(req) {
   const header = req.headers.cookie;
   const out = {};
@@ -90,5 +97,6 @@ module.exports = {
   getUserBySession,
   destroySession,
   parseCookies,
+  getUserExtras,
   SESSION_DAYS,
 };

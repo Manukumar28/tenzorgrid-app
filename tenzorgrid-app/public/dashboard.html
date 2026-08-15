@@ -25,25 +25,64 @@
 
   <div id="heroReal" style="display:none;" class="portfolio-hero">
     <div>
-      <div class="avatar avatar-lg" id="heroAvatar" style="width:64px;height:64px;font-size:22px;">?</div>
+      <div class="photo-wrap" id="photoWrap" title="Click to change your photo">
+        <div class="avatar avatar-lg" id="heroAvatar" style="width:64px;height:64px;font-size:22px;">?</div>
+        <div class="photo-edit-badge">✎</div>
+      </div>
+      <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" style="display:none">
       <h1 id="heroName">—</h1>
       <div class="role-line" id="heroRole">—</div>
       <div class="skills-row" id="heroSkills"></div>
     </div>
     <div style="text-align:right;">
       <div class="salary-box">
-        <div><div class="amt" id="heroCurrentSalary">—</div><div class="lbl">CURRENT</div></div>
-        <div><div class="amt" id="heroExpectedSalary">—</div><div class="lbl">EXPECTED</div></div>
+        <div><div class="amt"><span class="salary-amt-emoji">💰</span><span id="heroCurrentSalary">—</span></div><div class="lbl">CURRENT</div></div>
+        <div><div class="amt"><span class="salary-amt-emoji">🎯</span><span id="heroExpectedSalary">—</span></div><div class="lbl">EXPECTED</div></div>
       </div>
       <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="margin-top:14px;color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
     </div>
+
+    <div class="insights-panel" id="insightsPanel">
+      <div class="insight-card"><div class="ilabel">Market value</div><div class="ival" id="insMarketValue">Loading…</div></div>
+      <div class="insight-card"><div class="ilabel">Upskill to become</div><div class="ival" id="insUpskillTarget">Loading…</div><div class="isub" id="insUpskillMissing"></div></div>
+      <div class="insight-card"><div class="ilabel">Best-suited jobs</div><div class="ival" id="insBestFit">Loading…</div></div>
+    </div>
   </div>
 
-  <div class="section-title"><h3>Your role</h3><a href="/onboarding.html" style="font-size:13.5px;color:var(--primary);font-weight:600;">Edit profile →</a></div>
+  <div class="section-title"><h3>Your experience</h3></div>
   <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
 
   <div class="section-title"><h3>Matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
   <div id="jobsList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div><div class="skeleton" style="height:60px;"></div></div>
+  <div class="browse-all-cta">
+    <div><b>Want to see every matching job?</b><br><span>Browsing the full matched list is a subscriber feature.</span></div>
+    <a class="btn btn-primary btn-sm" href="/subscribe.html">Browse all matching jobs →</a>
+  </div>
+</div>
+
+<!-- Add experience modal -->
+<div class="modal-backdrop" id="expModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 4px;">Add a role</h3>
+    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">One card per organization / role.</p>
+    <div class="error-box" id="expErr"></div>
+    <div class="field"><label>Organization</label><input id="exp-org" placeholder="Acme Corp"></div>
+    <div class="field"><label>Role</label><input id="exp-role" placeholder="Software Engineer"></div>
+    <div class="field"><label>Responsibilities / achievements</label><textarea id="exp-achievements" rows="3" placeholder="Led migration to microservices; grew team from 2 to 6..."></textarea></div>
+    <div class="grid-2">
+      <div class="field"><label>Start year</label><input id="exp-start" type="number" min="1970" max="2100" placeholder="2021"></div>
+      <div class="field"><label>End year</label><input id="exp-end" type="number" min="1970" max="2100" placeholder="2024"></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="exp-current" style="width:auto;" onchange="document.getElementById('exp-end').disabled = this.checked;">
+      <label style="margin:0;">I currently work here</label>
+    </div>
+    <div class="field"><label>Salary at this role (₹/yr, optional)</label><input id="exp-salary" type="number" min="0" placeholder="1500000"></div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="closeExpModal()">Cancel</button>
+      <button class="btn btn-primary" id="expSaveBtn" onclick="saveExperience()">Save role</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -61,6 +100,17 @@ async function logout() {
   window.location.href = '/login.html';
 }
 
+function setAvatarVisual(el, name, photoUrl) {
+  el.innerHTML = '';
+  if (photoUrl) {
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    el.appendChild(img);
+  } else {
+    el.textContent = initials(name);
+  }
+}
+
 async function load() {
   const me = await fetch('/api/me').then((r) => r.json());
   if (!me.authenticated) { window.location.href = '/login.html'; return; }
@@ -68,11 +118,11 @@ async function load() {
 
   const p = me.profile;
   document.getElementById('miniName').textContent = p.name;
-  document.getElementById('miniAvatar').textContent = initials(p.name);
+  setAvatarVisual(document.getElementById('miniAvatar'), p.name, p.photoUrl);
+  setAvatarVisual(document.getElementById('heroAvatar'), p.name, p.photoUrl);
 
-  document.getElementById('heroAvatar').textContent = initials(p.name);
   document.getElementById('heroName').textContent = p.name;
-  document.getElementById('heroRole').textContent = p.role + (p.experienceYears ? ' · ' + p.experienceYears + ' yrs experience' : '');
+  document.getElementById('heroRole').textContent = p.role + (p.experienceYears ? ' · ' + p.experienceYears + ' yrs total experience' : '');
   document.getElementById('heroSkills').innerHTML = (p.skills || []).map((s) => '<span class="skill-pill">' + s + '</span>').join('') || '<span class="skill-pill">No skills added yet</span>';
   document.getElementById('heroCurrentSalary').textContent = fmtINR(p.currentSalary);
   document.getElementById('heroExpectedSalary').textContent = fmtINR(p.expectedSalary);
@@ -81,20 +131,15 @@ async function load() {
   document.getElementById('heroSkeleton').style.display = 'none';
   document.getElementById('heroReal').style.display = 'flex';
 
-  document.getElementById('expCards').innerHTML = `
-    <div class="exp-card">
-      <div class="org">${p.role || 'Your current role'}</div>
-      <div class="role">Current role · ${p.experienceYears || 0} yrs experience</div>
-      <div class="skills-row" style="margin-bottom:10px;">${(p.skills || []).map((s) => '<span class="tag">' + s + '</span>').join('') || '<span class="tag">Add skills in your profile</span>'}</div>
-      <div style="font-size:12.5px;color:var(--text-soft);">Current salary: ${fmtINR(p.currentSalary)} · Expected: ${fmtINR(p.expectedSalary)}</div>
-    </div>`;
+  loadInsights();
+  loadExperiences();
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   const jobs = jobsData.jobs || [];
   if (jobs.length === 0) {
     document.getElementById('jobsList').innerHTML = '<div class="empty-note">No jobs available yet.</div>';
   } else {
-    document.getElementById('jobsList').innerHTML = jobs.slice(0, 8).map((j) => `
+    document.getElementById('jobsList').innerHTML = jobs.slice(0, 3).map((j) => `
       <div class="job-row">
         <div class="jinfo">
           <b>${j.title}</b>
@@ -104,6 +149,125 @@ async function load() {
       </div>`).join('');
   }
 }
+
+async function loadInsights() {
+  try {
+    const ins = await fetch('/api/insights').then((r) => r.json());
+    document.getElementById('insMarketValue').textContent = ins.marketValueLabel || 'Add more skills to estimate';
+    document.getElementById('insUpskillTarget').textContent = ins.upskillTarget || 'Add more profile info';
+    document.getElementById('insUpskillMissing').textContent = (ins.upskillMissing && ins.upskillMissing.length)
+      ? 'Learn: ' + ins.upskillMissing.join(', ') : '';
+    const bf = ins.bestFit || [];
+    document.getElementById('insBestFit').textContent = bf.length
+      ? bf.map((j) => j.title + ' (' + j.matchPct + '%)').join(', ')
+      : 'No strong matches yet';
+  } catch (e) {
+    document.getElementById('insMarketValue').textContent = '—';
+    document.getElementById('insUpskillTarget').textContent = '—';
+    document.getElementById('insBestFit').textContent = '—';
+  }
+}
+
+async function loadExperiences() {
+  const data = await fetch('/api/experiences').then((r) => r.json());
+  const list = data.experiences || [];
+  const cardsHtml = list.map((e) => `
+    <div class="exp-card">
+      <button class="del-btn" onclick="removeExperience('${e.id}')" title="Remove">×</button>
+      <div class="org">${e.organization}</div>
+      <div class="role">${e.role}</div>
+      <div class="years">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}</div>
+      ${e.achievements ? '<div class="achievements">' + e.achievements.replace(/</g, '&lt;') + '</div>' : ''}
+      ${e.salary ? '<div class="salary-line">💰 ' + fmtINR(e.salary) + '/yr</div>' : ''}
+      ${e.isCurrent ? '<a class="btn btn-ghost btn-sm upgrade-btn" href="/career-growth.html#upgrade">Switch to Career Upgrade →</a>' : ''}
+    </div>`).join('');
+  document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()">+ Add a role</div>';
+}
+
+function openExpModal() {
+  document.getElementById('expErr').classList.remove('show');
+  document.getElementById('exp-org').value = '';
+  document.getElementById('exp-role').value = '';
+  document.getElementById('exp-achievements').value = '';
+  document.getElementById('exp-start').value = '';
+  document.getElementById('exp-end').value = '';
+  document.getElementById('exp-current').checked = false;
+  document.getElementById('exp-end').disabled = false;
+  document.getElementById('exp-salary').value = '';
+  document.getElementById('expModal').classList.add('show');
+}
+function closeExpModal() { document.getElementById('expModal').classList.remove('show'); }
+
+async function saveExperience() {
+  const errBox = document.getElementById('expErr');
+  errBox.classList.remove('show');
+  const org = document.getElementById('exp-org').value.trim();
+  const role = document.getElementById('exp-role').value.trim();
+  if (!org || !role) {
+    errBox.textContent = 'Organization and role are required.';
+    errBox.classList.add('show');
+    return;
+  }
+  const btn = document.getElementById('expSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch('/api/experiences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organization: org,
+        role,
+        achievements: document.getElementById('exp-achievements').value.trim(),
+        startYear: document.getElementById('exp-start').value,
+        endYear: document.getElementById('exp-end').value,
+        isCurrent: document.getElementById('exp-current').checked,
+        salary: document.getElementById('exp-salary').value,
+      }),
+    });
+    if (!res.ok) throw new Error('Could not save that role.');
+    closeExpModal();
+    loadExperiences();
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save role';
+  }
+}
+
+async function removeExperience(id) {
+  await fetch('/api/experiences/' + id, { method: 'DELETE' });
+  loadExperiences();
+}
+
+document.getElementById('photoWrap').addEventListener('click', () => document.getElementById('photoFile').click());
+document.getElementById('photoFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+  if (!allowed.includes(file.type)) { alert('Please choose a PNG, JPG, or WEBP image.'); return; }
+  if (file.size > 1.5 * 1024 * 1024) { alert('Photo must be under 1.5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    try {
+      const res = await fetch('/api/photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo: { mime: file.type, dataBase64: base64 } }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save photo.');
+      setAvatarVisual(document.getElementById('heroAvatar'), null, data.photoUrl);
+      setAvatarVisual(document.getElementById('miniAvatar'), null, data.photoUrl);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+  reader.readAsDataURL(file);
+});
 
 load().catch((e) => { console.error(e); });
 </script>

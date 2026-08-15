@@ -3,6 +3,7 @@
   --primary-dark:#3c34c9;
   --primary-soft:#eef0fe;
   --accent:#10b981;
+  --accent-light:#34d399;
   --accent-soft:#e6f8f1;
   --danger:#ef4444;
   --danger-soft:#fdecec;
@@ -15,6 +16,13 @@
   --radius-md:14px;
   --shadow-soft:0 10px 30px -12px rgba(15,23,42,.15);
   --shadow-card:0 2px 10px -2px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+  /* Exact logo gradient stops ("Midnight Platinum") — use these for every dark
+     surface in the app so the mark reads as part of one consistent brand,
+     instead of a different off-brand navy/purple. */
+  --brand-dark-1:#1B2138;
+  --brand-dark-2:#0B0E19;
+  --brand-dark-3:#040509;
+  --brand-dark-grad:linear-gradient(135deg,var(--brand-dark-1),var(--brand-dark-2) 55%,var(--brand-dark-3));
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -28,7 +36,13 @@ button{font-family:inherit;cursor:pointer;}
 
 .nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;}
-.logo img{width:34px;height:34px;border-radius:9px;}
+.logo img{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--brand-dark-grad);
+  padding:3px;box-sizing:border-box;
+  box-shadow:0 3px 10px -3px rgba(4,5,9,.55), 0 0 0 1px rgba(148,163,184,.25) inset;
+}
+.logo-word .g{color:var(--accent);}
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -89,9 +103,13 @@ button{font-family:inherit;cursor:pointer;}
 
 .dash-wrap{max-width:1040px;margin:0 auto;padding:34px 28px 90px;}
 .portfolio-hero{
-  background:linear-gradient(135deg,#111a33,#1e2954 55%, #2c2a63);color:#f1f5f9;border-radius:var(--radius-lg);
+  background:var(--brand-dark-grad);color:#f1f5f9;border-radius:var(--radius-lg);
   padding:34px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px;box-shadow:var(--shadow-soft);
-  flex-wrap:wrap;
+  flex-wrap:wrap;position:relative;overflow:hidden;
+}
+.portfolio-hero::after{
+  content:"";position:absolute;top:-40%;right:-10%;width:60%;height:180%;
+  background:radial-gradient(circle,rgba(52,211,153,.16),transparent 65%);pointer-events:none;
 }
 .portfolio-hero .avatar-lg{width:64px;height:64px;font-size:22px;border:2px solid rgba(255,255,255,.25);}
 .portfolio-hero h1{font-size:25px;margin:14px 0 4px;letter-spacing:-.01em;}
@@ -124,3 +142,89 @@ button{font-family:inherit;cursor:pointer;}
 .empty-note{font-size:13px;color:var(--text-faint);padding:14px 0;}
 .skeleton{background:linear-gradient(90deg,#eef1f7 25%,#f7f9fc 37%,#eef1f7 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:10px;}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+
+/* ---- Dashboard: photo upload, expanded banner, insights ---- */
+.photo-wrap{position:relative;display:inline-block;cursor:pointer;}
+.photo-wrap .avatar-lg{overflow:hidden;background-size:cover;background-position:center;}
+.photo-wrap .avatar-lg img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.photo-edit-badge{
+  position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-radius:50%;
+  background:var(--accent-light);color:#04150e;display:flex;align-items:center;justify-content:center;
+  font-size:11px;border:2px solid var(--brand-dark-2);
+}
+.salary-amt-emoji{margin-right:3px;}
+
+.insights-panel{
+  margin-top:22px;padding-top:20px;border-top:1px solid rgba(255,255,255,.14);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;width:100%;
+}
+.insight-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:14px 16px;}
+.insight-card .ilabel{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-light);font-weight:700;margin-bottom:6px;}
+.insight-card .ival{font-size:14.5px;font-weight:600;line-height:1.4;color:#f1f5f9;}
+.insight-card .isub{font-size:12px;color:#aab3cc;margin-top:4px;}
+
+/* ---- Real experience cards ---- */
+.exp-card{position:relative;}
+.exp-card .years{font-size:12px;color:var(--text-faint);margin-bottom:4px;}
+.exp-card .achievements{font-size:13px;color:var(--text-soft);margin:8px 0;white-space:pre-line;}
+.exp-card .salary-line{font-size:12.5px;color:var(--text-soft);margin-top:6px;}
+.exp-card .upgrade-btn{margin-top:14px;}
+.exp-card .del-btn{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:16px;line-height:1;padding:2px 6px;}
+.exp-card .del-btn:hover{color:var(--danger);}
+.exp-add-card{
+  display:flex;align-items:center;justify-content:center;min-height:150px;border:2px dashed var(--border);
+  border-radius:var(--radius-md);color:var(--text-soft);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface-alt);
+}
+.exp-add-card:hover{border-color:var(--primary);color:var(--primary);}
+
+/* ---- Modal ---- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(4,5,9,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
+.modal-backdrop.show{display:flex;}
+.modal-box{background:#fff;border-radius:var(--radius-lg);padding:28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+
+/* ---- Jobs lock / paywall teaser ---- */
+.job-row.locked{position:relative;}
+.browse-all-cta{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:var(--primary-soft);border:1.5px dashed var(--primary);border-radius:var(--radius-md);padding:18px 20px;margin-top:6px;
+}
+.browse-all-cta b{font-size:14.5px;}
+.browse-all-cta span{font-size:12.5px;color:var(--text-soft);}
+
+/* ---- Marketing pages: landing pillars + Career Growth explainer ---- */
+.dark-hero{background:var(--brand-dark-grad);color:#f1f5f9;min-height:100vh;}
+.dark-hero .top-nav a{color:#e2e8f0;}
+.hero-eyebrow{display:inline-block;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--accent-light);font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:99px;margin-bottom:22px;letter-spacing:.03em;}
+.hero-block{padding:70px 0 50px;text-align:center;}
+.hero-block h1{font-size:42px;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;line-height:1.12;}
+.hero-block p{font-size:17.5px;color:#a9b3cc;max-width:600px;margin:0 auto 30px;}
+
+.pillar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;padding:16px 0 80px;}
+.pillar-card{
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px 22px;
+  text-align:left;transition:transform .15s ease, border-color .15s ease;
+}
+.pillar-card.live{border-color:rgba(52,211,153,.45);cursor:pointer;}
+.pillar-card.live:hover{transform:translateY(-3px);border-color:var(--accent-light);}
+.pillar-card .picon{font-size:26px;margin-bottom:12px;}
+.pillar-card b{display:block;font-size:16px;margin-bottom:6px;}
+.pillar-card span{font-size:13px;color:#9aa4bd;display:block;}
+.pillar-status{display:inline-block;margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:99px;}
+.pillar-status.live{background:rgba(52,211,153,.18);color:var(--accent-light);}
+.pillar-status.soon{background:rgba(255,255,255,.08);color:#9aa4bd;}
+
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:16px 0 40px;}
+.feature-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;text-align:left;}
+.feature-card b{display:block;font-size:14.5px;margin-bottom:5px;}
+.feature-card span{font-size:13px;color:#9aa4bd;}
+
+/* ---- Subscribe / paywall page ---- */
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;padding:10px 0 60px;}
+.plan-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:30px 26px;box-shadow:var(--shadow-card);}
+.plan-card.featured{border-color:var(--primary);box-shadow:0 12px 30px -14px rgba(79,70,229,.4);position:relative;}
+.plan-card .pname{font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.04em;}
+.plan-card .pprice{font-size:30px;font-weight:800;margin:8px 0 4px;}
+.plan-card .pprice span{font-size:13px;font-weight:500;color:var(--text-soft);}
+.plan-feature-list{list-style:none;padding:0;margin:20px 0;}
+.plan-feature-list li{padding:8px 0;font-size:13.5px;border-bottom:1px solid var(--surface-alt);display:flex;gap:8px;}
+.plan-feature-list li::before{content:"✓";color:var(--accent);font-weight:700;}

@@ -3,8 +3,13 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { URL } = require('node:url');
 
-const { createUser, authenticate, createSession, getUserBySession, destroySession, parseCookies, SESSION_DAYS } = require('./lib/auth');
+const { createUser, authenticate, createSession, getUserBySession, destroySession, parseCookies, getUserExtras, SESSION_DAYS } = require('./lib/auth');
 const { getProfile, upsertProfile, computeMatches, UPLOADS_DIR } = require('./lib/profile');
+const { extractFromCv } = require('./lib/cvparse');
+const { SKILLS } = require('./lib/skills-data');
+const { listExperiences, addExperience, deleteExperience } = require('./lib/experience');
+const { savePhoto } = require('./lib/profile');
+const { computeInsights } = require('./lib/insights');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -102,10 +107,16 @@ async function handleApi(req, res, url) {
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
+    const dob = (body.dob || '').trim();
+    const gender = (body.gender || '').trim();
+    const profession = (body.profession || '').trim();
     if (!isValidEmail(email)) return sendJson(res, 400, { error: 'Please enter a valid email address.' });
     if (password.length < 8) return sendJson(res, 400, { error: 'Password must be at least 8 characters.' });
+    if (!dob) return sendJson(res, 400, { error: 'Please enter your date of birth.' });
+    if (!gender) return sendJson(res, 400, { error: 'Please select a gender.' });
+    if (!profession) return sendJson(res, 400, { error: 'Please select your profession.' });
     try {
-      const user = createUser(email, password);
+      const user = createUser(email, password, { dob, gender, profession });
       const session = createSession(user.id);
       setSessionCookie(res, session.token);
       return sendJson(res, 200, { ok: true, userId: user.id });
@@ -141,7 +152,8 @@ async function handleApi(req, res, url) {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 200, { authenticated: false });
     const profile = getProfile(user.id);
-    return sendJson(res, 200, { authenticated: true, email: user.email, hasProfile: Boolean(profile), profile });
+    const extras = getUserExtras(user.id);
+    return sendJson(res, 200, { authenticated: true, email: user.email, ...extras, hasProfile: Boolean(profile), profile });
   }
 
   // ---- POST /api/onboarding ----
@@ -197,6 +209,86 @@ async function handleApi(req, res, url) {
       'Content-Disposition': `attachment; filename="${row.cv_filename || 'resume'}"`,
     });
     return fs.createReadStream(filePath).pipe(res);
+  }
+
+  // ---- GET /api/skills (bundled list for the autosuggestion field) ----
+  if (pathname === '/api/skills' && req.method === 'GET') {
+    return sendJson(res, 200, { skills: SKILLS });
+  }
+
+  // ---- POST /api/cv-parse (best-effort text extraction + field guessing from an uploaded CV) ----
+  if (pathname === '/api/cv-parse' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.cv || !body.cv.dataBase64) return sendJson(res, 400, { error: 'No CV data provided.' });
+    try {
+      const buffer = Buffer.from(body.cv.dataBase64, 'base64');
+      const result = await extractFromCv(buffer, body.cv.mime);
+      return sendJson(res, 200, result);
+    } catch (e) {
+      console.error('CV parse error:', e);
+      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], source: 'none' });
+    }
+  }
+
+  // ---- POST /api/photo (profile photo upload) ----
+  if (pathname === '/api/photo' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      const photoUrl = savePhoto(user.id, body.photo || null);
+      return sendJson(res, 200, { ok: true, photoUrl });
+    } catch (e) {
+      if (['BAD_PHOTO', 'BAD_PHOTO_TYPE', 'PHOTO_TOO_LARGE', 'NO_PROFILE'].includes(e.code)) {
+        return sendJson(res, 400, { error: e.message });
+      }
+      console.error(e);
+      return sendJson(res, 500, { error: 'Something went wrong saving your photo.' });
+    }
+  }
+
+  // ---- GET /api/experiences / POST /api/experiences / DELETE /api/experiences/:id ----
+  if (pathname === '/api/experiences' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { experiences: listExperiences(user.id) });
+  }
+  if (pathname === '/api/experiences' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      addExperience(user.id, body);
+      return sendJson(res, 200, { experiences: listExperiences(user.id) });
+    } catch (e) {
+      if (e.code === 'BAD_EXPERIENCE') return sendJson(res, 400, { error: e.message });
+      console.error(e);
+      return sendJson(res, 500, { error: 'Something went wrong saving that role.' });
+    }
+  }
+  const expMatch = pathname.match(/^\/api\/experiences\/([a-f0-9]+)$/);
+  if (expMatch && req.method === 'DELETE') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    deleteExperience(user.id, expMatch[1]);
+    return sendJson(res, 200, { experiences: listExperiences(user.id) });
+  }
+
+  // ---- GET /api/insights (market value, upskill target, best-fit jobs) ----
+  if (pathname === '/api/insights' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const profile = getProfile(user.id);
+    if (!profile) return sendJson(res, 404, { error: 'Complete your profile first.' });
+    try {
+      const insights = await computeInsights(profile);
+      return sendJson(res, 200, insights);
+    } catch (e) {
+      console.error('Insights error:', e);
+      return sendJson(res, 500, { error: 'Could not compute insights right now.' });
+    }
   }
 
   sendJson(res, 404, { error: 'Not found' });

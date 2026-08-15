@@ -10,16 +10,52 @@ That also means there's no framework "magic" to learn — it's about 700 lines o
 readable JavaScript across a handful of files, which should make it easier for any developer
 you bring on later to understand quickly.
 
+## Updating your already-live app with this new version
+
+Your app is already live on Railway, connected to your `tenzorgrid-app` GitHub repository —
+this zip is an update, not a first deploy. Claude does not currently have permission to push
+directly to your GitHub repo from this session (even though you connected a GitHub
+integration, no working GitHub write-access tool showed up here — this looks like a gap on
+the tooling side, not something you did wrong), so the fastest way to get these changes live is:
+
+1. Unzip this file on your computer.
+2. Go to your repository on github.com (`Manukumar28/tenzorgrid-app`), open the
+   `tenzorgrid-app` folder inside it, and delete the old files (select all → Delete files),
+   or just drag-and-drop the new unzipped files in — GitHub will ask to overwrite/replace,
+   confirm yes for each. Commit the change.
+3. Railway is already watching that repo/branch, so it will automatically start a new
+   deployment within a few seconds. Watch the Deployments tab until it shows "Success," then
+   open your live URL and try it.
+
+Existing signed-up users, their profiles, and uploaded CVs are untouched by this update —
+they live on the persistent Volume, not in the code.
+
 ## What's real vs. what's still ahead
 
-Real and working right now: account creation, login, the onboarding form, CV upload and
-storage, the profile dashboard, and job matching (a transparent skill-overlap score against
-a small starter set of jobs — not yet pulling live listings from real job portals).
+Real and working right now: account creation (with date of birth, gender, and profession),
+login, a multi-pillar landing page (Career Growth live, Entrepreneur/Pillar 3/4/5 marked
+"coming soon"), a dedicated Career Growth explainer page, onboarding with CV upload that
+auto-fills your name/role/experience/skills (salary is always manual), a skills
+autosuggestion field, a profile dashboard with a profile photo, an insights panel (market
+value estimate, upskill target, best-fit jobs), real user-managed experience cards, and job
+matching (a transparent skill-overlap score against a small starter set of jobs — not yet
+pulling live listings from real job portals). The dashboard shows your top 2–3 matches;
+seeing the full list routes to a subscription page that lists what's included — there's no
+payment gateway wired up yet, by design, until that's the next thing to build.
 
-Not built yet: the marketing/explainer pages before signup (those still exist only in the
-earlier click-through prototype), and the entire Auto Apply / Career Upgrade / Career
-Transition / Resume Builder / Interview Prep subscriber area — that's Phase 2, and Auto Apply
-specifically still needs the feasibility research we discussed before any of it gets built.
+Not built yet: the entire Auto Apply / Career Upgrade / Career Transition / Resume Builder /
+Interview Prep subscriber area (that's Phase 2, and Auto Apply specifically still needs the
+feasibility research we discussed before any of it gets built), and the actual payment
+gateway behind the subscription page.
+
+### Optional: turning on real AI (CV parsing + insights)
+
+CV parsing and the dashboard's insights panel work out of the box using a transparent,
+rule-based approach — no setup needed. If you want to upgrade them to use real AI (Claude)
+for better accuracy, get an API key from console.anthropic.com and add it as an environment
+variable named `ANTHROPIC_API_KEY` in Railway's Variables tab for this service, then redeploy.
+The app automatically detects the key and switches over — nothing else to configure, and
+nothing breaks if you never add one.
 
 ## Running it on your own computer first (optional but reassuring)
 

@@ -8,17 +8,39 @@
 </head>
 <body>
 <div class="auth-wrap">
-  <div class="auth-card">
+  <div class="auth-card" style="width:440px;">
     <div class="logo" style="margin-bottom:22px;justify-content:center;"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div>
     <h2 style="margin:0 0 4px;font-size:19px;">Create your account</h2>
-    <p style="margin:0 0 20px;font-size:13.5px;color:var(--text-soft);">Takes under a minute.</p>
+    <p style="margin:0 0 20px;font-size:13.5px;color:var(--text-soft);">Takes under two minutes.</p>
     <div class="error-box" id="err"></div>
     <form id="signupForm">
       <div class="field"><label>Email</label><input type="email" id="email" required></div>
       <div class="field"><label>Password</label><input type="password" id="password" minlength="8" required>
         <div class="hint">At least 8 characters.</div>
       </div>
-      <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Create account</button>
+      <div class="grid-2">
+        <div class="field"><label>Date of birth</label><input type="date" id="dob" required></div>
+        <div class="field"><label>Gender</label>
+          <select id="gender" required>
+            <option value="" disabled selected>Select…</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Profession</label>
+        <select id="profession" required>
+          <option value="" disabled selected>Select…</option>
+          <option value="Salaried employee">Salaried employee</option>
+          <option value="Business owner / Entrepreneur">Business owner / Entrepreneur</option>
+          <option value="Freelancer / Self-employed">Freelancer / Self-employed</option>
+          <option value="Student">Student</option>
+          <option value="Currently not working / Job seeker">Currently not working / Job seeker</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" id="submitBtn" style="margin-top:6px;">Create account</button>
     </form>
     <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);">
       Already have an account? <a href="/login.html" style="color:var(--primary);font-weight:600;">Log in</a>
@@ -42,6 +64,9 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
+        dob: document.getElementById('dob').value,
+        gender: document.getElementById('gender').value,
+        profession: document.getElementById('profession').value,
       }),
     });
     const data = await res.json();
