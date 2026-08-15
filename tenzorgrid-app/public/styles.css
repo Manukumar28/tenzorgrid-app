@@ -32,7 +32,8 @@ body{
 }
 a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;}
-.container{max-width:1040px;margin:0 auto;padding:0 28px;}
+.container{max-width:1320px;margin:0 auto;padding:0 40px;}
+@media (max-width:900px){.container{padding:0 20px;}}
 
 .nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em;}
@@ -76,11 +77,25 @@ button{font-family:inherit;cursor:pointer;}
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .auth-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);padding:38px 36px;width:380px;}
 
+.skills-field{position:relative;}
 .chip-input-box{display:flex;flex-wrap:wrap;gap:7px;padding:9px;border:1.5px solid var(--border);border-radius:9px;background:#fff;}
 .chip-input-box input{border:none;flex:1;min-width:120px;padding:4px;font-size:14px;}
 .chip-input-box input:focus{outline:none;}
 .chip{background:var(--primary-soft);color:var(--primary-dark);padding:5px 10px;border-radius:99px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;}
 .chip button{background:none;border:none;color:var(--primary-dark);font-weight:700;font-size:13px;line-height:1;padding:0;}
+
+/* Custom skills suggestion dropdown — replaces the native <datalist>, which can't be
+   positioned or grouped by category and was rendering off to the side of the field. */
+.skills-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:280px;overflow-y:auto;
+  background:#fff;border:1.5px solid var(--border);border-radius:11px;box-shadow:var(--shadow-soft);
+  z-index:20;display:none;padding:6px 0;
+}
+.skills-dropdown.show{display:block;}
+.skills-dropdown-group{padding:8px 14px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-faint);}
+.skills-dropdown-item{padding:8px 14px;font-size:13.5px;cursor:pointer;}
+.skills-dropdown-item:hover,.skills-dropdown-item.active{background:var(--surface-alt);color:var(--primary);}
+.skills-dropdown-empty{padding:10px 14px;font-size:13px;color:var(--text-faint);}
 
 .cv-drop{
   border:2px dashed var(--border);border-radius:var(--radius-md);padding:26px;text-align:center;
@@ -90,7 +105,7 @@ button{font-family:inherit;cursor:pointer;}
 .cv-drop.filled{border-color:var(--accent);background:var(--accent-soft);}
 .cv-status{font-size:13px;color:var(--text-soft);margin-top:8px;}
 
-.onboard-wrap{max-width:640px;margin:0 auto;padding:44px 24px 90px;}
+.onboard-wrap{max-width:760px;margin:0 auto;padding:44px 24px 90px;}
 .onboard-progress{display:flex;align-items:center;gap:8px;margin-bottom:22px;}
 .onboard-progress .bar{flex:1;height:5px;border-radius:99px;background:var(--border);overflow:hidden;}
 .onboard-progress .bar i{display:block;height:100%;width:0%;background:var(--primary);transition:width .3s ease;}
@@ -99,9 +114,14 @@ button{font-family:inherit;cursor:pointer;}
 
 .app-header{background:#fff;border-bottom:1px solid var(--border);padding:16px 0;}
 .user-chip{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text-soft);}
-.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#10B981);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#10B981);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;overflow:hidden;flex-shrink:0;}
+/* Applies to every avatar variant (mini header avatar, big hero avatar) — without this
+   general rule, an <img> dropped into a small avatar (e.g. the 32px header one) has no
+   size constraint of its own and renders at its native photo resolution, breaking the
+   layout. Scoping this only to .avatar-lg was the bug; this rule covers all sizes. */
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
 
-.dash-wrap{max-width:1040px;margin:0 auto;padding:34px 28px 90px;}
+.dash-wrap{max-width:1320px;margin:0 auto;padding:34px 28px 90px;}
 .portfolio-hero{
   background:var(--brand-dark-grad);color:#f1f5f9;border-radius:var(--radius-lg);
   padding:34px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px;box-shadow:var(--shadow-soft);
@@ -145,8 +165,6 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ---- Dashboard: photo upload, expanded banner, insights ---- */
 .photo-wrap{position:relative;display:inline-block;cursor:pointer;}
-.photo-wrap .avatar-lg{overflow:hidden;background-size:cover;background-position:center;}
-.photo-wrap .avatar-lg img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .photo-edit-badge{
   position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-radius:50%;
   background:var(--accent-light);color:#04150e;display:flex;align-items:center;justify-content:center;

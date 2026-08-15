@@ -10,6 +10,45 @@ That also means there's no framework "magic" to learn — it's about 700 lines o
 readable JavaScript across a handful of files, which should make it easier for any developer
 you bring on later to understand quickly.
 
+## What changed in this update (bug-fix round)
+
+You reported 5 issues after testing the live site — all fixed and tested locally (including a
+synthetic hex/CID-encoded PDF to exercise the trickiest CV-parsing path, and a full Playwright
+run through signup → CV upload → dashboard):
+
+1. **CV autofill wasn't capturing name/role/experience.** Root cause was actually two
+   layered bugs: (a) many real PDFs (Word/LibreOffice/Canva exports) draw text using embedded
+   font "CID" hex codes that need a lookup table (a ToUnicode CMap) to decode — that decoding
+   is now implemented; and (b) even for ordinary PDFs, the extractor was joining all the text
+   from the page into one long run-on line, so anything that depended on line breaks (like
+   spotting your name on its own line) silently failed even though skills still matched fine.
+   The parser now tracks the PDF's actual line-break instructions so extracted text preserves
+   real line structure.
+2. **Skills dropdown misaligned and flat.** Replaced the native browser dropdown (which can't
+   be styled or grouped) with a custom dropdown that sits directly under the skills field and
+   groups suggestions under category headings (Programming languages, Frontend, Design, Sales
+   & marketing, etc. — 13 categories, ~180 skills total).
+3. **Profile photo rendering huge/broken.** The CSS only constrained the large photo on the
+   dashboard banner — the small header avatar had no size rule at all, so an uploaded photo
+   rendered at full native resolution there. Fixed with a general rule that covers every
+   avatar size.
+4. **Experience cards now auto-generate from your CV** (in addition to the existing manual
+   "+ Add a role" flow). The CV parser looks for a work-experience section, extracts each role
+   using the date ranges (e.g. "Jan 2022 – Present"), and pulls organization, job title, and
+   up to 4 achievement bullets per role. These show as a preview note during onboarding and
+   land as real, editable/deletable cards on your dashboard — you're never limited to what the
+   parser found; anything wrong or missing can be fixed with "+ Add a role" or the × on a card.
+5. **Desktop layout widened.** The page container, onboarding card, and dashboard were all
+   capped at old narrower widths that wasted space on a normal laptop/desktop screen. Widened
+   across the board (dashboard now uses up to 1320px instead of 1040px), with a mobile-specific
+   rule so phones are unaffected.
+
+On your open question about needing more API keys or storage: nothing new is required. User
+data (accounts, profiles, CVs, photos, experience cards) is already stored for real in the
+SQLite database on Railway's persistent Volume — it isn't test/mock data. The only optional
+integration remains `ANTHROPIC_API_KEY` (see below) for upgrading CV parsing and dashboard
+insights from the built-in rule-based approach to Claude — everything works without it too.
+
 ## Updating your already-live app with this new version
 
 Your app is already live on Railway, connected to your `tenzorgrid-app` GitHub repository —

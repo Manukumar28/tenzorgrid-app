@@ -6,7 +6,7 @@ const { URL } = require('node:url');
 const { createUser, authenticate, createSession, getUserBySession, destroySession, parseCookies, getUserExtras, SESSION_DAYS } = require('./lib/auth');
 const { getProfile, upsertProfile, computeMatches, UPLOADS_DIR } = require('./lib/profile');
 const { extractFromCv } = require('./lib/cvparse');
-const { SKILLS } = require('./lib/skills-data');
+const { SKILLS, SKILL_CATEGORIES } = require('./lib/skills-data');
 const { listExperiences, addExperience, deleteExperience } = require('./lib/experience');
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
@@ -213,7 +213,7 @@ async function handleApi(req, res, url) {
 
   // ---- GET /api/skills (bundled list for the autosuggestion field) ----
   if (pathname === '/api/skills' && req.method === 'GET') {
-    return sendJson(res, 200, { skills: SKILLS });
+    return sendJson(res, 200, { skills: SKILLS, categories: SKILL_CATEGORIES });
   }
 
   // ---- POST /api/cv-parse (best-effort text extraction + field guessing from an uploaded CV) ----
@@ -228,7 +228,7 @@ async function handleApi(req, res, url) {
       return sendJson(res, 200, result);
     } catch (e) {
       console.error('CV parse error:', e);
-      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], source: 'none' });
+      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], experience: [], source: 'none' });
     }
   }
 

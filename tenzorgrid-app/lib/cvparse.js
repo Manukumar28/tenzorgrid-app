@@ -108,8 +108,154 @@ function decodePdfString(s) {
   return out;
 }
 
+// Many real-world PDFs (Word "Save as PDF", LibreOffice, Canva, etc.) embed subset
+// fonts keyed by CID, where text is drawn with hex strings ("<...>  Tj") whose bytes
+// are glyph codes, NOT character codes — decoding them as Latin1 produces garbage.
+// The actual character is only recoverable via that font's embedded ToUnicode CMap
+// (a small lookup table also stored as a PDF stream, mapping glyph code -> Unicode).
+// This scans the whole document for every such CMap and merges them into one lookup
+// table. It's an approximation (not scoped per-font), but works well in practice
+// because most single-font-family resumes only have one relevant CMap in play.
+function parseToUnicodeCMaps(rawLatin1Pdf) {
+  const map = new Map();
+  const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let m;
+  while ((m = streamRe.exec(rawLatin1Pdf))) {
+    const buf = Buffer.from(m[1], 'latin1');
+    let content;
+    try {
+      content = zlib.inflateSync(buf).toString('latin1');
+    } catch (e) {
+      content = buf.toString('latin1'); // CMap streams aren't always compressed
+    }
+    if (!content.includes('beginbfchar') && !content.includes('beginbfrange')) continue;
+
+    const bfcharRe = /beginbfchar([\s\S]*?)endbfchar/g;
+    let cm;
+    while ((cm = bfcharRe.exec(content))) {
+      const pairRe = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g;
+      let pm;
+      while ((pm = pairRe.exec(cm[1]))) map.set(pm[1].toUpperCase().padStart(4, '0'), hexToUnicode(pm[2]));
+    }
+
+    const bfrangeRe = /beginbfrange([\s\S]*?)endbfrange/g;
+    let rm;
+    while ((rm = bfrangeRe.exec(content))) {
+      const rangeRe = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*(\[[^\]]*\]|<[0-9A-Fa-f]+>)/g;
+      let one;
+      while ((one = rangeRe.exec(rm[1]))) {
+        const width = one[1].length;
+        const start = parseInt(one[1], 16);
+        const end = parseInt(one[2], 16);
+        if (end - start > 5000) continue; // guard against a runaway/corrupt range
+        const dst = one[3];
+        if (dst.startsWith('[')) {
+          const arr = [...dst.matchAll(/<([0-9A-Fa-f]+)>/g)].map((x) => x[1]);
+          for (let i = start; i <= end && (i - start) < arr.length; i++) {
+            map.set(i.toString(16).toUpperCase().padStart(width, '0'), hexToUnicode(arr[i - start]));
+          }
+        } else {
+          const dstHex = dst.replace(/[<>]/g, '');
+          const dstStart = parseInt(dstHex, 16);
+          for (let i = start; i <= end; i++) {
+            map.set(
+              i.toString(16).toUpperCase().padStart(width, '0'),
+              hexToUnicode((dstStart + (i - start)).toString(16).padStart(dstHex.length, '0'))
+            );
+          }
+        }
+      }
+    }
+  }
+  return map;
+}
+
+function hexToUnicode(hex) {
+  if (hex.length % 4 !== 0) hex = hex.padStart(hex.length + (4 - (hex.length % 4)), '0');
+  let out = '';
+  for (let i = 0; i < hex.length; i += 4) out += String.fromCharCode(parseInt(hex.slice(i, i + 4), 16));
+  return out;
+}
+
+// Decode a hex string run from a Tj/TJ operator. Tries 2-byte (CID/Identity-H) codes
+// against the document's ToUnicode map first, since that's the common case for
+// generated PDFs with embedded fonts; falls back to 1-byte codes (simple fonts using
+// a hex string instead of a literal string, which also happens) if the CMap lookup
+// mostly misses.
+function decodeHexRun(hex, cmap) {
+  hex = hex.replace(/\s+/g, '');
+  if (hex.length % 2 !== 0) hex += '0';
+  if (cmap && cmap.size) {
+    let out2 = '';
+    let hit2 = 0;
+    let total2 = 0;
+    for (let i = 0; i + 4 <= hex.length; i += 4) {
+      const code = hex.slice(i, i + 4).toUpperCase();
+      total2++;
+      if (cmap.has(code)) { out2 += cmap.get(code); hit2++; }
+    }
+    if (total2 > 0 && hit2 / total2 > 0.4) return out2;
+  }
+  let out1 = '';
+  for (let i = 0; i + 2 <= hex.length; i += 2) out1 += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+  return out1;
+}
+
+// Single-pass, order-preserving operator scan for one content stream. Real PDFs almost
+// always draw one visual line per Tj/TJ call, moving the text cursor between lines with
+// Td/TD (relative move) or T* (next line, using the leading set by TL) — they do NOT
+// embed literal newline bytes in the string data. A naive extractor that just
+// concatenates every Tj/TJ's text with spaces collapses the whole page into one run-on
+// line, which silently breaks any line-oriented heuristic (name detection, section
+// splitting for work history) even though substring-based matching (skills) still works
+// fine — that mismatch is exactly what the "skills matched but name/role didn't" bug
+// report looked like. This tracks line-break operators and inserts '\n' at the right
+// points instead of flattening everything with spaces.
+const PDF_OP_RE = /(-?[\d.]+)\s+(-?[\d.]+)\s+(Td|TD)|(T\*)|\(((?:[^()\\]|\\.)*)\)\s*Tj|<([0-9A-Fa-f\s]+)>\s*Tj|\[((?:[^\[\]])*)\]\s*TJ/g;
+
+function contentStreamToText(content, cmap) {
+  let out = '';
+  let pendingBreak = false;
+  let m;
+  PDF_OP_RE.lastIndex = 0;
+  while ((m = PDF_OP_RE.exec(content))) {
+    const [, , tdy, tdop, tstar, lit, hex, arr] = m;
+    if (tdop) {
+      if (Math.abs(parseFloat(tdy)) > 0.01) pendingBreak = true;
+      continue;
+    }
+    if (tstar) { pendingBreak = true; continue; }
+
+    let piece = '';
+    if (lit !== undefined) {
+      piece = decodePdfString(lit);
+    } else if (hex !== undefined) {
+      piece = decodeHexRun(hex, cmap);
+    } else if (arr !== undefined) {
+      const pieceRe = /\(((?:[^()\\]|\\.)*)\)|<([0-9A-Fa-f\s]+)>/g;
+      let pm;
+      while ((pm = pieceRe.exec(arr))) {
+        if (pm[1] !== undefined) piece += decodePdfString(pm[1]);
+        else if (pm[2] !== undefined) piece += decodeHexRun(pm[2], cmap);
+      }
+    }
+    if (!piece) continue;
+
+    if (pendingBreak) {
+      out += '\n' + piece;
+    } else if (out && !/[\s\n]$/.test(out)) {
+      out += ' ' + piece;
+    } else {
+      out += piece;
+    }
+    pendingBreak = false;
+  }
+  return out;
+}
+
 function pdfBufferToText(buffer) {
   const raw = buffer.toString('latin1');
+  const cmap = parseToUnicodeCMaps(raw);
   let text = '';
   const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
   let m;
@@ -121,19 +267,7 @@ function pdfBufferToText(buffer) {
     } catch (e) {
       continue; // not Flate-compressed (image data, or already-plain) — skip
     }
-    const tjRe = /\(((?:[^()\\]|\\.)*)\)\s*Tj/g;
-    let tm;
-    while ((tm = tjRe.exec(content))) text += decodePdfString(tm[1]) + ' ';
-
-    const tjArrRe = /\[((?:[^\[\]]|\\.)*)\]\s*TJ/g;
-    let am;
-    while ((am = tjArrRe.exec(content))) {
-      const strRe = /\(((?:[^()\\]|\\.)*)\)/g;
-      let sm;
-      while ((sm = strRe.exec(am[1]))) text += decodePdfString(sm[1]);
-      text += ' ';
-    }
-    text += '\n';
+    text += contentStreamToText(content, cmap) + '\n';
   }
   return text.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -185,12 +319,118 @@ function guessSkills(text) {
   return found;
 }
 
+// ---- Multi-role work-experience extraction (heuristic) ----
+// Finds an "Experience" section, then splits it into individual roles using
+// date-range patterns ("Jan 2019 - Mar 2022", "2020 - Present", etc.) as anchors.
+// This is inherently approximate — resume layouts vary wildly — but degrades
+// gracefully: a section that isn't found or doesn't parse just yields [], and
+// the user can still add experience cards manually exactly as before.
+
+const MONTH_RE = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)';
+const DATE_RANGE_RE = new RegExp(
+  `(?:${MONTH_RE}\\.?\\s+)?(\\d{4})\\s*(?:-|–|—|to)\\s*(?:${MONTH_RE}\\.?\\s+)?(\\d{4}|Present|Current|Now|Till date|Ongoing)`,
+  'i'
+);
+const EXPERIENCE_SECTION_RE = /^(work\s+|professional\s+|employment\s+|career\s+)?(experience|work history|employment history)\s*:?$/i;
+const OTHER_SECTION_HEADERS = [
+  'education', 'academic', 'skills', 'technical skills', 'projects', 'certifications',
+  'certificates', 'awards', 'publications', 'references', 'languages', 'interests',
+  'hobbies', 'summary', 'objective', 'achievements', 'volunteer', 'extracurricular', 'activities',
+];
+
+function findExperienceSectionLines(text) {
+  const lines = text.split('\n');
+  let startIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim().toLowerCase().replace(/[:\-–—]+$/, '');
+    if (EXPERIENCE_SECTION_RE.test(l)) { startIdx = i + 1; break; }
+  }
+  if (startIdx === -1) return null;
+  let endIdx = lines.length;
+  for (let i = startIdx; i < lines.length; i++) {
+    const l = lines[i].trim().toLowerCase().replace(/[:\-–—]+$/, '');
+    if (l.length > 0 && l.length < 40 && OTHER_SECTION_HEADERS.some((h) => l === h || l.startsWith(h))) {
+      endIdx = i;
+      break;
+    }
+  }
+  return lines.slice(startIdx, endIdx);
+}
+
+function guessExperienceHeuristic(text) {
+  const sectionLines = findExperienceSectionLines(text);
+  if (!sectionLines || !sectionLines.length) return [];
+
+  const dateLineIdxs = [];
+  sectionLines.forEach((line, i) => { if (DATE_RANGE_RE.test(line)) dateLineIdxs.push(i); });
+  if (!dateLineIdxs.length) return [];
+
+  const entries = [];
+  for (let k = 0; k < dateLineIdxs.length && entries.length < 5; k++) {
+    const idx = dateLineIdxs[k];
+    const nextIdx = k + 1 < dateLineIdxs.length ? dateLineIdxs[k + 1] : sectionLines.length;
+    const line = sectionLines[idx];
+    const dm = line.match(DATE_RANGE_RE);
+    if (!dm) continue;
+    const startYear = parseInt(dm[1], 10);
+    const endRaw = dm[2];
+    const isCurrent = /present|current|now|ongoing|till date/i.test(endRaw);
+    const endYear = isCurrent ? null : parseInt(endRaw, 10);
+
+    const lineSansDate = line.replace(dm[0], '').replace(/[|,]+/g, ' ').trim();
+    let contextLines = [];
+    if (lineSansDate) contextLines.push(lineSansDate);
+    if (idx > 0 && sectionLines[idx - 1].trim()) contextLines.unshift(sectionLines[idx - 1].trim());
+    if (idx + 1 < nextIdx && sectionLines[idx + 1] && sectionLines[idx + 1].trim() &&
+        !/^[•\-*▪●]/.test(sectionLines[idx + 1].trim())) {
+      contextLines.push(sectionLines[idx + 1].trim());
+    }
+    contextLines = contextLines.filter(Boolean).slice(0, 3);
+
+    let organization = null;
+    let role = null;
+    if (contextLines.length) {
+      const first = contextLines[0];
+      const sepMatch = first.match(/^(.+?)\s*(?:@|\bat\b|\||,|-|–|—)\s*(.+)$/);
+      if (sepMatch) {
+        role = sepMatch[1].trim();
+        organization = sepMatch[2].trim();
+      } else {
+        role = first.trim();
+      }
+      if (!organization && contextLines[1]) organization = contextLines[1].trim();
+    }
+
+    // Reserve the line immediately before the next date-range (it's that next entry's
+    // org/role title line, already claimed via contextLines.unshift above) so it doesn't
+    // get misread as this entry's trailing achievement bullet.
+    const achievementsEnd = k + 1 < dateLineIdxs.length ? Math.max(idx + 1, nextIdx - 1) : nextIdx;
+    const achievements = [];
+    for (let j = idx + 1; j < achievementsEnd && achievements.length < 4; j++) {
+      const l = sectionLines[j].trim();
+      if (!l || contextLines.includes(l)) continue;
+      if (/^[•\-*▪●]/.test(l) || l.length > 20) achievements.push(l.replace(/^[•\-*▪●]\s*/, ''));
+    }
+
+    entries.push({
+      organization: organization || null,
+      role: role || null,
+      achievements,
+      startYear: isNaN(startYear) ? null : startYear,
+      endYear: isNaN(endYear) ? null : endYear,
+      isCurrent,
+    });
+  }
+  return entries;
+}
+
 function heuristicExtract(text) {
   return {
     name: guessName(text),
     role: guessRole(text),
     experienceYears: guessExperienceYears(text),
     skills: guessSkills(text),
+    experience: guessExperienceHeuristic(text),
   };
 }
 
@@ -200,17 +440,36 @@ async function aiExtract(text) {
     `name (string or null), role (the person's most recent or current job title, string or null), ` +
     `experienceYears (number or null — total years of professional experience), ` +
     `skills (array of up to 20 short skill strings actually present in the resume — technical and ` +
-    `professional skills only, no filler). Return ONLY the JSON object, nothing else.\n\n` +
+    `professional skills only, no filler), ` +
+    `experience (array of up to 5 past/current roles found in the resume's work-experience section, ` +
+    `each an object with: organization (string or null), role (job title, string or null), ` +
+    `achievements (array of up to 4 short bullet-point strings describing accomplishments in that role), ` +
+    `startYear (number or null), endYear (number or null — omit/null if isCurrent is true), ` +
+    `isCurrent (boolean — true if this is their present role, e.g. "Present"/"Current" in the dates)). ` +
+    `Order experience from most recent to oldest. Return ONLY the JSON object, nothing else.\n\n` +
     `Resume text:\n${text.slice(0, 6000)}`;
   try {
-    const raw = await ai.callClaude({ prompt, maxTokens: 700 });
+    const raw = await ai.callClaude({ prompt, maxTokens: 1400 });
     const json = ai.extractJson(raw);
     if (!json) return null;
+    const experience = Array.isArray(json.experience)
+      ? json.experience.slice(0, 5).map((e) => ({
+          organization: typeof e.organization === 'string' && e.organization.trim() ? e.organization.trim() : null,
+          role: typeof e.role === 'string' && e.role.trim() ? e.role.trim() : null,
+          achievements: Array.isArray(e.achievements)
+            ? e.achievements.filter((a) => typeof a === 'string').slice(0, 4)
+            : [],
+          startYear: typeof e.startYear === 'number' ? e.startYear : null,
+          endYear: typeof e.endYear === 'number' ? e.endYear : null,
+          isCurrent: !!e.isCurrent,
+        }))
+      : [];
     return {
       name: typeof json.name === 'string' && json.name.trim() ? json.name.trim() : null,
       role: typeof json.role === 'string' && json.role.trim() ? json.role.trim() : null,
       experienceYears: typeof json.experienceYears === 'number' ? json.experienceYears : null,
       skills: Array.isArray(json.skills) ? json.skills.filter((s) => typeof s === 'string').slice(0, 20) : [],
+      experience,
     };
   } catch (e) {
     console.error('AI CV extraction failed, falling back to heuristics:', e.message);
@@ -229,7 +488,7 @@ async function extractFromCv(buffer, mime) {
   }
 
   if (!text || text.replace(/\s/g, '').length < 30) {
-    return { name: null, role: null, experienceYears: null, skills: [], source: 'none' };
+    return { name: null, role: null, experienceYears: null, skills: [], experience: [], source: 'none' };
   }
 
   const aiResult = await aiExtract(text);
@@ -238,4 +497,4 @@ async function extractFromCv(buffer, mime) {
   return { ...heuristicExtract(text), source: 'heuristic' };
 }
 
-module.exports = { extractFromCv, pdfBufferToText, docxBufferToText, heuristicExtract, guessSkills };
+module.exports = { extractFromCv, pdfBufferToText, docxBufferToText, heuristicExtract, guessSkills, guessExperienceHeuristic };

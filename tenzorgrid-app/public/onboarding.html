@@ -15,7 +15,7 @@
 
   <div class="card" id="step-1">
     <h2 style="margin:0 0 6px;">Upload your CV (optional)</h2>
-    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. We'll try to pull your name, role, experience, and skills from it automatically — you can skip this and fill everything in manually instead.</div>
+    <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. We'll try to pull your name, role, experience, past roles, and skills from it automatically — you can skip this and fill everything in manually instead.</div>
     <div class="cv-drop" id="cvDrop">
       <div style="font-size:26px;">📄</div>
       <div style="font-weight:600;margin-top:6px;">Click to upload your CV</div>
@@ -40,11 +40,11 @@
         <div class="hint">We don't pull this from your CV — please enter it manually.</div>
       </div>
     </div>
-    <div class="field">
+    <div class="field skills-field">
       <label>Skills</label>
-      <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter" list="skills-datalist" autocomplete="off"></div>
-      <datalist id="skills-datalist"></datalist>
-      <div class="hint">Start typing for suggestions from our skills list, or add your own.</div>
+      <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter" autocomplete="off"></div>
+      <div class="skills-dropdown" id="skillsDropdown"></div>
+      <div class="hint">Start typing for suggestions from our skills list, or add your own and press Enter.</div>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
@@ -62,6 +62,7 @@
       </div>
     </div>
     <div class="field"><label>Anything else? (optional)</label><textarea id="f-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
+    <div class="hint" id="expPreviewNote" style="display:none;margin-bottom:14px;"></div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
       <button class="btn btn-primary" id="finishBtn" onclick="finishOnboarding()">Build my profile →</button>
@@ -72,7 +73,9 @@
 <script>
 let skills = [];
 let cvPayload = null; // { filename, mime, dataBase64 }
-let autofillApplied = false;
+let parsedExperiences = []; // experience entries detected from the CV, created after profile save
+let skillCategories = [];
+let flatSkills = [];
 
 (async function guard() {
   const me = await fetch('/api/me').then(r => r.json());
@@ -80,14 +83,9 @@ let autofillApplied = false;
   if (me.hasProfile) { window.location.href = '/dashboard.html'; return; }
 })();
 
-// Populate the skills autosuggestion datalist from the bundled skills list.
 fetch('/api/skills').then(r => r.json()).then(data => {
-  const list = document.getElementById('skills-datalist');
-  (data.skills || []).forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    list.appendChild(opt);
-  });
+  skillCategories = data.categories || [];
+  flatSkills = data.skills || [];
 }).catch(() => {});
 
 function showError(msg) {
@@ -105,6 +103,15 @@ function goStep(n) {
   [1, 2, 3].forEach((i) => { document.getElementById('step-' + i).style.display = (i === n) ? 'block' : 'none'; });
   document.getElementById('onboard-bar').style.width = (n * 33) + '%';
   document.getElementById('onboard-step-label').textContent = 'Step ' + n + ' of 3';
+  if (n === 3) {
+    const note = document.getElementById('expPreviewNote');
+    if (parsedExperiences.length) {
+      note.style.display = 'block';
+      note.textContent = '✓ We also found ' + parsedExperiences.length + ' past role' + (parsedExperiences.length === 1 ? '' : 's') + ' on your CV — they\'ll be added to your dashboard automatically. You can edit or remove them there.';
+    } else {
+      note.style.display = 'none';
+    }
+  }
 }
 function validateStep2AndGo(n) {
   if (!document.getElementById('f-name').value.trim()) return showError('Please enter your name.');
@@ -127,9 +134,6 @@ document.getElementById('cvFile').addEventListener('change', (e) => {
     const base64 = dataUrl.split(',')[1];
     cvPayload = { filename: file.name, mime: file.type, dataBase64: base64 };
     document.getElementById('cvDrop').classList.add('filled');
-    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
-
-    // Best-effort auto-fill: send the CV for parsing and pre-fill step 2 fields.
     document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' — reading details from your CV…';
     try {
       const res = await fetch('/api/cv-parse', {
@@ -139,10 +143,10 @@ document.getElementById('cvFile').addEventListener('change', (e) => {
       });
       const data = await res.json();
       applyAutofill(data);
-      document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
     } catch (err) {
-      document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+      // Extraction failing is not fatal — the form just stays manual.
     }
+    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
   };
   reader.readAsDataURL(file);
 });
@@ -158,31 +162,99 @@ function applyAutofill(data) {
     renderChips();
     filled.push('skills');
   }
+  if (Array.isArray(data.experience) && data.experience.length) {
+    parsedExperiences = data.experience;
+    filled.push(parsedExperiences.length + ' past role' + (parsedExperiences.length === 1 ? '' : 's'));
+  }
   if (filled.length) {
-    autofillApplied = true;
     const note = document.getElementById('autofillNote');
     const aiTag = data.source === 'ai' ? ' (AI-assisted)' : '';
     note.textContent = '✓ Pre-filled ' + filled.join(', ') + ' from your CV' + aiTag + ' — please double-check before continuing.';
     note.style.display = 'block';
+  } else {
+    const note = document.getElementById('autofillNote');
+    note.textContent = 'We couldn\'t automatically read details from that file — no problem, just fill in the fields below.';
+    note.style.display = 'block';
+    note.style.color = 'var(--text-soft)';
   }
 }
 
+// ---- Skills chip input + custom categorized suggestion dropdown ----
 const chipBox = document.getElementById('chip-box');
 const chipInput = document.getElementById('chip-input');
+const dropdown = document.getElementById('skillsDropdown');
+
 chipBox.addEventListener('click', () => chipInput.focus());
+
+function addSkill(val) {
+  val = (val || '').trim();
+  if (val && !skills.includes(val)) { skills.push(val); renderChips(); }
+  chipInput.value = '';
+  closeDropdown();
+}
+
 chipInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
-    const val = chipInput.value.trim();
-    if (val && !skills.includes(val)) { skills.push(val); renderChips(); }
-    chipInput.value = '';
+    const active = dropdown.querySelector('.skills-dropdown-item.active');
+    addSkill(active ? active.textContent : chipInput.value);
+  } else if (e.key === 'Escape') {
+    closeDropdown();
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    moveActive(e.key === 'ArrowDown' ? 1 : -1);
   }
 });
-chipInput.addEventListener('change', () => {
-  // Fires on datalist option selection too.
-  const val = chipInput.value.trim();
-  if (val && !skills.includes(val)) { skills.push(val); renderChips(); chipInput.value = ''; }
+chipInput.addEventListener('input', () => renderDropdown(chipInput.value.trim()));
+chipInput.addEventListener('focus', () => renderDropdown(chipInput.value.trim()));
+document.addEventListener('click', (e) => {
+  if (!chipBox.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
 });
+
+function closeDropdown() { dropdown.classList.remove('show'); dropdown.innerHTML = ''; }
+
+function moveActive(dir) {
+  const items = Array.from(dropdown.querySelectorAll('.skills-dropdown-item'));
+  if (!items.length) return;
+  let idx = items.findIndex((i) => i.classList.contains('active'));
+  items.forEach((i) => i.classList.remove('active'));
+  idx = (idx + dir + items.length) % items.length;
+  items[idx].classList.add('active');
+  items[idx].scrollIntoView({ block: 'nearest' });
+}
+
+function renderDropdown(query) {
+  const q = (query || '').toLowerCase();
+  dropdown.innerHTML = '';
+  let shown = 0;
+  const maxShown = 40;
+  for (const group of skillCategories) {
+    const matches = group.skills.filter((s) => !skills.includes(s) && (!q || s.toLowerCase().includes(q)));
+    if (!matches.length) continue;
+    const header = document.createElement('div');
+    header.className = 'skills-dropdown-group';
+    header.textContent = group.category;
+    dropdown.appendChild(header);
+    for (const s of matches) {
+      if (shown >= maxShown) break;
+      const item = document.createElement('div');
+      item.className = 'skills-dropdown-item';
+      item.textContent = s;
+      item.addEventListener('mousedown', (e) => { e.preventDefault(); addSkill(s); });
+      dropdown.appendChild(item);
+      shown++;
+    }
+    if (shown >= maxShown) break;
+  }
+  if (!shown) {
+    const empty = document.createElement('div');
+    empty.className = 'skills-dropdown-empty';
+    empty.textContent = q ? 'No matches — press Enter to add "' + query + '" as a custom skill.' : 'Start typing to see suggestions.';
+    dropdown.appendChild(empty);
+  }
+  dropdown.classList.add('show');
+}
+
 function renderChips() {
   chipBox.querySelectorAll('.chip').forEach((c) => c.remove());
   skills.forEach((s) => {
@@ -218,6 +290,26 @@ async function finishOnboarding() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+    // Create any experience cards detected from the CV. Best-effort — if one fails,
+    // still continue to the dashboard rather than blocking the user.
+    for (const exp of parsedExperiences) {
+      try {
+        await fetch('/api/experiences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organization: (exp.organization && String(exp.organization).trim()) || 'Unknown organization',
+            role: (exp.role && String(exp.role).trim()) || 'Role',
+            achievements: Array.isArray(exp.achievements) ? exp.achievements.join('\n') : (exp.achievements || ''),
+            startYear: exp.startYear || '',
+            endYear: exp.endYear || '',
+            isCurrent: !!exp.isCurrent,
+          }),
+        });
+      } catch (e) { /* non-fatal */ }
+    }
+
     window.location.href = '/dashboard.html';
   } catch (err) {
     showError(err.message);
