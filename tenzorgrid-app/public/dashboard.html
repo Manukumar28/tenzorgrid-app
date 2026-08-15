@@ -290,15 +290,29 @@ function promptUploadAndParse() {
   return new Promise((resolve) => {
     const input = document.getElementById('expCvFileInput');
     input.value = '';
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('focus', onCancelCheck);
+      resolve(val);
+    };
+    // The file input fires no event when the native picker is cancelled, so we'd
+    // otherwise hang forever. Watching for the window regaining focus (the picker
+    // closing) and checking shortly after whether a file actually landed catches it.
+    const onCancelCheck = () => {
+      setTimeout(() => { if (!settled && !input.files.length) finish(null); }, 300);
+    };
+    window.addEventListener('focus', onCancelCheck);
     input.onchange = () => {
       const file = input.files[0];
-      if (!file) { resolve(null); return; }
+      if (!file) { finish(null); return; }
       const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowed.includes(file.type) || file.size > 8 * 1024 * 1024) {
         const errBox = document.getElementById('expErr');
         errBox.textContent = 'Please choose a PDF or Word document under 8MB.';
         errBox.classList.add('show');
-        resolve(null);
+        finish(null);
         return;
       }
       const reader = new FileReader();
@@ -310,8 +324,8 @@ function promptUploadAndParse() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cv: { filename: file.name, mime: file.type, dataBase64: base64 } }),
           }).then((r) => r.json());
-          resolve(data);
-        } catch (e) { resolve(null); }
+          finish(data);
+        } catch (e) { finish(null); }
       };
       reader.readAsDataURL(file);
     };
@@ -408,6 +422,8 @@ document.getElementById('cvModalFile').addEventListener('change', (e) => {
 });
 
 async function rescanExistingCv() {
+  cvModalPayload = null; // discard any file picked earlier in this modal session -- we're using the stored CV now
+  document.getElementById('cvModalDrop').classList.remove('filled');
   document.getElementById('cvModalStatus').textContent = 'Re-scanning your CV on file…';
   await runCvParse(null, null);
 }
@@ -430,7 +446,8 @@ async function runCvParse(payload, label) {
 }
 
 function showCvPreview(data) {
-  const found = data && (data.name || data.role || data.experienceYears || (data.skills && data.skills.length) || (data.experience && data.experience.length));
+  const hasExp = data && data.experienceYears != null;
+  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length));
   if (!found) {
     document.getElementById('cvPreview').style.display = 'none';
     document.getElementById('cvApplyBtn').style.display = 'none';
@@ -445,7 +462,7 @@ function showCvPreview(data) {
   };
   set('cv-apply-name', !!data.name, !data.name, 'Name: ' + (data.name || '— not found'));
   set('cv-apply-role', !!data.role, !data.role, 'Role: ' + (data.role || '— not found'));
-  set('cv-apply-exp', !!data.experienceYears, !data.experienceYears, 'Experience: ' + (data.experienceYears ? data.experienceYears + ' yrs' : '— not found'));
+  set('cv-apply-exp', hasExp, !hasExp, 'Experience: ' + (hasExp ? data.experienceYears + ' yrs' : '— not found'));
 
   const knownSkills = new Set((currentProfile.skills || []).map((s) => s.toLowerCase()));
   const newSkills = (data.skills || []).filter((s) => s && !knownSkills.has(s.toLowerCase()));
@@ -491,22 +508,18 @@ async function applyCvUpdate() {
     if (!res.ok) throw new Error(data.error || 'Could not update your profile.');
 
     if (document.getElementById('cv-apply-roles').checked) {
-      for (const exp of (cvModalParsed._newRoles || [])) {
-        try {
-          await fetch('/api/experiences', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              organization: exp.organization,
-              role: exp.role,
-              achievements: Array.isArray(exp.achievements) ? exp.achievements.join('\n') : (exp.achievements || ''),
-              startYear: exp.startYear || '',
-              endYear: exp.endYear || '',
-              isCurrent: !!exp.isCurrent,
-            }),
-          });
-        } catch (e) { /* non-fatal */ }
-      }
+      await Promise.all((cvModalParsed._newRoles || []).map((exp) => fetch('/api/experiences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization: exp.organization,
+          role: exp.role,
+          achievements: Array.isArray(exp.achievements) ? exp.achievements.join('\n') : (exp.achievements || ''),
+          startYear: exp.startYear || '',
+          endYear: exp.endYear || '',
+          isCurrent: !!exp.isCurrent,
+        }),
+      }).catch(() => {}))); // best-effort -- one failed role add shouldn't block the others or the profile update
     }
     closeCvModal();
     load();
