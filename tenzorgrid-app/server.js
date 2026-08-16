@@ -11,6 +11,7 @@ const { listExperiences, addExperience, deleteExperience } = require('./lib/expe
 const { listCertifications, addCertification, deleteCertification } = require('./lib/certifications');
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
+const { syncJobsFromAdzuna } = require('./lib/jobsync');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -360,3 +361,9 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`TenzorGrid app running at http://localhost:${PORT}`);
 });
+
+// Refresh real job postings from Adzuna shortly after boot, then once a day.
+// Free-tier Adzuna budget is 250 calls/month; 6 queries/day keeps this well under it.
+const JOB_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+setTimeout(() => { syncJobsFromAdzuna().catch((e) => console.error('[jobsync] initial sync failed:', e.message)); }, 10 * 1000);
+setInterval(() => { syncJobsFromAdzuna().catch((e) => console.error('[jobsync] scheduled sync failed:', e.message)); }, JOB_SYNC_INTERVAL_MS);

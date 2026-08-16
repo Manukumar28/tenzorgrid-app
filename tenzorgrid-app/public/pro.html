@@ -184,6 +184,7 @@ function jobRowHtml(j, showMatch) {
         <span>${j.company} · ${j.portal}${j.location ? ' · ' + j.location : ''}${j.salaryMin ? ' · ' + fmtINR(j.salaryMin) + '–' + fmtINR(j.salaryMax) : ''}</span>
       </div>
       ${showMatch ? '<span class="match-badge ' + matchClass(j.matchScore) + '">' + j.matchScore + '% match</span>' : ''}
+      ${j.applyUrl ? '<a class="btn-ghost" style="margin-left:8px" href="' + j.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' : ''}
     </div>`;
 }
 

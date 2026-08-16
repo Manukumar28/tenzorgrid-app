@@ -149,6 +149,8 @@ function computeMatches(userSkills) {
       location: job.location,
       salaryMin: job.salary_min,
       salaryMax: job.salary_max,
+      applyUrl: job.apply_url || '',
+      source: job.source || '',
       matchScore: Math.min(99, score),
       matchedSkills: matched,
       missingSkills: missing,

@@ -111,6 +111,10 @@ ensureColumn('users', 'gender', 'TEXT');
 ensureColumn('users', 'profession', 'TEXT');
 ensureColumn('profiles', 'photo_data_url', 'TEXT');
 ensureColumn('users', 'is_pro', 'INTEGER DEFAULT 0');
+ensureColumn('jobs', 'apply_url', 'TEXT');
+ensureColumn('jobs', 'external_id', 'TEXT');
+ensureColumn('jobs', 'source', 'TEXT');
+ensureColumn('jobs', 'description', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.
