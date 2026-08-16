@@ -4,6 +4,8 @@
 // call budget — see jobsync.js for the refresh schedule.
 const https = require('node:https');
 const { SKILL_CATEGORIES } = require('./skills-data');
+const ai = require('./ai');
+const jobAiCache = require('./job-ai-cache');
 
 const APP_ID = process.env.ADZUNA_APP_ID || '';
 const APP_KEY = process.env.ADZUNA_APP_KEY || '';
@@ -23,6 +25,7 @@ const QUERIES = [
   { query: 'customer support', categories: ['Customer service & support'] },
   { query: 'sales executive', categories: ['Sales & marketing'] },
   { query: 'hr executive', categories: ['HR & entrepreneurship'] },
+  { query: 'graphic designer', categories: ['Design'] },
 ];
 
 function isAdzunaConfigured() {
@@ -113,11 +116,17 @@ async function fetchAdzunaJobs(queryMeta, { page = 1, resultsPerPage = 50 } = {}
   return (json.results || []).map((r) => normalizeAdzunaResult(r, queryMeta));
 }
 
+const ADZUNA_OWNED_HOST_RE = /(^|\.)adzuna\.[a-z.]+$/i;
+
 // Adzuna's redirect_url is a tracking link, not the real job board — this resolves
-// it to the actual destination host (e.g. "indeed.com", a company's own domain)
-// so the UI can show the real portal name/logo. Bounded hops + timeout + capped
-// concurrency so a slow/broken redirect can't stall the whole sync.
-function resolveFinalHost(urlStr, hopsLeft = 4) {
+// it to the actual destination host (e.g. "indeed.com", a company's own domain) so
+// the UI can show the real portal name/logo. Uses GET (not HEAD) because several
+// job boards only issue their redirect on GET; bounded hops + timeout + capped
+// concurrency so a slow/broken redirect can't stall the whole sync. If the chain
+// terminates back on an Adzuna-owned domain (no further HTTP redirect — often a
+// client-side/JS redirect we can't follow without a browser), we report that as
+// unresolved rather than mislabeling Adzuna itself as "the original portal".
+function resolveFinalHost(urlStr, hopsLeft = 6) {
   return new Promise((resolve) => {
     if (!urlStr || hopsLeft <= 0) return resolve(null);
     let settled = false;
@@ -127,21 +136,57 @@ function resolveFinalHost(urlStr, hopsLeft = 4) {
     const req = https.request({
       hostname: target.hostname,
       path: target.pathname + target.search,
-      method: 'HEAD',
-      timeout: 4000,
+      method: 'GET',
+      timeout: 5000,
     }, (res) => {
       const loc = res.headers.location;
       if (res.statusCode >= 300 && res.statusCode < 400 && loc) {
+        res.resume();
         resolveFinalHost(new URL(loc, target).toString(), hopsLeft - 1).then(done);
-      } else {
-        done(target.hostname.replace(/^www\./, ''));
+        return;
       }
       res.resume();
+      const host = target.hostname.replace(/^www\./, '');
+      done(ADZUNA_OWNED_HOST_RE.test(host) ? null : host);
     });
     req.on('timeout', () => { req.destroy(); done(null); });
     req.on('error', () => done(null));
     req.end();
   });
+}
+
+// AI-based summary + required-skill extraction, cached per posting so a listing
+// that reappears across daily syncs is never re-sent to the AI. Falls back to
+// null (caller keeps the keyword-scan skills + truncated description) when no
+// AI key is configured or the call fails — this feature is a pure upgrade.
+async function summarizeWithAI(job) {
+  if (!ai.isAvailable()) return null;
+  const cached = jobAiCache.getCached(job.externalId);
+  if (cached) return cached;
+  const prompt = `Job posting:\nTitle: ${job.title}\nCompany: ${job.company}\n` +
+    `Description:\n${(job.description || '').slice(0, 3000)}\n\n` +
+    `Return strict JSON with exactly these keys: ` +
+    `summary (2-3 sentence plain-English summary of the actual role and responsibilities — ` +
+    `skip company-boilerplate/legal text, focus on what the person would actually do), ` +
+    `skills (array of up to 8 specific required hard skills/tools mentioned or clearly implied — ` +
+    `not generic soft skills), ` +
+    `niceToHave (array of up to 3 soft/transferable skills like leadership or communication, if relevant). ` +
+    `Return ONLY the JSON object.`;
+  try {
+    const raw = await ai.callClaude({ prompt, maxTokens: 400 });
+    const json = ai.extractJson(raw);
+    if (!json || typeof json.summary !== 'string') return null;
+    const result = {
+      summary: json.summary.trim(),
+      skills: Array.isArray(json.skills) ? json.skills.filter((s) => typeof s === 'string').slice(0, 8) : [],
+      niceToHave: Array.isArray(json.niceToHave) ? json.niceToHave.filter((s) => typeof s === 'string').slice(0, 3) : [],
+    };
+    jobAiCache.setCached(job.externalId, result);
+    return result;
+  } catch (e) {
+    console.error(`[adzuna] AI summarization failed for ${job.externalId}:`, e.message);
+    return null;
+  }
 }
 
 async function withConcurrency(items, limit, worker) {
@@ -169,6 +214,18 @@ async function fetchAllConfiguredJobs() {
   }
   const hosts = await withConcurrency(all, 8, (job) => resolveFinalHost(job.applyUrl));
   all.forEach((job, idx) => { job.portalDomain = hosts[idx] || null; });
+
+  // AI summary/skills, capped at low concurrency — this is the one part of the
+  // sync that costs real money, so keep it gentle and let the cache do the work
+  // on every run after the first.
+  const summaries = await withConcurrency(all, 3, (job) => summarizeWithAI(job));
+  all.forEach((job, idx) => {
+    const s = summaries[idx];
+    job.summary = s ? s.summary : '';
+    if (s && s.skills.length) job.skills = s.skills;
+    if (s && s.niceToHave.length) job.softSkills = s.niceToHave;
+  });
+
   return all;
 }
 

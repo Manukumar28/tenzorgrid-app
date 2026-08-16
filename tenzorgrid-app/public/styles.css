@@ -185,14 +185,30 @@ a.logo{cursor:pointer;}
 .job-tile-salary{font-size:12.5px;font-weight:600;color:var(--text);}
 .job-tile-salary.undisclosed{color:var(--text-faint);font-weight:500;}
 .job-tile-desc{font-size:12.5px;color:var(--text-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0;}
-.job-tile-why{font-size:12px;color:var(--text-soft);background:var(--surface-alt);border-radius:8px;padding:8px 10px;line-height:1.5;}
-.job-tile-why b{color:var(--text);}
+.job-tile-portal-unknown{text-transform:none;font-style:italic;}
+.job-tile-skills{font-size:12px;}
+.job-tile-skills b{display:block;color:var(--text-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-bottom:5px;}
 .job-tile-foot{margin-top:auto;display:flex;align-items:center;justify-content:flex-end;padding-top:4px;}
-.job-tile-scope{font-size:12px;color:#92650a;background:#fef3e2;border:1px solid #fbd88f;border-radius:8px;padding:8px 10px;line-height:1.5;}
-.job-tile-scope a{color:#92650a;font-weight:700;text-decoration:underline;cursor:pointer;}
+.job-tile-career{border-radius:8px;padding:9px 10px;line-height:1.5;font-size:12px;}
+.job-tile-career.upgrade{background:#fef3e2;border:1px solid #fbd88f;}
+.job-tile-career.upgrade .career-label{color:#92650a;}
+.job-tile-career.upgrade a{color:#92650a;}
+.job-tile-career.transition{background:var(--primary-soft);border:1px solid var(--primary-soft);}
+.job-tile-career.transition .career-label{color:var(--primary-dark);}
+.job-tile-career.transition a{color:var(--primary-dark);}
+.career-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-bottom:4px;}
+.career-plan{color:var(--text-soft);}
+.job-tile-career a{font-weight:700;text-decoration:underline;cursor:pointer;}
 
 .gauge{position:relative;width:44px;height:44px;flex-shrink:0;}
 .gauge span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:16px;}
+.page-btn{min-width:34px;height:34px;padding:0 10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;color:var(--text-soft);cursor:pointer;transition:border-color .12s ease,color .12s ease;}
+.page-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary);}
+.page-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.page-btn:disabled{opacity:.4;cursor:default;}
+.page-ellipsis{color:var(--text-faint);padding:0 2px;}
 
 .empty-note{font-size:13px;color:var(--text-faint);padding:14px 0;}
 .skeleton{background:linear-gradient(90deg,#eef1f7 25%,#f7f9fc 37%,#eef1f7 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:10px;}
