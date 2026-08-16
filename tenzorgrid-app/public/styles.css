@@ -144,10 +144,8 @@ button{font-family:inherit;cursor:pointer;}
 .section-title{display:flex;align-items:baseline;justify-content:space-between;margin:34px 0 16px;}
 .section-title h3{font-size:18.5px;margin:0;letter-spacing:-.01em;}
 
-.exp-scroll{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
-.exp-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:22px;box-shadow:var(--shadow-card);}
-.exp-card .org{font-weight:700;font-size:15px;}
-.exp-card .role{font-size:13px;color:var(--text-soft);margin-bottom:10px;}
+.exp-scroll{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
+.exp-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);}
 .tag{font-size:11.5px;background:var(--surface-alt);border:1px solid var(--border);padding:3px 9px;border-radius:7px;color:var(--text-soft);}
 .tag.missing{background:#fef3e2;border-color:#fbd88f;color:#92650a;}
 
@@ -182,18 +180,90 @@ button{font-family:inherit;cursor:pointer;}
 .insight-card .isub{font-size:12px;color:#aab3cc;margin-top:4px;}
 
 /* ---- Real experience cards ---- */
-.exp-card{position:relative;}
-.exp-card .years{font-size:12px;color:var(--text-faint);margin-bottom:4px;}
-.exp-card .achievements{font-size:13px;color:var(--text-soft);margin:8px 0;white-space:pre-line;}
-.exp-card .salary-line{font-size:12.5px;color:var(--text-soft);margin-top:6px;}
-.exp-card .upgrade-btn{margin-top:14px;}
-.exp-card .del-btn{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:16px;line-height:1;padding:2px 6px;}
-.exp-card .del-btn:hover{color:var(--danger);}
-.exp-add-card{
-  display:flex;align-items:center;justify-content:center;min-height:150px;border:2px dashed var(--border);
-  border-radius:var(--radius-md);color:var(--text-soft);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface-alt);
+/* A career-history card is one of the most personally meaningful things on the
+   dashboard — years of someone's working life — so this gets more visual care
+   than a generic list item: a brand-gradient company badge, role-first hierarchy
+   (how recruiters actually scan), a real achievements list, a subtle current-role
+   accent, and a tactile hover lift instead of a flat static box. */
+.exp-card{
+  position:relative;padding:24px 24px 22px;
+  border-top:3px solid var(--border);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
-.exp-add-card:hover{border-color:var(--primary);color:var(--primary);}
+.exp-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px -16px rgba(15,23,42,.22);}
+.exp-card.is-current{border-top-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft) 0%,#fff 90px);}
+.exp-card.is-current:hover{box-shadow:0 16px 34px -16px rgba(16,185,129,.32);}
+
+.exp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.exp-head-left{display:flex;align-items:flex-start;gap:12px;min-width:0;}
+.exp-badge{
+  flex-shrink:0;width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;letter-spacing:.01em;
+  box-shadow:0 4px 12px -4px rgba(79,70,229,.45);
+}
+.exp-head-text{min-width:0;flex:1;}
+.exp-card .role{font-weight:700;font-size:15.5px;color:var(--text);line-height:1.3;}
+.exp-card .org{font-size:13px;color:var(--text-soft);font-weight:600;margin-top:1px;}
+
+.exp-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.exp-duration{font-size:12px;font-weight:600;color:var(--text-soft);background:var(--surface-alt);border:1px solid var(--border);padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:6px;}
+.exp-duration .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:exp-pulse 2s ease-in-out infinite;}
+@keyframes exp-pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.55);}70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+
+/* ---- Tenure achievement seal ----
+   A small badge celebrating how long someone stayed in a role, styled as a modern
+   seal (dashed outer ring + ribbon tails) rather than a literal gold-clipart medal.
+   Colour tiers level up with tenure -- Indigo -> Emerald -> Gold -> Platinum -- so a
+   longer stint visibly reads as a bigger achievement (Platinum doubles as a nod to
+   the "Midnight Platinum" brand mark for the longest-held roles). */
+.exp-seal{position:relative;flex-shrink:0;width:44px;height:50px;}
+.exp-seal .ring{position:absolute;top:0;left:0;width:44px;height:44px;border-radius:50%;border:3px dashed currentColor;opacity:.35;}
+.exp-seal .core{
+  position:absolute;top:4px;left:4px;width:36px;height:36px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;box-shadow:0 3px 10px -3px rgba(15,23,42,.35);
+}
+.exp-seal .core .num{font-size:13px;font-weight:800;line-height:1;}
+.exp-seal .core .unit{font-size:6.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.9;margin-top:1px;}
+.exp-seal .ribbon{position:absolute;bottom:0;left:50%;transform:translateX(-50%);display:flex;}
+.exp-seal .ribbon i{width:7px;height:13px;clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%);}
+.exp-seal .ribbon i:first-child{margin-right:-2px;transform:rotate(-8deg);}
+.exp-seal .ribbon i:last-child{transform:rotate(8deg);}
+
+.tier-indigo .ring{color:var(--primary);}
+.tier-indigo .core{background:linear-gradient(135deg,#4F46E5,#818CF8);}
+.tier-indigo .ribbon i{background:#4338CA;}
+
+.tier-emerald .ring{color:var(--accent);}
+.tier-emerald .core{background:linear-gradient(135deg,#10B981,#34D399);}
+.tier-emerald .ribbon i{background:#059669;}
+
+.tier-gold .ring{color:#D97706;}
+.tier-gold .core{background:linear-gradient(135deg,#F59E0B,#FCD34D);}
+.tier-gold .ribbon i{background:#B45309;}
+
+.tier-platinum .ring{color:#94A3B8;}
+.tier-platinum .core{background:linear-gradient(135deg,#E2E8F0,#F8FAFC 55%,#CBD5E1);color:#1B2138;box-shadow:0 3px 10px -3px rgba(15,23,42,.35), 0 0 0 1px rgba(148,163,184,.4) inset;}
+.tier-platinum .ribbon i{background:#64748B;}
+
+.exp-card .achievements{list-style:none;padding:0;margin:0 0 8px;}
+.exp-card .achievements li{position:relative;padding-left:16px;font-size:13px;color:var(--text-soft);line-height:1.55;margin-bottom:7px;}
+.exp-card .achievements li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:2px;border-radius:2px;background:var(--accent);}
+.exp-card .salary-line{font-size:12.5px;color:var(--text-soft);font-weight:600;margin-top:6px;}
+.exp-card .upgrade-btn{margin-top:14px;}
+.exp-card .del-btn{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:16px;line-height:1;padding:2px 6px;border-radius:6px;transition:color .12s ease, background .12s ease;}
+.exp-card .del-btn:hover{color:var(--danger);background:var(--danger-soft);}
+
+.exp-add-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:150px;border:2px dashed var(--border);
+  border-radius:var(--radius-md);color:var(--text-soft);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface-alt);
+  transition:border-color .15s ease, color .15s ease, background .15s ease;
+}
+.exp-add-card .plus-icon{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--text-faint);transition:inherit;}
+.exp-add-card:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft);}
+.exp-add-card:hover .plus-icon{border-color:var(--primary);color:var(--primary);background:#fff;}
 
 /* ---- Modal ---- */
 .modal-backdrop{position:fixed;inset:0;background:rgba(4,5,9,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}

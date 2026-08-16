@@ -207,21 +207,65 @@ async function loadInsights() {
   }
 }
 
+function expYears(e) {
+  const start = e.startYear;
+  const end = e.isCurrent ? new Date().getFullYear() : e.endYear;
+  if (!start || !end || end < start) return null;
+  return end - start;
+}
+
+// Tenure tiers, in ascending order of "achievement" -- longer time in a role levels
+// up the badge. Platinum doubles as a nod to the brand's own "Midnight Platinum" mark.
+function expTier(yrs) {
+  if (yrs >= 7) return 'tier-platinum';
+  if (yrs >= 4) return 'tier-gold';
+  if (yrs >= 2) return 'tier-emerald';
+  return 'tier-indigo';
+}
+
+function expSealHtml(yrs) {
+  if (yrs === null) return '';
+  const num = yrs < 1 ? '<1' : yrs;
+  const unit = yrs === 1 ? 'yr' : 'yrs';
+  return `
+    <div class="exp-seal ${expTier(yrs)}" title="${yrs < 1 ? 'Under a year' : yrs + ' year' + (yrs === 1 ? '' : 's')} in this role">
+      <span class="ring"></span>
+      <span class="core"><span class="num">${num}</span><span class="unit">${unit}</span></span>
+      <span class="ribbon"><i></i><i></i></span>
+    </div>`;
+}
+
+function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
 async function loadExperiences() {
   const data = await fetch('/api/experiences').then((r) => r.json());
   const list = data.experiences || [];
   currentExperiences = list;
-  const cardsHtml = list.map((e) => `
-    <div class="exp-card">
+  const cardsHtml = list.map((e) => {
+    const achievementLines = (e.achievements || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    const yrs = expYears(e);
+    return `
+    <div class="exp-card${e.isCurrent ? ' is-current' : ''}">
       <button class="del-btn" onclick="removeExperience('${e.id}')" title="Remove">×</button>
-      <div class="org">${e.organization}</div>
-      <div class="role">${e.role}</div>
-      <div class="years">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}</div>
-      ${e.achievements ? '<div class="achievements">' + e.achievements.replace(/</g, '&lt;') + '</div>' : ''}
+      <div class="exp-head">
+        <div class="exp-head-left">
+          <div class="exp-badge">${initials(e.organization)}</div>
+          <div class="exp-head-text">
+            <div class="role">${escapeHtml(e.role)}</div>
+            <div class="org">${escapeHtml(e.organization)}</div>
+          </div>
+        </div>
+        ${expSealHtml(yrs)}
+      </div>
+      <div class="exp-meta">
+        <span class="exp-duration">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}${e.isCurrent ? '<i class="live-dot"></i>' : ''}</span>
+      </div>
+      ${achievementLines.length ? '<ul class="achievements">' + achievementLines.map((l) => '<li>' + escapeHtml(l) + '</li>').join('') + '</ul>' : ''}
       ${e.salary ? '<div class="salary-line">💰 ' + fmtINR(e.salary) + '/yr</div>' : ''}
       ${e.isCurrent ? '<a class="btn btn-ghost btn-sm upgrade-btn" href="/career-growth.html#upgrade">Switch to Career Upgrade →</a>' : ''}
-    </div>`).join('');
-  document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()">+ Add a role</div>';
+    </div>`;
+  }).join('');
+  document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
 }
 
 function openExpModal() {
