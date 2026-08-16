@@ -12,13 +12,17 @@
 const https = require('node:https');
 
 const API_KEY = process.env.ANTHROPIC_API_KEY || '';
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-haiku-20241022';
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
 
 function isAvailable() {
   return Boolean(API_KEY);
 }
 
-function callClaude({ system, prompt, maxTokens }) {
+// `content` may be a plain prompt string, or an array of content blocks (e.g. a PDF
+// document block plus a text block) for callers that need to hand Claude a file
+// directly instead of pre-extracted text. `prompt` remains as a convenience for the
+// plain-text case.
+function callClaude({ system, prompt, content, maxTokens }) {
   return new Promise((resolve) => {
     if (!API_KEY) return resolve(null);
     let payload;
@@ -27,7 +31,7 @@ function callClaude({ system, prompt, maxTokens }) {
         model: MODEL,
         max_tokens: maxTokens || 1024,
         ...(system ? { system } : {}),
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: content || prompt }],
       });
     } catch (e) {
       return resolve(null);
