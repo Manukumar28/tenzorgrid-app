@@ -25,9 +25,24 @@ const ROLE_TITLES = [
   'Product Designer', 'Graphic Designer', 'Business Analyst', 'Systems Analyst',
   'Marketing Manager', 'Digital Marketing Manager', 'Sales Manager', 'Account Manager',
   'Business Development Manager', 'HR Manager', 'Recruiter', 'Talent Acquisition Specialist',
-  'Financial Analyst', 'Accountant', 'Operations Manager', 'Supply Chain Manager',
-  'Customer Success Manager', 'Support Engineer', 'Solutions Architect', 'Cloud Architect',
+  'Financial Analyst', 'Accountant', 'Senior Accountant', 'Staff Accountant', 'Accounts Receivable Specialist',
+  'Accounts Payable Specialist', 'Bookkeeper', 'Payroll Specialist', 'Auditor', 'Internal Auditor',
+  'Tax Consultant', 'Finance Manager', 'Controller', 'CFO',
+  'Operations Manager', 'Supply Chain Manager', 'Logistics Coordinator', 'Warehouse Manager',
+  'Customer Success Manager', 'Customer Service Representative', 'Customer Support Executive',
+  'Support Engineer', 'Solutions Architect', 'Cloud Architect',
   'Security Engineer', 'Network Engineer', 'Database Administrator', 'Intern',
+  'Registered Nurse', 'Staff Nurse', 'Medical Assistant', 'Pharmacist', 'Physician',
+  'Healthcare Administrator', 'Medical Billing Specialist', 'Clinical Coordinator',
+  'Paralegal', 'Legal Associate', 'Legal Counsel', 'Compliance Officer', 'Attorney',
+  'Teacher', 'Lecturer', 'Professor', 'Academic Coordinator', 'Trainer', 'Instructional Designer',
+  'Retail Associate', 'Store Manager', 'Cashier', 'Front Desk Executive', 'Receptionist',
+  'Hotel Manager', 'Event Coordinator', 'Office Administrator', 'Administrative Assistant',
+  'Executive Assistant', 'Data Entry Operator',
+  'Production Manager', 'Quality Control Inspector', 'Machine Operator', 'Site Engineer',
+  'Civil Engineer', 'Mechanical Engineer', 'Electrical Engineer', 'Construction Manager',
+  'Content Writer', 'Copywriter', 'Editor', 'Journalist', 'Public Relations Manager',
+  'Social Media Manager', 'Video Editor', 'Photographer',
 ];
 
 // ---- ZIP (used for .docx, which is a ZIP container of XML parts) ----
@@ -277,10 +292,15 @@ function pdfBufferToText(buffer) {
 function guessName(text) {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 8);
   for (const line of lines) {
-    if (line.length > 3 && line.length < 40 && /^[A-Za-z][A-Za-z.'\- ]+$/.test(line) &&
-        !/resume|curriculum|vitae|\bcv\b|profile|summary|objective/i.test(line)) {
-      const words = line.split(/\s+/);
-      if (words.length >= 2 && words.length <= 4) return line.replace(/\s+/g, ' ').trim();
+    // A name is often the first segment of a header line that also carries a title,
+    // email, or phone ("Jane Doe | Software Engineer", "Jane Doe, Accountant").
+    for (const segment of line.split(/\s*[|,•·]\s*|\s{2,}|\t/)) {
+      const s = segment.trim();
+      if (s.length > 3 && s.length < 40 && /^[A-Za-z][A-Za-z.'\- ]+$/.test(s) &&
+          !/resume|curriculum|vitae|\bcv\b|profile|summary|objective/i.test(s)) {
+        const words = s.split(/\s+/);
+        if (words.length >= 2 && words.length <= 4) return s.replace(/\s+/g, ' ').trim();
+      }
     }
   }
   return null;

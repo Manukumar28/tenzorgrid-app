@@ -48,8 +48,40 @@ const SKILL_CATEGORIES = [
     skills: ['Financial modeling', 'Budgeting', 'Forecasting', 'Accounting', 'Bookkeeping', 'Financial analysis', 'Investment analysis', 'Supply chain management', 'Operations management', 'Inventory management', 'Procurement', 'Logistics'],
   },
   {
+    category: 'Accounting & bookkeeping',
+    skills: ['Accounts receivable', 'Accounts payable', 'General ledger', 'Payroll', 'Payroll processing', 'Bank reconciliation', 'Reconciliation', 'Auditing', 'Internal audit', 'Tax preparation', 'Tax filing', 'GST filing', 'GAAP', 'IFRS', 'Cost accounting', 'Accounts finalization', 'Invoice processing', 'Journal entries', 'Fixed asset accounting', 'QuickBooks', 'Tally', 'SAP FICO', 'Oracle Financials', 'Zoho Books'],
+  },
+  {
     category: 'HR & entrepreneurship',
-    skills: ['Recruiting', 'Talent acquisition', 'Employee onboarding', 'Performance management', 'HR policy', 'Business strategy', 'Fundraising / Pitching investors', 'Startup operations', 'Go-to-market strategy', 'Vendor management'],
+    skills: ['Recruiting', 'Talent acquisition', 'Employee onboarding', 'Performance management', 'HR policy', 'Business strategy', 'Fundraising / Pitching investors', 'Startup operations', 'Go-to-market strategy', 'Vendor management', 'Compensation & benefits', 'Employee relations', 'HRIS', 'Payroll administration', 'Training & development', 'Workforce planning'],
+  },
+  {
+    category: 'Customer service & support',
+    skills: ['Customer service', 'Customer support', 'Technical support', 'Help desk', 'Call center operations', 'Ticket management', 'Zendesk', 'Freshdesk', 'Live chat support', 'Complaint resolution', 'Order processing', 'Client onboarding'],
+  },
+  {
+    category: 'Healthcare',
+    skills: ['Patient care', 'Clinical documentation', 'Nursing', 'Medical coding', 'Medical billing', 'Electronic health records (EHR)', 'Phlebotomy', 'Pharmacy operations', 'Healthcare administration', 'HIPAA compliance', 'Vital signs monitoring', 'Diagnostic testing'],
+  },
+  {
+    category: 'Legal',
+    skills: ['Legal research', 'Contract drafting', 'Contract review', 'Litigation support', 'Compliance', 'Regulatory affairs', 'Paralegal support', 'Corporate law', 'Intellectual property', 'Legal documentation', 'Due diligence'],
+  },
+  {
+    category: 'Education & training',
+    skills: ['Curriculum development', 'Lesson planning', 'Classroom management', 'Teaching', 'Tutoring', 'Instructional design', 'E-learning development', 'Student assessment', 'Academic counseling', 'Training delivery'],
+  },
+  {
+    category: 'Retail, hospitality & admin',
+    skills: ['Retail sales', 'Merchandising', 'Point of sale (POS) systems', 'Cash handling', 'Front desk operations', 'Hospitality management', 'Event coordination', 'Housekeeping operations', 'Administrative support', 'Office management', 'Data entry', 'Scheduling', 'Travel coordination', 'Microsoft Office (Word, Excel, PowerPoint)'],
+  },
+  {
+    category: 'Manufacturing, construction & trades',
+    skills: ['Production planning', 'Quality control', 'Lean manufacturing', 'Six Sigma', 'Warehouse operations', 'Machine operation', 'Assembly line operations', 'Construction management', 'Electrical work', 'Plumbing', 'Welding', 'Safety compliance (EHS)', 'CAD / AutoCAD'],
+  },
+  {
+    category: 'Media & communications',
+    skills: ['Content writing', 'Editing & proofreading', 'Journalism', 'Public relations', 'Video editing', 'Photography', 'Social media management', 'Community management', 'Technical writing', 'Translation'],
   },
   {
     category: 'Leadership & soft skills',
