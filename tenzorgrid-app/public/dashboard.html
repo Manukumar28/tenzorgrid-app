@@ -207,21 +207,44 @@ async function loadInsights() {
   }
 }
 
+function expSpan(e) {
+  const start = e.startYear;
+  const end = e.isCurrent ? new Date().getFullYear() : e.endYear;
+  if (!start || !end || end < start) return '';
+  const yrs = end - start;
+  if (yrs <= 0) return '< 1 yr';
+  return yrs + (yrs === 1 ? ' yr' : ' yrs');
+}
+
+function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
 async function loadExperiences() {
   const data = await fetch('/api/experiences').then((r) => r.json());
   const list = data.experiences || [];
   currentExperiences = list;
-  const cardsHtml = list.map((e) => `
-    <div class="exp-card">
+  const cardsHtml = list.map((e) => {
+    const achievementLines = (e.achievements || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    const span = expSpan(e);
+    return `
+    <div class="exp-card${e.isCurrent ? ' is-current' : ''}">
       <button class="del-btn" onclick="removeExperience('${e.id}')" title="Remove">×</button>
-      <div class="org">${e.organization}</div>
-      <div class="role">${e.role}</div>
-      <div class="years">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}</div>
-      ${e.achievements ? '<div class="achievements">' + e.achievements.replace(/</g, '&lt;') + '</div>' : ''}
+      <div class="exp-head">
+        <div class="exp-badge">${initials(e.organization)}</div>
+        <div class="exp-head-text">
+          <div class="role">${escapeHtml(e.role)}</div>
+          <div class="org">${escapeHtml(e.organization)}</div>
+        </div>
+      </div>
+      <div class="exp-meta">
+        <span class="exp-duration">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}${e.isCurrent ? '<i class="live-dot"></i>' : ''}</span>
+        ${span ? '<span class="exp-span">· ' + span + '</span>' : ''}
+      </div>
+      ${achievementLines.length ? '<ul class="achievements">' + achievementLines.map((l) => '<li>' + escapeHtml(l) + '</li>').join('') + '</ul>' : ''}
       ${e.salary ? '<div class="salary-line">💰 ' + fmtINR(e.salary) + '/yr</div>' : ''}
       ${e.isCurrent ? '<a class="btn btn-ghost btn-sm upgrade-btn" href="/career-growth.html#upgrade">Switch to Career Upgrade →</a>' : ''}
-    </div>`).join('');
-  document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()">+ Add a role</div>';
+    </div>`;
+  }).join('');
+  document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
 }
 
 function openExpModal() {
