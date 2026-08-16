@@ -454,50 +454,84 @@ function heuristicExtract(text) {
   };
 }
 
+const AI_EXTRACTION_INSTRUCTIONS = `Extract structured resume data as strict JSON with exactly these keys: ` +
+  `name (string or null), role (the person's most recent or current job title, string or null), ` +
+  `experienceYears (number or null — total years of professional experience), ` +
+  `skills (array of up to 20 short skill strings actually present in the resume — technical and ` +
+  `professional skills only, no filler), ` +
+  `experience (array of up to 5 past/current roles found in the resume's work-experience section, ` +
+  `each an object with: organization (string or null), role (job title, string or null), ` +
+  `achievements (array of up to 4 short bullet-point strings describing accomplishments in that role), ` +
+  `startYear (number or null), endYear (number or null — omit/null if isCurrent is true), ` +
+  `isCurrent (boolean — true if this is their present role, e.g. "Present"/"Current" in the dates)). ` +
+  `Order experience from most recent to oldest. Return ONLY the JSON object, nothing else.`;
+
+function normalizeAiExtraction(json) {
+  if (!json) return null;
+  const experience = Array.isArray(json.experience)
+    ? json.experience.slice(0, 5).map((e) => ({
+        organization: typeof e.organization === 'string' && e.organization.trim() ? e.organization.trim() : null,
+        role: typeof e.role === 'string' && e.role.trim() ? e.role.trim() : null,
+        achievements: Array.isArray(e.achievements)
+          ? e.achievements.filter((a) => typeof a === 'string').slice(0, 4)
+          : [],
+        startYear: typeof e.startYear === 'number' ? e.startYear : null,
+        endYear: typeof e.endYear === 'number' ? e.endYear : null,
+        isCurrent: !!e.isCurrent,
+      }))
+    : [];
+  return {
+    name: typeof json.name === 'string' && json.name.trim() ? json.name.trim() : null,
+    role: typeof json.role === 'string' && json.role.trim() ? json.role.trim() : null,
+    experienceYears: typeof json.experienceYears === 'number' ? json.experienceYears : null,
+    skills: Array.isArray(json.skills) ? json.skills.filter((s) => typeof s === 'string').slice(0, 20) : [],
+    experience,
+  };
+}
+
 async function aiExtract(text) {
   if (!ai.isAvailable()) return null;
-  const prompt = `Extract structured resume data as strict JSON with exactly these keys: ` +
-    `name (string or null), role (the person's most recent or current job title, string or null), ` +
-    `experienceYears (number or null — total years of professional experience), ` +
-    `skills (array of up to 20 short skill strings actually present in the resume — technical and ` +
-    `professional skills only, no filler), ` +
-    `experience (array of up to 5 past/current roles found in the resume's work-experience section, ` +
-    `each an object with: organization (string or null), role (job title, string or null), ` +
-    `achievements (array of up to 4 short bullet-point strings describing accomplishments in that role), ` +
-    `startYear (number or null), endYear (number or null — omit/null if isCurrent is true), ` +
-    `isCurrent (boolean — true if this is their present role, e.g. "Present"/"Current" in the dates)). ` +
-    `Order experience from most recent to oldest. Return ONLY the JSON object, nothing else.\n\n` +
-    `Resume text:\n${text.slice(0, 6000)}`;
+  const prompt = `${AI_EXTRACTION_INSTRUCTIONS}\n\nResume text:\n${text.slice(0, 6000)}`;
   try {
     const raw = await ai.callClaude({ prompt, maxTokens: 1400 });
-    const json = ai.extractJson(raw);
-    if (!json) return null;
-    const experience = Array.isArray(json.experience)
-      ? json.experience.slice(0, 5).map((e) => ({
-          organization: typeof e.organization === 'string' && e.organization.trim() ? e.organization.trim() : null,
-          role: typeof e.role === 'string' && e.role.trim() ? e.role.trim() : null,
-          achievements: Array.isArray(e.achievements)
-            ? e.achievements.filter((a) => typeof a === 'string').slice(0, 4)
-            : [],
-          startYear: typeof e.startYear === 'number' ? e.startYear : null,
-          endYear: typeof e.endYear === 'number' ? e.endYear : null,
-          isCurrent: !!e.isCurrent,
-        }))
-      : [];
-    return {
-      name: typeof json.name === 'string' && json.name.trim() ? json.name.trim() : null,
-      role: typeof json.role === 'string' && json.role.trim() ? json.role.trim() : null,
-      experienceYears: typeof json.experienceYears === 'number' ? json.experienceYears : null,
-      skills: Array.isArray(json.skills) ? json.skills.filter((s) => typeof s === 'string').slice(0, 20) : [],
-      experience,
-    };
+    return normalizeAiExtraction(ai.extractJson(raw));
   } catch (e) {
     console.error('AI CV extraction failed, falling back to heuristics:', e.message);
     return null;
   }
 }
 
+// Hands the raw PDF to Claude directly instead of our own hand-written text
+// extraction. This app's PDF-to-text code can't correctly decode every embedded
+// font encoding real-world PDF exporters use (some produce scrambled character
+// substitutions rather than missing text) -- sending the file itself sidesteps
+// that entirely, since Claude reads PDFs natively.
+async function aiExtractFromPdfDocument(buffer) {
+  if (!ai.isAvailable()) return null;
+  try {
+    const raw = await ai.callClaude({
+      content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: buffer.toString('base64') } },
+        { type: 'text', text: `${AI_EXTRACTION_INSTRUCTIONS}\n\nThe resume is the attached PDF document.` },
+      ],
+      maxTokens: 1400,
+    });
+    return normalizeAiExtraction(ai.extractJson(raw));
+  } catch (e) {
+    console.error('AI PDF extraction failed, falling back to text extraction:', e.message);
+    return null;
+  }
+}
+
 async function extractFromCv(buffer, mime) {
+  // For PDFs, try handing the file to Claude directly first -- our own text
+  // extraction below can misdecode custom embedded fonts (see aiExtractFromPdfDocument).
+  // No-ops (returns null immediately) when no ANTHROPIC_API_KEY is configured.
+  if (mime === 'application/pdf') {
+    const aiPdfResult = await aiExtractFromPdfDocument(buffer);
+    if (aiPdfResult) return { ...aiPdfResult, source: 'ai' };
+  }
+
   let text = '';
   try {
     if (mime === 'application/pdf') text = pdfBufferToText(buffer);
