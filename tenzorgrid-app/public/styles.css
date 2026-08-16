@@ -175,6 +175,25 @@ a.logo{cursor:pointer;}
 .match-badge.mid{background:#fef3e2;color:#92650a;}
 .match-badge.low{background:var(--danger-soft);color:#b91c1c;}
 
+.job-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+.job-tile{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:18px;display:flex;flex-direction:column;gap:10px;}
+.job-tile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.job-tile-portal{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.job-tile-portal img{width:16px;height:16px;border-radius:4px;flex-shrink:0;}
+.job-tile-title{font-size:15px;font-weight:700;margin:0;line-height:1.3;}
+.job-tile-sub{font-size:12.5px;color:var(--text-soft);}
+.job-tile-salary{font-size:12.5px;font-weight:600;color:var(--text);}
+.job-tile-salary.undisclosed{color:var(--text-faint);font-weight:500;}
+.job-tile-desc{font-size:12.5px;color:var(--text-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0;}
+.job-tile-why{font-size:12px;color:var(--text-soft);background:var(--surface-alt);border-radius:8px;padding:8px 10px;line-height:1.5;}
+.job-tile-why b{color:var(--text);}
+.job-tile-foot{margin-top:auto;display:flex;align-items:center;justify-content:flex-end;padding-top:4px;}
+.job-tile-scope{font-size:12px;color:#92650a;background:#fef3e2;border:1px solid #fbd88f;border-radius:8px;padding:8px 10px;line-height:1.5;}
+.job-tile-scope a{color:#92650a;font-weight:700;text-decoration:underline;cursor:pointer;}
+
+.gauge{position:relative;width:44px;height:44px;flex-shrink:0;}
+.gauge span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+
 .empty-note{font-size:13px;color:var(--text-faint);padding:14px 0;}
 .skeleton{background:linear-gradient(90deg,#eef1f7 25%,#f7f9fc 37%,#eef1f7 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:10px;}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}

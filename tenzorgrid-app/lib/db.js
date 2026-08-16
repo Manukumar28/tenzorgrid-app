@@ -115,6 +115,9 @@ ensureColumn('jobs', 'apply_url', 'TEXT');
 ensureColumn('jobs', 'external_id', 'TEXT');
 ensureColumn('jobs', 'source', 'TEXT');
 ensureColumn('jobs', 'description', 'TEXT');
+ensureColumn('jobs', 'nice_to_have_skills_json', 'TEXT');
+ensureColumn('jobs', 'source_domain', 'TEXT');
+ensureColumn('jobs', 'core_role', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

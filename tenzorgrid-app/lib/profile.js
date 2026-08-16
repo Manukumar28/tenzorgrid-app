@@ -127,33 +127,45 @@ function upsertProfile(userId, input) {
   return getProfile(userId);
 }
 
-// Simple, explainable overlap-based match score: (matching skills / required skills).
-// This is a rule-based v1 stand-in for the real AI-driven matching described in the PRD —
-// intentionally transparent rather than a black box, and easy to swap out later.
+// Explainable overlap-based match score: mandatory (domain) skills drive most of the
+// score, nice-to-have (soft/transferable) skills add a small bonus. Keeping these two
+// buckets separate matters — mandatory skills are scoped per-profession at ingest time
+// (see lib/adzuna.js), while nice-to-have is mostly generic "Leadership"/"Communication"
+// filler that shows up in nearly every posting. Scoring them together used to make every
+// job converge on ~99% regardless of actual domain fit.
 function computeMatches(userSkills) {
   const normalizedUser = new Set((userSkills || []).map((s) => s.trim().toLowerCase()));
   const jobs = db.prepare('SELECT * FROM jobs ORDER BY posted_at DESC').all();
   return jobs.map((job) => {
-    const required = JSON.parse(job.required_skills_json);
+    const required = JSON.parse(job.required_skills_json || '[]');
+    const niceToHave = JSON.parse(job.nice_to_have_skills_json || '[]');
     const matched = required.filter((s) => normalizedUser.has(s.trim().toLowerCase()));
     const missing = required.filter((s) => !normalizedUser.has(s.trim().toLowerCase()));
-    const rawScore = required.length ? matched.length / required.length : 0;
-    // Floor at 35% so an empty/sparse profile doesn't show a discouraging 0% —
-    // mirrors "at least some baseline fit" the way a recruiter skim would.
-    const score = Math.round(35 + rawScore * 65);
+    const niceMatched = niceToHave.filter((s) => normalizedUser.has(s.trim().toLowerCase()));
+
+    // No floor here on purpose — a job with zero domain-skill overlap should read as a
+    // weak match, not an artificially reassuring one.
+    const baseScore = required.length ? 15 + (matched.length / required.length) * 75 : 25;
+    const niceBonus = Math.min(niceMatched.length * 3, 10);
+    const score = Math.min(97, Math.round(baseScore + niceBonus));
+
     return {
       id: job.id,
       title: job.title,
       company: job.company,
       portal: job.portal,
+      portalDomain: job.source_domain || '',
       location: job.location,
       salaryMin: job.salary_min,
       salaryMax: job.salary_max,
       applyUrl: job.apply_url || '',
+      description: (job.description || '').slice(0, 500),
+      coreRole: job.core_role || '',
       source: job.source || '',
-      matchScore: Math.min(99, score),
+      matchScore: score,
       matchedSkills: matched,
       missingSkills: missing,
+      matchedNiceSkills: niceMatched,
     };
   }).sort((a, b) => b.matchScore - a.matchScore);
 }
