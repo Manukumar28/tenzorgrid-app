@@ -52,7 +52,9 @@ a.logo{cursor:pointer;}
   box-shadow:0 3px 12px -2px rgba(0,0,0,.6), 0 0 0 1px rgba(203,213,225,.45) inset,
     0 0 0 1px rgba(203,213,225,.3), 0 0 18px -4px rgba(139,147,255,.55);
 }
-.logo-word .g{color:var(--accent);}
+.logo-word{font-weight:700;}
+.logo-word .g{color:var(--accent);font-weight:800;}
+.dark-hero .logo-word .g{color:var(--accent-light);}
 
 /* ---- Marketing nav: center links + auth-aware right side ---- */
 .nav-links{display:flex;align-items:center;gap:28px;flex:1;justify-content:center;}
@@ -324,37 +326,58 @@ a.logo{cursor:pointer;}
 .feature-card b{display:block;font-size:14.5px;margin-bottom:5px;}
 .feature-card span{font-size:13px;color:#9aa4bd;}
 
-/* ---- Animated AI/network background for dark-hero pages ----
-   Three layers, all decorative and behind the content (z-index:1, content sits at 2):
-   a faint dot-grid (nods to "grid" in the product name), two slow-drifting brand-colour
-   auroras for depth, and a handful of connected nodes with flowing lines to read as an
-   "agentic network" rather than generic decoration. Kept low-opacity/blurred so text on
-   top stays fully legible -- the goal is atmosphere, not a distraction. */
-.ai-bg{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;}
-.ai-bg .grid-layer{
-  position:absolute;inset:-10%;
-  background-image:radial-gradient(rgba(148,163,184,.35) 1px,transparent 1px);
-  background-size:34px 34px;
-  -webkit-mask-image:radial-gradient(ellipse 65% 55% at 50% 30%,#000 30%,transparent 75%);
-  mask-image:radial-gradient(ellipse 65% 55% at 50% 30%,#000 30%,transparent 75%);
-  opacity:.5;
-}
-.ai-bg .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.4;}
-.ai-bg .blob-a{width:520px;height:520px;top:-160px;left:-120px;background:radial-gradient(circle,rgba(79,70,229,.55),transparent 70%);animation:blob-float-a 22s ease-in-out infinite alternate;}
-.ai-bg .blob-b{width:460px;height:460px;top:60px;right:-140px;background:radial-gradient(circle,rgba(16,185,129,.45),transparent 70%);animation:blob-float-b 26s ease-in-out infinite alternate;}
-.ai-bg .blob-c{width:380px;height:380px;bottom:-180px;left:38%;background:radial-gradient(circle,rgba(139,147,255,.4),transparent 70%);animation:blob-float-c 19s ease-in-out infinite alternate;}
-@keyframes blob-float-a{0%{transform:translate(0,0) scale(1);}100%{transform:translate(60px,40px) scale(1.12);}}
-@keyframes blob-float-b{0%{transform:translate(0,0) scale(1);}100%{transform:translate(-50px,30px) scale(1.08);}}
-@keyframes blob-float-c{0%{transform:translate(0,0) scale(1);}100%{transform:translate(30px,-30px) scale(1.1);}}
+/* ---- Animated galaxy background for dark-hero pages ----
+   Layered behind the content (z-index:1, content sits at 2): two tiled star fields
+   drifting at different speeds for a parallax "moving through space" feel, a handful
+   of individually twinkling bright stars, slow-drifting brand-colour nebula clouds for
+   depth, and a constellation of connected nodes on top. Kept low-opacity/blurred so
+   text stays fully legible -- the goal is atmosphere, not a distraction. */
+.ai-bg{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 50% 0%,#11142a 0%,transparent 60%);}
 
-.ai-bg svg.nodes{position:absolute;inset:0;width:100%;height:100%;opacity:.55;}
+.ai-bg .starfield{position:absolute;inset:-25%;background-repeat:repeat;}
+.ai-bg .stars-far{
+  background-image:
+    radial-gradient(1.3px 1.3px at 15px 25px,#fff,transparent),
+    radial-gradient(1px 1px at 60px 90px,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 110px 40px,#fff,transparent),
+    radial-gradient(1px 1px at 150px 130px,#fff,transparent),
+    radial-gradient(1.2px 1.2px at 190px 70px,#fff,transparent);
+  background-size:220px 220px;
+  opacity:.5;
+  animation:star-drift-far 160s linear infinite;
+}
+.ai-bg .stars-near{
+  background-image:
+    radial-gradient(1.6px 1.6px at 30px 60px,#dfe3fb,transparent),
+    radial-gradient(1.3px 1.3px at 90px 20px,#dfe3fb,transparent),
+    radial-gradient(1.8px 1.8px at 140px 100px,#dfe3fb,transparent),
+    radial-gradient(1.3px 1.3px at 175px 45px,#dfe3fb,transparent);
+  background-size:170px 170px;
+  opacity:.4;
+  animation:star-drift-near 95s linear infinite reverse;
+}
+@keyframes star-drift-far{from{transform:translate(0,0);}to{transform:translate(-220px,-160px);}}
+@keyframes star-drift-near{from{transform:translate(0,0);}to{transform:translate(170px,-130px);}}
+
+.ai-bg .twinkle{position:absolute;width:2.5px;height:2.5px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.8);animation:twinkle 3.4s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.8);}50%{opacity:1;transform:scale(1.4);}}
+
+.ai-bg .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;}
+.ai-bg .blob-a{width:560px;height:560px;top:-180px;left:-140px;background:radial-gradient(circle,rgba(99,70,229,.6),transparent 70%);animation:blob-float-a 30s ease-in-out infinite alternate;}
+.ai-bg .blob-b{width:480px;height:480px;top:40px;right:-160px;background:radial-gradient(circle,rgba(16,185,129,.4),transparent 70%);animation:blob-float-b 34s ease-in-out infinite alternate;}
+.ai-bg .blob-c{width:420px;height:420px;bottom:-200px;left:36%;background:radial-gradient(circle,rgba(168,85,247,.35),transparent 70%);animation:blob-float-c 26s ease-in-out infinite alternate;}
+@keyframes blob-float-a{0%{transform:translate(0,0) scale(1) rotate(0deg);}100%{transform:translate(70px,50px) scale(1.15) rotate(8deg);}}
+@keyframes blob-float-b{0%{transform:translate(0,0) scale(1) rotate(0deg);}100%{transform:translate(-60px,40px) scale(1.1) rotate(-6deg);}}
+@keyframes blob-float-c{0%{transform:translate(0,0) scale(1) rotate(0deg);}100%{transform:translate(40px,-40px) scale(1.12) rotate(7deg);}}
+
+.ai-bg svg.nodes{position:absolute;inset:0;width:100%;height:100%;opacity:.5;}
 .ai-bg svg.nodes line{stroke:url(#nodeLineGrad);stroke-width:1;stroke-dasharray:5 7;animation:node-flow 6s linear infinite;}
-.ai-bg svg.nodes circle{fill:#8B93FF;animation:node-pulse 3.6s ease-in-out infinite;}
+.ai-bg svg.nodes circle{fill:#c4b5fd;animation:node-pulse 3.6s ease-in-out infinite;}
 @keyframes node-flow{to{stroke-dashoffset:-120;}}
 @keyframes node-pulse{0%,100%{opacity:.35;r:2.4;}50%{opacity:1;r:3.6;}}
 
 @media (prefers-reduced-motion:reduce){
-  .ai-bg .blob,.ai-bg svg.nodes line,.ai-bg svg.nodes circle{animation:none;}
+  .ai-bg .blob,.ai-bg svg.nodes line,.ai-bg svg.nodes circle,.ai-bg .starfield,.ai-bg .twinkle{animation:none;}
 }
 
 /* ---- Trust / how-it-works sections ---- */
