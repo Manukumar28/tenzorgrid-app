@@ -74,6 +74,7 @@
 let skills = [];
 let cvPayload = null; // { filename, mime, dataBase64 }
 let parsedExperiences = []; // experience entries detected from the CV, created after profile save
+let parsedCertifications = []; // certifications detected from the CV, created after profile save
 let skillCategories = [];
 let flatSkills = [];
 
@@ -105,9 +106,12 @@ function goStep(n) {
   document.getElementById('onboard-step-label').textContent = 'Step ' + n + ' of 3';
   if (n === 3) {
     const note = document.getElementById('expPreviewNote');
-    if (parsedExperiences.length) {
+    const parts = [];
+    if (parsedExperiences.length) parts.push(parsedExperiences.length + ' past role' + (parsedExperiences.length === 1 ? '' : 's'));
+    if (parsedCertifications.length) parts.push(parsedCertifications.length + ' certification' + (parsedCertifications.length === 1 ? '' : 's'));
+    if (parts.length) {
       note.style.display = 'block';
-      note.textContent = '✓ We also found ' + parsedExperiences.length + ' past role' + (parsedExperiences.length === 1 ? '' : 's') + ' on your CV — they\'ll be added to your dashboard automatically. You can edit or remove them there.';
+      note.textContent = '✓ We also found ' + parts.join(' and ') + ' on your CV — they\'ll be added to your dashboard automatically. You can edit or remove them there.';
     } else {
       note.style.display = 'none';
     }
@@ -165,6 +169,10 @@ function applyAutofill(data) {
   if (Array.isArray(data.experience) && data.experience.length) {
     parsedExperiences = data.experience;
     filled.push(parsedExperiences.length + ' past role' + (parsedExperiences.length === 1 ? '' : 's'));
+  }
+  if (Array.isArray(data.certifications) && data.certifications.length) {
+    parsedCertifications = data.certifications;
+    filled.push(parsedCertifications.length + ' certification' + (parsedCertifications.length === 1 ? '' : 's'));
   }
   if (filled.length) {
     const note = document.getElementById('autofillNote');
@@ -305,6 +313,22 @@ async function finishOnboarding() {
             startYear: exp.startYear || '',
             endYear: exp.endYear || '',
             isCurrent: !!exp.isCurrent,
+          }),
+        });
+      } catch (e) { /* non-fatal */ }
+    }
+
+    // Same for certifications detected from the CV.
+    for (const cert of parsedCertifications) {
+      try {
+        await fetch('/api/certifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: (cert.name && String(cert.name).trim()) || 'Certification',
+            issuer: cert.issuer || '',
+            issueYear: cert.issueYear || '',
+            expiryYear: cert.expiryYear || '',
           }),
         });
       } catch (e) { /* non-fatal */ }

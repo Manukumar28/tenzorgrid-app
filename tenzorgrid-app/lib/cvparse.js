@@ -444,6 +444,54 @@ function guessExperienceHeuristic(text) {
   return entries;
 }
 
+// ---- Certifications extraction (heuristic) ----
+// Same section-scanning approach as experience: find a "Certifications" header,
+// take lines until the next section header, and try to split each line into
+// name + issuer + year. Inherently approximate for the same reason as above.
+const CERT_SECTION_RE = /^(licenses?\s*(&|and)?\s*)?(certifications?|certificates?)\s*:?$/i;
+
+function findCertificationSectionLines(text) {
+  const lines = text.split('\n');
+  let startIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim().toLowerCase().replace(/[:\-–—]+$/, '');
+    if (CERT_SECTION_RE.test(l)) { startIdx = i + 1; break; }
+  }
+  if (startIdx === -1) return null;
+  let endIdx = lines.length;
+  for (let i = startIdx; i < lines.length; i++) {
+    const l = lines[i].trim().toLowerCase().replace(/[:\-–—]+$/, '');
+    if (!l) continue;
+    if (EXPERIENCE_SECTION_RE.test(l)) { endIdx = i; break; }
+    if (l.length < 40 && OTHER_SECTION_HEADERS.some((h) => l === h || l.startsWith(h)) && !CERT_SECTION_RE.test(l)) {
+      endIdx = i;
+      break;
+    }
+  }
+  return lines.slice(startIdx, endIdx);
+}
+
+function guessCertificationsHeuristic(text) {
+  const sectionLines = findCertificationSectionLines(text);
+  if (!sectionLines || !sectionLines.length) return [];
+  const entries = [];
+  for (const raw of sectionLines) {
+    const line = raw.trim().replace(/^[•\-*▪●]\s*/, '');
+    if (!line || line.length < 3) continue;
+    const yearMatch = line.match(/\b(19[89]\d|20[0-3]\d)\b/);
+    const issueYear = yearMatch ? parseInt(yearMatch[1], 10) : null;
+    const rest = line.replace(/\(?\b(19[89]\d|20[0-3]\d)\b\)?/, '').trim().replace(/[,\-–—|]+$/, '').trim();
+    if (!rest) continue;
+    let name = rest;
+    let issuer = null;
+    const sep = rest.match(/^(.+?)\s*(?:-|–|—|\||,)\s*(.+)$/);
+    if (sep) { name = sep[1].trim(); issuer = sep[2].trim(); }
+    entries.push({ name, issuer, issueYear, expiryYear: null });
+    if (entries.length >= 8) break;
+  }
+  return entries;
+}
+
 function heuristicExtract(text) {
   return {
     name: guessName(text),
@@ -451,6 +499,7 @@ function heuristicExtract(text) {
     experienceYears: guessExperienceYears(text),
     skills: guessSkills(text),
     experience: guessExperienceHeuristic(text),
+    certifications: guessCertificationsHeuristic(text),
   };
 }
 
@@ -463,7 +512,10 @@ const AI_EXTRACTION_INSTRUCTIONS = `Extract structured resume data as strict JSO
   `each an object with: organization (string or null), role (job title, string or null), ` +
   `achievements (array of up to 4 short bullet-point strings describing accomplishments in that role), ` +
   `startYear (number or null), endYear (number or null — omit/null if isCurrent is true), ` +
-  `isCurrent (boolean — true if this is their present role, e.g. "Present"/"Current" in the dates)). ` +
+  `isCurrent (boolean — true if this is their present role, e.g. "Present"/"Current" in the dates)), ` +
+  `certifications (array of up to 8 certifications/licenses/professional courses found in the resume, ` +
+  `each an object with: name (string, required), issuer (the issuing organization, string or null), ` +
+  `issueYear (number or null), expiryYear (number or null — omit/null if no expiry is stated)). ` +
   `Order experience from most recent to oldest. Return ONLY the JSON object, nothing else.`;
 
 function normalizeAiExtraction(json) {
@@ -480,12 +532,24 @@ function normalizeAiExtraction(json) {
         isCurrent: !!e.isCurrent,
       }))
     : [];
+  const certifications = Array.isArray(json.certifications)
+    ? json.certifications
+        .filter((c) => c && typeof c.name === 'string' && c.name.trim())
+        .slice(0, 8)
+        .map((c) => ({
+          name: c.name.trim(),
+          issuer: typeof c.issuer === 'string' && c.issuer.trim() ? c.issuer.trim() : null,
+          issueYear: typeof c.issueYear === 'number' ? c.issueYear : null,
+          expiryYear: typeof c.expiryYear === 'number' ? c.expiryYear : null,
+        }))
+    : [];
   return {
     name: typeof json.name === 'string' && json.name.trim() ? json.name.trim() : null,
     role: typeof json.role === 'string' && json.role.trim() ? json.role.trim() : null,
     experienceYears: typeof json.experienceYears === 'number' ? json.experienceYears : null,
     skills: Array.isArray(json.skills) ? json.skills.filter((s) => typeof s === 'string').slice(0, 20) : [],
     experience,
+    certifications,
   };
 }
 
@@ -542,7 +606,7 @@ async function extractFromCv(buffer, mime) {
   }
 
   if (!text || text.replace(/\s/g, '').length < 30) {
-    return { name: null, role: null, experienceYears: null, skills: [], experience: [], source: 'none' };
+    return { name: null, role: null, experienceYears: null, skills: [], experience: [], certifications: [], source: 'none' };
   }
 
   const aiResult = await aiExtract(text);

@@ -136,6 +136,7 @@
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-exp" style="width:auto;"><label style="margin:0;" id="cv-apply-exp-label">Experience</label></div>
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-skills" style="width:auto;"><label style="margin:0;" id="cv-apply-skills-label">Skills</label></div>
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-roles" style="width:auto;"><label style="margin:0;" id="cv-apply-roles-label">Past roles</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-certs" style="width:auto;"><label style="margin:0;" id="cv-apply-certs-label">Certifications</label></div>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeCvModal()">Cancel</button>
@@ -156,6 +157,7 @@ function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' :
 
 let currentProfile = null;
 let currentExperiences = [];
+let currentCertifications = [];
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
@@ -310,6 +312,7 @@ function certStatus(c) {
 async function loadCertifications() {
   const data = await fetch('/api/certifications').then((r) => r.json());
   const list = data.certifications || [];
+  currentCertifications = list;
   const cardsHtml = list.map((c) => {
     const status = certStatus(c);
     return `
@@ -350,8 +353,8 @@ async function saveCertification() {
   errBox.classList.remove('show');
   const name = document.getElementById('cert-name').value.trim();
   const issuer = document.getElementById('cert-issuer').value.trim();
-  if (!name || !issuer) {
-    errBox.textContent = 'Certification name and issuing organization are required.';
+  if (!name) {
+    errBox.textContent = 'Certification name is required.';
     errBox.classList.add('show');
     return;
   }
@@ -610,7 +613,7 @@ async function runCvParse(payload, label) {
 
 function showCvPreview(data) {
   const hasExp = data && data.experienceYears != null;
-  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length));
+  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length) || (data.certifications && data.certifications.length));
   if (!found) {
     document.getElementById('cvPreview').style.display = 'none';
     document.getElementById('cvApplyBtn').style.display = 'none';
@@ -638,6 +641,12 @@ function showCvPreview(data) {
   cvModalParsed._newRoles = newRoles;
   set('cv-apply-roles', !!newRoles.length, !newRoles.length,
     'Past roles: ' + (newRoles.length ? ('+' + newRoles.length + ' new') : 'no new roles found'));
+
+  const existingCertNames = new Set((currentCertifications || []).map((c) => c.name.toLowerCase()));
+  const newCerts = (data.certifications || []).filter((c) => c && c.name && !existingCertNames.has(c.name.toLowerCase()));
+  cvModalParsed._newCerts = newCerts;
+  set('cv-apply-certs', !!newCerts.length, !newCerts.length,
+    'Certifications: ' + (newCerts.length ? ('+' + newCerts.length + ' new') : 'no new certifications found'));
 
   document.getElementById('cvPreview').style.display = 'block';
   document.getElementById('cvApplyBtn').style.display = 'inline-flex';
@@ -683,6 +692,18 @@ async function applyCvUpdate() {
           isCurrent: !!exp.isCurrent,
         }),
       }).catch(() => {}))); // best-effort -- one failed role add shouldn't block the others or the profile update
+    }
+    if (document.getElementById('cv-apply-certs').checked) {
+      await Promise.all((cvModalParsed._newCerts || []).map((c) => fetch('/api/certifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: c.name,
+          issuer: c.issuer || '',
+          issueYear: c.issueYear || '',
+          expiryYear: c.expiryYear || '',
+        }),
+      }).catch(() => {})));
     }
     closeCvModal();
     load();

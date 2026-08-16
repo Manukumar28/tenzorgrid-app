@@ -242,7 +242,7 @@ async function handleApi(req, res, url) {
       return sendJson(res, 200, result);
     } catch (e) {
       console.error('CV parse error:', e);
-      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], experience: [], source: 'none' });
+      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], experience: [], certifications: [], source: 'none' });
     }
   }
 
