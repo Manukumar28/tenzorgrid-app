@@ -283,10 +283,73 @@ a.logo{cursor:pointer;}
 .exp-add-card:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft);}
 .exp-add-card:hover .plus-icon{border-color:var(--primary);color:var(--primary);background:#fff;}
 
+/* ---- Certifications ----
+   Reuses the app's established "badge" visual language but with its own shape
+   (hexagon, echoing skill/credential badges like Credly) so it reads as a related
+   but distinct kind of achievement from the tenure seals and company badges above.
+   The status pill is functional, not just decorative -- expired credentials are
+   flagged so the profile stays honest about what's actually current. */
+.cert-scroll{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+.cert-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:22px;position:relative;transition:transform .18s ease, box-shadow .18s ease;}
+.cert-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px -16px rgba(15,23,42,.22);}
+.cert-card .del-btn{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);font-size:16px;line-height:1;padding:2px 6px;border-radius:6px;transition:color .12s ease, background .12s ease;}
+.cert-card .del-btn:hover{color:var(--danger);background:var(--danger-soft);}
+.cert-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.cert-badge{
+  flex-shrink:0;width:42px;height:48px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  background:linear-gradient(135deg,#F59E0B,#FCD34D);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;box-shadow:0 4px 10px -3px rgba(217,119,6,.5);
+}
+.cert-head-text{min-width:0;flex:1;}
+.cert-card .cname{font-weight:700;font-size:15px;color:var(--text);line-height:1.35;}
+.cert-card .cissuer{font-size:12.5px;color:var(--text-soft);font-weight:600;margin-top:1px;}
+.cert-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.cert-years{font-size:12px;color:var(--text-faint);}
+.cert-status{font-size:11px;font-weight:700;letter-spacing:.02em;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;}
+.cert-status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.cert-status.valid{background:var(--accent-soft);color:#067a55;}
+.cert-status.expiring{background:#fef3e2;color:#92650a;}
+.cert-status.expired{background:var(--danger-soft);color:#b91c1c;}
+.cert-card .ccred{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.cert-card .cview{font-size:12.5px;font-weight:600;color:var(--primary);margin-top:8px;display:inline-block;}
+
 /* ---- Modal ---- */
 .modal-backdrop{position:fixed;inset:0;background:rgba(4,5,9,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
 .modal-backdrop.show{display:flex;}
 .modal-box{background:#fff;border-radius:var(--radius-lg);padding:28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+
+/* ---- Pro dashboard tabs ---- */
+.pro-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:30px;overflow-x:auto;}
+.pro-tab{padding:13px 18px;font-size:14px;font-weight:600;color:var(--text-soft);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s ease, border-color .15s ease;}
+.pro-tab:hover{color:var(--text);}
+.pro-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.pro-panel{display:none;}
+.pro-panel.active{display:block;}
+.preview-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:#fef3e2;color:#92650a;margin-left:10px;vertical-align:middle;}
+.pro-filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.pro-filter-row input,.pro-filter-row select{padding:9px 13px;border-radius:9px;border:1.5px solid var(--border);font-size:13.5px;font-family:inherit;background:#fff;}
+.pro-filter-row input{flex:1;min-width:180px;}
+
+.template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.template-card{border:1.5px solid var(--border);border-radius:var(--radius-md);padding:16px;cursor:pointer;transition:border-color .15s ease, transform .15s ease;text-align:center;}
+.template-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+.template-card.selected{border-color:var(--primary);background:var(--primary-soft);}
+.template-preview{height:120px;border-radius:8px;background:var(--surface-alt);margin-bottom:10px;padding:12px;display:flex;flex-direction:column;gap:5px;}
+.template-preview .tp-line{height:5px;border-radius:3px;background:var(--border);}
+.template-preview .tp-line.short{width:55%;}
+.template-preview .tp-line.accent{background:var(--primary);width:40%;height:7px;}
+
+.phase-row{display:flex;gap:16px;margin-bottom:14px;}
+.phase-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.phase-body b{display:block;font-size:14.5px;margin-bottom:3px;}
+.phase-body span{font-size:13px;color:var(--text-soft);}
+
+.interview-cat{border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:14px;}
+.interview-cat h4{margin:0 0 12px;font-size:14.5px;}
+.interview-cat ul{margin:0;padding-left:18px;}
+.interview-cat li{font-size:13.5px;color:var(--text-soft);margin-bottom:8px;line-height:1.5;}
 
 /* ---- Jobs lock / paywall teaser ---- */
 .job-row.locked{position:relative;}

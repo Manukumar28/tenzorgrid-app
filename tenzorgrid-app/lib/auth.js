@@ -71,9 +71,13 @@ function destroySession(token) {
 }
 
 function getUserExtras(userId) {
-  const row = db.prepare('SELECT dob, gender, profession FROM users WHERE id = ?').get(userId);
-  if (!row) return { dob: null, gender: null, profession: null };
-  return row;
+  const row = db.prepare('SELECT dob, gender, profession, is_pro FROM users WHERE id = ?').get(userId);
+  if (!row) return { dob: null, gender: null, profession: null, isPro: false };
+  return { dob: row.dob, gender: row.gender, profession: row.profession, isPro: Boolean(row.is_pro) };
+}
+
+function setPro(userId, value) {
+  db.prepare('UPDATE users SET is_pro = ? WHERE id = ?').run(value ? 1 : 0, userId);
 }
 
 function parseCookies(req) {
@@ -98,5 +102,6 @@ module.exports = {
   destroySession,
   parseCookies,
   getUserExtras,
+  setPro,
   SESSION_DAYS,
 };

@@ -81,6 +81,18 @@ CREATE TABLE IF NOT EXISTS jobs (
   salary_max REAL,
   posted_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS certifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  issue_year INTEGER,
+  expiry_year INTEGER,
+  credential_id TEXT,
+  credential_url TEXT,
+  created_at TEXT NOT NULL
+);
 `);
 
 // Safe migration helper for columns added after the DB was first created
@@ -98,6 +110,7 @@ ensureColumn('users', 'dob', 'TEXT');
 ensureColumn('users', 'gender', 'TEXT');
 ensureColumn('users', 'profession', 'TEXT');
 ensureColumn('profiles', 'photo_data_url', 'TEXT');
+ensureColumn('users', 'is_pro', 'INTEGER DEFAULT 0');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

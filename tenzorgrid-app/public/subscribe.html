@@ -46,10 +46,26 @@
         <li>Interview Preparation tailored to the roles you're applying to</li>
         <li>Application status tracking across every job you've applied to</li>
       </ul>
-      <button class="btn btn-primary btn-block" disabled>Payment coming soon</button>
-      <div class="hint" style="text-align:center;margin-top:10px;">The payment gateway isn't connected yet — this page shows what's included so far. We'll turn checkout on in the next round.</div>
+      <button class="btn btn-primary btn-block" id="subscribeBtn" onclick="subscribe()">Subscribe (dev mode) →</button>
+      <div class="hint" style="text-align:center;margin-top:10px;">The payment gateway isn't connected yet — clicking Subscribe unlocks Pro instantly while we build this out. Real checkout is coming.</div>
     </div>
   </div>
 </div>
+<script>
+async function subscribe() {
+  const btn = document.getElementById('subscribeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Activating…';
+  try {
+    const res = await fetch('/api/subscribe', { method: 'POST' });
+    if (!res.ok) throw new Error('Could not activate Pro right now.');
+    window.location.href = '/pro.html';
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe (dev mode) →';
+    alert(e.message);
+  }
+}
+</script>
 </body>
 </html>

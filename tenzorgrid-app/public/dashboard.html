@@ -55,11 +55,35 @@
   <div class="section-title"><h3>Your experience</h3></div>
   <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
 
+  <div class="section-title"><h3>Certifications</h3></div>
+  <div class="cert-scroll" id="certCards"><div class="skeleton" style="height:100px;"></div></div>
+
   <div class="section-title"><h3>Matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
   <div id="jobsList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div><div class="skeleton" style="height:60px;"></div></div>
   <div class="browse-all-cta">
     <div><b>Want to see every matching job?</b><br><span>Browsing the full matched list is a subscriber feature.</span></div>
-    <a class="btn btn-primary btn-sm" href="/subscribe.html">Browse all matching jobs →</a>
+    <a class="btn btn-primary btn-sm" id="browseAllBtn" href="/subscribe.html">Browse all matching jobs →</a>
+  </div>
+</div>
+
+<!-- Add certification modal -->
+<div class="modal-backdrop" id="certModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 4px;">Add a certification</h3>
+    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">Courses, professional certifications, licenses — anything credential-worthy.</p>
+    <div class="error-box" id="certErr"></div>
+    <div class="field"><label>Certification name</label><input id="cert-name" placeholder="AWS Certified Solutions Architect"></div>
+    <div class="field"><label>Issuing organization</label><input id="cert-issuer" placeholder="Amazon Web Services"></div>
+    <div class="grid-2">
+      <div class="field"><label>Issue year</label><input id="cert-issue-year" type="number" min="1970" max="2100" placeholder="2024"></div>
+      <div class="field"><label>Expiry year (optional)</label><input id="cert-expiry-year" type="number" min="1970" max="2100" placeholder="2027"></div>
+    </div>
+    <div class="field"><label>Credential ID (optional)</label><input id="cert-credential-id" placeholder="ABC123XYZ"></div>
+    <div class="field"><label>Credential URL (optional)</label><input id="cert-credential-url" placeholder="https://..."></div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="closeCertModal()">Cancel</button>
+      <button class="btn btn-primary" id="certSaveBtn" onclick="saveCertification()">Save certification</button>
+    </div>
   </div>
 </div>
 
@@ -172,6 +196,13 @@ async function load() {
 
   loadInsights();
   loadExperiences();
+  loadCertifications();
+
+  const browseBtn = document.getElementById('browseAllBtn');
+  if (me.isPro) {
+    browseBtn.textContent = 'Browse all matching jobs →';
+    browseBtn.href = '/pro.html';
+  }
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   const jobs = jobsData.jobs || [];
@@ -266,6 +297,94 @@ async function loadExperiences() {
     </div>`;
   }).join('');
   document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
+}
+
+function certStatus(c) {
+  if (!c.expiryYear) return { label: 'No expiry', cls: 'valid' };
+  const currentYear = new Date().getFullYear();
+  if (c.expiryYear < currentYear) return { label: 'Expired ' + c.expiryYear, cls: 'expired' };
+  if (c.expiryYear === currentYear) return { label: 'Expires this year', cls: 'expiring' };
+  return { label: 'Valid through ' + c.expiryYear, cls: 'valid' };
+}
+
+async function loadCertifications() {
+  const data = await fetch('/api/certifications').then((r) => r.json());
+  const list = data.certifications || [];
+  const cardsHtml = list.map((c) => {
+    const status = certStatus(c);
+    return `
+    <div class="cert-card">
+      <button class="del-btn" onclick="removeCertification('${c.id}')" title="Remove">×</button>
+      <div class="cert-head">
+        <div class="cert-badge">${initials(c.issuer)}</div>
+        <div class="cert-head-text">
+          <div class="cname">${escapeHtml(c.name)}</div>
+          <div class="cissuer">${escapeHtml(c.issuer)}</div>
+        </div>
+      </div>
+      <div class="cert-meta-row">
+        ${c.issueYear ? '<span class="cert-years">Issued ' + c.issueYear + '</span>' : ''}
+        <span class="cert-status ${status.cls}">${status.label}</span>
+      </div>
+      ${c.credentialId ? '<div class="ccred">ID: ' + escapeHtml(c.credentialId) + '</div>' : ''}
+      ${c.credentialUrl ? '<a class="cview" href="' + escapeHtml(c.credentialUrl) + '" target="_blank" rel="noopener">View credential ↗</a>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('certCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openCertModal()"><span class="plus-icon">+</span>Add a certification</div>';
+}
+
+function openCertModal() {
+  document.getElementById('certErr').classList.remove('show');
+  document.getElementById('cert-name').value = '';
+  document.getElementById('cert-issuer').value = '';
+  document.getElementById('cert-issue-year').value = '';
+  document.getElementById('cert-expiry-year').value = '';
+  document.getElementById('cert-credential-id').value = '';
+  document.getElementById('cert-credential-url').value = '';
+  document.getElementById('certModal').classList.add('show');
+}
+function closeCertModal() { document.getElementById('certModal').classList.remove('show'); }
+
+async function saveCertification() {
+  const errBox = document.getElementById('certErr');
+  errBox.classList.remove('show');
+  const name = document.getElementById('cert-name').value.trim();
+  const issuer = document.getElementById('cert-issuer').value.trim();
+  if (!name || !issuer) {
+    errBox.textContent = 'Certification name and issuing organization are required.';
+    errBox.classList.add('show');
+    return;
+  }
+  const btn = document.getElementById('certSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch('/api/certifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, issuer,
+        issueYear: document.getElementById('cert-issue-year').value,
+        expiryYear: document.getElementById('cert-expiry-year').value,
+        credentialId: document.getElementById('cert-credential-id').value.trim(),
+        credentialUrl: document.getElementById('cert-credential-url').value.trim(),
+      }),
+    });
+    if (!res.ok) throw new Error('Could not save that certification.');
+    closeCertModal();
+    loadCertifications();
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save certification';
+  }
+}
+
+async function removeCertification(id) {
+  await fetch('/api/certifications/' + id, { method: 'DELETE' });
+  loadCertifications();
 }
 
 function openExpModal() {
