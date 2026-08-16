@@ -50,7 +50,7 @@
       <select id="boardPortal"><option value="">All sources</option></select>
     </div>
     <div id="boardList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div></div>
-    <p style="font-size:12.5px;color:var(--text-faint);margin-top:16px;">This list is a starter set — live aggregation from more job portals is on the roadmap, and we'll say so honestly here until it's real.</p>
+    <p style="font-size:12.5px;color:var(--text-faint);margin-top:16px;">Live listings, refreshed daily from Adzuna — broader portal coverage is on the roadmap.</p>
   </div>
 
   <!-- Career Upgrade -->
@@ -135,7 +135,20 @@ function initials(name) {
   return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
 function fmtINR(n) { if (!n) return '—'; return '₹' + Number(n).toLocaleString('en-IN'); }
-function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low'; }
+function gaugeColor(score) { return score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626'; }
+function gaugeHtml(score) {
+  const r = 18, c = 2 * Math.PI * r;
+  const offset = c - (Math.max(0, Math.min(100, score)) / 100) * c;
+  const color = gaugeColor(score);
+  return `<div class="gauge" title="${score}% match">
+    <svg viewBox="0 0 44 44" width="44" height="44">
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--border)" stroke-width="4.5"/>
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" transform="rotate(-90 22 22)"/>
+    </svg>
+    <span style="color:${color}">${score}%</span>
+  </div>`;
+}
 function setAvatarVisual(el, name, photoUrl) {
   el.innerHTML = '';
   if (photoUrl) { const img = document.createElement('img'); img.src = photoUrl; el.appendChild(img); }
@@ -167,6 +180,7 @@ async function init() {
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   allJobs = jobsData.jobs || [];
+  buildMarketValueByRole();
 
   renderMatches();
   renderBoard();
@@ -176,29 +190,88 @@ async function init() {
   renderInterview();
 }
 
-function jobRowHtml(j, showMatch) {
+let marketValueByRole = {};
+function buildMarketValueByRole() {
+  const buckets = {};
+  allJobs.forEach((j) => {
+    if (!j.coreRole || !j.salaryMin) return;
+    (buckets[j.coreRole] = buckets[j.coreRole] || []).push((j.salaryMin + (j.salaryMax || j.salaryMin)) / 2);
+  });
+  marketValueByRole = Object.fromEntries(Object.entries(buckets).map(([role, vals]) =>
+    [role, Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)]));
+}
+
+function switchToTab(name) {
+  document.querySelectorAll('.pro-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.pro-panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+
+function salaryHtml(j) {
+  if (j.salaryMin) {
+    return `<div class="job-tile-salary">${fmtINR(j.salaryMin)}–${fmtINR(j.salaryMax || j.salaryMin)}/yr</div>`;
+  }
+  const mv = marketValueByRole[j.coreRole];
+  return `<div class="job-tile-salary undisclosed">Salary not disclosed${mv ? ' · Market ~' + fmtINR(mv) + '/yr' : ''}</div>`;
+}
+
+function whyHtml(j) {
+  if (j.matchedSkills.length) {
+    return `<div class="job-tile-why"><b>Why this matches you:</b> ${j.matchedSkills.slice(0, 5).join(', ')}</div>`;
+  }
+  if (j.matchedNiceSkills.length) {
+    return `<div class="job-tile-why"><b>Shared strengths:</b> ${j.matchedNiceSkills.join(', ')} — but the core skills for this role aren't on your profile yet.</div>`;
+  }
+  return '';
+}
+
+function scopeHtml(j) {
+  if (j.matchScore >= 60) return '';
+  const transferable = j.matchedNiceSkills[0] || (profile.experienceYears ? profile.experienceYears + '+ years of experience' : 'your existing experience');
+  if (j.matchScore >= 40) {
+    return `<div class="job-tile-scope">Missing ${j.missingSkills.length} skill${j.missingSkills.length === 1 ? '' : 's'} for a strong fit — see <a onclick="switchToTab('upgrade')">Career Upgrade</a> for a plan.</div>`;
+  }
+  return `<div class="job-tile-scope">Different domain from your profile, but ${transferable} can carry over — see <a onclick="switchToTab('transition')">Career Transition</a> for how.</div>`;
+}
+
+function portalHtml(j) {
+  const domain = j.portalDomain || '';
+  const label = domain || j.portal || 'Unknown source';
+  const favicon = domain ? `<img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" alt="" onerror="this.style.display='none'">` : '';
+  return `<div class="job-tile-portal">${favicon}${label}</div>`;
+}
+
+function jobTileHtml(j, showMatch) {
   return `
-    <div class="job-row">
-      <div class="jinfo">
-        <b>${j.title}</b>
-        <span>${j.company} · ${j.portal}${j.location ? ' · ' + j.location : ''}${j.salaryMin ? ' · ' + fmtINR(j.salaryMin) + '–' + fmtINR(j.salaryMax) : ''}</span>
+    <div class="job-tile">
+      <div class="job-tile-head">
+        <div>
+          ${portalHtml(j)}
+          <div class="job-tile-title">${j.title}</div>
+          <div class="job-tile-sub">${j.company}${j.location ? ' · ' + j.location : ''}</div>
+        </div>
+        ${showMatch ? gaugeHtml(j.matchScore) : ''}
       </div>
-      ${showMatch ? '<span class="match-badge ' + matchClass(j.matchScore) + '">' + j.matchScore + '% match</span>' : ''}
-      ${j.applyUrl ? '<a class="btn-ghost" style="margin-left:8px" href="' + j.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' : ''}
+      ${salaryHtml(j)}
+      ${j.description ? `<p class="job-tile-desc">${j.description}</p>` : ''}
+      ${showMatch ? whyHtml(j) : ''}
+      ${showMatch ? scopeHtml(j) : ''}
+      <div class="job-tile-foot">
+        ${j.applyUrl ? `<a class="btn btn-primary btn-sm" href="${j.applyUrl}" target="_blank" rel="noopener noreferrer">Apply →</a>` : ''}
+      </div>
     </div>`;
 }
 
 function renderMatches() {
   const el = document.getElementById('matchesList');
   if (!allJobs.length) { el.innerHTML = '<div class="empty-note">No jobs available yet.</div>'; return; }
-  el.innerHTML = allJobs.map((j) => jobRowHtml(j, true)).join('');
+  el.innerHTML = '<div class="job-grid">' + allJobs.map((j) => jobTileHtml(j, true)).join('') + '</div>';
 }
 
 function renderBoard() {
   const locSel = document.getElementById('boardLocation');
   const portalSel = document.getElementById('boardPortal');
   const locations = [...new Set(allJobs.map((j) => j.location).filter(Boolean))];
-  const portals = [...new Set(allJobs.map((j) => j.portal).filter(Boolean))];
+  const portals = [...new Set(allJobs.map((j) => j.portalDomain || j.portal).filter(Boolean))];
   locSel.innerHTML = '<option value="">All locations</option>' + locations.map((l) => `<option value="${l}">${l}</option>`).join('');
   portalSel.innerHTML = '<option value="">All sources</option>' + portals.map((p) => `<option value="${p}">${p}</option>`).join('');
   filterBoard();
@@ -214,11 +287,11 @@ function filterBoard() {
   const filtered = allJobs.filter((j) =>
     (!q || (j.title + ' ' + j.company).toLowerCase().includes(q)) &&
     (!loc || j.location === loc) &&
-    (!portal || j.portal === portal)
+    (!portal || (j.portalDomain || j.portal) === portal)
   );
   const el = document.getElementById('boardList');
   el.innerHTML = filtered.length
-    ? filtered.map((j) => jobRowHtml(j, false)).join('')
+    ? '<div class="job-grid">' + filtered.map((j) => jobTileHtml(j, true)).join('') + '</div>'
     : '<div class="empty-note">No jobs match those filters.</div>';
 }
 
