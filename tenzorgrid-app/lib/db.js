@@ -94,6 +94,18 @@ CREATE TABLE IF NOT EXISTS certifications (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS education (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  institution TEXT NOT NULL,
+  degree TEXT NOT NULL,
+  field_of_study TEXT,
+  start_year INTEGER,
+  end_year INTEGER,
+  is_current INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
 -- Caches AI-generated job summaries/skills keyed by the source posting's external_id,
 -- so a posting that reappears across daily syncs is never re-sent to the AI —
 -- this is the thing that keeps AI usage bounded to "once per posting ever seen".

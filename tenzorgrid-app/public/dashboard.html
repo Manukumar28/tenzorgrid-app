@@ -40,6 +40,7 @@
         <div><div class="amt"><span class="salary-amt-emoji">🎯</span><span id="heroExpectedSalary">—</span></div><div class="lbl">EXPECTED</div></div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openEditProfileModal()">✎ Edit profile</button>
         <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
         <button class="btn btn-ghost btn-sm" id="updateCvBtn" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openCvModal()">Update from CV</button>
       </div>
@@ -54,6 +55,9 @@
 
   <div class="section-title"><h3>Your experience</h3></div>
   <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
+
+  <div class="section-title"><h3>Education</h3></div>
+  <div class="exp-scroll" id="eduCards"><div class="skeleton" style="height:100px;"></div></div>
 
   <div class="section-title"><h3>Certifications</h3></div>
   <div class="cert-scroll" id="certCards"><div class="skeleton" style="height:100px;"></div></div>
@@ -70,8 +74,13 @@
 <div class="modal-backdrop" id="certModal">
   <div class="modal-box">
     <h3 style="margin:0 0 4px;">Add a certification</h3>
-    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">Courses, professional certifications, licenses — anything credential-worthy.</p>
+    <p style="margin:0 0 14px;font-size:13px;color:var(--text-soft);">Courses, professional certifications, licenses — anything credential-worthy.</p>
     <div class="error-box" id="certErr"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:10px 12px;background:var(--bg-soft, #f4f6fb);border-radius:10px;">
+      <span style="font-size:13px;color:var(--text-soft);flex:1;">Have this certification on your CV?</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="certFillCvBtn" onclick="fillCertFromCv()">✨ Fill from CV</button>
+    </div>
+    <input type="file" id="certCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
     <div class="field"><label>Certification name</label><input id="cert-name" placeholder="AWS Certified Solutions Architect"></div>
     <div class="field"><label>Issuing organization</label><input id="cert-issuer" placeholder="Amazon Web Services"></div>
     <div class="grid-2">
@@ -117,6 +126,64 @@
   </div>
 </div>
 
+<!-- Add education modal -->
+<div class="modal-backdrop" id="eduModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 4px;">Add education</h3>
+    <p style="margin:0 0 14px;font-size:13px;color:var(--text-soft);">Degrees, diplomas — one card per qualification.</p>
+    <div class="error-box" id="eduErr"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:10px 12px;background:var(--bg-soft, #f4f6fb);border-radius:10px;">
+      <span style="font-size:13px;color:var(--text-soft);flex:1;">Have this on your CV?</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="eduFillCvBtn" onclick="fillEducationFromCv()">✨ Fill from CV</button>
+    </div>
+    <input type="file" id="eduCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
+    <div class="field"><label>Institution</label><input id="edu-institution" placeholder="IIT Bombay"></div>
+    <div class="field"><label>Degree / qualification</label><input id="edu-degree" placeholder="B.Tech"></div>
+    <div class="field"><label>Field of study (optional)</label><input id="edu-field" placeholder="Computer Science"></div>
+    <div class="grid-2">
+      <div class="field"><label>Start year</label><input id="edu-start" type="number" min="1970" max="2100" placeholder="2015"></div>
+      <div class="field"><label>End year</label><input id="edu-end" type="number" min="1970" max="2100" placeholder="2019"></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="edu-current" style="width:auto;" onchange="document.getElementById('edu-end').disabled = this.checked;">
+      <label style="margin:0;">I'm currently studying here</label>
+    </div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="closeEduModal()">Cancel</button>
+      <button class="btn btn-primary" id="eduSaveBtn" onclick="saveEducation()">Save education</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit profile modal -->
+<div class="modal-backdrop" id="editProfileModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 4px;">Edit profile</h3>
+    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">Manual edits — or use "Update from CV" on the dashboard to re-extract these automatically.</p>
+    <div class="error-box" id="editProfileErr"></div>
+    <div class="grid-2">
+      <div class="field"><label>Full name</label><input id="ep-name" placeholder="Jane Doe"></div>
+      <div class="field"><label>Current role</label><input id="ep-role" placeholder="Software Engineer"></div>
+      <div class="field"><label>Years of experience</label><input id="ep-exp" type="number" min="0" step="0.5" placeholder="4"></div>
+      <div class="field"><label>Current salary (₹/yr)</label><input id="ep-salary" type="number" min="0" placeholder="1200000"></div>
+      <div class="field"><label>Expected salary (₹/yr)</label><input id="ep-expected" type="number" min="0" placeholder="1800000"></div>
+      <div class="field"><label>Open to relocation?</label>
+        <select id="ep-relocate"><option>No</option><option>Yes</option><option>Remote only</option></select>
+      </div>
+    </div>
+    <div class="field skills-field">
+      <label>Skills</label>
+      <div class="chip-input-box" id="ep-chip-box"><input id="ep-chip-input" placeholder="Type a skill and press Enter" autocomplete="off"></div>
+      <div class="skills-dropdown" id="ep-skillsDropdown"></div>
+    </div>
+    <div class="field"><label>Anything else? (optional)</label><textarea id="ep-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="closeEditProfileModal()">Cancel</button>
+      <button class="btn btn-primary" id="editProfileSaveBtn" onclick="saveEditProfile()">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Update from CV modal -->
 <div class="modal-backdrop" id="cvModal">
   <div class="modal-box">
@@ -137,6 +204,7 @@
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-skills" style="width:auto;"><label style="margin:0;" id="cv-apply-skills-label">Skills</label></div>
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-roles" style="width:auto;"><label style="margin:0;" id="cv-apply-roles-label">Past roles</label></div>
       <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-certs" style="width:auto;"><label style="margin:0;" id="cv-apply-certs-label">Certifications</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-edu" style="width:auto;"><label style="margin:0;" id="cv-apply-edu-label">Education</label></div>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeCvModal()">Cancel</button>
@@ -158,6 +226,9 @@ function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' :
 let currentProfile = null;
 let currentExperiences = [];
 let currentCertifications = [];
+let currentEducation = [];
+let skillCategories = [];
+fetch('/api/skills').then((r) => r.json()).then((data) => { skillCategories = data.categories || []; }).catch(() => {});
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
@@ -198,6 +269,7 @@ async function load() {
 
   loadInsights();
   loadExperiences();
+  loadEducation();
   loadCertifications();
 
   const browseBtn = document.getElementById('browseAllBtn');
@@ -301,6 +373,273 @@ async function loadExperiences() {
   document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
 }
 
+async function loadEducation() {
+  const data = await fetch('/api/education').then((r) => r.json());
+  const list = data.education || [];
+  currentEducation = list;
+  const cardsHtml = list.map((e) => `
+    <div class="exp-card">
+      <button class="del-btn" onclick="removeEducation('${e.id}')" title="Remove">×</button>
+      <div class="exp-head">
+        <div class="exp-head-left">
+          <div class="exp-badge">${initials(e.institution)}</div>
+          <div class="exp-head-text">
+            <div class="role">${escapeHtml(e.degree)}${e.fieldOfStudy ? ' · ' + escapeHtml(e.fieldOfStudy) : ''}</div>
+            <div class="org">${escapeHtml(e.institution)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="exp-meta">
+        <span class="exp-duration">${e.startYear || '—'} – ${e.isCurrent ? 'Present' : (e.endYear || '—')}${e.isCurrent ? '<i class="live-dot"></i>' : ''}</span>
+      </div>
+    </div>`).join('');
+  document.getElementById('eduCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openEduModal()"><span class="plus-icon">+</span>Add education</div>';
+}
+
+function eduKey(e) { return ((e.institution || '') + '|' + (e.degree || '')).trim().toLowerCase(); }
+
+function openEduModal() {
+  document.getElementById('eduErr').classList.remove('show');
+  document.getElementById('edu-institution').value = '';
+  document.getElementById('edu-degree').value = '';
+  document.getElementById('edu-field').value = '';
+  document.getElementById('edu-start').value = '';
+  document.getElementById('edu-end').value = '';
+  document.getElementById('edu-current').checked = false;
+  document.getElementById('edu-end').disabled = false;
+  document.getElementById('eduModal').classList.add('show');
+}
+function closeEduModal() { document.getElementById('eduModal').classList.remove('show'); }
+
+async function saveEducation() {
+  const errBox = document.getElementById('eduErr');
+  errBox.classList.remove('show');
+  const institution = document.getElementById('edu-institution').value.trim();
+  const degree = document.getElementById('edu-degree').value.trim();
+  if (!institution || !degree) {
+    errBox.textContent = 'Institution and degree are required.';
+    errBox.classList.add('show');
+    return;
+  }
+  const btn = document.getElementById('eduSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch('/api/education', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        institution, degree,
+        fieldOfStudy: document.getElementById('edu-field').value.trim(),
+        startYear: document.getElementById('edu-start').value,
+        endYear: document.getElementById('edu-end').value,
+        isCurrent: document.getElementById('edu-current').checked,
+      }),
+    });
+    if (!res.ok) throw new Error('Could not save that qualification.');
+    closeEduModal();
+    loadEducation();
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save education';
+  }
+}
+
+async function removeEducation(id) {
+  await fetch('/api/education/' + id, { method: 'DELETE' });
+  loadEducation();
+}
+
+async function fillEducationFromCv() {
+  const errBox = document.getElementById('eduErr');
+  errBox.classList.remove('show');
+  const btn = document.getElementById('eduFillCvBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scanning CV…';
+  try {
+    const data = await getCvData('eduCvFileInput', errBox);
+    if (!data) return;
+    const existingKeys = new Set((currentEducation || []).map(eduKey));
+    const candidates = (data.education || []).filter((e) => e && e.degree && !existingKeys.has(eduKey(e)));
+    if (!candidates.length) {
+      errBox.textContent = 'No new education found on your CV — fill this in manually.';
+      errBox.classList.add('show');
+      return;
+    }
+    const chosen = candidates[0];
+    document.getElementById('edu-institution').value = chosen.institution || '';
+    document.getElementById('edu-degree').value = chosen.degree || '';
+    document.getElementById('edu-field').value = chosen.fieldOfStudy || '';
+    document.getElementById('edu-start').value = chosen.startYear || '';
+    document.getElementById('edu-current').checked = !!chosen.isCurrent;
+    document.getElementById('edu-end').disabled = !!chosen.isCurrent;
+    document.getElementById('edu-end').value = chosen.isCurrent ? '' : (chosen.endYear || '');
+    if (candidates.length > 1) {
+      errBox.textContent = 'Filled from your CV. Found ' + (candidates.length - 1) + ' more — save this one, then click "Fill from CV" again for the next.';
+      errBox.classList.add('show');
+    }
+  } catch (e) {
+    errBox.textContent = 'Could not read your CV right now — please fill this in manually.';
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Fill from CV';
+  }
+}
+
+// ---- Edit profile modal (manual edits to name/role/skills/salary/etc.) ----
+let epSkills = [];
+const epChipBox = document.getElementById('ep-chip-box');
+const epChipInput = document.getElementById('ep-chip-input');
+const epDropdown = document.getElementById('ep-skillsDropdown');
+
+epChipBox.addEventListener('click', () => epChipInput.focus());
+
+function epAddSkill(val) {
+  val = (val || '').trim();
+  if (val && !epSkills.includes(val)) { epSkills.push(val); epRenderChips(); }
+  epChipInput.value = '';
+  epCloseDropdown();
+}
+
+epChipInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const active = epDropdown.querySelector('.skills-dropdown-item.active');
+    epAddSkill(active ? active.textContent : epChipInput.value);
+  } else if (e.key === 'Escape') {
+    epCloseDropdown();
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    epMoveActive(e.key === 'ArrowDown' ? 1 : -1);
+  }
+});
+epChipInput.addEventListener('input', () => epRenderDropdown(epChipInput.value.trim()));
+epChipInput.addEventListener('focus', () => epRenderDropdown(epChipInput.value.trim()));
+document.addEventListener('click', (e) => {
+  if (!epChipBox.contains(e.target) && !epDropdown.contains(e.target)) epCloseDropdown();
+});
+
+function epCloseDropdown() { epDropdown.classList.remove('show'); epDropdown.innerHTML = ''; }
+
+function epMoveActive(dir) {
+  const items = Array.from(epDropdown.querySelectorAll('.skills-dropdown-item'));
+  if (!items.length) return;
+  let idx = items.findIndex((i) => i.classList.contains('active'));
+  items.forEach((i) => i.classList.remove('active'));
+  idx = (idx + dir + items.length) % items.length;
+  items[idx].classList.add('active');
+  items[idx].scrollIntoView({ block: 'nearest' });
+}
+
+function epRenderDropdown(query) {
+  const q = (query || '').toLowerCase();
+  epDropdown.innerHTML = '';
+  let shown = 0;
+  const maxShown = 40;
+  for (const group of skillCategories) {
+    const matches = group.skills.filter((s) => !epSkills.includes(s) && (!q || s.toLowerCase().includes(q)));
+    if (!matches.length) continue;
+    const header = document.createElement('div');
+    header.className = 'skills-dropdown-group';
+    header.textContent = group.category;
+    epDropdown.appendChild(header);
+    for (const s of matches) {
+      if (shown >= maxShown) break;
+      const item = document.createElement('div');
+      item.className = 'skills-dropdown-item';
+      item.textContent = s;
+      item.addEventListener('mousedown', (e) => { e.preventDefault(); epAddSkill(s); });
+      epDropdown.appendChild(item);
+      shown++;
+    }
+    if (shown >= maxShown) break;
+  }
+  if (!shown) {
+    const empty = document.createElement('div');
+    empty.className = 'skills-dropdown-empty';
+    empty.textContent = q ? 'No matches — press Enter to add "' + query + '" as a custom skill.' : 'Start typing to see suggestions.';
+    epDropdown.appendChild(empty);
+  }
+  epDropdown.classList.add('show');
+}
+
+function epRenderChips() {
+  epChipBox.querySelectorAll('.chip').forEach((c) => c.remove());
+  epSkills.forEach((s) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    const safe = s.replace(/'/g, "\\'");
+    chip.innerHTML = s + ' <button type="button" onclick="epRemoveChip(\'' + safe + '\')">×</button>';
+    epChipBox.insertBefore(chip, epChipInput);
+  });
+}
+function epRemoveChip(s) { epSkills = epSkills.filter((x) => x !== s); epRenderChips(); }
+
+function openEditProfileModal() {
+  if (!currentProfile) return;
+  document.getElementById('editProfileErr').classList.remove('show');
+  document.getElementById('ep-name').value = currentProfile.name || '';
+  document.getElementById('ep-role').value = currentProfile.role || '';
+  document.getElementById('ep-exp').value = currentProfile.experienceYears || '';
+  document.getElementById('ep-salary').value = currentProfile.currentSalary || '';
+  document.getElementById('ep-expected').value = currentProfile.expectedSalary || '';
+  document.getElementById('ep-relocate').value = currentProfile.relocation || 'No';
+  document.getElementById('ep-notes').value = currentProfile.notes || '';
+  epSkills = (currentProfile.skills || []).slice();
+  epRenderChips();
+  epCloseDropdown();
+  document.getElementById('editProfileModal').classList.add('show');
+}
+
+function closeEditProfileModal() {
+  document.getElementById('editProfileModal').classList.remove('show');
+}
+
+async function saveEditProfile() {
+  const errBox = document.getElementById('editProfileErr');
+  errBox.classList.remove('show');
+  const name = document.getElementById('ep-name').value.trim();
+  const role = document.getElementById('ep-role').value.trim();
+  if (!name || !role) {
+    errBox.textContent = 'Name and current role are required.';
+    errBox.classList.add('show');
+    return;
+  }
+  const btn = document.getElementById('editProfileSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, role,
+        experienceYears: document.getElementById('ep-exp').value,
+        currentSalary: document.getElementById('ep-salary').value,
+        expectedSalary: document.getElementById('ep-expected').value,
+        relocation: document.getElementById('ep-relocate').value,
+        notes: document.getElementById('ep-notes').value,
+        skills: epSkills,
+        cv: null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not save your profile.');
+    closeEditProfileModal();
+    load();
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save changes';
+  }
+}
+
 function certStatus(c) {
   if (!c.expiryYear) return { label: 'No expiry', cls: 'valid' };
   const currentYear = new Date().getFullYear();
@@ -390,6 +729,42 @@ async function removeCertification(id) {
   loadCertifications();
 }
 
+function certKey(c) { return (c.name || '').trim().toLowerCase(); }
+
+async function fillCertFromCv() {
+  const errBox = document.getElementById('certErr');
+  errBox.classList.remove('show');
+  const btn = document.getElementById('certFillCvBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scanning CV…';
+  try {
+    const data = await getCvData('certCvFileInput', errBox);
+    if (!data) return;
+    const existingKeys = new Set((currentCertifications || []).map(certKey));
+    const candidates = (data.certifications || []).filter((c) => c && c.name && !existingKeys.has(certKey(c)));
+    if (!candidates.length) {
+      errBox.textContent = 'No new certifications found on your CV — fill this in manually.';
+      errBox.classList.add('show');
+      return;
+    }
+    const chosen = candidates[0];
+    document.getElementById('cert-name').value = chosen.name || '';
+    document.getElementById('cert-issuer').value = chosen.issuer || '';
+    document.getElementById('cert-issue-year').value = chosen.issueYear || '';
+    document.getElementById('cert-expiry-year').value = chosen.expiryYear || '';
+    if (candidates.length > 1) {
+      errBox.textContent = 'Filled from your CV. Found ' + (candidates.length - 1) + ' more — save this one, then click "Fill from CV" again for the next.';
+      errBox.classList.add('show');
+    }
+  } catch (e) {
+    errBox.textContent = 'Could not read your CV right now — please fill this in manually.';
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Fill from CV';
+  }
+}
+
 function openExpModal() {
   document.getElementById('expErr').classList.remove('show');
   document.getElementById('exp-org').value = '';
@@ -450,11 +825,13 @@ async function removeExperience(id) {
 
 function expKey(e) { return ((e.organization || '') + '|' + (e.role || '')).trim().toLowerCase(); }
 
-// Lets the user upload a one-off CV to parse from inside the Add Role modal,
+// Lets the user upload a one-off CV to parse from inside an "Add ___" modal,
 // used only when they have no CV on file yet — it is not saved to their profile.
-function promptUploadAndParse() {
+// Shared across the Experience/Certification/Education "Fill from CV" buttons,
+// each passing their own file input + error box so state never crosses modals.
+function promptUploadAndParse(fileInputId, errBox) {
   return new Promise((resolve) => {
-    const input = document.getElementById('expCvFileInput');
+    const input = document.getElementById(fileInputId);
     input.value = '';
     let settled = false;
     const finish = (val) => {
@@ -475,7 +852,6 @@ function promptUploadAndParse() {
       if (!file) { finish(null); return; }
       const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowed.includes(file.type) || file.size > 8 * 1024 * 1024) {
-        const errBox = document.getElementById('expErr');
         errBox.textContent = 'Please choose a PDF or Word document under 8MB.';
         errBox.classList.add('show');
         finish(null);
@@ -499,6 +875,19 @@ function promptUploadAndParse() {
   });
 }
 
+// Uses the CV already on file if there is one; otherwise prompts a one-off upload
+// via the given file input. Shared by every "Fill from CV" button on the dashboard.
+async function getCvData(fileInputId, errBox) {
+  if (currentProfile && currentProfile.hasCv) {
+    return fetch('/api/cv-parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).then((r) => r.json());
+  }
+  return promptUploadAndParse(fileInputId, errBox);
+}
+
 async function fillRoleFromCv() {
   const errBox = document.getElementById('expErr');
   errBox.classList.remove('show');
@@ -506,17 +895,8 @@ async function fillRoleFromCv() {
   btn.disabled = true;
   btn.textContent = 'Scanning CV…';
   try {
-    let data;
-    if (currentProfile && currentProfile.hasCv) {
-      data = await fetch('/api/cv-parse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      }).then((r) => r.json());
-    } else {
-      data = await promptUploadAndParse();
-      if (!data) { return; }
-    }
+    const data = await getCvData('expCvFileInput', errBox);
+    if (!data) return;
     const existingKeys = new Set((currentExperiences || []).map(expKey));
     const candidates = (data.experience || []).filter((e) => e && e.organization && e.role && !existingKeys.has(expKey(e)));
     if (!candidates.length) {
@@ -613,7 +993,7 @@ async function runCvParse(payload, label) {
 
 function showCvPreview(data) {
   const hasExp = data && data.experienceYears != null;
-  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length) || (data.certifications && data.certifications.length));
+  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length) || (data.certifications && data.certifications.length) || (data.education && data.education.length));
   if (!found) {
     document.getElementById('cvPreview').style.display = 'none';
     document.getElementById('cvApplyBtn').style.display = 'none';
@@ -647,6 +1027,12 @@ function showCvPreview(data) {
   cvModalParsed._newCerts = newCerts;
   set('cv-apply-certs', !!newCerts.length, !newCerts.length,
     'Certifications: ' + (newCerts.length ? ('+' + newCerts.length + ' new') : 'no new certifications found'));
+
+  const existingEduKeys = new Set((currentEducation || []).map(eduKey));
+  const newEducation = (data.education || []).filter((e) => e && e.degree && !existingEduKeys.has(eduKey(e)));
+  cvModalParsed._newEducation = newEducation;
+  set('cv-apply-edu', !!newEducation.length, !newEducation.length,
+    'Education: ' + (newEducation.length ? ('+' + newEducation.length + ' new') : 'no new education found'));
 
   document.getElementById('cvPreview').style.display = 'block';
   document.getElementById('cvApplyBtn').style.display = 'inline-flex';
@@ -702,6 +1088,20 @@ async function applyCvUpdate() {
           issuer: c.issuer || '',
           issueYear: c.issueYear || '',
           expiryYear: c.expiryYear || '',
+        }),
+      }).catch(() => {})));
+    }
+    if (document.getElementById('cv-apply-edu').checked) {
+      await Promise.all((cvModalParsed._newEducation || []).map((e) => fetch('/api/education', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          institution: e.institution || '',
+          degree: e.degree,
+          fieldOfStudy: e.fieldOfStudy || '',
+          startYear: e.startYear || '',
+          endYear: e.endYear || '',
+          isCurrent: !!e.isCurrent,
         }),
       }).catch(() => {})));
     }
