@@ -194,7 +194,8 @@ button{font-family:inherit;cursor:pointer;}
 .exp-card.is-current{border-top-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft) 0%,#fff 90px);}
 .exp-card.is-current:hover{box-shadow:0 16px 34px -16px rgba(16,185,129,.32);}
 
-.exp-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.exp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.exp-head-left{display:flex;align-items:flex-start;gap:12px;min-width:0;}
 .exp-badge{
   flex-shrink:0;width:42px;height:42px;border-radius:12px;
   background:linear-gradient(135deg,var(--primary),var(--accent));
@@ -210,7 +211,42 @@ button{font-family:inherit;cursor:pointer;}
 .exp-duration{font-size:12px;font-weight:600;color:var(--text-soft);background:var(--surface-alt);border:1px solid var(--border);padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:6px;}
 .exp-duration .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:exp-pulse 2s ease-in-out infinite;}
 @keyframes exp-pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.55);}70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
-.exp-span{font-size:12px;color:var(--text-faint);}
+
+/* ---- Tenure achievement seal ----
+   A small badge celebrating how long someone stayed in a role, styled as a modern
+   seal (dashed outer ring + ribbon tails) rather than a literal gold-clipart medal.
+   Colour tiers level up with tenure -- Indigo -> Emerald -> Gold -> Platinum -- so a
+   longer stint visibly reads as a bigger achievement (Platinum doubles as a nod to
+   the "Midnight Platinum" brand mark for the longest-held roles). */
+.exp-seal{position:relative;flex-shrink:0;width:44px;height:50px;}
+.exp-seal .ring{position:absolute;top:0;left:0;width:44px;height:44px;border-radius:50%;border:3px dashed currentColor;opacity:.35;}
+.exp-seal .core{
+  position:absolute;top:4px;left:4px;width:36px;height:36px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;box-shadow:0 3px 10px -3px rgba(15,23,42,.35);
+}
+.exp-seal .core .num{font-size:13px;font-weight:800;line-height:1;}
+.exp-seal .core .unit{font-size:6.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.9;margin-top:1px;}
+.exp-seal .ribbon{position:absolute;bottom:0;left:50%;transform:translateX(-50%);display:flex;}
+.exp-seal .ribbon i{width:7px;height:13px;clip-path:polygon(0 0,100% 0,100% 100%,50% 72%,0 100%);}
+.exp-seal .ribbon i:first-child{margin-right:-2px;transform:rotate(-8deg);}
+.exp-seal .ribbon i:last-child{transform:rotate(8deg);}
+
+.tier-indigo .ring{color:var(--primary);}
+.tier-indigo .core{background:linear-gradient(135deg,#4F46E5,#818CF8);}
+.tier-indigo .ribbon i{background:#4338CA;}
+
+.tier-emerald .ring{color:var(--accent);}
+.tier-emerald .core{background:linear-gradient(135deg,#10B981,#34D399);}
+.tier-emerald .ribbon i{background:#059669;}
+
+.tier-gold .ring{color:#D97706;}
+.tier-gold .core{background:linear-gradient(135deg,#F59E0B,#FCD34D);}
+.tier-gold .ribbon i{background:#B45309;}
+
+.tier-platinum .ring{color:#94A3B8;}
+.tier-platinum .core{background:linear-gradient(135deg,#E2E8F0,#F8FAFC 55%,#CBD5E1);color:#1B2138;box-shadow:0 3px 10px -3px rgba(15,23,42,.35), 0 0 0 1px rgba(148,163,184,.4) inset;}
+.tier-platinum .ribbon i{background:#64748B;}
 
 .exp-card .achievements{list-style:none;padding:0;margin:0 0 8px;}
 .exp-card .achievements li{position:relative;padding-left:16px;font-size:13px;color:var(--text-soft);line-height:1.55;margin-bottom:7px;}
