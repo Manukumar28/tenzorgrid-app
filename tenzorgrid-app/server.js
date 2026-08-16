@@ -9,6 +9,7 @@ const { extractFromCv } = require('./lib/cvparse');
 const { SKILLS, SKILL_CATEGORIES } = require('./lib/skills-data');
 const { listExperiences, addExperience, deleteExperience } = require('./lib/experience');
 const { listCertifications, addCertification, deleteCertification } = require('./lib/certifications');
+const { listEducation, addEducation, deleteEducation } = require('./lib/education');
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
 const { syncJobsFromAdzuna } = require('./lib/jobsync');
@@ -243,7 +244,7 @@ async function handleApi(req, res, url) {
       return sendJson(res, 200, result);
     } catch (e) {
       console.error('CV parse error:', e);
-      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], experience: [], certifications: [], source: 'none' });
+      return sendJson(res, 200, { name: null, role: null, experienceYears: null, skills: [], experience: [], certifications: [], education: [], source: 'none' });
     }
   }
 
@@ -316,6 +317,33 @@ async function handleApi(req, res, url) {
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     deleteCertification(user.id, certMatch[1]);
     return sendJson(res, 200, { certifications: listCertifications(user.id) });
+  }
+
+  // ---- GET /api/education / POST /api/education / DELETE /api/education/:id ----
+  if (pathname === '/api/education' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { education: listEducation(user.id) });
+  }
+  if (pathname === '/api/education' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      addEducation(user.id, body);
+      return sendJson(res, 200, { education: listEducation(user.id) });
+    } catch (e) {
+      if (e.code === 'BAD_EDUCATION') return sendJson(res, 400, { error: e.message });
+      console.error(e);
+      return sendJson(res, 500, { error: 'Something went wrong saving that qualification.' });
+    }
+  }
+  const eduMatch = pathname.match(/^\/api\/education\/([a-f0-9]+)$/);
+  if (eduMatch && req.method === 'DELETE') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    deleteEducation(user.id, eduMatch[1]);
+    return sendJson(res, 200, { education: listEducation(user.id) });
   }
 
   // ---- POST /api/subscribe (dev-mode instant Pro activation; no payment gateway yet) ----
