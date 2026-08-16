@@ -37,7 +37,7 @@
 
   <!-- Job Matches -->
   <div class="pro-panel active" id="panel-matches">
-    <div class="section-title" style="margin-top:0;"><h3>All your matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
+    <div class="section-title" style="margin-top:0;"><h3>All your matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Strong matches only (80%+) — see the Job Board for everything else</span></div>
     <div id="matchesList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div></div>
   </div>
 
@@ -214,33 +214,43 @@ function salaryHtml(j) {
   return `<div class="job-tile-salary undisclosed">Salary not disclosed${mv ? ' · Market ~' + fmtINR(mv) + '/yr' : ''}</div>`;
 }
 
-function whyHtml(j) {
-  if (j.matchedSkills.length) {
-    return `<div class="job-tile-why"><b>Why this matches you:</b> ${j.matchedSkills.slice(0, 5).join(', ')}</div>`;
-  }
-  if (j.matchedNiceSkills.length) {
-    return `<div class="job-tile-why"><b>Shared strengths:</b> ${j.matchedNiceSkills.join(', ')} — but the core skills for this role aren't on your profile yet.</div>`;
-  }
-  return '';
+function requiredSkillsHtml(j) {
+  if (!j.requiredSkills || !j.requiredSkills.length) return '';
+  return `<div class="job-tile-skills"><b>Required skills</b><div class="skills-row">${j.requiredSkills.map((s) => '<span class="tag' + (j.missingSkills.includes(s) ? ' missing' : '') + '">' + s + '</span>').join('')}</div></div>`;
 }
 
-function scopeHtml(j) {
-  if (j.matchScore >= 60) return '';
-  const transferable = j.matchedNiceSkills[0] || (profile.experienceYears ? profile.experienceYears + '+ years of experience' : 'your existing experience');
-  if (j.matchScore >= 40) {
-    return `<div class="job-tile-scope">Missing ${j.missingSkills.length} skill${j.missingSkills.length === 1 ? '' : 's'} for a strong fit — see <a onclick="switchToTab('upgrade')">Career Upgrade</a> for a plan.</div>`;
+// Below a strong-match score, a job tile trades the (now-removed) "why this
+// matches you" note for forward-looking guidance: what's missing, and whether
+// the realistic move is closing the gap (Career Upgrade) or a domain change
+// (Career Transition). No AI call here — deterministic templates keep this free.
+function careerBlocksHtml(j) {
+  if (j.matchScore >= 80) return '';
+  const missing = j.missingSkills.slice(0, 6);
+  if (j.matchScore >= 50) {
+    return `
+      <div class="job-tile-career upgrade">
+        <div class="career-label">Career Upgrade path</div>
+        <div class="career-plan">Learn ${missing.slice(0, 2).join(' and ') || 'the skills above'} first — closing this gap moves you into strong-match territory for ${j.coreRole || 'this type of role'} and typically supports asking for more. See <a onclick="switchToTab('upgrade')">Career Upgrade</a> for a full plan.</div>
+      </div>`;
   }
-  return `<div class="job-tile-scope">Different domain from your profile, but ${transferable} can carry over — see <a onclick="switchToTab('transition')">Career Transition</a> for how.</div>`;
+  const transferable = j.matchedNiceSkills[0] || (profile.experienceYears ? profile.experienceYears + '+ years of experience' : 'your existing experience');
+  return `
+    <div class="job-tile-career transition">
+      <div class="career-label">Career Transition path</div>
+      <div class="career-plan">Different field from your background, but ${transferable} can carry over. Realistic path: build the skills above through a focused course or project, then target entry-adjacent roles here before aiming for titles like this one. See <a onclick="switchToTab('transition')">Career Transition</a> for a structured plan.</div>
+    </div>`;
 }
 
 function portalHtml(j) {
   const domain = j.portalDomain || '';
-  const label = domain || j.portal || 'Unknown source';
-  const favicon = domain ? `<img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" alt="" onerror="this.style.display='none'">` : '';
-  return `<div class="job-tile-portal">${favicon}${label}</div>`;
+  if (domain) {
+    return `<div class="job-tile-portal"><img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" alt="" onerror="this.style.display='none'">${domain}</div>`;
+  }
+  return `<div class="job-tile-portal job-tile-portal-unknown">Adzuna listing</div>`;
 }
 
 function jobTileHtml(j, showMatch) {
+  const body = j.summary || j.description;
   return `
     <div class="job-tile">
       <div class="job-tile-head">
@@ -252,47 +262,85 @@ function jobTileHtml(j, showMatch) {
         ${showMatch ? gaugeHtml(j.matchScore) : ''}
       </div>
       ${salaryHtml(j)}
-      ${j.description ? `<p class="job-tile-desc">${j.description}</p>` : ''}
-      ${showMatch ? whyHtml(j) : ''}
-      ${showMatch ? scopeHtml(j) : ''}
+      ${body ? `<p class="job-tile-desc">${body}</p>` : ''}
+      ${requiredSkillsHtml(j)}
+      ${showMatch ? careerBlocksHtml(j) : ''}
       <div class="job-tile-foot">
         ${j.applyUrl ? `<a class="btn btn-primary btn-sm" href="${j.applyUrl}" target="_blank" rel="noopener noreferrer">Apply →</a>` : ''}
       </div>
     </div>`;
 }
 
+const PAGE_SIZE = 20;
+const pageState = { matches: 1, board: 1 };
+
+function paginationHtml(key, total) {
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const current = Math.min(pageState[key], pages);
+  if (pages <= 1) return '';
+  let buttons = '';
+  for (let p = 1; p <= pages; p++) {
+    if (pages > 9 && Math.abs(p - current) > 2 && p !== 1 && p !== pages) {
+      if (Math.abs(p - current) === 3) buttons += '<span class="page-ellipsis">…</span>';
+      continue;
+    }
+    buttons += `<button class="page-btn${p === current ? ' active' : ''}" onclick="goToPage('${key}', ${p})">${p}</button>`;
+  }
+  return `<div class="pagination">
+    <button class="page-btn" onclick="goToPage('${key}', ${current - 1})" ${current <= 1 ? 'disabled' : ''}>← Prev</button>
+    ${buttons}
+    <button class="page-btn" onclick="goToPage('${key}', ${current + 1})" ${current >= pages ? 'disabled' : ''}>Next →</button>
+  </div>`;
+}
+
+function goToPage(key, page) {
+  pageState[key] = page;
+  if (key === 'matches') renderMatches(); else filterBoard();
+  document.getElementById(key === 'matches' ? 'panel-matches' : 'panel-board').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function renderMatches() {
   const el = document.getElementById('matchesList');
-  if (!allJobs.length) { el.innerHTML = '<div class="empty-note">No jobs available yet.</div>'; return; }
-  el.innerHTML = '<div class="job-grid">' + allJobs.map((j) => jobTileHtml(j, true)).join('') + '</div>';
+  // Only strong matches (>=80%) show here — anything weaker belongs on the
+  // Job Board, which is explicit about what's missing instead of implying fit.
+  const strong = allJobs.filter((j) => j.matchScore >= 80);
+  if (!strong.length) {
+    el.innerHTML = '<div class="empty-note">No strong matches (80%+) yet — check the Job Board for the full list, including what would close the gap.</div>';
+    return;
+  }
+  const start = (pageState.matches - 1) * PAGE_SIZE;
+  const pageItems = strong.slice(start, start + PAGE_SIZE);
+  el.innerHTML = '<div class="job-grid">' + pageItems.map((j) => jobTileHtml(j, true)).join('') + '</div>' + paginationHtml('matches', strong.length);
 }
 
 function renderBoard() {
   const locSel = document.getElementById('boardLocation');
   const portalSel = document.getElementById('boardPortal');
   const locations = [...new Set(allJobs.map((j) => j.location).filter(Boolean))];
-  const portals = [...new Set(allJobs.map((j) => j.portalDomain || j.portal).filter(Boolean))];
+  const portals = [...new Set(allJobs.map((j) => j.portalDomain).filter(Boolean))];
   locSel.innerHTML = '<option value="">All locations</option>' + locations.map((l) => `<option value="${l}">${l}</option>`).join('');
   portalSel.innerHTML = '<option value="">All sources</option>' + portals.map((p) => `<option value="${p}">${p}</option>`).join('');
   filterBoard();
-  document.getElementById('boardSearch').addEventListener('input', filterBoard);
-  locSel.addEventListener('change', filterBoard);
-  portalSel.addEventListener('change', filterBoard);
+  document.getElementById('boardSearch').addEventListener('input', () => { pageState.board = 1; filterBoard(); });
+  locSel.addEventListener('change', () => { pageState.board = 1; filterBoard(); });
+  portalSel.addEventListener('change', () => { pageState.board = 1; filterBoard(); });
 }
 
 function filterBoard() {
   const q = (document.getElementById('boardSearch').value || '').toLowerCase();
   const loc = document.getElementById('boardLocation').value;
   const portal = document.getElementById('boardPortal').value;
+  // allJobs is already sorted highest-match-first by computeMatches(); filtering preserves that order.
   const filtered = allJobs.filter((j) =>
     (!q || (j.title + ' ' + j.company).toLowerCase().includes(q)) &&
     (!loc || j.location === loc) &&
-    (!portal || (j.portalDomain || j.portal) === portal)
+    (!portal || j.portalDomain === portal)
   );
   const el = document.getElementById('boardList');
-  el.innerHTML = filtered.length
-    ? '<div class="job-grid">' + filtered.map((j) => jobTileHtml(j, true)).join('') + '</div>'
-    : '<div class="empty-note">No jobs match those filters.</div>';
+  if (!filtered.length) { el.innerHTML = '<div class="empty-note">No jobs match those filters.</div>'; return; }
+  const start = (pageState.board - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+  el.innerHTML = '<div class="job-grid">' + pageItems.map((j) => jobTileHtml(j, true)).join('') + '</div>' + paginationHtml('board', filtered.length);
 }
 
 async function renderUpgrade() {

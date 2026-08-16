@@ -9,8 +9,8 @@ const { isAdzunaConfigured, fetchAllConfiguredJobs } = require('./adzuna');
 const { isSupabaseConfigured, upsertJobPostings } = require('./supabase');
 
 const insertJob = db.prepare(`
-  INSERT INTO jobs (id, title, company, portal, location, required_skills_json, salary_min, salary_max, posted_at, apply_url, external_id, source, description, nice_to_have_skills_json, source_domain, core_role)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO jobs (id, title, company, portal, location, required_skills_json, salary_min, salary_max, posted_at, apply_url, external_id, source, description, nice_to_have_skills_json, source_domain, core_role, summary)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 function toSupabaseRow(job) {
@@ -21,7 +21,7 @@ function toSupabaseRow(job) {
     company: job.company,
     location: job.location,
     apply_url: job.applyUrl,
-    description: job.description,
+    description: job.summary || job.description,
     core_role: job.coreRole,
     mandatory_skills: job.skills,
     nice_to_have_skills: job.softSkills || [],
@@ -60,7 +60,7 @@ async function syncJobsFromAdzuna() {
         JSON.stringify(job.skills || []), job.salaryMin, job.salaryMax,
         job.postedAt || new Date().toISOString(), job.applyUrl, job.externalId,
         job.source, job.description, JSON.stringify(job.softSkills || []),
-        job.portalDomain, job.coreRole
+        job.portalDomain, job.coreRole, job.summary || ''
       );
     }
     db.exec('COMMIT');

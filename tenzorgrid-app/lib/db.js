@@ -93,6 +93,17 @@ CREATE TABLE IF NOT EXISTS certifications (
   credential_url TEXT,
   created_at TEXT NOT NULL
 );
+
+-- Caches AI-generated job summaries/skills keyed by the source posting's external_id,
+-- so a posting that reappears across daily syncs is never re-sent to the AI —
+-- this is the thing that keeps AI usage bounded to "once per posting ever seen".
+CREATE TABLE IF NOT EXISTS job_ai_cache (
+  external_id TEXT PRIMARY KEY,
+  summary TEXT,
+  skills_json TEXT,
+  nice_to_have_json TEXT,
+  created_at TEXT NOT NULL
+);
 `);
 
 // Safe migration helper for columns added after the DB was first created
@@ -118,6 +129,7 @@ ensureColumn('jobs', 'description', 'TEXT');
 ensureColumn('jobs', 'nice_to_have_skills_json', 'TEXT');
 ensureColumn('jobs', 'source_domain', 'TEXT');
 ensureColumn('jobs', 'core_role', 'TEXT');
+ensureColumn('jobs', 'summary', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.
