@@ -10,8 +10,8 @@
 <div class="dark-hero">
   <div class="container">
     <div class="nav top-nav">
-      <div class="logo"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div>
-      <div style="display:flex;gap:10px;">
+      <a class="logo" href="/"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</a>
+      <div style="display:flex;gap:10px;" id="navCta">
         <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="/">← All pillars</a>
         <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="/login.html">Log in</a>
         <a class="btn btn-primary btn-sm" href="/signup.html">Sign up</a>
@@ -21,7 +21,7 @@
       <div class="hero-eyebrow">Your career, automated</div>
       <h1>One platform to find, apply,<br>and grow your career.</h1>
       <p>TenzorGrid brings job discovery, your resume, and an AI-guided career plan into a single place — build your profile once and see where you match.</p>
-      <a class="btn btn-primary" href="/signup.html">Get started →</a>
+      <a class="btn btn-primary" href="/signup.html" id="ctaTop">Get started →</a>
     </div>
 
     <div class="feature-grid">
@@ -36,9 +36,28 @@
 
     <div class="hero-block" style="padding-top:10px;padding-bottom:70px;">
       <p style="margin-bottom:26px;">Auto Apply, Career Upgrade, Career Transition, the Resume Builder, and Interview Prep unlock with a subscription — everything else on this page is free to explore once you've built your profile.</p>
-      <a class="btn btn-primary" href="/signup.html">Build my profile →</a>
+      <a class="btn btn-primary" href="/signup.html" id="ctaBottom">Build my profile →</a>
     </div>
   </div>
 </div>
+<script>
+(async function setupAuthAwareCtas() {
+  try {
+    const me = await fetch('/api/me').then((r) => r.json());
+    if (!me.authenticated) return;
+    const dest = me.hasProfile ? '/dashboard.html' : '/onboarding.html';
+    const label = me.hasProfile ? 'Go to my dashboard →' : 'Finish my profile →';
+    ['ctaTop', 'ctaBottom'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.setAttribute('href', dest);
+      el.textContent = label;
+    });
+    document.getElementById('navCta').innerHTML = `
+      <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="/">← All pillars</a>
+      <a class="btn btn-primary btn-sm" href="${dest}">${me.hasProfile ? 'Dashboard' : 'Finish profile'}</a>`;
+  } catch (e) { /* stay on the logged-out default */ }
+})();
+</script>
 </body>
 </html>

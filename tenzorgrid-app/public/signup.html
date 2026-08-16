@@ -9,7 +9,7 @@
 <body>
 <div class="auth-wrap">
   <div class="auth-card" style="width:440px;">
-    <div class="logo" style="margin-bottom:22px;justify-content:center;"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</div>
+    <a class="logo" href="/" style="margin-bottom:22px;justify-content:center;"><img src="/assets/icon.svg" alt="TenzorGrid"> TenzorGrid</a>
     <h2 style="margin:0 0 4px;font-size:19px;">Create your account</h2>
     <p style="margin:0 0 20px;font-size:13.5px;color:var(--text-soft);">Takes under two minutes.</p>
     <div class="error-box" id="err"></div>
@@ -71,7 +71,7 @@ form.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Something went wrong.');
-    window.location.href = '/onboarding.html';
+    window.location.href = '/';
   } catch (err) {
     errBox.textContent = err.message;
     errBox.classList.add('show');
