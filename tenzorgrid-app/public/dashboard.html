@@ -39,7 +39,10 @@
         <div><div class="amt"><span class="salary-amt-emoji">💰</span><span id="heroCurrentSalary">—</span></div><div class="lbl">CURRENT</div></div>
         <div><div class="amt"><span class="salary-amt-emoji">🎯</span><span id="heroExpectedSalary">—</span></div><div class="lbl">EXPECTED</div></div>
       </div>
-      <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="margin-top:14px;color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+        <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
+        <button class="btn btn-ghost btn-sm" id="updateCvBtn" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openCvModal()">Update from CV</button>
+      </div>
     </div>
 
     <div class="insights-panel" id="insightsPanel">
@@ -64,8 +67,13 @@
 <div class="modal-backdrop" id="expModal">
   <div class="modal-box">
     <h3 style="margin:0 0 4px;">Add a role</h3>
-    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">One card per organization / role.</p>
+    <p style="margin:0 0 14px;font-size:13px;color:var(--text-soft);">One card per organization / role.</p>
     <div class="error-box" id="expErr"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:10px 12px;background:var(--bg-soft, #f4f6fb);border-radius:10px;">
+      <span style="font-size:13px;color:var(--text-soft);flex:1;">Have this role on your CV?</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="expFillCvBtn" onclick="fillRoleFromCv()">✨ Fill from CV</button>
+    </div>
+    <input type="file" id="expCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
     <div class="field"><label>Organization</label><input id="exp-org" placeholder="Acme Corp"></div>
     <div class="field"><label>Role</label><input id="exp-role" placeholder="Software Engineer"></div>
     <div class="field"><label>Responsibilities / achievements</label><textarea id="exp-achievements" rows="3" placeholder="Led migration to microservices; grew team from 2 to 6..."></textarea></div>
@@ -85,6 +93,33 @@
   </div>
 </div>
 
+<!-- Update from CV modal -->
+<div class="modal-backdrop" id="cvModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 4px;">Update from CV</h3>
+    <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">Re-scan your CV on file, or upload a new one, to refresh your profile.</p>
+    <div class="error-box" id="cvModalErr"></div>
+    <button class="btn btn-primary btn-sm" id="cvModalUseExisting" style="display:none;margin-bottom:10px;width:100%;" onclick="rescanExistingCv()">Re-scan my CV on file</button>
+    <div class="cv-drop" id="cvModalDrop">
+      <div style="font-size:26px;">📄</div>
+      <div style="font-weight:600;margin-top:6px;">Click to upload a new CV</div>
+      <div class="cv-status" id="cvModalStatus">No file selected</div>
+    </div>
+    <input type="file" id="cvModalFile" accept=".pdf,.doc,.docx" style="display:none">
+    <div id="cvPreview" style="display:none;margin-top:18px;">
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-name" style="width:auto;"><label style="margin:0;" id="cv-apply-name-label">Name</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-role" style="width:auto;"><label style="margin:0;" id="cv-apply-role-label">Role</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-exp" style="width:auto;"><label style="margin:0;" id="cv-apply-exp-label">Experience</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-skills" style="width:auto;"><label style="margin:0;" id="cv-apply-skills-label">Skills</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-roles" style="width:auto;"><label style="margin:0;" id="cv-apply-roles-label">Past roles</label></div>
+    </div>
+    <div class="step-actions">
+      <button class="btn btn-ghost" onclick="closeCvModal()">Cancel</button>
+      <button class="btn btn-primary" id="cvApplyBtn" onclick="applyCvUpdate()" style="display:none;">Apply updates</button>
+    </div>
+  </div>
+</div>
+
 <script>
 function initials(name) {
   return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
@@ -94,6 +129,9 @@ function fmtINR(n) {
   return '₹' + Number(n).toLocaleString('en-IN');
 }
 function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low'; }
+
+let currentProfile = null;
+let currentExperiences = [];
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
@@ -117,6 +155,7 @@ async function load() {
   if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
 
   const p = me.profile;
+  currentProfile = p;
   document.getElementById('miniName').textContent = p.name;
   setAvatarVisual(document.getElementById('miniAvatar'), p.name, p.photoUrl);
   setAvatarVisual(document.getElementById('heroAvatar'), p.name, p.photoUrl);
@@ -171,6 +210,7 @@ async function loadInsights() {
 async function loadExperiences() {
   const data = await fetch('/api/experiences').then((r) => r.json());
   const list = data.experiences || [];
+  currentExperiences = list;
   const cardsHtml = list.map((e) => `
     <div class="exp-card">
       <button class="del-btn" onclick="removeExperience('${e.id}')" title="Remove">×</button>
@@ -240,6 +280,255 @@ async function saveExperience() {
 async function removeExperience(id) {
   await fetch('/api/experiences/' + id, { method: 'DELETE' });
   loadExperiences();
+}
+
+function expKey(e) { return ((e.organization || '') + '|' + (e.role || '')).trim().toLowerCase(); }
+
+// Lets the user upload a one-off CV to parse from inside the Add Role modal,
+// used only when they have no CV on file yet — it is not saved to their profile.
+function promptUploadAndParse() {
+  return new Promise((resolve) => {
+    const input = document.getElementById('expCvFileInput');
+    input.value = '';
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('focus', onCancelCheck);
+      resolve(val);
+    };
+    // The file input fires no event when the native picker is cancelled, so we'd
+    // otherwise hang forever. Watching for the window regaining focus (the picker
+    // closing) and checking shortly after whether a file actually landed catches it.
+    const onCancelCheck = () => {
+      setTimeout(() => { if (!settled && !input.files.length) finish(null); }, 300);
+    };
+    window.addEventListener('focus', onCancelCheck);
+    input.onchange = () => {
+      const file = input.files[0];
+      if (!file) { finish(null); return; }
+      const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowed.includes(file.type) || file.size > 8 * 1024 * 1024) {
+        const errBox = document.getElementById('expErr');
+        errBox.textContent = 'Please choose a PDF or Word document under 8MB.';
+        errBox.classList.add('show');
+        finish(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        try {
+          const data = await fetch('/api/cv-parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cv: { filename: file.name, mime: file.type, dataBase64: base64 } }),
+          }).then((r) => r.json());
+          finish(data);
+        } catch (e) { finish(null); }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+}
+
+async function fillRoleFromCv() {
+  const errBox = document.getElementById('expErr');
+  errBox.classList.remove('show');
+  const btn = document.getElementById('expFillCvBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scanning CV…';
+  try {
+    let data;
+    if (currentProfile && currentProfile.hasCv) {
+      data = await fetch('/api/cv-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }).then((r) => r.json());
+    } else {
+      data = await promptUploadAndParse();
+      if (!data) { return; }
+    }
+    const existingKeys = new Set((currentExperiences || []).map(expKey));
+    const candidates = (data.experience || []).filter((e) => e && e.organization && e.role && !existingKeys.has(expKey(e)));
+    if (!candidates.length) {
+      errBox.textContent = 'No new roles found on your CV — fill this in manually.';
+      errBox.classList.add('show');
+      return;
+    }
+    const chosen = candidates[0];
+    document.getElementById('exp-org').value = chosen.organization || '';
+    document.getElementById('exp-role').value = chosen.role || '';
+    document.getElementById('exp-achievements').value = Array.isArray(chosen.achievements) ? chosen.achievements.join('\n') : (chosen.achievements || '');
+    document.getElementById('exp-start').value = chosen.startYear || '';
+    document.getElementById('exp-current').checked = !!chosen.isCurrent;
+    document.getElementById('exp-end').disabled = !!chosen.isCurrent;
+    document.getElementById('exp-end').value = chosen.isCurrent ? '' : (chosen.endYear || '');
+    if (candidates.length > 1) {
+      errBox.textContent = 'Filled from your CV. Found ' + (candidates.length - 1) + ' more role' + (candidates.length - 1 === 1 ? '' : 's') + ' — save this one, then click "Fill from CV" again for the next.';
+      errBox.classList.add('show');
+    }
+  } catch (e) {
+    errBox.textContent = 'Could not read your CV right now — please fill this in manually.';
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Fill from CV';
+  }
+}
+
+// ---- Update from CV modal ----
+let cvModalParsed = null;
+let cvModalPayload = null; // set when the user uploads a fresh file in this modal
+
+function openCvModal() {
+  document.getElementById('cvModalErr').classList.remove('show');
+  document.getElementById('cvModalStatus').textContent = 'No file selected';
+  document.getElementById('cvModalDrop').classList.remove('filled');
+  document.getElementById('cvPreview').style.display = 'none';
+  document.getElementById('cvApplyBtn').style.display = 'none';
+  document.getElementById('cvModalUseExisting').style.display = (currentProfile && currentProfile.hasCv) ? 'block' : 'none';
+  cvModalParsed = null;
+  cvModalPayload = null;
+  document.getElementById('cvModal').classList.add('show');
+}
+function closeCvModal() { document.getElementById('cvModal').classList.remove('show'); }
+
+function showCvModalError(msg) {
+  const box = document.getElementById('cvModalErr');
+  box.textContent = msg;
+  box.classList.add('show');
+}
+
+document.getElementById('cvModalDrop').addEventListener('click', () => document.getElementById('cvModalFile').click());
+document.getElementById('cvModalFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (!allowed.includes(file.type)) { showCvModalError('Please upload a PDF or Word document.'); return; }
+  if (file.size > 8 * 1024 * 1024) { showCvModalError('CV must be under 8MB.'); return; }
+  document.getElementById('cvModalErr').classList.remove('show');
+  document.getElementById('cvModalStatus').textContent = 'Reading "' + file.name + '"…';
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    cvModalPayload = { filename: file.name, mime: file.type, dataBase64: base64 };
+    document.getElementById('cvModalDrop').classList.add('filled');
+    await runCvParse(cvModalPayload, file.name);
+  };
+  reader.readAsDataURL(file);
+});
+
+async function rescanExistingCv() {
+  cvModalPayload = null; // discard any file picked earlier in this modal session -- we're using the stored CV now
+  document.getElementById('cvModalDrop').classList.remove('filled');
+  document.getElementById('cvModalStatus').textContent = 'Re-scanning your CV on file…';
+  await runCvParse(null, null);
+}
+
+async function runCvParse(payload, label) {
+  try {
+    const res = await fetch('/api/cv-parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cv: payload }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showCvModalError(data.error || 'Could not read that CV.'); return; }
+    cvModalParsed = data;
+    showCvPreview(data);
+    document.getElementById('cvModalStatus').textContent = label ? ('✓ ' + label + ' read') : '✓ Re-scanned your CV on file';
+  } catch (e) {
+    showCvModalError('Could not read that CV — please try again.');
+  }
+}
+
+function showCvPreview(data) {
+  const hasExp = data && data.experienceYears != null;
+  const found = data && (data.name || data.role || hasExp || (data.skills && data.skills.length) || (data.experience && data.experience.length));
+  if (!found) {
+    document.getElementById('cvPreview').style.display = 'none';
+    document.getElementById('cvApplyBtn').style.display = 'none';
+    showCvModalError("We couldn't find any details in that CV to update.");
+    return;
+  }
+  const set = (id, checked, disabled, label) => {
+    const box = document.getElementById(id);
+    box.checked = checked;
+    box.disabled = disabled;
+    document.getElementById(id + '-label').textContent = label;
+  };
+  set('cv-apply-name', !!data.name, !data.name, 'Name: ' + (data.name || '— not found'));
+  set('cv-apply-role', !!data.role, !data.role, 'Role: ' + (data.role || '— not found'));
+  set('cv-apply-exp', hasExp, !hasExp, 'Experience: ' + (hasExp ? data.experienceYears + ' yrs' : '— not found'));
+
+  const knownSkills = new Set((currentProfile.skills || []).map((s) => s.toLowerCase()));
+  const newSkills = (data.skills || []).filter((s) => s && !knownSkills.has(s.toLowerCase()));
+  cvModalParsed._newSkills = newSkills;
+  set('cv-apply-skills', !!newSkills.length, !newSkills.length,
+    'Skills: ' + (newSkills.length ? ('+' + newSkills.length + ' new (' + newSkills.slice(0, 5).join(', ') + (newSkills.length > 5 ? '…' : '') + ')') : 'no new skills found'));
+
+  const existingKeys = new Set((currentExperiences || []).map(expKey));
+  const newRoles = (data.experience || []).filter((e) => e && e.organization && e.role && !existingKeys.has(expKey(e)));
+  cvModalParsed._newRoles = newRoles;
+  set('cv-apply-roles', !!newRoles.length, !newRoles.length,
+    'Past roles: ' + (newRoles.length ? ('+' + newRoles.length + ' new') : 'no new roles found'));
+
+  document.getElementById('cvPreview').style.display = 'block';
+  document.getElementById('cvApplyBtn').style.display = 'inline-flex';
+}
+
+async function applyCvUpdate() {
+  if (!cvModalParsed) return;
+  const btn = document.getElementById('cvApplyBtn');
+  btn.disabled = true;
+  btn.textContent = 'Applying…';
+  try {
+    const payload = {
+      name: document.getElementById('cv-apply-name').checked ? cvModalParsed.name : currentProfile.name,
+      role: document.getElementById('cv-apply-role').checked ? cvModalParsed.role : currentProfile.role,
+      experienceYears: document.getElementById('cv-apply-exp').checked ? cvModalParsed.experienceYears : currentProfile.experienceYears,
+      currentSalary: currentProfile.currentSalary,
+      expectedSalary: currentProfile.expectedSalary,
+      relocation: currentProfile.relocation,
+      notes: currentProfile.notes,
+      skills: document.getElementById('cv-apply-skills').checked
+        ? (currentProfile.skills || []).concat(cvModalParsed._newSkills || [])
+        : (currentProfile.skills || []),
+      cv: cvModalPayload,
+    };
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not update your profile.');
+
+    if (document.getElementById('cv-apply-roles').checked) {
+      await Promise.all((cvModalParsed._newRoles || []).map((exp) => fetch('/api/experiences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization: exp.organization,
+          role: exp.role,
+          achievements: Array.isArray(exp.achievements) ? exp.achievements.join('\n') : (exp.achievements || ''),
+          startYear: exp.startYear || '',
+          endYear: exp.endYear || '',
+          isCurrent: !!exp.isCurrent,
+        }),
+      }).catch(() => {}))); // best-effort -- one failed role add shouldn't block the others or the profile update
+    }
+    closeCvModal();
+    load();
+  } catch (e) {
+    showCvModalError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Apply updates';
+  }
 }
 
 document.getElementById('photoWrap').addEventListener('click', () => document.getElementById('photoFile').click());

@@ -217,14 +217,27 @@ async function handleApi(req, res, url) {
   }
 
   // ---- POST /api/cv-parse (best-effort text extraction + field guessing from an uploaded CV) ----
+  // If no file is included in the body, falls back to re-scanning the CV already on file for this
+  // user, so the dashboard can offer "re-scan my CV" without requiring a fresh upload each time.
   if (pathname === '/api/cv-parse' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     const body = await readJsonBody(req);
-    if (!body.cv || !body.cv.dataBase64) return sendJson(res, 400, { error: 'No CV data provided.' });
     try {
-      const buffer = Buffer.from(body.cv.dataBase64, 'base64');
-      const result = await extractFromCv(buffer, body.cv.mime);
+      let buffer, mime;
+      if (body.cv && body.cv.dataBase64) {
+        buffer = Buffer.from(body.cv.dataBase64, 'base64');
+        mime = body.cv.mime;
+      } else {
+        const { db } = require('./lib/db');
+        const row = db.prepare('SELECT cv_stored_name, cv_mime FROM profiles WHERE user_id = ?').get(user.id);
+        if (!row || !row.cv_stored_name) return sendJson(res, 400, { error: 'No CV on file — please upload one.' });
+        const filePath = path.join(UPLOADS_DIR, row.cv_stored_name);
+        if (!fs.existsSync(filePath)) return sendJson(res, 404, { error: 'CV file missing on server.' });
+        buffer = fs.readFileSync(filePath);
+        mime = row.cv_mime;
+      }
+      const result = await extractFromCv(buffer, mime);
       return sendJson(res, 200, result);
     } catch (e) {
       console.error('CV parse error:', e);
