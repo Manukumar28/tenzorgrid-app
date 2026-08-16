@@ -3,11 +3,12 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { URL } = require('node:url');
 
-const { createUser, authenticate, createSession, getUserBySession, destroySession, parseCookies, getUserExtras, SESSION_DAYS } = require('./lib/auth');
+const { createUser, authenticate, createSession, getUserBySession, destroySession, parseCookies, getUserExtras, setPro, SESSION_DAYS } = require('./lib/auth');
 const { getProfile, upsertProfile, computeMatches, UPLOADS_DIR } = require('./lib/profile');
 const { extractFromCv } = require('./lib/cvparse');
 const { SKILLS, SKILL_CATEGORIES } = require('./lib/skills-data');
 const { listExperiences, addExperience, deleteExperience } = require('./lib/experience');
+const { listCertifications, addCertification, deleteCertification } = require('./lib/certifications');
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
 
@@ -287,6 +288,41 @@ async function handleApi(req, res, url) {
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     deleteExperience(user.id, expMatch[1]);
     return sendJson(res, 200, { experiences: listExperiences(user.id) });
+  }
+
+  // ---- GET /api/certifications / POST /api/certifications / DELETE /api/certifications/:id ----
+  if (pathname === '/api/certifications' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { certifications: listCertifications(user.id) });
+  }
+  if (pathname === '/api/certifications' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      addCertification(user.id, body);
+      return sendJson(res, 200, { certifications: listCertifications(user.id) });
+    } catch (e) {
+      if (e.code === 'BAD_CERTIFICATION') return sendJson(res, 400, { error: e.message });
+      console.error(e);
+      return sendJson(res, 500, { error: 'Something went wrong saving that certification.' });
+    }
+  }
+  const certMatch = pathname.match(/^\/api\/certifications\/([a-f0-9]+)$/);
+  if (certMatch && req.method === 'DELETE') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    deleteCertification(user.id, certMatch[1]);
+    return sendJson(res, 200, { certifications: listCertifications(user.id) });
+  }
+
+  // ---- POST /api/subscribe (dev-mode instant Pro activation; no payment gateway yet) ----
+  if (pathname === '/api/subscribe' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    setPro(user.id, true);
+    return sendJson(res, 200, { ok: true, isPro: true });
   }
 
   // ---- GET /api/insights (market value, upskill target, best-fit jobs) ----

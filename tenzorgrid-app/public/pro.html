@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TenzorGrid Pro</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-header">
+  <div class="container nav">
+    <a class="logo" href="/"><img src="/assets/icon.svg" alt="TenzorGrid"> <span class="logo-word">Tenzor<span class="g">Grid</span></span></a>
+    <div class="user-chip">
+      <a class="btn btn-ghost btn-sm" href="/dashboard.html">← Dashboard</a>
+      <div class="avatar" id="miniAvatar">?</div>
+      <span id="miniName">Loading…</span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-wrap">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+    <h1 style="font-size:24px;margin:0;letter-spacing:-.01em;">TenzorGrid Pro</h1>
+    <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--accent-soft);color:#067a55;">Active</span>
+  </div>
+  <p style="color:var(--text-soft);font-size:14px;margin:0 0 24px;">Everything unlocked. Some tabs below are early previews — try them and tell us what's worth building for real.</p>
+
+  <div class="pro-tabs" id="tabs">
+    <button class="pro-tab active" data-tab="matches">Job Matches</button>
+    <button class="pro-tab" data-tab="board">Job Board</button>
+    <button class="pro-tab" data-tab="upgrade">Career Upgrade</button>
+    <button class="pro-tab" data-tab="transition">Career Transition</button>
+    <button class="pro-tab" data-tab="resume">Resume Builder</button>
+    <button class="pro-tab" data-tab="interview">Interview Prep</button>
+  </div>
+
+  <!-- Job Matches -->
+  <div class="pro-panel active" id="panel-matches">
+    <div class="section-title" style="margin-top:0;"><h3>All your matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
+    <div id="matchesList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div></div>
+  </div>
+
+  <!-- Job Board -->
+  <div class="pro-panel" id="panel-board">
+    <div class="section-title" style="margin-top:0;"><h3>Job board<span class="preview-tag">Growing</span></h3><span style="font-size:12.5px;color:var(--text-faint);">Every open role we have, not just your top matches</span></div>
+    <div class="pro-filter-row">
+      <input id="boardSearch" placeholder="Search title or company…">
+      <select id="boardLocation"><option value="">All locations</option></select>
+      <select id="boardPortal"><option value="">All sources</option></select>
+    </div>
+    <div id="boardList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin-top:16px;">This list is a starter set — live aggregation from more job portals is on the roadmap, and we'll say so honestly here until it's real.</p>
+  </div>
+
+  <!-- Career Upgrade -->
+  <div class="pro-panel" id="panel-upgrade">
+    <div class="section-title" style="margin-top:0;"><h3>Career Upgrade</h3></div>
+    <div class="card" id="upgradeCard">
+      <div class="skeleton" style="height:100px;"></div>
+    </div>
+    <div class="section-title"><h3>Suggested courses<span class="preview-tag">Preview</span></h3></div>
+    <div class="card">
+      <div class="phase-row"><div class="phase-num">1</div><div class="phase-body"><b>Close your top skill gap</b><span id="courseA">Add a few skills to your profile to get personalized course suggestions here.</span></div></div>
+      <div class="phase-row"><div class="phase-num">2</div><div class="phase-body"><b>Go deeper with a project</b><span>A hands-on project matched to your target role — real recommendations are coming as this pillar is built out.</span></div></div>
+      <div class="phase-row" style="margin-bottom:0;"><div class="phase-num">3</div><div class="phase-body"><b>Track your progress</b><span>A progress tracker for skills learned vs. remaining will live here.</span></div></div>
+    </div>
+  </div>
+
+  <!-- Career Transition -->
+  <div class="pro-panel" id="panel-transition">
+    <div class="section-title" style="margin-top:0;"><h3>Career Transition<span class="preview-tag">Preview</span></h3></div>
+    <div class="card">
+      <div class="field" style="max-width:360px;">
+        <label>Where do you want to transition to?</label>
+        <select id="transitionTarget" onchange="renderTransitionPlan()">
+          <option value="pm">Product Management</option>
+          <option value="data">Data / Analytics</option>
+          <option value="devops">Cloud &amp; DevOps</option>
+          <option value="design">Product Design</option>
+        </select>
+      </div>
+      <div id="transitionPlan" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
+  <!-- Resume Builder -->
+  <div class="pro-panel" id="panel-resume">
+    <div class="section-title" style="margin-top:0;"><h3>Resume Builder<span class="preview-tag">Preview</span></h3></div>
+    <p style="font-size:13.5px;color:var(--text-soft);margin:0 0 18px;">Pick a template — the real builder will generate this from your live profile automatically.</p>
+    <div class="template-grid" id="templateGrid">
+      <div class="template-card selected" data-template="modern">
+        <div class="template-preview"><div class="tp-line accent"></div><div class="tp-line short"></div><div class="tp-line"></div><div class="tp-line"></div><div class="tp-line short"></div></div>
+        <b>Modern</b>
+      </div>
+      <div class="template-card" data-template="classic">
+        <div class="template-preview" style="align-items:center;"><div class="tp-line accent" style="width:60%;"></div><div class="tp-line" style="width:80%;"></div><div class="tp-line" style="width:80%;"></div><div class="tp-line short"></div></div>
+        <b>Classic</b>
+      </div>
+      <div class="template-card" data-template="minimal">
+        <div class="template-preview"><div class="tp-line short"></div><div class="tp-line" style="background:var(--accent);width:30%;"></div><div class="tp-line"></div><div class="tp-line short"></div></div>
+        <b>Minimal</b>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="generateResume()">Generate from my profile →</button>
+    <span id="resumeNote" style="margin-left:12px;font-size:13px;color:var(--text-faint);"></span>
+  </div>
+
+  <!-- Interview Prep -->
+  <div class="pro-panel" id="panel-interview">
+    <div class="section-title" style="margin-top:0;"><h3>Interview Prep<span class="preview-tag">Preview</span></h3></div>
+    <p style="font-size:13.5px;color:var(--text-soft);margin:0 0 18px;" id="interviewIntro">Practice questions, tailored to your role.</p>
+    <div class="interview-cat">
+      <h4>Behavioral</h4>
+      <ul>
+        <li>Tell me about a time you had to deliver results under a tight deadline.</li>
+        <li>Describe a disagreement with a manager or teammate and how you resolved it.</li>
+        <li>What's a decision you made that you'd approach differently today?</li>
+      </ul>
+    </div>
+    <div class="interview-cat">
+      <h4>Role-specific</h4>
+      <ul id="roleQuestions"></ul>
+    </div>
+    <div class="interview-cat" style="margin-bottom:0;">
+      <h4>Mock interview</h4>
+      <p style="font-size:13.5px;color:var(--text-soft);margin:0 0 14px;">An AI-run mock interview with feedback on your answers is on the roadmap.</p>
+      <button class="btn btn-ghost" disabled>Start mock interview (coming soon)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function initials(name) {
+  return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+}
+function fmtINR(n) { if (!n) return '—'; return '₹' + Number(n).toLocaleString('en-IN'); }
+function matchClass(score) { return score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low'; }
+function setAvatarVisual(el, name, photoUrl) {
+  el.innerHTML = '';
+  if (photoUrl) { const img = document.createElement('img'); img.src = photoUrl; el.appendChild(img); }
+  else { el.textContent = initials(name); }
+}
+async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login.html'; }
+
+let profile = null;
+let allJobs = [];
+
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pro-tab');
+  if (!btn) return;
+  document.querySelectorAll('.pro-tab').forEach((t) => t.classList.remove('active'));
+  document.querySelectorAll('.pro-panel').forEach((p) => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+});
+
+async function init() {
+  const me = await fetch('/api/me').then((r) => r.json());
+  if (!me.authenticated) { window.location.href = '/login.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
+  if (!me.isPro) { window.location.href = '/subscribe.html'; return; }
+
+  profile = me.profile;
+  document.getElementById('miniName').textContent = profile.name;
+  setAvatarVisual(document.getElementById('miniAvatar'), profile.name, profile.photoUrl);
+
+  const jobsData = await fetch('/api/jobs').then((r) => r.json());
+  allJobs = jobsData.jobs || [];
+
+  renderMatches();
+  renderBoard();
+  renderUpgrade();
+  renderTransitionPlan();
+  renderResumeTemplates();
+  renderInterview();
+}
+
+function jobRowHtml(j, showMatch) {
+  return `
+    <div class="job-row">
+      <div class="jinfo">
+        <b>${j.title}</b>
+        <span>${j.company} · ${j.portal}${j.location ? ' · ' + j.location : ''}${j.salaryMin ? ' · ' + fmtINR(j.salaryMin) + '–' + fmtINR(j.salaryMax) : ''}</span>
+      </div>
+      ${showMatch ? '<span class="match-badge ' + matchClass(j.matchScore) + '">' + j.matchScore + '% match</span>' : ''}
+    </div>`;
+}
+
+function renderMatches() {
+  const el = document.getElementById('matchesList');
+  if (!allJobs.length) { el.innerHTML = '<div class="empty-note">No jobs available yet.</div>'; return; }
+  el.innerHTML = allJobs.map((j) => jobRowHtml(j, true)).join('');
+}
+
+function renderBoard() {
+  const locSel = document.getElementById('boardLocation');
+  const portalSel = document.getElementById('boardPortal');
+  const locations = [...new Set(allJobs.map((j) => j.location).filter(Boolean))];
+  const portals = [...new Set(allJobs.map((j) => j.portal).filter(Boolean))];
+  locSel.innerHTML = '<option value="">All locations</option>' + locations.map((l) => `<option value="${l}">${l}</option>`).join('');
+  portalSel.innerHTML = '<option value="">All sources</option>' + portals.map((p) => `<option value="${p}">${p}</option>`).join('');
+  filterBoard();
+  document.getElementById('boardSearch').addEventListener('input', filterBoard);
+  locSel.addEventListener('change', filterBoard);
+  portalSel.addEventListener('change', filterBoard);
+}
+
+function filterBoard() {
+  const q = (document.getElementById('boardSearch').value || '').toLowerCase();
+  const loc = document.getElementById('boardLocation').value;
+  const portal = document.getElementById('boardPortal').value;
+  const filtered = allJobs.filter((j) =>
+    (!q || (j.title + ' ' + j.company).toLowerCase().includes(q)) &&
+    (!loc || j.location === loc) &&
+    (!portal || j.portal === portal)
+  );
+  const el = document.getElementById('boardList');
+  el.innerHTML = filtered.length
+    ? filtered.map((j) => jobRowHtml(j, false)).join('')
+    : '<div class="empty-note">No jobs match those filters.</div>';
+}
+
+async function renderUpgrade() {
+  const card = document.getElementById('upgradeCard');
+  try {
+    const ins = await fetch('/api/insights').then((r) => r.json());
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;font-weight:700;">Current role</div>
+          <div style="font-size:16px;font-weight:700;margin-top:4px;">${profile.role || '—'}</div>
+        </div>
+        <div style="font-size:22px;color:var(--text-faint);">→</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;font-weight:700;">Target role</div>
+          <div style="font-size:16px;font-weight:700;margin-top:4px;color:var(--primary);">${ins.upskillTarget || 'Add more skills to see a target'}</div>
+        </div>
+      </div>
+      ${(ins.upskillMissing || []).length ? `
+        <div style="margin-top:20px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Skills worth closing the gap on</div>
+          <div class="skills-row">${ins.upskillMissing.map((s) => '<span class="tag missing">' + s + '</span>').join('')}</div>
+        </div>` : ''}
+    `;
+    if ((ins.upskillMissing || []).length) {
+      document.getElementById('courseA').textContent = 'Learn ' + ins.upskillMissing[0] + ' — course matching from real platforms is coming; for now this is where it will show up.';
+    }
+  } catch (e) {
+    card.innerHTML = '<div class="empty-note">Complete your profile to see your upgrade path.</div>';
+  }
+}
+
+const TRANSITION_PLANS = {
+  pm: { title: 'Product Management', skills: ['Product strategy', 'Roadmapping', 'Stakeholder management', 'User research'], phases: [
+    ['Learn the fundamentals', 'Product strategy, roadmapping, and the PM lifecycle — 4–6 weeks of focused study.'],
+    ['Build a portfolio piece', 'Write a mock PRD and roadmap for a product you know well.'],
+    ['Make the case internally or externally', 'Target PM-adjacent roles first (APM, Product Analyst) to bridge in.'],
+  ]},
+  data: { title: 'Data / Analytics', skills: ['SQL', 'Data analysis', 'Data visualization', 'Statistics'], phases: [
+    ['Build core data skills', 'SQL, spreadsheet-to-Python analysis, and statistics fundamentals.'],
+    ['Ship a real analysis project', 'Take a public dataset relevant to your industry and publish the findings.'],
+    ['Target analyst-track roles', 'Business/Data Analyst roles are the most common entry point.'],
+  ]},
+  devops: { title: 'Cloud & DevOps', skills: ['AWS', 'Docker', 'CI/CD', 'Linux'], phases: [
+    ['Get hands-on with the cloud', 'AWS or GCP fundamentals plus Linux basics.'],
+    ['Containerize something real', 'Docker + a simple CI/CD pipeline for a personal project.'],
+    ['Target junior DevOps/SRE roles', 'Support or Junior DevOps roles are the common entry point.'],
+  ]},
+  design: { title: 'Product Design', skills: ['UI design', 'UX design', 'Figma', 'Prototyping'], phases: [
+    ['Learn the craft', 'UI/UX fundamentals and Figma proficiency.'],
+    ['Build a case study', 'Redesign a product you use daily and document your process.'],
+    ['Target junior design roles', 'Build a portfolio site and apply to associate/junior design roles.'],
+  ]},
+};
+
+function renderTransitionPlan() {
+  const key = document.getElementById('transitionTarget').value;
+  const plan = TRANSITION_PLANS[key];
+  document.getElementById('transitionPlan').innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Skills to build</div>
+    <div class="skills-row" style="margin-bottom:20px;">${plan.skills.map((s) => '<span class="skill-pill" style="background:var(--primary-soft);color:var(--primary-dark);border:1px solid var(--primary-soft);">' + s + '</span>').join('')}</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;">Suggested path</div>
+    ${plan.phases.map((p, i) => `
+      <div class="phase-row">
+        <div class="phase-num">${i + 1}</div>
+        <div class="phase-body"><b>${p[0]}</b><span>${p[1]}</span></div>
+      </div>`).join('')}
+  `;
+}
+
+function renderResumeTemplates() {
+  document.getElementById('templateGrid').addEventListener('click', (e) => {
+    const card = e.target.closest('.template-card');
+    if (!card) return;
+    document.querySelectorAll('.template-card').forEach((c) => c.classList.remove('selected'));
+    card.classList.add('selected');
+  });
+}
+function generateResume() {
+  document.getElementById('resumeNote').textContent = 'The real generator is still being built — this will produce a downloadable resume from your live profile.';
+}
+
+const ROLE_QUESTION_BANK = {
+  default: [
+    'Walk me through your resume and what you’re looking for next.',
+    'What accomplishment from your current role are you most proud of?',
+    'What’s a skill gap you’re actively working on right now?',
+  ],
+};
+function renderInterview() {
+  const role = profile.role || 'your role';
+  document.getElementById('interviewIntro').textContent = 'Practice questions, tailored to ' + role + '.';
+  const qs = ROLE_QUESTION_BANK.default;
+  document.getElementById('roleQuestions').innerHTML = qs.map((q) => '<li>' + q + '</li>').join('');
+}
+
+init().catch((e) => console.error(e));
+</script>
+</body>
+</html>
