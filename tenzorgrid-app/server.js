@@ -18,6 +18,23 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BODY_BYTES = 12 * 1024 * 1024; // 12MB (accommodates base64 CV upload)
 
+// In-memory sliding-window rate limiter for login/signup — a single Railway instance
+// keeps this in process memory (resets on restart/redeploy), which is fine here: the
+// goal is just to make brute-force password guessing and mass fake-account creation
+// slow and annoying, not airtight. Keyed by client IP.
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 10;
+const rateLimitHits = new Map(); // `${bucket}:${ip}` -> [timestamps]
+function isRateLimited(bucket, req) {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  const key = `${bucket}:${ip}`;
+  const now = Date.now();
+  const hits = (rateLimitHits.get(key) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  hits.push(now);
+  rateLimitHits.set(key, hits);
+  return hits.length > RATE_LIMIT_MAX;
+}
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -62,13 +79,20 @@ function sendJson(res, statusCode, data) {
   res.end(body);
 }
 
+// Railway (and most hosts) terminate TLS at the edge and set this env var, so we can
+// tell we're being served over HTTPS even though Node itself only ever sees plain HTTP
+// from the proxy. Locally (no RAILWAY_ENVIRONMENT, no NODE_ENV=production) this stays
+// off so the session cookie still works over plain http://localhost during development.
+const IS_PRODUCTION = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production');
+const COOKIE_SECURE = IS_PRODUCTION ? '; Secure' : '';
+
 function setSessionCookie(res, token) {
   const maxAge = SESSION_DAYS * 24 * 60 * 60;
-  res.setHeader('Set-Cookie', `session=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Lax`);
+  res.setHeader('Set-Cookie', `session=${encodeURIComponent(token)}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Lax${COOKIE_SECURE}`);
 }
 
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', 'session=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax');
+  res.setHeader('Set-Cookie', `session=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax${COOKIE_SECURE}`);
 }
 
 function getCurrentUser(req) {
@@ -107,6 +131,7 @@ async function handleApi(req, res, url) {
 
   // ---- POST /api/signup ----
   if (pathname === '/api/signup' && req.method === 'POST') {
+    if (isRateLimited('signup', req)) return sendJson(res, 429, { error: 'Too many attempts — please try again in a few minutes.' });
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
@@ -132,6 +157,7 @@ async function handleApi(req, res, url) {
 
   // ---- POST /api/login ----
   if (pathname === '/api/login' && req.method === 'POST') {
+    if (isRateLimited('login', req)) return sendJson(res, 429, { error: 'Too many attempts — please try again in a few minutes.' });
     const body = await readJsonBody(req);
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
@@ -189,12 +215,17 @@ async function handleApi(req, res, url) {
   }
 
   // ---- GET /api/jobs ----
+  // Free accounts only ever get the top 3 matches back — the full list is a Pro
+  // feature, and that has to be enforced here, not just by hiding it in the UI,
+  // or anyone can call this endpoint directly and read every match for free.
   if (pathname === '/api/jobs' && req.method === 'GET') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     const profile = getProfile(user.id);
+    const extras = getUserExtras(user.id);
     const matches = computeMatches(profile ? profile.skills : []);
-    return sendJson(res, 200, { jobs: matches });
+    const jobs = extras.isPro ? matches : matches.slice(0, 3);
+    return sendJson(res, 200, { jobs, totalCount: matches.length });
   }
 
   // ---- GET /api/cv (download own CV) ----
@@ -372,8 +403,32 @@ async function handleApi(req, res, url) {
   sendJson(res, 404, { error: 'Not found' });
 }
 
+// Baseline security headers on every response. The CSP allows 'unsafe-inline' for
+// script/style because every page here is plain inline <script>/<style> (zero build
+// step, zero external JS) — the real value of the policy is still blocking any
+// externally-hosted script/style/frame the app itself never intended to load, plus
+// frame-ancestors, which stops the whole site from being iframed for clickjacking.
+function applySecurityHeaders(req, res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; '));
+  if (IS_PRODUCTION) res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+}
+
 const server = http.createServer(async (req, res) => {
   try {
+    applySecurityHeaders(req, res);
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname.startsWith('/api/')) {
       await handleApi(req, res, url);

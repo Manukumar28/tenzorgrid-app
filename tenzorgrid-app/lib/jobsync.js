@@ -37,11 +37,22 @@ async function syncJobsFromAdzuna() {
     return { fetched: 0 };
   }
 
-  const jobs = await fetchAllConfiguredJobs();
-  if (!jobs.length) {
+  const fetched = await fetchAllConfiguredJobs();
+  if (!fetched.length) {
     console.log('[jobsync] No jobs returned from Adzuna this run.');
     return { fetched: 0 };
   }
+
+  // The same posting can match more than one of the profession-scoped queries in
+  // adzuna.js (e.g. a role that reads as both "software engineer" and "data analyst"),
+  // so dedupe by externalId before writing — otherwise it shows up twice on the
+  // dashboard and job board.
+  const seen = new Set();
+  const jobs = fetched.filter((job) => {
+    if (seen.has(job.externalId)) return false;
+    seen.add(job.externalId);
+    return true;
+  });
 
   if (isSupabaseConfigured()) {
     try {

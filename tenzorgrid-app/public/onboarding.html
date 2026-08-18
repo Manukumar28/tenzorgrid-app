@@ -33,15 +33,15 @@
     <div style="color:var(--text-soft);font-size:14px;margin-bottom:10px;">This builds your profile and dashboard.</div>
     <div class="cv-status" id="autofillNote" style="display:none;margin-bottom:14px;color:#067a55;font-weight:600;"></div>
     <div class="grid-2">
-      <div class="field"><label>Full name</label><input id="f-name" placeholder="Jane Doe" required></div>
-      <div class="field"><label>Current role</label><input id="f-role" placeholder="Software Engineer" required></div>
-      <div class="field"><label>Years of experience</label><input id="f-exp" type="number" min="0" step="0.5" placeholder="4"></div>
-      <div class="field"><label>Current salary (₹/yr)</label><input id="f-salary" type="number" min="0" placeholder="1200000">
+      <div class="field"><label for="f-name">Full name</label><input id="f-name" placeholder="Jane Doe" autocomplete="name" required></div>
+      <div class="field"><label for="f-role">Current role</label><input id="f-role" placeholder="Software Engineer" required></div>
+      <div class="field"><label for="f-exp">Years of experience</label><input id="f-exp" type="number" min="0" step="0.5" placeholder="4"></div>
+      <div class="field"><label for="f-salary">Current salary (₹/yr)</label><input id="f-salary" type="number" min="0" placeholder="1200000">
         <div class="hint">We don't pull this from your CV — please enter it manually.</div>
       </div>
     </div>
     <div class="field skills-field">
-      <label>Skills</label>
+      <label for="chip-input">Skills</label>
       <div class="chip-input-box" id="chip-box"><input id="chip-input" placeholder="Type a skill and press Enter" autocomplete="off"></div>
       <div class="skills-dropdown" id="skillsDropdown"></div>
       <div class="hint">Start typing for suggestions from our skills list, or add your own and press Enter.</div>
@@ -56,12 +56,12 @@
     <h2 style="margin:0 0 6px;">What are you aiming for?</h2>
     <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">Helps prioritize the right matches.</div>
     <div class="grid-2">
-      <div class="field"><label>Expected salary (₹/yr)</label><input id="f-expected" type="number" min="0" placeholder="1800000"></div>
-      <div class="field"><label>Open to relocation?</label>
+      <div class="field"><label for="f-expected">Expected salary (₹/yr)</label><input id="f-expected" type="number" min="0" placeholder="1800000"></div>
+      <div class="field"><label for="f-relocate">Open to relocation?</label>
         <select id="f-relocate"><option>No</option><option>Yes</option><option>Remote only</option></select>
       </div>
     </div>
-    <div class="field"><label>Anything else? (optional)</label><textarea id="f-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
+    <div class="field"><label for="f-notes">Anything else? (optional)</label><textarea id="f-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
     <div class="hint" id="expPreviewNote" style="display:none;margin-bottom:14px;"></div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
