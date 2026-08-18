@@ -81,14 +81,14 @@
       <button type="button" class="btn btn-ghost btn-sm" id="certFillCvBtn" onclick="fillCertFromCv()">✨ Fill from CV</button>
     </div>
     <input type="file" id="certCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
-    <div class="field"><label>Certification name</label><input id="cert-name" placeholder="AWS Certified Solutions Architect"></div>
-    <div class="field"><label>Issuing organization</label><input id="cert-issuer" placeholder="Amazon Web Services"></div>
+    <div class="field"><label for="cert-name">Certification name</label><input id="cert-name" placeholder="AWS Certified Solutions Architect"></div>
+    <div class="field"><label for="cert-issuer">Issuing organization</label><input id="cert-issuer" placeholder="Amazon Web Services"></div>
     <div class="grid-2">
-      <div class="field"><label>Issue year</label><input id="cert-issue-year" type="number" min="1970" max="2100" placeholder="2024"></div>
-      <div class="field"><label>Expiry year (optional)</label><input id="cert-expiry-year" type="number" min="1970" max="2100" placeholder="2027"></div>
+      <div class="field"><label for="cert-issue-year">Issue year</label><input id="cert-issue-year" type="number" min="1970" max="2100" placeholder="2024"></div>
+      <div class="field"><label for="cert-expiry-year">Expiry year (optional)</label><input id="cert-expiry-year" type="number" min="1970" max="2100" placeholder="2027"></div>
     </div>
-    <div class="field"><label>Credential ID (optional)</label><input id="cert-credential-id" placeholder="ABC123XYZ"></div>
-    <div class="field"><label>Credential URL (optional)</label><input id="cert-credential-url" placeholder="https://..."></div>
+    <div class="field"><label for="cert-credential-id">Credential ID (optional)</label><input id="cert-credential-id" placeholder="ABC123XYZ"></div>
+    <div class="field"><label for="cert-credential-url">Credential URL (optional)</label><input id="cert-credential-url" placeholder="https://..."></div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeCertModal()">Cancel</button>
       <button class="btn btn-primary" id="certSaveBtn" onclick="saveCertification()">Save certification</button>
@@ -107,18 +107,18 @@
       <button type="button" class="btn btn-ghost btn-sm" id="expFillCvBtn" onclick="fillRoleFromCv()">✨ Fill from CV</button>
     </div>
     <input type="file" id="expCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
-    <div class="field"><label>Organization</label><input id="exp-org" placeholder="Acme Corp"></div>
-    <div class="field"><label>Role</label><input id="exp-role" placeholder="Software Engineer"></div>
-    <div class="field"><label>Responsibilities / achievements</label><textarea id="exp-achievements" rows="3" placeholder="Led migration to microservices; grew team from 2 to 6..."></textarea></div>
+    <div class="field"><label for="exp-org">Organization</label><input id="exp-org" placeholder="Acme Corp"></div>
+    <div class="field"><label for="exp-role">Role</label><input id="exp-role" placeholder="Software Engineer"></div>
+    <div class="field"><label for="exp-achievements">Responsibilities / achievements</label><textarea id="exp-achievements" rows="3" placeholder="Led migration to microservices; grew team from 2 to 6..."></textarea></div>
     <div class="grid-2">
-      <div class="field"><label>Start year</label><input id="exp-start" type="number" min="1970" max="2100" placeholder="2021"></div>
-      <div class="field"><label>End year</label><input id="exp-end" type="number" min="1970" max="2100" placeholder="2024"></div>
+      <div class="field"><label for="exp-start">Start year</label><input id="exp-start" type="number" min="1970" max="2100" placeholder="2021"></div>
+      <div class="field"><label for="exp-end">End year</label><input id="exp-end" type="number" min="1970" max="2100" placeholder="2024"></div>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:8px;">
       <input type="checkbox" id="exp-current" style="width:auto;" onchange="document.getElementById('exp-end').disabled = this.checked;">
-      <label style="margin:0;">I currently work here</label>
+      <label for="exp-current" style="margin:0;">I currently work here</label>
     </div>
-    <div class="field"><label>Salary at this role (₹/yr, optional)</label><input id="exp-salary" type="number" min="0" placeholder="1500000"></div>
+    <div class="field"><label for="exp-salary">Salary at this role (₹/yr, optional)</label><input id="exp-salary" type="number" min="0" placeholder="1500000"></div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeExpModal()">Cancel</button>
       <button class="btn btn-primary" id="expSaveBtn" onclick="saveExperience()">Save role</button>
@@ -137,16 +137,16 @@
       <button type="button" class="btn btn-ghost btn-sm" id="eduFillCvBtn" onclick="fillEducationFromCv()">✨ Fill from CV</button>
     </div>
     <input type="file" id="eduCvFileInput" accept=".pdf,.doc,.docx" style="display:none">
-    <div class="field"><label>Institution</label><input id="edu-institution" placeholder="IIT Bombay"></div>
-    <div class="field"><label>Degree / qualification</label><input id="edu-degree" placeholder="B.Tech"></div>
-    <div class="field"><label>Field of study (optional)</label><input id="edu-field" placeholder="Computer Science"></div>
+    <div class="field"><label for="edu-institution">Institution</label><input id="edu-institution" placeholder="IIT Bombay"></div>
+    <div class="field"><label for="edu-degree">Degree / qualification</label><input id="edu-degree" placeholder="B.Tech"></div>
+    <div class="field"><label for="edu-field">Field of study (optional)</label><input id="edu-field" placeholder="Computer Science"></div>
     <div class="grid-2">
-      <div class="field"><label>Start year</label><input id="edu-start" type="number" min="1970" max="2100" placeholder="2015"></div>
-      <div class="field"><label>End year</label><input id="edu-end" type="number" min="1970" max="2100" placeholder="2019"></div>
+      <div class="field"><label for="edu-start">Start year</label><input id="edu-start" type="number" min="1970" max="2100" placeholder="2015"></div>
+      <div class="field"><label for="edu-end">End year</label><input id="edu-end" type="number" min="1970" max="2100" placeholder="2019"></div>
     </div>
     <div class="field" style="display:flex;align-items:center;gap:8px;">
       <input type="checkbox" id="edu-current" style="width:auto;" onchange="document.getElementById('edu-end').disabled = this.checked;">
-      <label style="margin:0;">I'm currently studying here</label>
+      <label for="edu-current" style="margin:0;">I'm currently studying here</label>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeEduModal()">Cancel</button>
@@ -162,21 +162,21 @@
     <p style="margin:0 0 18px;font-size:13px;color:var(--text-soft);">Manual edits — or use "Update from CV" on the dashboard to re-extract these automatically.</p>
     <div class="error-box" id="editProfileErr"></div>
     <div class="grid-2">
-      <div class="field"><label>Full name</label><input id="ep-name" placeholder="Jane Doe"></div>
-      <div class="field"><label>Current role</label><input id="ep-role" placeholder="Software Engineer"></div>
-      <div class="field"><label>Years of experience</label><input id="ep-exp" type="number" min="0" step="0.5" placeholder="4"></div>
-      <div class="field"><label>Current salary (₹/yr)</label><input id="ep-salary" type="number" min="0" placeholder="1200000"></div>
-      <div class="field"><label>Expected salary (₹/yr)</label><input id="ep-expected" type="number" min="0" placeholder="1800000"></div>
-      <div class="field"><label>Open to relocation?</label>
+      <div class="field"><label for="ep-name">Full name</label><input id="ep-name" placeholder="Jane Doe" autocomplete="name"></div>
+      <div class="field"><label for="ep-role">Current role</label><input id="ep-role" placeholder="Software Engineer"></div>
+      <div class="field"><label for="ep-exp">Years of experience</label><input id="ep-exp" type="number" min="0" step="0.5" placeholder="4"></div>
+      <div class="field"><label for="ep-salary">Current salary (₹/yr)</label><input id="ep-salary" type="number" min="0" placeholder="1200000"></div>
+      <div class="field"><label for="ep-expected">Expected salary (₹/yr)</label><input id="ep-expected" type="number" min="0" placeholder="1800000"></div>
+      <div class="field"><label for="ep-relocate">Open to relocation?</label>
         <select id="ep-relocate"><option>No</option><option>Yes</option><option>Remote only</option></select>
       </div>
     </div>
     <div class="field skills-field">
-      <label>Skills</label>
+      <label for="ep-chip-input">Skills</label>
       <div class="chip-input-box" id="ep-chip-box"><input id="ep-chip-input" placeholder="Type a skill and press Enter" autocomplete="off"></div>
       <div class="skills-dropdown" id="ep-skillsDropdown"></div>
     </div>
-    <div class="field"><label>Anything else? (optional)</label><textarea id="ep-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
+    <div class="field"><label for="ep-notes">Anything else? (optional)</label><textarea id="ep-notes" rows="3" placeholder="e.g. targeting product-management roles..."></textarea></div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeEditProfileModal()">Cancel</button>
       <button class="btn btn-primary" id="editProfileSaveBtn" onclick="saveEditProfile()">Save changes</button>
@@ -198,13 +198,13 @@
     </div>
     <input type="file" id="cvModalFile" accept=".pdf,.doc,.docx" style="display:none">
     <div id="cvPreview" style="display:none;margin-top:18px;">
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-name" style="width:auto;"><label style="margin:0;" id="cv-apply-name-label">Name</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-role" style="width:auto;"><label style="margin:0;" id="cv-apply-role-label">Role</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-exp" style="width:auto;"><label style="margin:0;" id="cv-apply-exp-label">Experience</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-skills" style="width:auto;"><label style="margin:0;" id="cv-apply-skills-label">Skills</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-roles" style="width:auto;"><label style="margin:0;" id="cv-apply-roles-label">Past roles</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-certs" style="width:auto;"><label style="margin:0;" id="cv-apply-certs-label">Certifications</label></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-edu" style="width:auto;"><label style="margin:0;" id="cv-apply-edu-label">Education</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-name" style="width:auto;"><label for="cv-apply-name" style="margin:0;" id="cv-apply-name-label">Name</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-role" style="width:auto;"><label for="cv-apply-role" style="margin:0;" id="cv-apply-role-label">Role</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-exp" style="width:auto;"><label for="cv-apply-exp" style="margin:0;" id="cv-apply-exp-label">Experience</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-skills" style="width:auto;"><label for="cv-apply-skills" style="margin:0;" id="cv-apply-skills-label">Skills</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-roles" style="width:auto;"><label for="cv-apply-roles" style="margin:0;" id="cv-apply-roles-label">Past roles</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-certs" style="width:auto;"><label for="cv-apply-certs" style="margin:0;" id="cv-apply-certs-label">Certifications</label></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cv-apply-edu" style="width:auto;"><label for="cv-apply-edu" style="margin:0;" id="cv-apply-edu-label">Education</label></div>
     </div>
     <div class="step-actions">
       <button class="btn btn-ghost" onclick="closeCvModal()">Cancel</button>
