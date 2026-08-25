@@ -458,10 +458,34 @@ a.logo{cursor:pointer;}
 .pillar-card.vector{--p:#35E7C6;}
 .pillar-card.circuit{--p:#FB7185;}
 
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:16px 0 40px;}
-.feature-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;text-align:left;}
-.feature-card b{display:block;font-size:14.5px;margin-bottom:5px;}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:16px 0 8px;}
+.feature-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;text-align:left;transition:border-color .15s ease,background .15s ease;}
+.feature-card:hover{border-color:rgba(52,211,153,.4);background:rgba(255,255,255,.06);}
+.feature-card.soon{border-style:dashed;}
+.feature-card b{display:flex;align-items:center;gap:8px;font-size:14.5px;margin-bottom:8px;}
 .feature-card span{font-size:13px;color:#9aa4bd;}
+.fc-icon{width:36px;height:36px;border-radius:10px;background:rgba(52,211,153,.14);color:var(--accent-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.fc-icon svg{width:19px;height:19px;}
+.fc-soon{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.1);color:#9aa4bd;padding:2px 7px;border-radius:99px;}
+
+.dash-preview{padding:36px 0 8px;max-width:640px;margin:0 auto;}
+.dp-label{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;color:#6b7590;text-align:center;margin-bottom:14px;}
+.dp-card{
+  background:linear-gradient(160deg,rgba(124,108,240,.14),rgba(53,231,198,.08));
+  border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:22px 24px;backdrop-filter:blur(8px);
+}
+.dp-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.dp-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7C6CF0,#35E7C6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#05060B;}
+.dp-who b{display:block;font-size:14.5px;color:#fff;}
+.dp-who span{font-size:12px;color:#9aa4bd;}
+.dp-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.dp-ins{background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;}
+.dp-ins-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#35E7C6;margin-bottom:4px;}
+.dp-ins-val{display:block;font-size:12.5px;font-weight:600;color:#fff;}
+.dp-jobs{display:flex;flex-direction:column;gap:8px;}
+.dp-job{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#e2e8f0;}
+.dp-job i{font-style:normal;font-size:11px;font-weight:700;color:#35E7C6;background:rgba(53,231,198,.14);padding:2px 8px;border-radius:99px;}
+@media (max-width:560px){.dp-insights{grid-template-columns:1fr 1fr;}}
 
 /* ---- Animated galaxy background for dark-hero pages ----
    Layered behind the content (z-index:1, content sits at 2): two tiled star fields
