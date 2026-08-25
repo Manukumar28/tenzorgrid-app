@@ -219,7 +219,6 @@ async function setupNav() {
   try {
     const me = await fetch('/api/me').then((r) => r.json());
     const navCta = document.getElementById('navCta');
-    const careerCard = document.getElementById('careerGrowthCard');
     if (me.authenticated) {
       navCta.innerHTML = `
         <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="#" id="navLogout">Log out</a>
@@ -229,7 +228,8 @@ async function setupNav() {
         await fetch('/api/logout', { method: 'POST' });
         window.location.reload();
       });
-      if (careerCard && me.hasProfile) careerCard.setAttribute('href', '/dashboard.html');
+      // Career Growth card always opens the explainer page, even for logged-in
+      // users with a profile — they click through to the dashboard from there.
     }
   } catch (e) { /* stay on the logged-out default */ }
 }
