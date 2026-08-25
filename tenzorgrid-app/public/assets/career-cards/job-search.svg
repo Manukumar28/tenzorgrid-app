@@ -1,0 +1,42 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="js-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#154C9C"/>
+      <stop offset="1" stop-color="#0E8F82"/>
+    </linearGradient>
+    <filter id="js-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="js-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#js-bg)"/>
+  <circle cx="120" cy="80" r="130" fill="#35E7C6" opacity=".25" filter="url(#js-blur)"/>
+  <circle cx="680" cy="360" r="140" fill="#4C8DFF" opacity=".30" filter="url(#js-blur)"/>
+
+  <g transform="translate(300,110)">
+    <ellipse cx="120" cy="230" rx="170" ry="20" fill="#000" opacity=".2" filter="url(#js-shadow)"/>
+    <g transform="translate(0,10) rotate(-6)">
+      <rect width="220" height="54" rx="10" fill="#FFFFFF"/>
+      <circle cx="30" cy="27" r="14" fill="#4C8DFF"/>
+      <rect x="56" y="18" width="120" height="8" rx="4" fill="#33395B"/>
+      <rect x="56" y="32" width="80" height="7" rx="3.5" fill="#9AA4BD"/>
+    </g>
+    <g transform="translate(30,66) rotate(-3)">
+      <rect width="220" height="54" rx="10" fill="#FFFFFF"/>
+      <circle cx="30" cy="27" r="14" fill="#35E7C6"/>
+      <rect x="56" y="18" width="130" height="8" rx="4" fill="#33395B"/>
+      <rect x="56" y="32" width="70" height="7" rx="3.5" fill="#9AA4BD"/>
+    </g>
+    <g transform="translate(10,122)">
+      <rect width="220" height="54" rx="10" fill="#FFFFFF"/>
+      <circle cx="30" cy="27" r="14" fill="#7C6CF0"/>
+      <rect x="56" y="18" width="110" height="8" rx="4" fill="#33395B"/>
+      <rect x="56" y="32" width="90" height="7" rx="3.5" fill="#9AA4BD"/>
+    </g>
+  </g>
+
+  <g transform="translate(430,60)">
+    <circle cx="70" cy="70" r="62" fill="none" stroke="#FFFFFF" stroke-width="16"/>
+    <circle cx="70" cy="70" r="62" fill="#EAF6FF" opacity=".14"/>
+    <line x1="114" y1="114" x2="172" y2="172" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="70" cy="70" r="30" fill="#35E7C6" opacity=".9"/>
+  </g>
+</svg>

@@ -1,0 +1,25 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mi-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A3452"/>
+      <stop offset="1" stop-color="#4A4270"/>
+    </linearGradient>
+    <filter id="mi-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="mi-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#mi-bg)"/>
+  <circle cx="150" cy="100" r="130" fill="#9C8FD9" opacity=".16" filter="url(#mi-blur)"/>
+  <circle cx="660" cy="360" r="140" fill="#7C89B0" opacity=".16" filter="url(#mi-blur)"/>
+
+  <g transform="translate(400,225)">
+    <ellipse cx="0" cy="140" rx="150" ry="16" fill="#000" opacity=".22" filter="url(#mi-shadow)"/>
+    <circle r="150" fill="none" stroke="#9C8FD9" stroke-width="3" opacity=".35"/>
+    <circle r="110" fill="none" stroke="#9C8FD9" stroke-width="3" opacity=".45"/>
+    <circle r="72" fill="none" stroke="#9C8FD9" stroke-width="3" opacity=".55"/>
+
+    <rect x="-26" y="-92" width="52" height="86" rx="26" fill="#DCD6F5"/>
+    <path d="M-40 -20 a40 40 0 0080 0" fill="none" stroke="#DCD6F5" stroke-width="7" stroke-linecap="round"/>
+    <line x1="0" y1="20" x2="0" y2="48" stroke="#DCD6F5" stroke-width="7" stroke-linecap="round"/>
+    <line x1="-26" y1="48" x2="26" y2="48" stroke="#DCD6F5" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

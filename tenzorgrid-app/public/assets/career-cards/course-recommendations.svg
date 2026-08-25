@@ -1,0 +1,35 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cr-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8A5A1E"/>
+      <stop offset="1" stop-color="#5B2E8A"/>
+    </linearGradient>
+    <filter id="cr-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="cr-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#cr-bg)"/>
+  <circle cx="130" cy="90" r="130" fill="#FFD166" opacity=".22" filter="url(#cr-blur)"/>
+  <circle cx="680" cy="370" r="140" fill="#B267E0" opacity=".25" filter="url(#cr-blur)"/>
+
+  <g transform="translate(280,130)">
+    <ellipse cx="120" cy="200" rx="180" ry="18" fill="#000" opacity=".2" filter="url(#cr-shadow)"/>
+    <path d="M120 20 L0 55 L120 90 L240 55 Z" fill="#FFFFFF"/>
+    <path d="M40 66 L40 130 C40 150 200 150 200 130 L200 66" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+    <line x1="240" y1="55" x2="240" y2="105" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="240" cy="112" r="6" fill="#FFD166"/>
+  </g>
+
+  <g transform="translate(190,90)">
+    <circle r="28" fill="#FFD166"/>
+    <path d="M-4 -8 L1 4 L-4 16 L10 0 Z" fill="#8A5A1E" transform="translate(0,-2) scale(0.9)"/>
+    <path d="M0 -12 L4 -2 L14 -2 L6 4 L9 14 L0 8 L-9 14 L-6 4 L-14 -2 L-4 -2 Z" fill="#8A5A1E"/>
+  </g>
+  <g transform="translate(560,150)">
+    <circle r="26" fill="#35E7C6"/>
+    <path d="M-9 3l7 7 13-16" fill="none" stroke="#0B4A40" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(610,260)">
+    <circle r="20" fill="#B267E0"/>
+    <path d="M0 -9 L2.6 -2.6 L9 -2.6 L4 1.6 L5.8 8.4 L0 4.6 L-5.8 8.4 L-4 1.6 L-9 -2.6 L-2.6 -2.6 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

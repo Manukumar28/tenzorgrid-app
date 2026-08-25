@@ -1,0 +1,29 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vw-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#33384A"/>
+      <stop offset="1" stop-color="#454B66"/>
+    </linearGradient>
+    <filter id="vw-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="vw-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#vw-bg)"/>
+  <circle cx="650" cy="360" r="140" fill="#7C89B0" opacity=".18" filter="url(#vw-blur)"/>
+  <circle cx="130" cy="90" r="120" fill="#8FA0C9" opacity=".14" filter="url(#vw-blur)"/>
+
+  <g transform="translate(240,110)">
+    <ellipse cx="160" cy="250" rx="200" ry="18" fill="#000" opacity=".22" filter="url(#vw-shadow)"/>
+    <rect x="0" y="0" width="320" height="200" rx="14" fill="#5B6280" opacity=".9"/>
+    <rect x="16" y="16" width="288" height="168" rx="6" fill="#2B2F45"/>
+    <rect x="36" y="40" width="140" height="10" rx="5" fill="#8FA0C9"/>
+    <rect x="36" y="62" width="200" height="8" rx="4" fill="#5B6280"/>
+    <rect x="36" y="80" width="160" height="8" rx="4" fill="#5B6280"/>
+    <rect x="140" y="200" width="40" height="26" fill="#5B6280"/>
+    <rect x="100" y="226" width="120" height="14" rx="7" fill="#454B66"/>
+  </g>
+
+  <g transform="translate(500,90)">
+    <circle r="44" fill="#2B2F45" stroke="#8FA0C9" stroke-width="3" stroke-dasharray="6 8"/>
+    <path d="M-14 -4 L-2 10 L16 -14" fill="none" stroke="#8FA0C9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ct-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A2E6B"/>
+      <stop offset="1" stop-color="#3A2E8A"/>
+    </linearGradient>
+    <filter id="ct-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#ct-bg)"/>
+  <circle cx="670" cy="110" r="140" fill="#E060B8" opacity=".22" filter="url(#ct-blur)"/>
+  <circle cx="120" cy="380" r="130" fill="#7C6CF0" opacity=".3" filter="url(#ct-blur)"/>
+
+  <g transform="translate(180,110)">
+    <path d="M60 220 L60 140 C60 100 100 100 140 90 L340 30" fill="none" stroke="#FFFFFF" stroke-opacity=".85" stroke-width="10" stroke-linecap="round"/>
+    <path d="M60 140 C60 180 100 180 140 190 L340 250" fill="none" stroke="#FFFFFF" stroke-opacity=".4" stroke-width="10" stroke-linecap="round"/>
+
+    <circle cx="60" cy="220" r="16" fill="#FFFFFF"/>
+
+    <g transform="translate(340,30)">
+      <circle r="42" fill="#35E7C6"/>
+      <path d="M-6 -16 L14 0 L-6 16" fill="none" stroke="#0B4A40" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(340,250)">
+      <circle r="30" fill="#FFFFFF" opacity=".25"/>
+      <circle r="30" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="6 8" opacity=".6"/>
+    </g>
+  </g>
+</svg>

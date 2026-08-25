@@ -1,0 +1,44 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="db-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B2E8A"/>
+      <stop offset="1" stop-color="#0F6E63"/>
+    </linearGradient>
+    <filter id="db-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="db-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <linearGradient id="db-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EEF1F8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#db-bg)"/>
+  <circle cx="660" cy="90" r="140" fill="#35E7C6" opacity=".28" filter="url(#db-blur)"/>
+  <circle cx="110" cy="380" r="130" fill="#7C6CF0" opacity=".30" filter="url(#db-blur)"/>
+
+  <ellipse cx="400" cy="360" rx="230" ry="24" fill="#000" opacity=".25" filter="url(#db-shadow)"/>
+
+  <g transform="translate(180,95)">
+    <rect width="440" height="260" rx="20" fill="url(#db-card)"/>
+    <circle cx="46" cy="46" r="22" fill="#7C6CF0"/>
+    <circle cx="46" cy="46" r="22" fill="none" stroke="#5B4CD6" stroke-width="2"/>
+    <rect x="82" y="34" width="120" height="10" rx="5" fill="#33395B"/>
+    <rect x="82" y="52" width="80" height="8" rx="4" fill="#9AA4BD"/>
+
+    <rect x="330" y="30" width="82" height="34" rx="17" fill="#E6FBF5"/>
+    <path d="M348 52l8-10 7 6 12-16" fill="none" stroke="#0FA98C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="28" y="150" width="384" height="1" fill="#E7EAF3"/>
+    <g>
+      <rect x="40" y="188" width="34" height="46" rx="6" fill="#C9CEE6"/>
+      <rect x="86" y="164" width="34" height="70" rx="6" fill="#8C7EF2"/>
+      <rect x="132" y="140" width="34" height="94" rx="6" fill="#35E7C6"/>
+      <rect x="178" y="176" width="34" height="58" rx="6" fill="#C9CEE6"/>
+    </g>
+    <g transform="translate(268,168)">
+      <rect width="144" height="66" rx="12" fill="#F5F1FF"/>
+      <rect x="16" y="16" width="70" height="8" rx="4" fill="#6C5CE0"/>
+      <rect x="16" y="32" width="112" height="8" rx="4" fill="#B7ADEE"/>
+      <rect x="16" y="46" width="90" height="8" rx="4" fill="#B7ADEE"/>
+    </g>
+  </g>
+</svg>

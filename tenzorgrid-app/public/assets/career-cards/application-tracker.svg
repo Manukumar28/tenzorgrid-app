@@ -1,0 +1,43 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="at-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0E6E63"/>
+      <stop offset="1" stop-color="#1D9A5C"/>
+    </linearGradient>
+    <filter id="at-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#at-bg)"/>
+  <circle cx="700" cy="90" r="130" fill="#35E7C6" opacity=".28" filter="url(#at-blur)"/>
+  <circle cx="90" cy="380" r="130" fill="#0F6E63" opacity=".35" filter="url(#at-blur)"/>
+
+  <g transform="translate(120,205)">
+    <line x1="40" y1="20" x2="680" y2="20" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="6" stroke-dasharray="2 16" stroke-linecap="round"/>
+
+    <g transform="translate(0,0)">
+      <circle r="40" fill="#0FA98C"/>
+      <path d="M-16 0l11 12 21-24" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(220,0)">
+      <circle r="40" fill="#0FA98C"/>
+      <path d="M-16 0l11 12 21-24" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(440,0)">
+      <circle r="40" fill="#FFFFFF" opacity=".18"/>
+      <circle r="40" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-dasharray="8 10"/>
+      <circle r="10" fill="#FFFFFF"/>
+    </g>
+    <g transform="translate(660,0)">
+      <circle r="40" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity=".4"/>
+    </g>
+  </g>
+
+  <g transform="translate(80,120)">
+    <rect width="150" height="30" rx="15" fill="#FFFFFF" opacity=".85"/>
+  </g>
+  <g transform="translate(300,120)">
+    <rect width="180" height="30" rx="15" fill="#FFFFFF" opacity=".55"/>
+  </g>
+  <g transform="translate(540,120)">
+    <rect width="130" height="30" rx="15" fill="#FFFFFF" opacity=".3"/>
+  </g>
+</svg>
