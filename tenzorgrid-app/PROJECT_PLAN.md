@@ -124,6 +124,23 @@ Shipped (across PRs #14, #16, #17, all squash-merged to `main`):
   Soon cards trigger the same toast pattern as the dashboard's locked-pillar tabs), and
   moved Virtual Workspace to the first card position — user confirmed it's next up for
   development (PR #23).
+- Dashboard (`dashboard.html`) gained a real left sidebar (11 items mirroring the Career
+  Growth grid) replacing its unused left-side dead space with a single centered column —
+  clicking an item switches a right-hand panel via URL hash (linkable/bookmarkable,
+  works with back/forward), same active-panel mechanism as `pro.html`'s existing
+  `.pro-tabs`/`.pro-panel`. Panel content is honest about what's built: Dashboard/Job
+  Search/Salary Insights/Career Upgrade show real data; Resume & Interview Prep/Career
+  Upgrade/Career Transition are Pro-gated — Pro subscribers get a real deep link into the
+  matching `pro.html` tab (which gained hash-based initial-tab support, e.g.
+  `/pro.html#upgrade`), everyone else sees an honest "Unlock with Pro" prompt instead of
+  a fake preview; Application Tracker/Course Recommendations/Auto Apply/Virtual
+  Workspace/AI Mock Interviews show an honest "not built yet" panel (nothing exists for
+  these anywhere in the app yet). Career Growth's live cards now carry a `data-hash` per
+  feature so a logged-in user with a profile clicking one lands directly on the matching
+  dashboard panel instead of the generic dashboard home (PR #25). Also widened the
+  dashboard shell + header from the shared 1320px `.container` to a page-scoped 1800px
+  `.container-app` so it uses the full window on wide screens, without affecting other
+  pages that still use the narrower shared class (PR #26).
 
 **Not done, deferred on purpose:** Three.js (nothing needs 3D yet — waits for Phase 1's
 Skill Tree module). Real payment gateway (still `/api/subscribe` dev-mode stub — flip to
