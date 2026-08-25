@@ -152,7 +152,7 @@ a.logo{cursor:pointer;}
    layout. Scoping this only to .avatar-lg was the bug; this rule covers all sizes. */
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
 
-.dash-wrap{max-width:1320px;margin:0 auto;padding:34px 28px 90px;}
+.dash-wrap{max-width:1800px;margin:0 auto;padding:34px 28px 90px;}
 .portfolio-hero{
   background:var(--brand-dark-grad);color:#f1f5f9;border-radius:var(--radius-lg);
   padding:34px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px;box-shadow:var(--shadow-soft);
@@ -460,7 +460,7 @@ a.logo{cursor:pointer;}
 /* ---- Marketing pages: landing pillars + Career Growth explainer ---- */
 .dark-hero{background:var(--brand-dark-grad);color:#f1f5f9;min-height:100vh;position:relative;overflow:hidden;}
 .dark-hero .top-nav a{color:#e2e8f0;}
-.dark-hero>.container,.dark-hero>.container-wide,.dark-hero>.feature-grid-wrap{position:relative;z-index:2;}
+.dark-hero>.container,.dark-hero>.container-wide,.dark-hero>.container-app,.dark-hero>.feature-grid-wrap{position:relative;z-index:2;}
 .hero-eyebrow{display:inline-block;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--accent-light);font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:99px;margin-bottom:22px;letter-spacing:.03em;}
 .hero-block{padding:70px 0 50px;text-align:center;}
 .hero-block h1{font-size:42px;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;line-height:1.12;}
