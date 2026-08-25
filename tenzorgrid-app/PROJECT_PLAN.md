@@ -141,6 +141,14 @@ Shipped (across PRs #14, #16, #17, all squash-merged to `main`):
   dashboard shell + header from the shared 1320px `.container` to a page-scoped 1800px
   `.container-app` so it uses the full window on wide screens, without affecting other
   pages that still use the narrower shared class (PR #26).
+- `.container-app` extended to `pro.html` (header + `.dash-wrap`), `career-growth.html`
+  (nav bar only — hero headline text stays in the narrower `.container` for readability),
+  and `landing.html` (replacing the one-off `.container-wide`) — a full site-wide width
+  audit. Confirmed with the user first that `login.html`, `signup.html`,
+  `onboarding.html`, `welcome.html`, and `subscribe.html` should stay at their current
+  deliberately-narrow, form-focused widths rather than also stretching to 1800px — those
+  are small forms/pricing tables, not content surfaces, and forcing them wider would
+  create dead space rather than remove it (PR #28).
 
 **Not done, deferred on purpose:** Three.js (nothing needs 3D yet — waits for Phase 1's
 Skill Tree module). Real payment gateway (still `/api/subscribe` dev-mode stub — flip to
