@@ -58,6 +58,15 @@
       <div class="insight-card"><div class="ilabel">Upskill to become</div><div class="ival" id="insUpskillTarget">Loading…</div><div class="isub" id="insUpskillMissing"></div></div>
       <div class="insight-card"><div class="ilabel">Best-suited jobs</div><div class="ival" id="insBestFit">Loading…</div></div>
     </div>
+
+    <div class="completion-meter" id="completionMeter">
+      <div class="cm-head">
+        <span class="cm-label">Profile strength</span>
+        <span class="cm-pct" id="cmPct">0%</span>
+      </div>
+      <div class="cm-bar"><div class="cm-fill" id="cmFill" style="width:0%"></div></div>
+      <div class="cm-hint" id="cmHint"></div>
+    </div>
   </div>
 
   <div class="section-title"><h3>Your experience</h3></div>
@@ -253,12 +262,53 @@ let currentProfile = null;
 let currentExperiences = [];
 let currentCertifications = [];
 let currentEducation = [];
+let currentEmail = null;
 let skillCategories = [];
 fetch('/api/skills').then((r) => r.json()).then((data) => { skillCategories = data.categories || []; }).catch(() => {});
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
   window.location.href = '/login.html';
+}
+
+function updateCompletionMeter() {
+  if (!currentProfile) return;
+  const checks = [
+    (currentProfile.skills || []).length >= 3,
+    Boolean(currentProfile.hasCv),
+    Boolean(currentProfile.photoUrl),
+    currentExperiences.length > 0,
+    currentEducation.length > 0,
+    currentCertifications.length > 0,
+  ];
+  const done = checks.filter(Boolean).length;
+  const pct = Math.round((done / checks.length) * 100);
+
+  const fill = document.getElementById('cmFill');
+  const pctEl = document.getElementById('cmPct');
+  const hintEl = document.getElementById('cmHint');
+  if (!fill) return;
+  fill.style.width = pct + '%';
+  TG.countUp(pctEl, pct, { format: (n) => n + '%' });
+
+  const missing = [];
+  if (!checks[0]) missing.push('add a few more skills');
+  if (!checks[1]) missing.push('upload your CV');
+  if (!checks[2]) missing.push('add a profile photo');
+  if (!checks[3]) missing.push('add a work role');
+  if (!checks[4]) missing.push('add your education');
+  if (!checks[5]) missing.push('add a certification');
+  hintEl.textContent = pct === 100
+    ? 'Your profile is fully filled out — nice.'
+    : 'Next: ' + missing.slice(0, 2).join(', ') + (missing.length > 2 ? ', and more' : '');
+
+  if (pct === 100 && currentEmail) {
+    const flagKey = 'tg_profile_complete_' + currentEmail;
+    if (!localStorage.getItem(flagKey)) {
+      localStorage.setItem(flagKey, '1');
+      TG.confetti(document.getElementById('completionMeter'));
+    }
+  }
 }
 
 function setAvatarVisual(el, name, photoUrl) {
@@ -279,6 +329,8 @@ async function load() {
 
   const p = me.profile;
   currentProfile = p;
+  currentEmail = me.email;
+  updateCompletionMeter();
   document.getElementById('miniName').textContent = p.name;
   setAvatarVisual(document.getElementById('miniAvatar'), p.name, p.photoUrl);
   setAvatarVisual(document.getElementById('heroAvatar'), p.name, p.photoUrl);
@@ -433,6 +485,7 @@ async function loadExperiences() {
     </div>`;
   }).join('');
   document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
+  updateCompletionMeter();
 }
 
 async function loadEducation() {
@@ -456,6 +509,7 @@ async function loadEducation() {
       </div>
     </div>`).join('');
   document.getElementById('eduCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openEduModal()"><span class="plus-icon">+</span>Add education</div>';
+  updateCompletionMeter();
 }
 
 function eduKey(e) { return ((e.institution || '') + '|' + (e.degree || '')).trim().toLowerCase(); }
@@ -735,6 +789,7 @@ async function loadCertifications() {
     </div>`;
   }).join('');
   document.getElementById('certCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openCertModal()"><span class="plus-icon">+</span>Add a certification</div>';
+  updateCompletionMeter();
 }
 
 function openCertModal() {

@@ -57,6 +57,35 @@ window.TG = window.TG || {};
     });
   };
 
+  // Small celebratory burst of dots from the center of `originEl` — used for
+  // one-off milestones (e.g. profile reaching 100%). No-op under reduced
+  // motion or if GSAP isn't available; still fires visually once either way.
+  TG.confetti = function (originEl) {
+    if (!originEl) return;
+    const rect = originEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6d28d9'];
+    if (!hasGsap || prefersReducedMotion) return;
+    for (let i = 0; i < 18; i++) {
+      const dot = document.createElement('div');
+      dot.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:7px;height:7px;border-radius:50%;` +
+        `background:${colors[i % colors.length]};pointer-events:none;z-index:500;`;
+      document.body.appendChild(dot);
+      const angle = (Math.PI * 2 * i) / 18 + Math.random() * 0.4;
+      const dist = 60 + Math.random() * 70;
+      gsap.to(dot, {
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist - 20,
+        opacity: 0,
+        scale: 0.3,
+        duration: 0.8 + Math.random() * 0.4,
+        ease: 'power2.out',
+        onComplete: () => dot.remove(),
+      });
+    }
+  };
+
   // Crossfades between two elements that occupy the same spot (e.g. a
   // monthly/yearly price swap) instead of an instant display:none toggle.
   TG.crossfade = function (hideEl, showEl) {
