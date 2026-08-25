@@ -188,6 +188,9 @@ async function init() {
   renderTransitionPlan();
   renderResumeTemplates();
   renderInterview();
+
+  const initialTab = (location.hash || '').replace('#', '');
+  if (['matches', 'board', 'upgrade', 'transition', 'resume', 'interview'].includes(initialTab)) switchToTab(initialTab);
 }
 
 let marketValueByRole = {};

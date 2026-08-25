@@ -25,64 +25,160 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<div class="dash-wrap">
-  <div class="portfolio-hero" id="heroSkeleton">
-    <div class="skeleton" style="width:100%;height:140px;"></div>
-  </div>
+<div class="dash-shell">
+  <nav class="dash-sidebar" id="dashSidebar">
+    <button class="dash-nav-item active" data-panel="dashboard">🏠 Dashboard</button>
+    <button class="dash-nav-item" data-panel="virtual-workspace">🖥️ Virtual Workspace<span class="dash-nav-soon">Soon</span></button>
+    <button class="dash-nav-item" data-panel="job-search">🔍 Job Search</button>
+    <button class="dash-nav-item" data-panel="application-tracker">📋 Application Tracker<span class="dash-nav-soon">Soon</span></button>
+    <button class="dash-nav-item" data-panel="resume-interview">📄 Resume &amp; Interview Prep</button>
+    <button class="dash-nav-item" data-panel="salary-insights">📈 Salary Insights</button>
+    <button class="dash-nav-item" data-panel="career-upgrade">🚀 Career Upgrade</button>
+    <button class="dash-nav-item" data-panel="career-transition">🔀 Career Transition</button>
+    <button class="dash-nav-item" data-panel="course-recommendations">🎓 Course Recommendations<span class="dash-nav-soon">Soon</span></button>
+    <button class="dash-nav-item" data-panel="auto-apply">⚡ Auto Apply<span class="dash-nav-soon">Soon</span></button>
+    <button class="dash-nav-item" data-panel="mock-interviews">🎤 AI Mock Interviews<span class="dash-nav-soon">Soon</span></button>
+  </nav>
 
-  <div id="heroReal" style="display:none;" class="portfolio-hero">
-    <div>
-      <div class="photo-wrap" id="photoWrap" title="Click to change your photo">
-        <div class="avatar avatar-lg" id="heroAvatar" style="width:64px;height:64px;font-size:22px;">?</div>
-        <div class="photo-edit-badge">✎</div>
+  <div class="dash-main">
+
+    <section class="dash-panel active" id="panel-dashboard">
+      <div class="portfolio-hero" id="heroSkeleton">
+        <div class="skeleton" style="width:100%;height:140px;"></div>
       </div>
-      <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" style="display:none">
-      <h1 id="heroName">—</h1>
-      <div class="role-line" id="heroRole">—</div>
-      <div class="skills-row" id="heroSkills"></div>
-    </div>
-    <div style="text-align:right;">
-      <div class="salary-box">
-        <div><div class="amt"><span class="salary-amt-emoji">💰</span><span id="heroCurrentSalary">—</span></div><div class="lbl">CURRENT</div></div>
-        <div><div class="amt"><span class="salary-amt-emoji">🎯</span><span id="heroExpectedSalary">—</span></div><div class="lbl">EXPECTED</div></div>
+
+      <div id="heroReal" style="display:none;" class="portfolio-hero">
+        <div>
+          <div class="photo-wrap" id="photoWrap" title="Click to change your photo">
+            <div class="avatar avatar-lg" id="heroAvatar" style="width:64px;height:64px;font-size:22px;">?</div>
+            <div class="photo-edit-badge">✎</div>
+          </div>
+          <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" style="display:none">
+          <h1 id="heroName">—</h1>
+          <div class="role-line" id="heroRole">—</div>
+          <div class="skills-row" id="heroSkills"></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="salary-box">
+            <div><div class="amt"><span class="salary-amt-emoji">💰</span><span id="heroCurrentSalary">—</span></div><div class="lbl">CURRENT</div></div>
+            <div><div class="amt"><span class="salary-amt-emoji">🎯</span><span id="heroExpectedSalary">—</span></div><div class="lbl">EXPECTED</div></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openEditProfileModal()">✎ Edit profile</button>
+            <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
+            <button class="btn btn-ghost btn-sm" id="updateCvBtn" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openCvModal()">Update from CV</button>
+          </div>
+        </div>
+
+        <div class="insights-panel" id="insightsPanel">
+          <div class="insight-card"><div class="ilabel">Market value</div><div class="ival" id="insMarketValue">Loading…</div></div>
+          <div class="insight-card"><div class="ilabel">Upskill to become</div><div class="ival" id="insUpskillTarget">Loading…</div><div class="isub" id="insUpskillMissing"></div></div>
+          <div class="insight-card"><div class="ilabel">Best-suited jobs</div><div class="ival" id="insBestFit">Loading…</div></div>
+        </div>
+
+        <div class="completion-meter" id="completionMeter">
+          <div class="cm-head">
+            <span class="cm-label">Profile strength</span>
+            <span class="cm-pct" id="cmPct">0%</span>
+          </div>
+          <div class="cm-bar"><div class="cm-fill" id="cmFill" style="width:0%"></div></div>
+          <div class="cm-hint" id="cmHint"></div>
+        </div>
       </div>
-      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openEditProfileModal()">✎ Edit profile</button>
-        <a href="/api/cv" id="cvDownloadLink" class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);display:none;">Download CV</a>
-        <button class="btn btn-ghost btn-sm" id="updateCvBtn" style="color:#e2e8f0;border-color:rgba(255,255,255,.3);" onclick="openCvModal()">Update from CV</button>
+
+      <div class="section-title"><h3>Your experience</h3></div>
+      <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
+
+      <div class="section-title"><h3>Education</h3></div>
+      <div class="exp-scroll" id="eduCards"><div class="skeleton" style="height:100px;"></div></div>
+
+      <div class="section-title"><h3>Certifications</h3></div>
+      <div class="cert-scroll" id="certCards"><div class="skeleton" style="height:100px;"></div></div>
+    </section>
+
+    <section class="dash-panel" id="panel-virtual-workspace">
+      <div class="feature-panel-banner soon"><img src="/assets/career-cards/virtual-workspace.svg" alt=""><div class="fpb-text"><b>Virtual Workspace</b><span>A simulated work environment with an AI manager assigning real tasks and reviewing your submissions.</span></div></div>
+      <div class="feature-soon-note">We're building this next — build verifiable work experience before your first job. Check back soon.</div>
+    </section>
+
+    <section class="dash-panel" id="panel-job-search">
+      <div class="feature-panel-banner"><img src="/assets/career-cards/job-search.svg" alt=""><div class="fpb-text"><b>Job Search</b><span>Matched openings, ranked by real skill overlap with your profile.</span></div></div>
+      <div class="section-title" style="margin-top:0;"><h3>Matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
+      <div id="jobsList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div><div class="skeleton" style="height:60px;"></div></div>
+      <div class="browse-all-cta">
+        <div><b>Want to see every matching job?</b><br><span>Browsing the full matched list is a subscriber feature.</span></div>
+        <a class="btn btn-primary btn-sm" id="browseAllBtn" href="/subscribe.html">Browse all matching jobs →</a>
       </div>
-    </div>
+    </section>
 
-    <div class="insights-panel" id="insightsPanel">
-      <div class="insight-card"><div class="ilabel">Market value</div><div class="ival" id="insMarketValue">Loading…</div></div>
-      <div class="insight-card"><div class="ilabel">Upskill to become</div><div class="ival" id="insUpskillTarget">Loading…</div><div class="isub" id="insUpskillMissing"></div></div>
-      <div class="insight-card"><div class="ilabel">Best-suited jobs</div><div class="ival" id="insBestFit">Loading…</div></div>
-    </div>
+    <section class="dash-panel" id="panel-application-tracker">
+      <div class="feature-panel-banner soon"><img src="/assets/career-cards/application-tracker.svg" alt=""><div class="fpb-text"><b>Application Tracker</b><span>Every job you've applied to, tracked in one place.</span></div></div>
+      <div class="feature-soon-note">Not built yet — once Auto Apply ships, applications will start showing up here automatically. Check back soon.</div>
+    </section>
 
-    <div class="completion-meter" id="completionMeter">
-      <div class="cm-head">
-        <span class="cm-label">Profile strength</span>
-        <span class="cm-pct" id="cmPct">0%</span>
+    <section class="dash-panel" id="panel-resume-interview">
+      <div class="feature-panel-banner"><img src="/assets/career-cards/resume-interview.svg" alt=""><div class="fpb-text"><b>Resume &amp; Interview Prep</b><span>A resume built from your real profile, plus role-specific interview questions.</span></div></div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:12px;">Your resume data</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="/api/cv" id="cvDownloadLink2" class="btn btn-ghost btn-sm" style="display:none;">Download CV</a>
+          <button class="btn btn-ghost btn-sm" onclick="openCvModal()">Update from CV</button>
+        </div>
       </div>
-      <div class="cm-bar"><div class="cm-fill" id="cmFill" style="width:0%"></div></div>
-      <div class="cm-hint" id="cmHint"></div>
-    </div>
-  </div>
+      <div class="feature-upsell" id="riUpsell">
+        <div><b>Full Resume Builder &amp; Interview Prep</b><span>Generated resume templates, role-specific practice questions — unlock with Pro.</span></div>
+        <a class="btn btn-primary btn-sm" href="/subscribe.html">Unlock with Pro →</a>
+      </div>
+      <a class="btn btn-primary btn-sm" id="riProLink" href="/pro.html#resume" style="display:none;margin-top:18px;">Open Resume Builder &amp; Interview Prep →</a>
+    </section>
 
-  <div class="section-title"><h3>Your experience</h3></div>
-  <div class="exp-scroll" id="expCards"><div class="skeleton" style="height:140px;"></div></div>
+    <section class="dash-panel" id="panel-salary-insights">
+      <div class="feature-panel-banner"><img src="/assets/career-cards/salary-insights.svg" alt=""><div class="fpb-text"><b>Salary Insights</b><span>A real market-value estimate for your role and experience.</span></div></div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;font-weight:700;">Market value</div>
+        <div style="font-size:24px;font-weight:800;margin-top:6px;" id="siMarketValue">Loading…</div>
+        <p style="font-size:13px;color:var(--text-soft);margin-top:10px;">Based on real job postings matched to your role and skills. Add more skills or experience to refine this.</p>
+      </div>
+    </section>
 
-  <div class="section-title"><h3>Education</h3></div>
-  <div class="exp-scroll" id="eduCards"><div class="skeleton" style="height:100px;"></div></div>
+    <section class="dash-panel" id="panel-career-upgrade">
+      <div class="feature-panel-banner"><img src="/assets/career-cards/career-upgrade.svg" alt=""><div class="fpb-text"><b>Career Upgrade</b><span>See what's missing between your profile and your target role.</span></div></div>
+      <div class="card" style="padding:24px;">
+        <div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;font-weight:700;">Upskill to become</div>
+        <div style="font-size:18px;font-weight:700;margin-top:6px;" id="cuUpskillTarget">Loading…</div>
+        <div style="font-size:13px;color:var(--text-soft);margin-top:6px;" id="cuUpskillMissing"></div>
+      </div>
+      <div class="feature-upsell" id="cuUpsell">
+        <div><b>Full Career Upgrade plan</b><span>A guided, phased plan to close the gap — unlock with Pro.</span></div>
+        <a class="btn btn-primary btn-sm" href="/subscribe.html">Unlock with Pro →</a>
+      </div>
+      <a class="btn btn-primary btn-sm" id="cuProLink" href="/pro.html#upgrade" style="display:none;margin-top:18px;">Open full Career Upgrade plan →</a>
+    </section>
 
-  <div class="section-title"><h3>Certifications</h3></div>
-  <div class="cert-scroll" id="certCards"><div class="skeleton" style="height:100px;"></div></div>
+    <section class="dash-panel" id="panel-career-transition">
+      <div class="feature-panel-banner"><img src="/assets/career-cards/career-transition.svg" alt=""><div class="fpb-text"><b>Career Transition</b><span>A bundled plan for switching into a new target career.</span></div></div>
+      <div class="feature-upsell" id="ctUpsell">
+        <div><b>Career Transition planner</b><span>Pick a target field and get a structured switching plan — unlock with Pro.</span></div>
+        <a class="btn btn-primary btn-sm" href="/subscribe.html">Unlock with Pro →</a>
+      </div>
+      <a class="btn btn-primary btn-sm" id="ctProLink" href="/pro.html#transition" style="display:none;">Open Career Transition planner →</a>
+    </section>
 
-  <div class="section-title"><h3>Matching jobs</h3><span style="font-size:12.5px;color:var(--text-faint);">Ranked by skill overlap with your profile</span></div>
-  <div id="jobsList"><div class="skeleton" style="height:60px;margin-bottom:10px;"></div><div class="skeleton" style="height:60px;"></div></div>
-  <div class="browse-all-cta">
-    <div><b>Want to see every matching job?</b><br><span>Browsing the full matched list is a subscriber feature.</span></div>
-    <a class="btn btn-primary btn-sm" id="browseAllBtn" href="/subscribe.html">Browse all matching jobs →</a>
+    <section class="dash-panel" id="panel-course-recommendations">
+      <div class="feature-panel-banner soon"><img src="/assets/career-cards/course-recommendations.svg" alt=""><div class="fpb-text"><b>Course Recommendations</b><span>Budget-aware course and skill suggestions matched to your gaps.</span></div></div>
+      <div class="feature-soon-note">Not built yet — check back soon.</div>
+    </section>
+
+    <section class="dash-panel" id="panel-auto-apply">
+      <div class="feature-panel-banner soon"><img src="/assets/career-cards/auto-apply.svg" alt=""><div class="fpb-text"><b>Auto Apply</b><span>Matched jobs applied to on your behalf.</span></div></div>
+      <div class="feature-soon-note">Not built yet — check back soon.</div>
+    </section>
+
+    <section class="dash-panel" id="panel-mock-interviews">
+      <div class="feature-panel-banner soon"><img src="/assets/career-cards/mock-interviews.svg" alt=""><div class="fpb-text"><b>AI Mock Interviews</b><span>Live practice with real-time feedback on your answers.</span></div></div>
+      <div class="feature-soon-note">Not built yet — check back soon.</div>
+    </section>
+
   </div>
 </div>
 
@@ -249,6 +345,23 @@ document.getElementById('pillarSwitcher').addEventListener('click', (e) => {
 });
 TG.hoverLift('.ps-tab.locked');
 
+// ---- Sidebar / feature panel switching ----
+const DASH_PANELS = ['dashboard', 'virtual-workspace', 'job-search', 'application-tracker', 'resume-interview', 'salary-insights', 'career-upgrade', 'career-transition', 'course-recommendations', 'auto-apply', 'mock-interviews'];
+function switchDashPanel(name) {
+  if (!DASH_PANELS.includes(name)) name = 'dashboard';
+  document.querySelectorAll('.dash-nav-item').forEach((t) => t.classList.toggle('active', t.dataset.panel === name));
+  document.querySelectorAll('.dash-panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+document.getElementById('dashSidebar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.dash-nav-item');
+  if (!btn) return;
+  const name = btn.dataset.panel;
+  window.location.hash = name === 'dashboard' ? '' : name;
+  switchDashPanel(name);
+});
+window.addEventListener('hashchange', () => switchDashPanel((location.hash || '').replace('#', '')));
+switchDashPanel((location.hash || '').replace('#', ''));
+
 function initials(name) {
   return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
@@ -340,7 +453,10 @@ async function load() {
   document.getElementById('heroSkills').innerHTML = (p.skills || []).map((s) => '<span class="skill-pill">' + s + '</span>').join('') || '<span class="skill-pill">No skills added yet</span>';
   document.getElementById('heroCurrentSalary').textContent = fmtINR(p.currentSalary);
   document.getElementById('heroExpectedSalary').textContent = fmtINR(p.expectedSalary);
-  if (p.hasCv) document.getElementById('cvDownloadLink').style.display = 'inline-flex';
+  if (p.hasCv) {
+    document.getElementById('cvDownloadLink').style.display = 'inline-flex';
+    document.getElementById('cvDownloadLink2').style.display = 'inline-flex';
+  }
 
   document.getElementById('heroSkeleton').style.display = 'none';
   document.getElementById('heroReal').style.display = 'flex';
@@ -356,6 +472,14 @@ async function load() {
     browseBtn.textContent = 'Browse all matching jobs →';
     browseBtn.href = '/pro.html';
   }
+
+  // Career Upgrade / Career Transition / Resume & Interview Prep are Pro-gated
+  // features that already live on pro.html — Pro subscribers get a real deep
+  // link into the matching tab there; everyone else sees the upgrade prompt.
+  [['riUpsell', 'riProLink'], ['cuUpsell', 'cuProLink'], ['ctUpsell', 'ctProLink']].forEach(([upsellId, linkId]) => {
+    document.getElementById(upsellId).style.display = me.isPro ? 'none' : 'flex';
+    document.getElementById(linkId).style.display = me.isPro ? 'inline-flex' : 'none';
+  });
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   const jobs = jobsData.jobs || [];
@@ -419,10 +543,17 @@ async function loadInsights() {
     document.getElementById('insBestFit').textContent = bf.length
       ? bf.map((j) => j.title + ' (' + j.matchPct + '%)').join(', ')
       : 'No strong matches yet';
+
+    document.getElementById('siMarketValue').textContent = ins.marketValueLabel || 'Add more skills to estimate';
+    document.getElementById('cuUpskillTarget').textContent = ins.upskillTarget || 'Add more profile info';
+    document.getElementById('cuUpskillMissing').textContent = (ins.upskillMissing && ins.upskillMissing.length)
+      ? 'Learn: ' + ins.upskillMissing.join(', ') : '';
   } catch (e) {
     document.getElementById('insMarketValue').textContent = '—';
     document.getElementById('insUpskillTarget').textContent = '—';
     document.getElementById('insBestFit').textContent = '—';
+    document.getElementById('siMarketValue').textContent = '—';
+    document.getElementById('cuUpskillTarget').textContent = '—';
   }
 }
 
