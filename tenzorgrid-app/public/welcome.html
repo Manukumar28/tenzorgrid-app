@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome — TenzorGrid</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-header">
+  <div class="container nav">
+    <a class="logo" href="/"><img src="/assets/icon.svg" alt="TenzorGrid"> <span class="logo-word">Tenzor<span class="g">Grid</span></span></a>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+  </div>
+</div>
+
+<div class="dash-wrap" style="max-width:960px;">
+  <div class="welcome-head">
+    <h1>What do you want to work on first?</h1>
+    <p>Pick a pillar to get started — you can add more from your dashboard any time.</p>
+  </div>
+
+  <div class="welcome-grid" id="welcomeGrid">
+    <a class="welcome-card live" href="/onboarding.html" style="animation-delay:.02s;">
+      <div class="wc-icon">🚀</div>
+      <b>Job Assistant</b>
+      <span>Find, apply, and grow — matched jobs, upgrade &amp; transition guidance, resume and interview prep.</span>
+      <span class="wc-status wc-live">Ready to start →</span>
+    </a>
+    <div class="welcome-card" style="animation-delay:.08s;">
+      <div class="wc-icon">💼</div>
+      <b>Business Assistant</b>
+      <span>Ad generation, smart CRM, lead scoring, and operational forecasting for entrepreneurs and SMEs.</span>
+      <span class="wc-status wc-soon">Coming soon</span>
+    </div>
+    <div class="welcome-card" style="animation-delay:.14s;">
+      <div class="wc-icon">📈</div>
+      <b>Trader Assistant</b>
+      <span>Algorithmic strategy building, market sentiment tracking, and automated risk management.</span>
+      <span class="wc-status wc-soon">Coming soon</span>
+    </div>
+    <div class="welcome-card" style="animation-delay:.2s;">
+      <div class="wc-icon">🤖</div>
+      <b>Custom AI Automation</b>
+      <span>Bespoke workflow automation, private RAG chatbots, and API access for larger teams.</span>
+      <span class="wc-status wc-soon">Coming soon</span>
+    </div>
+  </div>
+</div>
+
+<script>
+async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login.html'; }
+
+async function init() {
+  const me = await fetch('/api/me').then((r) => r.json());
+  if (!me.authenticated) { window.location.href = '/login.html'; return; }
+  if (me.hasProfile) { window.location.href = '/dashboard.html'; return; }
+}
+init().catch((e) => console.error(e));
+</script>
+</body>
+</html>

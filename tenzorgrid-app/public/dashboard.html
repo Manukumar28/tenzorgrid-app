@@ -249,7 +249,7 @@ function setAvatarVisual(el, name, photoUrl) {
 async function load() {
   const me = await fetch('/api/me').then((r) => r.json());
   if (!me.authenticated) { window.location.href = '/login.html'; return; }
-  if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/welcome.html'; return; }
 
   const p = me.profile;
   currentProfile = p;
@@ -280,10 +280,11 @@ async function load() {
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   const jobs = jobsData.jobs || [];
+  const hiddenCount = Math.max(0, (jobsData.totalCount || 0) - jobs.length);
   if (jobs.length === 0) {
     document.getElementById('jobsList').innerHTML = '<div class="empty-note">No jobs available yet.</div>';
   } else {
-    document.getElementById('jobsList').innerHTML = jobs.slice(0, 3).map((j) => `
+    const realRows = jobs.slice(0, 3).map((j) => `
       <div class="job-row">
         <div class="jinfo">
           <b>${j.title}</b>
@@ -291,6 +292,35 @@ async function load() {
         </div>
         <span class="match-badge ${matchClass(j.matchScore)}">${j.matchScore}% match</span>
       </div>`).join('');
+
+    let lockedBlock = '';
+    if (!me.isPro && hiddenCount > 0) {
+      const previewCount = Math.min(2, hiddenCount);
+      const lockedRows = Array.from({ length: previewCount }).map(() => `
+        <div class="job-row">
+          <div class="jinfo"><b>Senior role match</b><span>Company · Job portal · Location</span></div>
+          <span class="match-badge high">‑‑% match</span>
+        </div>`).join('');
+      lockedBlock = `
+        <div class="locked-stack">
+          ${lockedRows}
+          <div class="locked-overlay">
+            <span class="lock-icon">🔒</span>
+            <b>${hiddenCount} more matching job${hiddenCount === 1 ? '' : 's'}</b>
+            <a href="/subscribe.html">Unlock with Pro →</a>
+          </div>
+        </div>`;
+    }
+    document.getElementById('jobsList').innerHTML = realRows + lockedBlock;
+  }
+
+  const ctaBox = document.querySelector('.browse-all-cta');
+  if (ctaBox && !me.isPro) {
+    ctaBox.querySelector('span').textContent = hiddenCount > 0
+      ? `You're seeing 3 of ${jobsData.totalCount} matches — the rest are a subscriber feature.`
+      : 'Browsing the full matched list is a subscriber feature.';
+  } else if (ctaBox && me.isPro) {
+    ctaBox.style.display = 'none';
   }
 }
 

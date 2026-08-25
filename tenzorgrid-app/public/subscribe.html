@@ -20,14 +20,19 @@
     <p style="color:var(--text-soft);font-size:15px;max-width:560px;margin:0 auto;">A subscription unlocks the full matched-jobs list plus the tools to act on it.</p>
   </div>
 
-  <div class="plan-grid">
+  <div class="billing-toggle" id="billingToggle" role="group" aria-label="Billing period">
+    <button type="button" class="billing-opt active" data-period="monthly">Monthly</button>
+    <button type="button" class="billing-opt" data-period="yearly">Yearly <span class="save-chip">Save 17%</span></button>
+  </div>
+
+  <div class="plan-grid plan-grid-3">
     <div class="plan-card">
       <div class="pname">Free</div>
-      <div class="pprice">₹0</div>
+      <div class="pprice">₹0<span> forever</span></div>
       <ul class="plan-feature-list">
         <li>Build your profile &amp; portfolio dashboard</li>
         <li>CV upload with auto-fill</li>
-        <li>Top 2–3 matching jobs preview</li>
+        <li>Top 3 matching jobs preview</li>
         <li>Market value &amp; upskill insights</li>
         <li>Add your work experience cards</li>
       </ul>
@@ -35,8 +40,10 @@
     </div>
 
     <div class="plan-card featured">
+      <div class="plan-badge">Most popular</div>
       <div class="pname">TenzorGrid Pro</div>
-      <div class="pprice">Price TBD <span>/month</span></div>
+      <div class="pprice"><span class="price-monthly">₹499<span> /month</span></span><span class="price-yearly" style="display:none;">₹4,999<span> /year</span></span></div>
+      <div class="price-note price-note-yearly" style="display:none;">Works out to ₹417/month</div>
       <ul class="plan-feature-list">
         <li>Browse and filter <b>every</b> matching job, not just the top 3</li>
         <li>Auto Apply — jobs applied to on your behalf, with an Exceptions list for anything needing a manual step</li>
@@ -46,14 +53,46 @@
         <li>Interview Preparation tailored to the roles you're applying to</li>
         <li>Application status tracking across every job you've applied to</li>
       </ul>
-      <button class="btn btn-primary btn-block" id="subscribeBtn" onclick="subscribe()">Subscribe (dev mode) →</button>
-      <div class="hint" style="text-align:center;margin-top:10px;">The payment gateway isn't connected yet — clicking Subscribe unlocks Pro instantly while we build this out. Real checkout is coming.</div>
+      <button class="btn btn-primary btn-block" id="subscribeBtn" onclick="subscribe(event)">Upgrade to Pro →</button>
+      <div class="hint" style="text-align:center;margin-top:10px;">Payment gateway isn't connected yet — Upgrade activates Pro instantly while we finish checkout. Cancel anytime, no lock-in.</div>
     </div>
+
+    <div class="plan-card">
+      <div class="plan-badge plan-badge-alt">First 500 users</div>
+      <div class="pname">Founding Member</div>
+      <div class="pprice">₹249<span> /month</span></div>
+      <div class="price-note">Locked for life on this account</div>
+      <ul class="plan-feature-list">
+        <li>Everything in Pro, same features</li>
+        <li>Price never increases for this account</li>
+        <li>Early access to Business, Trader &amp; Custom AI pillars as they ship</li>
+      </ul>
+      <button class="btn btn-ghost btn-block" id="foundingBtn" onclick="subscribe(event)">Claim founding price →</button>
+      <div class="hint" style="text-align:center;margin-top:10px;" id="foundingHint">A genuine capped offer — once 500 accounts claim it, this tier closes for good.</div>
+    </div>
+  </div>
+
+  <div class="plans-faq">
+    <div class="faq-row"><b>Can I cancel anytime?</b><span>Yes — cancel from your account settings whenever you like, no retention flow, no calls.</span></div>
+    <div class="faq-row"><b>What happens to my data if I downgrade?</b><span>Nothing is deleted. Your profile, CV, and history stay exactly as they are — you just go back to the Free feature set.</span></div>
+    <div class="faq-row"><b>Is the Founding Member price really locked forever?</b><span>Yes, for as long as your subscription stays active on this account.</span></div>
   </div>
 </div>
 <script>
-async function subscribe() {
-  const btn = document.getElementById('subscribeBtn');
+document.getElementById('billingToggle').addEventListener('click', (e) => {
+  const opt = e.target.closest('.billing-opt');
+  if (!opt) return;
+  document.querySelectorAll('.billing-opt').forEach((b) => b.classList.remove('active'));
+  opt.classList.add('active');
+  const yearly = opt.dataset.period === 'yearly';
+  document.querySelector('.price-monthly').style.display = yearly ? 'none' : '';
+  document.querySelector('.price-yearly').style.display = yearly ? '' : 'none';
+  document.querySelector('.price-note-yearly').style.display = yearly ? '' : 'none';
+});
+
+async function subscribe(e) {
+  const btn = e && e.target ? e.target.closest('button') : document.getElementById('subscribeBtn');
+  const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Activating…';
   try {
@@ -62,7 +101,7 @@ async function subscribe() {
     window.location.href = '/pro.html';
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = 'Subscribe (dev mode) →';
+    btn.textContent = original;
     alert(e.message);
   }
 }
