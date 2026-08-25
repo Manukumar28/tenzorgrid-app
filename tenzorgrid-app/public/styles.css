@@ -528,6 +528,29 @@ a.logo{cursor:pointer;}
 .site-footer .foot-links a:hover{color:#fff;}
 .site-footer .foot-copy{font-size:12.5px;color:#6b7590;}
 
+/* ---- Dashboard pillar switcher + toast ---- */
+.pillar-switcher{display:flex;gap:6px;padding:0 28px 12px;flex-wrap:wrap;}
+.ps-tab{
+  display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-soft);
+  background:transparent;border:1.5px solid var(--border);border-radius:99px;padding:7px 14px;cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,color .15s ease;
+}
+.ps-tab.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.ps-tab.locked{color:var(--text-faint);cursor:pointer;}
+.ps-tab.locked:hover{border-color:var(--text-faint);transform:translateY(-1px);}
+.ps-soon{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--surface-alt);color:var(--text-faint);padding:2px 6px;border-radius:99px;}
+.ps-business:hover{border-color:#6d28d9;}
+.ps-trader:hover{border-color:#b45309;}
+.ps-custom:hover{border-color:#be123c;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);
+  background:var(--text);color:#fff;font-size:13.5px;font-weight:500;
+  padding:12px 20px;border-radius:99px;box-shadow:var(--shadow-soft);
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:200;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
 /* ---- Welcome / pillar-picker page ---- */
 .welcome-head{text-align:center;padding:36px 0 8px;}
 .welcome-head h1{font-size:26px;margin:0 0 10px;letter-spacing:-.01em;}

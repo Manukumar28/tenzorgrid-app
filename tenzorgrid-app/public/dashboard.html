@@ -16,7 +16,14 @@
       <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
     </div>
   </div>
+  <div class="container pillar-switcher" id="pillarSwitcher" role="tablist" aria-label="TenzorGrid pillars">
+    <button class="ps-tab active" data-pillar="job" role="tab" aria-selected="true">🚀 Job Assistant</button>
+    <button class="ps-tab locked ps-business" data-pillar="business" role="tab" aria-selected="false">💼 Business<span class="ps-soon">Soon</span></button>
+    <button class="ps-tab locked ps-trader" data-pillar="trader" role="tab" aria-selected="false">📈 Trader<span class="ps-soon">Soon</span></button>
+    <button class="ps-tab locked ps-custom" data-pillar="custom" role="tab" aria-selected="false">🤖 Custom AI<span class="ps-soon">Soon</span></button>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
 
 <div class="dash-wrap">
   <div class="portfolio-hero" id="heroSkeleton">
@@ -216,6 +223,23 @@
 <script src="/vendor/gsap.min.js"></script>
 <script src="/animations.js"></script>
 <script>
+let toastTimer = null;
+function showToast(message) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+const PILLAR_NAMES = { business: 'Business Assistant', trader: 'Trader Assistant', custom: 'Custom AI Automation' };
+document.getElementById('pillarSwitcher').addEventListener('click', (e) => {
+  const tab = e.target.closest('.ps-tab');
+  if (!tab || !tab.classList.contains('locked')) return;
+  showToast(`${PILLAR_NAMES[tab.dataset.pillar]} is coming soon — you'll see it here the moment it ships.`);
+});
+TG.hoverLift('.ps-tab.locked');
+
 function initials(name) {
   return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
