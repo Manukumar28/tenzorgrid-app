@@ -36,6 +36,8 @@ button{font-family:inherit;cursor:pointer;}
 @media (max-width:900px){.container{padding:0 20px;}}
 .container-wide{max-width:1560px;margin:0 auto;padding:0 48px;}
 @media (max-width:900px){.container-wide{padding:0 20px;}}
+.container-app{max-width:1800px;margin:0 auto;padding:0 40px;}
+@media (max-width:900px){.container-app{padding:0 20px;}}
 
 .nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;gap:20px;}
 .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19.5px;letter-spacing:-.02em;flex-shrink:0;}
@@ -402,7 +404,7 @@ a.logo{cursor:pointer;}
    dashboard's own left-side dead space becomes real navigation: a sticky
    sidebar listing every Career Growth feature, switching a right-hand panel
    without a page reload (same active-panel pattern as .pro-tabs/.pro-panel). */
-.dash-shell{max-width:1320px;margin:0 auto;padding:34px 28px 90px;display:flex;gap:30px;align-items:flex-start;}
+.dash-shell{max-width:1800px;margin:0 auto;padding:34px clamp(20px,4vw,64px) 90px;display:flex;gap:30px;align-items:flex-start;}
 .dash-sidebar{flex:0 0 224px;position:sticky;top:20px;display:flex;flex-direction:column;gap:2px;}
 .dash-nav-item{
   display:flex;align-items:center;gap:8px;width:100%;text-align:left;
