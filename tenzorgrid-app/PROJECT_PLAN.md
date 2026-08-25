@@ -104,6 +104,17 @@ Shipped (across PRs #14, #16, #17, all squash-merged to `main`):
   sending logged-in users with a profile straight to `/dashboard.html` when they clicked
   the Career Growth pillar card, skipping this explainer page — now everyone lands here
   first and clicks through via the page's own nav (PR #19).
+- Flip cards replaced again (user feedback: flipping "is not much professional") with an
+  Apple.com-style sliding carousel — cards auto-advance slowly, pause on interaction,
+  navigable via prev/next arrows, pagination dots, or native swipe/scroll (CSS
+  scroll-snap). Each of the 11 cards now has a bespoke SVG illustration (self-authored,
+  not a generated raster asset — `public/assets/career-cards/`, unique gradient + scene
+  per feature, e.g. a dashboard mockup for Your Dashboard, a forked path for Career
+  Transition) instead of a small line icon, with the description as a permanent caption
+  overlay at the bottom of the card rather than hidden behind an interaction. Soon cards
+  (Virtual Workspace, AI Mock Interviews) use desaturated art to read as not-yet-live at
+  a glance. Respects `prefers-reduced-motion`, lazy-loads off-screen images, hides arrows
+  on narrow viewports (PR #21).
 
 **Not done, deferred on purpose:** Three.js (nothing needs 3D yet — waits for Phase 1's
 Skill Tree module). Real payment gateway (still `/api/subscribe` dev-mode stub — flip to
@@ -139,8 +150,8 @@ are new builds:
 
 ## Next immediate step
 
-Career Growth explainer page (flip cards + routing fix) shipped and live as of PR #19.
-Ask the user: start Phase 1 (Career Growth pillar completion — Skill Tree, Career
-Transition slider, Auto Apply tracker, Resume Prep ATS dial, Virtual Workspace, Mock
-Interviews), or address one of the open items (missing matching-jobs/subscription nav,
-SEO/gitignore cleanup) first?
+Career Growth explainer page (Apple-style sliding carousel + custom illustrations +
+routing fix) shipped and live as of PR #21. Ask the user: start Phase 1 (Career Growth
+pillar completion — Skill Tree, Career Transition slider, Auto Apply tracker, Resume
+Prep ATS dial, Virtual Workspace, Mock Interviews), or address one of the open items
+(missing matching-jobs/subscription nav, SEO/gitignore cleanup) first?
