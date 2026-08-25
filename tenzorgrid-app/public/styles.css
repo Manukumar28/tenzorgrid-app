@@ -419,7 +419,7 @@ a.logo{cursor:pointer;}
 /* ---- Marketing pages: landing pillars + Career Growth explainer ---- */
 .dark-hero{background:var(--brand-dark-grad);color:#f1f5f9;min-height:100vh;position:relative;overflow:hidden;}
 .dark-hero .top-nav a{color:#e2e8f0;}
-.dark-hero>.container,.dark-hero>.container-wide{position:relative;z-index:2;}
+.dark-hero>.container,.dark-hero>.container-wide,.dark-hero>.feature-grid-wrap{position:relative;z-index:2;}
 .hero-eyebrow{display:inline-block;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--accent-light);font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:99px;margin-bottom:22px;letter-spacing:.03em;}
 .hero-block{padding:70px 0 50px;text-align:center;}
 .hero-block h1{font-size:42px;font-weight:800;letter-spacing:-.03em;margin:0 0 16px;line-height:1.12;}
@@ -501,6 +501,36 @@ a.logo{cursor:pointer;}
 .carousel-dots{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:2px;}
 .carousel-dot{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.25);border:none;cursor:pointer;padding:0;transition:background .2s,width .2s;}
 .carousel-dot.active{width:20px;background:var(--accent-light);}
+
+/* ---- Career Growth feature grid (full-width, replaces the carousel on this page —
+   the carousel component above stays for later reuse elsewhere, e.g. the landing page) ---- */
+.feature-grid-wrap{width:100%;box-sizing:border-box;padding:26px clamp(20px,4vw,64px) 10px;}
+.feature-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;
+  max-width:1800px;margin:0 auto;
+}
+.feature-card{
+  display:block;position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/10;
+  background:#151a2e;box-shadow:0 14px 34px rgba(0,0,0,.35);cursor:pointer;
+  border:0;padding:0;margin:0;width:100%;text-align:left;font:inherit;text-decoration:none;color:inherit;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.feature-card:hover,.feature-card:focus-visible{transform:translateY(-4px);box-shadow:0 20px 44px rgba(0,0,0,.45);}
+.feature-card:focus-visible{outline:2px solid var(--accent-light);outline-offset:3px;}
+.feature-card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.feature-card.soon .feature-card-img{opacity:.7;filter:saturate(.7);}
+.feature-card-badge{
+  position:absolute;top:14px;right:14px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;backdrop-filter:blur(4px);z-index:2;
+}
+.feature-card-badge.live{background:rgba(52,211,153,.22);color:#eafff8;border:1px solid rgba(52,211,153,.4);}
+.feature-card-badge.soon{background:rgba(255,255,255,.14);color:#e7eaf3;border:1px solid rgba(255,255,255,.2);}
+.feature-card-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:18px 20px 17px;
+  background:linear-gradient(to top,rgba(5,6,11,.92) 8%,rgba(5,6,11,.55) 55%,transparent);
+}
+.feature-card-caption b{display:block;font-size:16px;color:#fff;margin-bottom:5px;}
+.feature-card-caption span{font-size:13px;color:#cdd2e6;line-height:1.5;display:block;}
 
 /* ---- Animated galaxy background for dark-hero pages ----
    Layered behind the content (z-index:1, content sits at 2): two tiled star fields
