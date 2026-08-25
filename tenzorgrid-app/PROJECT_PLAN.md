@@ -47,6 +47,11 @@ its own onboarding that only triggers when activated.
    new work: `git fetch origin main && git checkout -B claude/tenzorgrid-project-transfer-0cm81z origin/main`,
    then `git push --force-with-lease` when pushing the next round (safe — the branch
    only ever contains already-merged history at that point).
+   **This step is easy to skip when resuming after a session interruption** (it was
+   skipped once, on the PR #19 work, and turned the usual harmless divergence into a
+   real GitHub-reported merge conflict — fixed by cherry-picking the stray commit onto
+   a fresh branch off `origin/main`). Always run the reset explicitly as the first
+   action of any resumed session, even if the previous turn was cut off mid-work.
 7. **PR flow:** Create PR against `main`, squash-merge, confirm Railway deploy status
    before telling the user it's live (Railway only auto-deploys from `main`).
 
@@ -90,6 +95,15 @@ Shipped (across PRs #14, #16, #17, all squash-merged to `main`):
 - Career Growth explainer page upgrade: icon badges, a real dashboard-preview card
   before the signup ask, "Coming soon" section (Virtual Workspace, AI Mock Interviews) —
   `career-growth.html`
+- Career Growth page rebuilt again as 11 interactive flip cards (hover on desktop, tap
+  on touch, keyboard-accessible) replacing the static feature list: Your Dashboard, Job
+  Search, Application Tracker, Resume & Interview Prep, Salary Insights (new — surfaces
+  existing `insights.js` market-value data as its own card), Career Upgrade, Career
+  Transition, Course Recommendations, Auto Apply (all live), Virtual Workspace and AI
+  Mock Interviews (both "Soon"). Also fixed a real routing bug: `landing.html` was
+  sending logged-in users with a profile straight to `/dashboard.html` when they clicked
+  the Career Growth pillar card, skipping this explainer page — now everyone lands here
+  first and clicks through via the page's own nav (PR #19).
 
 **Not done, deferred on purpose:** Three.js (nothing needs 3D yet — waits for Phase 1's
 Skill Tree module). Real payment gateway (still `/api/subscribe` dev-mode stub — flip to
@@ -125,5 +139,8 @@ are new builds:
 
 ## Next immediate step
 
-Ask the user: start Phase 1 (Career Growth pillar completion), or address one of the
-open items (missing nav links, SEO/gitignore cleanup) first?
+Career Growth explainer page (flip cards + routing fix) shipped and live as of PR #19.
+Ask the user: start Phase 1 (Career Growth pillar completion — Skill Tree, Career
+Transition slider, Auto Apply tracker, Resume Prep ATS dial, Virtual Workspace, Mock
+Interviews), or address one of the open items (missing matching-jobs/subscription nav,
+SEO/gitignore cleanup) first?
