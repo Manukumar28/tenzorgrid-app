@@ -115,6 +115,15 @@ Shipped (across PRs #14, #16, #17, all squash-merged to `main`):
   (Virtual Workspace, AI Mock Interviews) use desaturated art to read as not-yet-live at
   a glance. Respects `prefers-reduced-motion`, lazy-loads off-screen images, hides arrows
   on narrow viewports (PR #21).
+- Carousel replaced on this page (kept in `styles.css`, unused, for a later spot — the
+  user said the landing page, TBD) with a full-width responsive grid — the carousel's
+  fixed-width 3-card row centered in a wide viewport read as "mid of system" with "very
+  few information" visible. Grid auto-fits up to 5+ columns on wide screens. Also:
+  removed the "Your Dashboard" card (redundant with the page's own dashboard CTA), made
+  every card clickable (live cards are auth-aware links matching the page's other CTAs;
+  Soon cards trigger the same toast pattern as the dashboard's locked-pillar tabs), and
+  moved Virtual Workspace to the first card position — user confirmed it's next up for
+  development (PR #23).
 
 **Not done, deferred on purpose:** Three.js (nothing needs 3D yet — waits for Phase 1's
 Skill Tree module). Real payment gateway (still `/api/subscribe` dev-mode stub — flip to
@@ -132,15 +141,17 @@ scale).
 
 ## Phase 1 — Complete the Career Growth pillar — NOT STARTED
 
-From the original roadmap, six modules, three are visual upgrades of what exists, three
-are new builds:
+**User confirmed Virtual Workspace is the next module to build** (moved to the first
+card on the Career Growth page for this reason). From the original roadmap, six modules,
+three are visual upgrades of what exists, three are new builds:
+- Virtual Workspace — **next up.** Heaviest build: a simulated work environment with a
+  daily AI-manager loop assigning tasks and reviewing submissions. Promised on the
+  Career Growth page as "Soon"/"we're building this next," so there's user-facing
+  expectation once this starts.
 - Resume Prep — ATS score dial + live rewrite view
 - Career Upgrade — Skill Tree (this is where Three.js first gets used)
 - Career Transition — drag-slider resume morph
 - Auto Apply — job radar + pipeline tracker
-- Virtual Workspace — deferred within Phase 1 too (heaviest build, daily AI-manager
-  loop) — now also promised on the Career Growth page as "coming soon," so there's
-  user-facing expectation once Phase 1 starts
 - Mock Interviews — voice/avatar version; ships text-only first — also promised as
   "coming soon" on the Career Growth page
 
@@ -150,8 +161,7 @@ are new builds:
 
 ## Next immediate step
 
-Career Growth explainer page (Apple-style sliding carousel + custom illustrations +
-routing fix) shipped and live as of PR #21. Ask the user: start Phase 1 (Career Growth
-pillar completion — Skill Tree, Career Transition slider, Auto Apply tracker, Resume
-Prep ATS dial, Virtual Workspace, Mock Interviews), or address one of the open items
-(missing matching-jobs/subscription nav, SEO/gitignore cleanup) first?
+Career Growth explainer page (full-width clickable grid, custom illustrations, routing
+fix) shipped and live as of PR #23. User has confirmed the next build is **Virtual
+Workspace** (Phase 1) — ask them to kick that off, or confirm scope first (it's the
+heaviest Phase 1 module: daily AI-manager loop, task assignment, submission review).
