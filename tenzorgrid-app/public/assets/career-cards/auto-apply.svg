@@ -1,0 +1,30 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aa-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5B2E8A"/>
+      <stop offset="1" stop-color="#B2660E"/>
+    </linearGradient>
+    <filter id="aa-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#aa-bg)"/>
+  <circle cx="650" cy="100" r="140" fill="#FFD166" opacity=".22" filter="url(#aa-blur)"/>
+  <circle cx="130" cy="370" r="130" fill="#7C6CF0" opacity=".3" filter="url(#aa-blur)"/>
+
+  <g transform="translate(300,60)">
+    <rect x="0" y="150" width="120" height="30" rx="15" fill="#FFFFFF" opacity=".85"/>
+    <rect x="10" y="190" width="120" height="30" rx="15" fill="#FFFFFF" opacity=".55"/>
+    <rect x="-10" y="230" width="120" height="30" rx="15" fill="#FFFFFF" opacity=".3"/>
+
+    <path d="M150 40 L110 150 L150 145 L120 260 L220 120 L175 128 Z" fill="#FFD166"/>
+
+    <g transform="translate(230,50) rotate(20)">
+      <path d="M0 0 L60 10 L0 30 L10 10 Z" fill="#FFFFFF"/>
+    </g>
+    <g transform="translate(270,120) rotate(8)">
+      <path d="M0 0 L50 8 L0 24 L8 8 Z" fill="#35E7C6"/>
+    </g>
+    <g transform="translate(255,190) rotate(-6)">
+      <path d="M0 0 L46 7 L0 22 L7 7 Z" fill="#FFFFFF" opacity=".8"/>
+    </g>
+  </g>
+</svg>

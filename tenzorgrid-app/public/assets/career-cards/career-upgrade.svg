@@ -1,0 +1,27 @@
+<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cu-bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A3B1F"/>
+      <stop offset="1" stop-color="#5B2E8A"/>
+    </linearGradient>
+    <filter id="cu-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="45"/></filter>
+    <filter id="cu-shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="800" height="450" fill="url(#cu-bg)"/>
+  <circle cx="130" cy="100" r="130" fill="#FF9F5A" opacity=".25" filter="url(#cu-blur)"/>
+  <circle cx="690" cy="360" r="150" fill="#7C6CF0" opacity=".3" filter="url(#cu-blur)"/>
+
+  <g transform="translate(220,120)">
+    <ellipse cx="180" cy="260" rx="220" ry="20" fill="#000" opacity=".2" filter="url(#cu-shadow)"/>
+    <rect x="0" y="200" width="80" height="60" rx="10" fill="#EED7C6"/>
+    <rect x="100" y="150" width="80" height="110" rx="10" fill="#F3A469"/>
+    <rect x="200" y="90" width="80" height="170" rx="10" fill="#FFC48A"/>
+    <rect x="300" y="30" width="80" height="230" rx="10" fill="#FFFFFF"/>
+
+    <path d="M20 190 L120 130 L220 70 L340 10" fill="none" stroke="#35E7C6" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 18"/>
+    <g transform="translate(340,10)">
+      <circle r="26" fill="#35E7C6"/>
+      <path d="M-9 4l7 7 13-16" fill="none" stroke="#0B4A40" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

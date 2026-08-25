@@ -458,42 +458,49 @@ a.logo{cursor:pointer;}
 .pillar-card.vector{--p:#35E7C6;}
 .pillar-card.circuit{--p:#FB7185;}
 
-/* ---- Career Growth flip cards ---- */
-.flip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;padding:18px 0 8px;}
-.flip-card{height:186px;perspective:1200px;cursor:pointer;border-radius:16px;}
-.flip-card:focus-visible{outline:2px solid var(--accent-light);outline-offset:3px;}
-.flip-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;}
-.flip-card.flipped .flip-inner{transform:rotateY(180deg);}
-@media (hover:hover){.flip-card:hover .flip-inner{transform:rotateY(180deg);}}
-.flip-front,.flip-back{
-  position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;padding:18px;
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
-  display:flex;flex-direction:column;
+/* ---- Career Growth carousel ---- */
+.carousel{position:relative;padding:6px 0 0;}
+.carousel-track{
+  display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  padding:6px 6px 22px;margin:0 -6px;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
-.flip-front{justify-content:flex-end;}
-.flip-front.soon{border-style:dashed;}
-.flip-back{transform:rotateY(180deg);justify-content:center;background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.3);}
-.flip-back.soon{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);}
-.flip-back b{font-size:14px;margin-bottom:8px;color:#fff;}
-.flip-back span{font-size:12.5px;color:#c3c9dc;line-height:1.5;}
-.flip-title{font-size:14.5px;color:#fff;}
-.fc-icon{width:36px;height:36px;border-radius:10px;background:rgba(52,211,153,.14);color:var(--accent-light);display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
-.fc-icon svg{width:19px;height:19px;}
-.fc-live,.fc-soon{
+.carousel-track::-webkit-scrollbar{display:none;}
+.carousel-track:focus-visible{outline:2px solid var(--accent-light);outline-offset:4px;}
+.carousel-card{
+  position:relative;flex:0 0 auto;width:min(78vw,380px);aspect-ratio:16/9;border-radius:20px;overflow:hidden;
+  scroll-snap-align:start;background:#151a2e;box-shadow:0 14px 34px rgba(0,0,0,.35);
+}
+.carousel-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.carousel-badge{
   position:absolute;top:14px;right:14px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  padding:2px 7px;border-radius:99px;
+  padding:3px 9px;border-radius:99px;backdrop-filter:blur(4px);z-index:2;
 }
-.fc-live{background:rgba(52,211,153,.16);color:var(--accent-light);}
-.fc-soon{background:rgba(255,255,255,.1);color:#9aa4bd;}
+.carousel-badge.live{background:rgba(52,211,153,.22);color:#eafff8;border:1px solid rgba(52,211,153,.4);}
+.carousel-badge.soon{background:rgba(255,255,255,.14);color:#e7eaf3;border:1px solid rgba(255,255,255,.2);}
+.carousel-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:16px 18px 15px;
+  background:linear-gradient(to top,rgba(5,6,11,.92) 8%,rgba(5,6,11,.55) 55%,transparent);
+}
+.carousel-caption b{display:block;font-size:15px;color:#fff;margin-bottom:4px;}
+.carousel-caption span{font-size:12.5px;color:#cdd2e6;line-height:1.45;display:block;}
+.carousel-card.soon .carousel-img{opacity:.7;filter:saturate(.7);}
 
-.dp-front{justify-content:flex-end;background:linear-gradient(160deg,rgba(124,108,240,.18),rgba(53,231,198,.1));}
-.dp-mini-row{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
-.dp-avatar{width:30px;height:30px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,#7C6CF0,#35E7C6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#05060B;}
-.dp-who b{display:block;font-size:13px;color:#fff;}
-.dp-who span{font-size:11px;color:#9aa4bd;}
-.dp-mini-ins{background:rgba(0,0,0,.22);border-radius:8px;padding:7px 10px;margin-bottom:10px;}
-.dp-ins-label{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#35E7C6;margin-bottom:2px;}
-.dp-ins-val{display:block;font-size:12px;font-weight:600;color:#fff;}
+.carousel-arrow{
+  position:absolute;top:41%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
+  background:rgba(10,12,22,.6);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:17px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);
+  transition:background .15s,transform .15s;z-index:3;
+}
+.carousel-arrow:hover{background:rgba(10,12,22,.85);}
+.carousel-arrow:active{transform:translateY(-50%) scale(.92);}
+.carousel-arrow.prev{left:-6px;}
+.carousel-arrow.next{right:-6px;}
+@media (max-width:640px){.carousel-arrow{display:none;}}
+
+.carousel-dots{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:2px;}
+.carousel-dot{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.25);border:none;cursor:pointer;padding:0;transition:background .2s,width .2s;}
+.carousel-dot.active{width:20px;background:var(--accent-light);}
 
 /* ---- Animated galaxy background for dark-hero pages ----
    Layered behind the content (z-index:1, content sits at 2): two tiled star fields
