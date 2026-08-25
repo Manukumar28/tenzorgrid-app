@@ -17,9 +17,22 @@
     <h2 style="margin:0 0 6px;">Upload your CV (optional)</h2>
     <div style="color:var(--text-soft);font-size:14px;margin-bottom:24px;">PDF or Word, up to 8MB. We'll try to pull your name, role, experience, past roles, and skills from it automatically — you can skip this and fill everything in manually instead.</div>
     <div class="cv-drop" id="cvDrop">
-      <div style="font-size:26px;">📄</div>
-      <div style="font-weight:600;margin-top:6px;">Click to upload your CV</div>
-      <div class="cv-status" id="cvStatus">No file selected</div>
+      <div id="cvIdle">
+        <div style="font-size:26px;">📄</div>
+        <div style="font-weight:600;margin-top:6px;">Click to upload your CV</div>
+        <div class="cv-status" id="cvStatus">No file selected</div>
+      </div>
+      <div class="cv-scan" id="cvScan" style="display:none;">
+        <div class="cv-scan-doc">
+          <div class="laser"></div>
+          <div class="ln" style="width:60%"></div>
+          <div class="ln" style="width:80%"></div>
+          <div class="ln" style="width:45%"></div>
+          <div class="ln" style="width:70%"></div>
+        </div>
+        <div class="cv-scan-status" id="cvScanStatus">Reading your CV…</div>
+        <div class="cv-scan-found" id="cvScanFound"></div>
+      </div>
     </div>
     <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display:none">
     <div class="step-actions">
@@ -74,6 +87,7 @@
 let skills = [];
 let cvPayload = null; // { filename, mime, dataBase64 }
 let parsedExperiences = []; // experience entries detected from the CV, created after profile save
+let autofilledFieldIds = []; // field ids to "pop" the first time step 2 is shown
 let parsedCertifications = []; // certifications detected from the CV, created after profile save
 let skillCategories = [];
 let flatSkills = [];
@@ -104,6 +118,18 @@ function goStep(n) {
   [1, 2, 3].forEach((i) => { document.getElementById('step-' + i).style.display = (i === n) ? 'block' : 'none'; });
   document.getElementById('onboard-bar').style.width = (n * 33) + '%';
   document.getElementById('onboard-step-label').textContent = 'Step ' + n + ' of 3';
+  if (n === 2 && autofilledFieldIds.length) {
+    const ids = autofilledFieldIds;
+    autofilledFieldIds = []; // only pop once, the first time step 2 is reached
+    ids.forEach((id, i) => {
+      const wrap = document.getElementById(id) && document.getElementById(id).closest('.field');
+      if (!wrap) return;
+      setTimeout(() => {
+        wrap.classList.add('pop');
+        setTimeout(() => wrap.classList.remove('pop'), 900);
+      }, i * 180);
+    });
+  }
   if (n === 3) {
     const note = document.getElementById('expPreviewNote');
     const parts = [];
@@ -131,26 +157,47 @@ document.getElementById('cvFile').addEventListener('change', (e) => {
   if (!allowed.includes(file.type)) { showError('Please upload a PDF or Word document.'); return; }
   if (file.size > 8 * 1024 * 1024) { showError('CV must be under 8MB.'); return; }
   clearError();
-  document.getElementById('cvStatus').textContent = 'Reading "' + file.name + '"…';
+  const cvIdle = document.getElementById('cvIdle');
+  const cvScan = document.getElementById('cvScan');
+  const scanStatus = document.getElementById('cvScanStatus');
+  const scanFound = document.getElementById('cvScanFound');
+  cvIdle.style.display = 'none';
+  cvScan.style.display = 'flex';
+  scanStatus.textContent = 'Reading "' + file.name + '"…';
+  scanFound.innerHTML = '';
   const reader = new FileReader();
   reader.onload = async () => {
     const dataUrl = reader.result;
     const base64 = dataUrl.split(',')[1];
     cvPayload = { filename: file.name, mime: file.type, dataBase64: base64 };
     document.getElementById('cvDrop').classList.add('filled');
-    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' — reading details from your CV…';
+    let data = null;
     try {
       const res = await fetch('/api/cv-parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cv: cvPayload }),
       });
-      const data = await res.json();
+      data = await res.json();
       applyAutofill(data);
     } catch (err) {
       // Extraction failing is not fatal — the form just stays manual.
     }
-    document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+
+    const foundTags = [];
+    if (data && data.name) foundTags.push('Name');
+    if (data && data.role) foundTags.push('Role');
+    if (data && Array.isArray(data.skills) && data.skills.length) foundTags.push(data.skills.length + ' skill' + (data.skills.length === 1 ? '' : 's'));
+    if (data && Array.isArray(data.experience) && data.experience.length) foundTags.push(data.experience.length + ' past role' + (data.experience.length === 1 ? '' : 's'));
+
+    scanStatus.textContent = foundTags.length ? 'Found:' : 'Done reading — nothing auto-detected, that\'s okay.';
+    scanFound.innerHTML = foundTags.map((t) => '<span class="tag">' + t + '</span>').join('');
+
+    setTimeout(() => {
+      cvScan.style.display = 'none';
+      cvIdle.style.display = 'block';
+      document.getElementById('cvStatus').textContent = '✓ ' + file.name + ' ready to upload';
+    }, 1100);
   };
   reader.readAsDataURL(file);
 });
@@ -158,13 +205,14 @@ document.getElementById('cvFile').addEventListener('change', (e) => {
 function applyAutofill(data) {
   if (!data) return;
   let filled = [];
-  if (data.name) { document.getElementById('f-name').value = data.name; filled.push('name'); }
-  if (data.role) { document.getElementById('f-role').value = data.role; filled.push('role'); }
-  if (data.experienceYears) { document.getElementById('f-exp').value = data.experienceYears; filled.push('experience'); }
+  if (data.name) { document.getElementById('f-name').value = data.name; filled.push('name'); autofilledFieldIds.push('f-name'); }
+  if (data.role) { document.getElementById('f-role').value = data.role; filled.push('role'); autofilledFieldIds.push('f-role'); }
+  if (data.experienceYears) { document.getElementById('f-exp').value = data.experienceYears; filled.push('experience'); autofilledFieldIds.push('f-exp'); }
   if (Array.isArray(data.skills) && data.skills.length) {
     data.skills.forEach((s) => { if (s && !skills.includes(s)) skills.push(s); });
     renderChips();
     filled.push('skills');
+    autofilledFieldIds.push('chip-input');
   }
   if (Array.isArray(data.experience) && data.experience.length) {
     parsedExperiences = data.experience;

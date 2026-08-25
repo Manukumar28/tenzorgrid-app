@@ -69,30 +69,77 @@
       <h1>One platform for your career,<br>and your business.</h1>
       <p>TenzorGrid is building a set of focused, AI-powered tools — starting with Career Growth, live today, with more on the way for entrepreneurs and beyond.</p>
     </div>
-    <div class="pillar-grid" id="services">
-      <a class="pillar-card live" href="/career-growth.html" id="careerGrowthCard">
-        <div class="picon">🚀</div>
-        <b>Career Growth</b>
-        <span>Find, apply, and grow — one profile, matched jobs, upgrade &amp; transition guidance, resume and interview prep.</span>
-        <span class="pillar-status live">Live now</span>
-      </a>
-      <div class="pillar-card">
-        <div class="picon">💼</div>
-        <b>Business Assistant</b>
-        <span>An AI co-pilot for entrepreneurs and SMEs — ad generation, smart CRM, lead scoring, and operational forecasting.</span>
-        <span class="pillar-status soon">Coming soon</span>
-      </div>
-      <div class="pillar-card">
-        <div class="picon">📈</div>
-        <b>Trader Assistant</b>
-        <span>Algorithmic strategy building, market sentiment tracking, and automated risk management for retail traders.</span>
-        <span class="pillar-status soon">Coming soon</span>
-      </div>
-      <div class="pillar-card">
-        <div class="picon">🤖</div>
-        <b>Custom AI Automation</b>
-        <span>Bespoke workflow automation, private RAG chatbots, and API access for businesses that need more than off-the-shelf.</span>
-        <span class="pillar-status soon">Coming soon</span>
+    <div class="pillar-constellation">
+      <svg width="0" height="0" style="position:absolute;">
+        <defs>
+          <linearGradient id="pillarEdgeGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7C6CF0"/><stop offset="100%" stop-color="#35E7C6"/></linearGradient>
+          <linearGradient id="gCareer" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9D8FFF"/><stop offset="100%" stop-color="#7C6CF0"/></linearGradient>
+          <linearGradient id="gBiz" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FBCB6B"/><stop offset="100%" stop-color="#F0B429"/></linearGradient>
+          <linearGradient id="gTrade" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7FF3D9"/><stop offset="100%" stop-color="#35E7C6"/></linearGradient>
+          <linearGradient id="gAi" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF9AA8"/><stop offset="100%" stop-color="#FB7185"/></linearGradient>
+        </defs>
+      </svg>
+      <svg class="pillar-edges" id="pillarEdgeSvg"></svg>
+      <div class="pillar-grid" id="services">
+        <a class="pillar-card live orbit" href="/career-growth.html" id="careerGrowthCard">
+          <div class="picon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2c3 2 4.5 5.5 4.5 9 0 2-.7 3.8-1.8 5.2l-2.7 2.8-2.7-2.8C8.2 14.8 7.5 13 7.5 11 7.5 7.5 9 4 12 2z" fill="url(#gCareer)"/>
+              <circle cx="12" cy="9.6" r="1.7" fill="#05060B"/>
+              <path d="M7.5 13c-1.7.3-2.9 1.7-3.1 4.2 1.9-.5 3.3-1.5 4-2.7M16.5 13c1.7.3 2.9 1.7 3.1 4.2-1.9-.5-3.3-1.5-4-2.7" stroke="url(#gCareer)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M10.3 19.8l1.7 2.6 1.7-2.6" stroke="#FBCB6B" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="ptag">FOR JOB SEEKERS</span>
+          <b>Career Growth</b>
+          <span>Find better jobs and grow your career, faster — matched jobs, upgrade &amp; transition guidance, resume and interview prep, all from one profile.</span>
+          <span class="pillar-status live">Live now</span>
+        </a>
+        <div class="pillar-card beacon">
+          <div class="picon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="8" width="18" height="12" rx="2.2" fill="url(#gBiz)"/>
+              <path d="M8.2 8V6.2a2 2 0 012-2h3.6a2 2 0 012 2V8" stroke="url(#gBiz)" stroke-width="1.7" fill="none"/>
+              <rect x="6.8" y="13.4" width="2.1" height="4" rx="0.5" fill="#05060B"/>
+              <rect x="10.6" y="11.2" width="2.1" height="6.2" rx="0.5" fill="#05060B"/>
+              <rect x="14.4" y="9.6" width="2.1" height="7.8" rx="0.5" fill="#05060B"/>
+            </svg>
+          </div>
+          <span class="ptag">FOR BUSINESS OWNERS</span>
+          <b>Business Growth</b>
+          <span>Get more customers and run your business smoother — AI ad creation, lead tracking, and sales forecasting for entrepreneurs and small businesses.</span>
+          <span class="pillar-status soon">Coming soon</span>
+        </div>
+        <div class="pillar-card vector">
+          <div class="picon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3.6" y="11" width="2.6" height="7.4" rx="0.7" fill="url(#gTrade)"/>
+              <rect x="4.5" y="9" width="0.8" height="2.3" fill="url(#gTrade)"/>
+              <rect x="10.7" y="6.6" width="2.6" height="8.6" rx="0.7" fill="url(#gTrade)"/>
+              <rect x="11.6" y="4.4" width="0.8" height="2.5" fill="url(#gTrade)"/>
+              <rect x="17.8" y="3.4" width="2.6" height="9.6" rx="0.7" fill="url(#gTrade)"/>
+              <rect x="18.7" y="1.2" width="0.8" height="2.5" fill="url(#gTrade)"/>
+              <path d="M2.6 21.2l6-6.4 3.8 2.8 8-9.4" stroke="#05060B" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+            </svg>
+          </div>
+          <span class="ptag">FOR TRADERS</span>
+          <b>Smart Trading</b>
+          <span>Trade with an AI edge, not guesswork — automated strategies, market sentiment, and risk protection so one bad trade doesn't wipe you out.</span>
+          <span class="pillar-status soon">Coming soon</span>
+        </div>
+        <div class="pillar-card circuit">
+          <div class="picon">
+            <svg viewBox="0 0 24 24">
+              <rect x="6" y="6" width="12" height="12" rx="2.6" fill="url(#gAi)"/>
+              <rect x="9.3" y="9.3" width="5.4" height="5.4" rx="1.1" fill="#05060B"/>
+              <path d="M9 3v2.4M15 3v2.4M9 18.6V21M15 18.6V21M3 9h2.4M3 15h2.4M18.6 9H21M18.6 15H21" stroke="url(#gAi)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="ptag">FOR TEAMS &amp; COMPANIES</span>
+          <b>Custom AI Solutions</b>
+          <span>AI tools built for exactly how your business runs — automated workflows, a chatbot trained on your own documents, and API access.</span>
+          <span class="pillar-status soon">Coming soon</span>
+        </div>
       </div>
     </div>
 
@@ -187,6 +234,35 @@ async function setupNav() {
   } catch (e) { /* stay on the logged-out default */ }
 }
 setupNav();
+
+function drawPillarEdges() {
+  const svg = document.getElementById('pillarEdgeSvg');
+  const row = document.getElementById('services');
+  if (!svg || !row) return;
+  const cards = [...row.querySelectorAll('.pillar-card')];
+  const rowRect = row.getBoundingClientRect();
+  svg.innerHTML = '';
+  for (let i = 0; i < cards.length - 1; i++) {
+    const a = cards[i].getBoundingClientRect();
+    const b = cards[i + 1].getBoundingClientRect();
+    // Cards wrap to a new row below ~980px — skip drawing an edge across the wrap.
+    if (Math.abs(a.top - b.top) > 10) continue;
+    const x1 = a.right - rowRect.left, y1 = a.top - rowRect.top + 22;
+    const x2 = b.left - rowRect.left, y2 = b.top - rowRect.top + 22;
+    const midY = Math.min(y1, y2) - 30;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${midY} ${x2} ${y2}`);
+    svg.appendChild(path);
+    [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.setAttribute('r', 2.4);
+      svg.appendChild(dot);
+    });
+  }
+}
+window.addEventListener('resize', drawPillarEdges);
+drawPillarEdges();
+setTimeout(drawPillarEdges, 200);
 </script>
 </body>
 </html>
