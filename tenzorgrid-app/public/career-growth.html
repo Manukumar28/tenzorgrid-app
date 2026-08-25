@@ -35,49 +35,49 @@
         <div class="feature-card-caption"><b>Virtual Workspace</b><span>A simulated work environment with an AI manager assigning real tasks and reviewing your submissions — build verifiable experience before your first job. We're building this next.</span></div>
       </button>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Job Search">
+      <a class="feature-card live-link" href="/signup.html" data-title="Job Search" data-hash="job-search">
         <img class="feature-card-img" src="/assets/career-cards/job-search.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Job Search</b><span>Matched openings pulled from portals and company career pages into one feed, ranked by real skill overlap.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Application Tracker">
+      <a class="feature-card live-link" href="/signup.html" data-title="Application Tracker" data-hash="application-tracker">
         <img class="feature-card-img" src="/assets/career-cards/application-tracker.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Application Tracker</b><span>Every job you've applied to, tracked in one place, so you always know where things stand.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Resume & Interview Prep">
+      <a class="feature-card live-link" href="/signup.html" data-title="Resume & Interview Prep" data-hash="resume-interview">
         <img class="feature-card-img" src="/assets/career-cards/resume-interview.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Resume &amp; Interview Prep</b><span>A resume built from your real profile, plus role-specific interview questions to practice with before you apply.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Salary Insights">
+      <a class="feature-card live-link" href="/signup.html" data-title="Salary Insights" data-hash="salary-insights">
         <img class="feature-card-img" src="/assets/career-cards/salary-insights.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Salary Insights</b><span>A real market-value estimate for your role and experience — see how it moves as you add skills.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Career Upgrade">
+      <a class="feature-card live-link" href="/signup.html" data-title="Career Upgrade" data-hash="career-upgrade">
         <img class="feature-card-img" src="/assets/career-cards/career-upgrade.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Career Upgrade</b><span>See what's missing between your profile and your target role, with a guided plan to close the gap in your current lane.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Career Transition">
+      <a class="feature-card live-link" href="/signup.html" data-title="Career Transition" data-hash="career-transition">
         <img class="feature-card-img" src="/assets/career-cards/career-transition.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Career Transition</b><span>A bundled plan — courses, skills, timeline, hands-on projects — for switching into a new target career.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Course Recommendations">
+      <a class="feature-card live-link" href="/signup.html" data-title="Course Recommendations" data-hash="course-recommendations">
         <img class="feature-card-img" src="/assets/career-cards/course-recommendations.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Course Recommendations</b><span>Budget-aware course and skill suggestions sourced across course platforms, matched to your gaps.</span></div>
       </a>
 
-      <a class="feature-card live-link" href="/signup.html" data-title="Auto Apply">
+      <a class="feature-card live-link" href="/signup.html" data-title="Auto Apply" data-hash="auto-apply">
         <img class="feature-card-img" src="/assets/career-cards/auto-apply.svg" alt="" loading="lazy">
         <span class="feature-card-badge live">Live</span>
         <div class="feature-card-caption"><b>Auto Apply</b><span>Matched jobs applied to on your behalf, with an Exceptions list for anything that needs a manual step.</span></div>
@@ -131,7 +131,10 @@ document.querySelectorAll('.feature-card.soon').forEach((card) => {
       el.setAttribute('href', dest);
       el.textContent = label;
     });
-    document.querySelectorAll('.feature-card.live-link').forEach((el) => el.setAttribute('href', dest));
+    document.querySelectorAll('.feature-card.live-link').forEach((el) => {
+      const href = me.hasProfile ? (dest + '#' + el.dataset.hash) : dest;
+      el.setAttribute('href', href);
+    });
     document.getElementById('navCta').innerHTML = `
       <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="/">← All pillars</a>
       <a class="btn btn-primary btn-sm" href="${dest}">${me.hasProfile ? 'Dashboard' : 'Finish profile'}</a>`;
