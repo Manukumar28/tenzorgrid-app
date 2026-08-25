@@ -16,7 +16,14 @@
       <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
     </div>
   </div>
+  <div class="container pillar-switcher" id="pillarSwitcher" role="tablist" aria-label="TenzorGrid pillars">
+    <button class="ps-tab active" data-pillar="job" role="tab" aria-selected="true">🚀 Job Assistant</button>
+    <button class="ps-tab locked ps-business" data-pillar="business" role="tab" aria-selected="false">💼 Business<span class="ps-soon">Soon</span></button>
+    <button class="ps-tab locked ps-trader" data-pillar="trader" role="tab" aria-selected="false">📈 Trader<span class="ps-soon">Soon</span></button>
+    <button class="ps-tab locked ps-custom" data-pillar="custom" role="tab" aria-selected="false">🤖 Custom AI<span class="ps-soon">Soon</span></button>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
 
 <div class="dash-wrap">
   <div class="portfolio-hero" id="heroSkeleton">
@@ -50,6 +57,15 @@
       <div class="insight-card"><div class="ilabel">Market value</div><div class="ival" id="insMarketValue">Loading…</div></div>
       <div class="insight-card"><div class="ilabel">Upskill to become</div><div class="ival" id="insUpskillTarget">Loading…</div><div class="isub" id="insUpskillMissing"></div></div>
       <div class="insight-card"><div class="ilabel">Best-suited jobs</div><div class="ival" id="insBestFit">Loading…</div></div>
+    </div>
+
+    <div class="completion-meter" id="completionMeter">
+      <div class="cm-head">
+        <span class="cm-label">Profile strength</span>
+        <span class="cm-pct" id="cmPct">0%</span>
+      </div>
+      <div class="cm-bar"><div class="cm-fill" id="cmFill" style="width:0%"></div></div>
+      <div class="cm-hint" id="cmHint"></div>
     </div>
   </div>
 
@@ -213,7 +229,26 @@
   </div>
 </div>
 
+<script src="/vendor/gsap.min.js"></script>
+<script src="/animations.js"></script>
 <script>
+let toastTimer = null;
+function showToast(message) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+const PILLAR_NAMES = { business: 'Business Assistant', trader: 'Trader Assistant', custom: 'Custom AI Automation' };
+document.getElementById('pillarSwitcher').addEventListener('click', (e) => {
+  const tab = e.target.closest('.ps-tab');
+  if (!tab || !tab.classList.contains('locked')) return;
+  showToast(`${PILLAR_NAMES[tab.dataset.pillar]} is coming soon — you'll see it here the moment it ships.`);
+});
+TG.hoverLift('.ps-tab.locked');
+
 function initials(name) {
   return (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
@@ -227,12 +262,53 @@ let currentProfile = null;
 let currentExperiences = [];
 let currentCertifications = [];
 let currentEducation = [];
+let currentEmail = null;
 let skillCategories = [];
 fetch('/api/skills').then((r) => r.json()).then((data) => { skillCategories = data.categories || []; }).catch(() => {});
 
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
   window.location.href = '/login.html';
+}
+
+function updateCompletionMeter() {
+  if (!currentProfile) return;
+  const checks = [
+    (currentProfile.skills || []).length >= 3,
+    Boolean(currentProfile.hasCv),
+    Boolean(currentProfile.photoUrl),
+    currentExperiences.length > 0,
+    currentEducation.length > 0,
+    currentCertifications.length > 0,
+  ];
+  const done = checks.filter(Boolean).length;
+  const pct = Math.round((done / checks.length) * 100);
+
+  const fill = document.getElementById('cmFill');
+  const pctEl = document.getElementById('cmPct');
+  const hintEl = document.getElementById('cmHint');
+  if (!fill) return;
+  fill.style.width = pct + '%';
+  TG.countUp(pctEl, pct, { format: (n) => n + '%' });
+
+  const missing = [];
+  if (!checks[0]) missing.push('add a few more skills');
+  if (!checks[1]) missing.push('upload your CV');
+  if (!checks[2]) missing.push('add a profile photo');
+  if (!checks[3]) missing.push('add a work role');
+  if (!checks[4]) missing.push('add your education');
+  if (!checks[5]) missing.push('add a certification');
+  hintEl.textContent = pct === 100
+    ? 'Your profile is fully filled out — nice.'
+    : 'Next: ' + missing.slice(0, 2).join(', ') + (missing.length > 2 ? ', and more' : '');
+
+  if (pct === 100 && currentEmail) {
+    const flagKey = 'tg_profile_complete_' + currentEmail;
+    if (!localStorage.getItem(flagKey)) {
+      localStorage.setItem(flagKey, '1');
+      TG.confetti(document.getElementById('completionMeter'));
+    }
+  }
 }
 
 function setAvatarVisual(el, name, photoUrl) {
@@ -249,10 +325,12 @@ function setAvatarVisual(el, name, photoUrl) {
 async function load() {
   const me = await fetch('/api/me').then((r) => r.json());
   if (!me.authenticated) { window.location.href = '/login.html'; return; }
-  if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/welcome.html'; return; }
 
   const p = me.profile;
   currentProfile = p;
+  currentEmail = me.email;
+  updateCompletionMeter();
   document.getElementById('miniName').textContent = p.name;
   setAvatarVisual(document.getElementById('miniAvatar'), p.name, p.photoUrl);
   setAvatarVisual(document.getElementById('heroAvatar'), p.name, p.photoUrl);
@@ -266,6 +344,7 @@ async function load() {
 
   document.getElementById('heroSkeleton').style.display = 'none';
   document.getElementById('heroReal').style.display = 'flex';
+  TG.fadeInUp('#heroReal, #insightsPanel .insight-card', { stagger: 0.08 });
 
   loadInsights();
   loadExperiences();
@@ -280,10 +359,11 @@ async function load() {
 
   const jobsData = await fetch('/api/jobs').then((r) => r.json());
   const jobs = jobsData.jobs || [];
+  const hiddenCount = Math.max(0, (jobsData.totalCount || 0) - jobs.length);
   if (jobs.length === 0) {
     document.getElementById('jobsList').innerHTML = '<div class="empty-note">No jobs available yet.</div>';
   } else {
-    document.getElementById('jobsList').innerHTML = jobs.slice(0, 3).map((j) => `
+    const realRows = jobs.slice(0, 3).map((j) => `
       <div class="job-row">
         <div class="jinfo">
           <b>${j.title}</b>
@@ -291,6 +371,40 @@ async function load() {
         </div>
         <span class="match-badge ${matchClass(j.matchScore)}">${j.matchScore}% match</span>
       </div>`).join('');
+
+    let lockedBlock = '';
+    if (!me.isPro && hiddenCount > 0) {
+      const previewCount = Math.min(2, hiddenCount);
+      const lockedRows = Array.from({ length: previewCount }).map(() => `
+        <div class="job-row">
+          <div class="jinfo"><b>Senior role match</b><span>Company · Job portal · Location</span></div>
+          <span class="match-badge high">‑‑% match</span>
+        </div>`).join('');
+      lockedBlock = `
+        <div class="locked-stack">
+          ${lockedRows}
+          <div class="locked-overlay">
+            <span class="lock-icon">🔒</span>
+            <b id="lockedCount">0 more matching job${hiddenCount === 1 ? '' : 's'}</b>
+            <a href="/subscribe.html">Unlock with Pro →</a>
+          </div>
+        </div>`;
+    }
+    document.getElementById('jobsList').innerHTML = realRows + lockedBlock;
+    TG.fadeInUp('.job-row', { stagger: 0.06, y: 8 });
+    const lockedCountEl = document.getElementById('lockedCount');
+    if (lockedCountEl) {
+      TG.countUp(lockedCountEl, hiddenCount, { format: (n) => `${n} more matching job${n === 1 ? '' : 's'}` });
+    }
+  }
+
+  const ctaBox = document.querySelector('.browse-all-cta');
+  if (ctaBox && !me.isPro) {
+    ctaBox.querySelector('span').textContent = hiddenCount > 0
+      ? `You're seeing 3 of ${jobsData.totalCount} matches — the rest are a subscriber feature.`
+      : 'Browsing the full matched list is a subscriber feature.';
+  } else if (ctaBox && me.isPro) {
+    ctaBox.style.display = 'none';
   }
 }
 
@@ -371,6 +485,7 @@ async function loadExperiences() {
     </div>`;
   }).join('');
   document.getElementById('expCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openExpModal()"><span class="plus-icon">+</span>Add a role</div>';
+  updateCompletionMeter();
 }
 
 async function loadEducation() {
@@ -394,6 +509,7 @@ async function loadEducation() {
       </div>
     </div>`).join('');
   document.getElementById('eduCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openEduModal()"><span class="plus-icon">+</span>Add education</div>';
+  updateCompletionMeter();
 }
 
 function eduKey(e) { return ((e.institution || '') + '|' + (e.degree || '')).trim().toLowerCase(); }
@@ -673,6 +789,7 @@ async function loadCertifications() {
     </div>`;
   }).join('');
   document.getElementById('certCards').innerHTML = cardsHtml + '<div class="exp-add-card" onclick="openCertModal()"><span class="plus-icon">+</span>Add a certification</div>';
+  updateCompletionMeter();
 }
 
 function openCertModal() {

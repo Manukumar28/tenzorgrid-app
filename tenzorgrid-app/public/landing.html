@@ -78,26 +78,20 @@
       </a>
       <div class="pillar-card">
         <div class="picon">💼</div>
-        <b>For Entrepreneurs</b>
-        <span>AI-powered tools for running and growing a business — details coming as we build this out.</span>
+        <b>Business Assistant</b>
+        <span>An AI co-pilot for entrepreneurs and SMEs — ad generation, smart CRM, lead scoring, and operational forecasting.</span>
         <span class="pillar-status soon">Coming soon</span>
       </div>
       <div class="pillar-card">
-        <div class="picon">✨</div>
-        <b>Pillar 3</b>
-        <span>Not yet named — a future TenzorGrid service.</span>
+        <div class="picon">📈</div>
+        <b>Trader Assistant</b>
+        <span>Algorithmic strategy building, market sentiment tracking, and automated risk management for retail traders.</span>
         <span class="pillar-status soon">Coming soon</span>
       </div>
       <div class="pillar-card">
-        <div class="picon">✨</div>
-        <b>Pillar 4</b>
-        <span>Not yet named — a future TenzorGrid service.</span>
-        <span class="pillar-status soon">Coming soon</span>
-      </div>
-      <div class="pillar-card">
-        <div class="picon">✨</div>
-        <b>Pillar 5</b>
-        <span>Not yet named — a future TenzorGrid service.</span>
+        <div class="picon">🤖</div>
+        <b>Custom AI Automation</b>
+        <span>Bespoke workflow automation, private RAG chatbots, and API access for businesses that need more than off-the-shelf.</span>
         <span class="pillar-status soon">Coming soon</span>
       </div>
     </div>
@@ -182,7 +176,7 @@ async function setupNav() {
     if (me.authenticated) {
       navCta.innerHTML = `
         <a class="btn btn-ghost btn-sm" style="color:#e2e8f0;border-color:rgba(255,255,255,.25);" href="#" id="navLogout">Log out</a>
-        <a class="btn btn-primary btn-sm" href="${me.hasProfile ? '/dashboard.html' : '/onboarding.html'}">${me.hasProfile ? 'Go to dashboard' : 'Finish my profile'}</a>`;
+        <a class="btn btn-primary btn-sm" href="${me.hasProfile ? '/dashboard.html' : '/welcome.html'}">${me.hasProfile ? 'Go to dashboard' : 'Get started'}</a>`;
       document.getElementById('navLogout').addEventListener('click', async (e) => {
         e.preventDefault();
         await fetch('/api/logout', { method: 'POST' });

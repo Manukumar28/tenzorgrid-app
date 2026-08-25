@@ -46,7 +46,7 @@ form.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.error || 'Something went wrong.');
 
     const me = await fetch('/api/me').then(r => r.json());
-    window.location.href = me.hasProfile ? '/dashboard.html' : '/onboarding.html';
+    window.location.href = me.hasProfile ? '/dashboard.html' : '/welcome.html';
   } catch (err) {
     errBox.textContent = err.message;
     errBox.classList.add('show');

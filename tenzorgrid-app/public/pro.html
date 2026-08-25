@@ -171,7 +171,7 @@ document.getElementById('tabs').addEventListener('click', (e) => {
 async function init() {
   const me = await fetch('/api/me').then((r) => r.json());
   if (!me.authenticated) { window.location.href = '/login.html'; return; }
-  if (!me.hasProfile) { window.location.href = '/onboarding.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/welcome.html'; return; }
   if (!me.isPro) { window.location.href = '/subscribe.html'; return; }
 
   profile = me.profile;
