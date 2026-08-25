@@ -78,15 +78,21 @@
     <div class="faq-row"><b>Is the Founding Member price really locked forever?</b><span>Yes, for as long as your subscription stays active on this account.</span></div>
   </div>
 </div>
+<script src="/vendor/gsap.min.js"></script>
+<script src="/animations.js"></script>
 <script>
+TG.staggerIn('.plan-card');
+TG.hoverLift('.plan-card');
+
 document.getElementById('billingToggle').addEventListener('click', (e) => {
   const opt = e.target.closest('.billing-opt');
   if (!opt) return;
   document.querySelectorAll('.billing-opt').forEach((b) => b.classList.remove('active'));
   opt.classList.add('active');
   const yearly = opt.dataset.period === 'yearly';
-  document.querySelector('.price-monthly').style.display = yearly ? 'none' : '';
-  document.querySelector('.price-yearly').style.display = yearly ? '' : 'none';
+  TG.crossfade(
+    yearly ? document.querySelector('.price-monthly') : document.querySelector('.price-yearly'),
+    yearly ? document.querySelector('.price-yearly') : document.querySelector('.price-monthly'));
   document.querySelector('.price-note-yearly').style.display = yearly ? '' : 'none';
 });
 

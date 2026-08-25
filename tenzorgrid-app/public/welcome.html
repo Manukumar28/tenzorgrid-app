@@ -48,7 +48,11 @@
   </div>
 </div>
 
+<script src="/vendor/gsap.min.js"></script>
+<script src="/animations.js"></script>
 <script>
+TG.hoverLift('.welcome-card.live');
+
 async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login.html'; }
 
 async function init() {
