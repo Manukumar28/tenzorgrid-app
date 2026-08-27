@@ -215,15 +215,29 @@ stub; wiring a real gateway for ₹1,999/mo billing is a separate, later prerequ
 this can actually generate revenue.
 
 **Roadmap (P0 → P3), from the blueprint:**
-- **P0 (starting now):** data model (`sim_enrollments`, `sim_tasks`, `sim_messages`,
-  `sim_scores`, `sim_attendance`), the character engine (archetype + skin + instance →
-  system prompt → `callClaude()`), the task engine, and the Line Manager rubric grader.
-- **P1:** Data Analyst, IC track, full weekly loop (task → chat → submission → grading →
-  dashboard), attendance tracking. No certificate issuance yet.
+- **P0 — ✅ SHIPPED (PR #31).** Data model (`sim_enrollments`, `sim_tasks`, `sim_messages`,
+  `sim_attendance` — `sim_scores` folded into `sim_tasks.score` for now, split out later if
+  the dashboard needs a weekly competency trend), the character engine
+  (`lib/workspace.js` — archetype + skin → system prompt → the existing `callClaude()`),
+  the task engine, and the Line Manager rubric grader. Ships as a real, working slice:
+  Data Analyst is live at `/workspace.html`, flipped from "Soon" to "Live" on both the
+  Career Growth grid and the dashboard sidebar. One task (`da-001`, department salary
+  breakdown) proves the full loop — enroll → Line Manager assigns → learner submits SQL
+  → graded (AI-scored when `ANTHROPIC_API_KEY` is set, deterministic correctness check as
+  fallback) → feedback lands in chat → attendance counts toward the 66-day milestone.
+  SQL runs against a synthetic in-memory dataset, never the real `tenzorgrid.db`. No
+  certificate issuance, no payment gate, no manager track yet — all deliberately P1+.
+- **P1 — next:** build out the task library beyond the single `da-001` task (multiple
+  tasks per week, a Stakeholder message that changes a requirement mid-task per the
+  architecture's non-negotiable design point), weekly 1:1 pacing, and a
+  performance-dashboard view of Virtual Workspace progress (the mockup from the blueprint,
+  section 7). Still Data Analyst / IC only, still no certificate.
 - **P2:** Manager track + team assembly wizard, Salesforce Admin as the second role, 5-6
   more roles from the catalog, the three added domain skins.
 - **P3:** Employee ID issuance, certificate PDF, recurring-milestone re-issuance, the public
-  HR verification portal, defence-interview flow.
+  HR verification portal, defence-interview flow. Real payment gateway for the ₹1,999/mo
+  subscription needs to land before or alongside this — certificates are the thing this
+  feature is actually monetizing.
 
 Six modules total in this phase, three are visual upgrades of what exists, three are new
 builds:
@@ -240,8 +254,10 @@ builds:
 
 ## Next immediate step
 
-Virtual Workspace engineering has started (P0: data model, character engine, task engine,
-rubric grader — see Phase 1 above for the full decision log). If resuming this after a
-context reset, re-read this file's Phase 1 section first, then check `lib/` for whatever
-P0 modules already exist (`sim_*` tables, a character/task engine file) before assuming
-nothing has been built yet.
+Virtual Workspace P0 is shipped and live (PR #31) — Data Analyst is a real, working role at
+`/workspace.html`, no longer "Soon" anywhere in the app. Ask the user whether to go next
+with **P1** (more tasks + mid-task requirement changes + a Virtual Workspace performance
+dashboard, still Data Analyst/IC only) or jump to **P2** (manager track + team assembly +
+Salesforce Admin as the second role) — see Phase 1 above for the full roadmap. If resuming
+after a context reset, `lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the P0
+code to read first, not something to rebuild.
