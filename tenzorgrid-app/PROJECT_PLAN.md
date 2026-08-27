@@ -227,6 +227,24 @@ this can actually generate revenue.
   fallback) → feedback lands in chat → attendance counts toward the 66-day milestone.
   SQL runs against a synthetic in-memory dataset, never the real `tenzorgrid.db`. No
   certificate issuance, no payment gate, no manager track yet — all deliberately P1+.
+- **P0.5 — ✅ SHIPPED.** Full UI rebuild. The user rejected the original two-panel
+  chat+task layout as too thin for a ₹1,999/mo product ("this is not worth for 1999/-")
+  and gave an explicit sidebar-app spec to match, matching a reference SaaS dashboard's
+  structure. `/workspace.html` is now a real sidebar app shell with seven tabs — Overview
+  (performance stat cards + task-progress bar + recent activity), Projects (the learner's
+  one project shown with completed/ongoing task counts and a folder-style file browser of
+  submitted work), Tasks (list + detail view, with the SQL editor embedded inline as "the
+  respective tool" for SQL tasks), Calendar (a real month grid with attended days
+  highlighted), Emails (stakeholder message threads, with reply — grouped/threaded by
+  subject), Team (roster cards for Line Manager/People Partner/Business Stakeholder, with
+  a real per-person chat for internal roster members — external contacts route to Emails
+  instead), and Settings (honest "coming soon" placeholder, per the user's own words).
+  Analytics and Documents were explicitly dropped — not required. Team/Emails chat is a
+  new, small backend addition (`sendLearnerMessage()` in `lib/workspace.js`, backed by a
+  new `sim_messages.thread_archetype` column): the Line Manager replies via `lib/ai.js`
+  when a key is configured, other archetypes get an honest canned acknowledgement — same
+  "AI upgrades a heuristic, never required" pattern the grader already uses. Verified
+  end-to-end with Playwright across all seven tabs before shipping.
 - **P1 — next:** build out the task library beyond the single `da-001` task (multiple
   tasks per week, a Stakeholder message that changes a requirement mid-task per the
   architecture's non-negotiable design point), weekly 1:1 pacing, and a
@@ -254,10 +272,11 @@ builds:
 
 ## Next immediate step
 
-Virtual Workspace P0 is shipped and live (PR #31) — Data Analyst is a real, working role at
-`/workspace.html`, no longer "Soon" anywhere in the app. Ask the user whether to go next
-with **P1** (more tasks + mid-task requirement changes + a Virtual Workspace performance
-dashboard, still Data Analyst/IC only) or jump to **P2** (manager track + team assembly +
-Salesforce Admin as the second role) — see Phase 1 above for the full roadmap. If resuming
-after a context reset, `lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the P0
-code to read first, not something to rebuild.
+Virtual Workspace P0 + the P0.5 UI rebuild are shipped and live — Data Analyst is a real,
+working role at `/workspace.html`, presented as a full sidebar app (Overview / Projects /
+Tasks / Calendar / Emails / Team / Settings), no longer "Soon" anywhere in the app. Ask the
+user whether to go next with **P1** (more tasks + mid-task requirement changes + deeper
+performance-dashboard views) or jump to **P2** (manager track + team assembly + Salesforce
+Admin as the second role) — see Phase 1 above for the full roadmap. If resuming after a
+context reset, `lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the code to read
+first, not something to rebuild; `public/workspace.html` is the sidebar app shell.

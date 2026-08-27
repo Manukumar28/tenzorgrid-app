@@ -23,6 +23,27 @@ const ROLE_CATALOG = {
   data_analyst: { label: 'Data Analyst', skin: 'Data & Analytics' },
 };
 
+// The Team tab roster. Manager-track direct reports get added here once team
+// assembly ships (P2) — for the IC track this fixed cast is the whole org chart
+// above the learner.
+const ROSTER = [
+  { archetype: 'line_manager', name: LINE_MANAGER_NAME, title: 'Line Manager' },
+  { archetype: 'people_partner', name: PEOPLE_PARTNER_NAME, title: 'People Partner (HR)' },
+  { archetype: 'stakeholder', name: STAKEHOLDER_NAME, title: 'Business Stakeholder' },
+];
+
+// Archetypes whose messages surface in the Emails tab (external-facing, formal)
+// rather than Team Chat (internal). Only Vikram exists in P0; customer/client
+// archetypes join this list as later roles add them.
+const EMAIL_ARCHETYPES = ['stakeholder'];
+
+const PROJECTS = {
+  data_analyst: {
+    title: 'Q1 Compensation Review',
+    description: "A departmental pay analysis for the leadership team, run out of the Data & Analytics function.",
+  },
+};
+
 // The practice dataset every Data Analyst task runs against. Rebuilt fresh, in memory,
 // for every single query execution — a learner's SELECT can never persist a change or
 // see anything outside this table.
@@ -70,6 +91,7 @@ const TASKS = {
     title: 'Department salary breakdown',
     brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) that returns each department's average salary, sorted highest to lowest.",
     referenceSql: 'SELECT department, AVG(salary) AS avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC',
+    estHours: 3,
   },
 };
 
@@ -80,12 +102,12 @@ function getEnrollment(userId) {
   return db.prepare('SELECT * FROM sim_enrollments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(userId);
 }
 
-function addMessage(enrollmentId, senderArchetype, senderName, body, taskId) {
+function addMessage(enrollmentId, senderArchetype, senderName, body, taskId, subject, threadArchetype) {
   const id = cryptoRandomId();
   db.prepare(`
-    INSERT INTO sim_messages (id, enrollment_id, sender_archetype, sender_name, body, task_id, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, enrollmentId, senderArchetype, senderName, body, taskId || null, now());
+    INSERT INTO sim_messages (id, enrollment_id, sender_archetype, sender_name, body, task_id, subject, thread_archetype, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, enrollmentId, senderArchetype, senderName, body, taskId || null, subject || null, threadArchetype || senderArchetype, now());
   return id;
 }
 
@@ -94,9 +116,9 @@ function assignTask(enrollmentId, taskKey) {
   if (!def) throw new Error('Unknown task: ' + taskKey);
   const id = cryptoRandomId();
   db.prepare(`
-    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at)
-    VALUES (?, ?, ?, ?, ?, 'assigned', ?)
-  `).run(id, enrollmentId, taskKey, def.title, def.brief, now());
+    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours)
+    VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?)
+  `).run(id, enrollmentId, taskKey, def.title, def.brief, now(), def.estHours || null);
   return id;
 }
 
@@ -126,6 +148,9 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   const task = TASKS['da-001'];
   addMessage(id, 'line_manager', LINE_MANAGER_NAME,
     `First task: ${task.title}. ${task.brief}`, taskId);
+  addMessage(id, 'stakeholder', STAKEHOLDER_NAME,
+    "Hi — following up on the department pay numbers Asha mentioned. I need this for a leadership review, so ideally by end of day Thursday. Let me know if anything's unclear about what I'm after.",
+    taskId, 'Department salary numbers — need by Thursday');
 
   return getEnrollment(userId);
 }
@@ -139,14 +164,44 @@ function getState(userId) {
   const attendedDays = attendanceRows.length;
   const trainingMonthDays = 22;
   const milestoneDays = trainingMonthDays * 3; // 66 — first certificate eligibility
+
+  const gradedTasks = tasks.filter((t) => t.status === 'graded');
+  const avgScore = gradedTasks.length
+    ? Math.round(gradedTasks.reduce((sum, t) => sum + (t.score || 0), 0) / gradedTasks.length)
+    : null;
+  const hoursAssigned = tasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
+
+  const projectDef = PROJECTS[enrollment.role];
+  const project = projectDef ? {
+    title: projectDef.title,
+    description: projectDef.description,
+    tasksCompleted: gradedTasks.length,
+    tasksTotal: tasks.length,
+    files: tasks.filter((t) => t.submission).map((t) => ({
+      taskId: t.id, name: t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.sql',
+      title: t.title, submittedAt: t.submitted_at, score: t.score,
+    })),
+  } : null;
+
   return {
     enrollment,
     messages,
     tasks,
+    roster: ROSTER,
+    emailArchetypes: EMAIL_ARCHETYPES,
+    project,
+    performance: {
+      tasksCompleted: gradedTasks.length,
+      tasksTotal: tasks.length,
+      avgScore,
+      hoursAssigned,
+      hoursTarget: 8,
+    },
     attendance: {
       attendedDays,
       milestoneDays,
       checkedInToday: attendanceRows.some((r) => r.attended_on === today()),
+      days: attendanceRows.map((r) => r.attended_on),
     },
   };
 }
@@ -246,6 +301,45 @@ async function submitTask(userId, taskId, sql) {
   return { score, feedback, result: submittedResult };
 }
 
+// Canned, in-character responses for archetypes that don't warrant an AI call for
+// every reply — keeps the Team/Emails chat honest (a message always gets an answer)
+// without spending an AI call on People Ops small talk.
+const CANNED_REPLIES = {
+  people_partner: "Thanks for flagging — noted. Ping me any time about policy or onboarding.",
+  stakeholder: "Thanks for the update, appreciate it — let me know if anything changes on timing.",
+};
+
+const LINE_MANAGER_CHAT_SYSTEM = `You are Asha Rao, the Line Manager archetype in TenzorGrid's Virtual Workspace — a behavioural work simulator. Your comms style is short, direct, warm but never soft, 1-3 sentences. Reply in character to the learner's chat message. You are not grading anything here — that only happens on task submission. Never rewrite or solve their task for them.
+
+Respond with ONLY the reply text, no preamble, no JSON.`;
+
+async function replyAsArchetype(archetype, learnerBody) {
+  if (archetype === 'line_manager' && ai.isAvailable()) {
+    const reply = await ai.callClaude({ system: LINE_MANAGER_CHAT_SYSTEM, prompt: learnerBody, maxTokens: 200 });
+    if (reply) return reply.trim();
+  }
+  return CANNED_REPLIES[archetype] || "Got it, thanks — noted.";
+}
+
+// Learner-initiated chat/email. Team tab uses this for line_manager/people_partner;
+// Emails tab uses it for stakeholder (and any future EMAIL_ARCHETYPES), threading
+// the reply's subject off the original.
+async function sendLearnerMessage(userId, archetype, body, subject) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const person = ROSTER.find((r) => r.archetype === archetype);
+  if (!person) throw new Error('Unknown recipient.');
+  const clean = (body || '').trim();
+  if (!clean) throw new Error('Message cannot be empty.');
+
+  addMessage(enrollment.id, 'learner', 'You', clean, null, subject || null, archetype);
+  const reply = await replyAsArchetype(archetype, clean);
+  const replySubject = subject ? 'Re: ' + subject.replace(/^Re:\s*/i, '') : null;
+  addMessage(enrollment.id, archetype, person.name, reply, null, replySubject, archetype);
+
+  return getState(userId);
+}
+
 module.exports = {
   ROLE_CATALOG,
   startEnrollment,
@@ -254,4 +348,5 @@ module.exports = {
   checkIn,
   submitTask,
   runPracticeQuery,
+  sendLearnerMessage,
 };
