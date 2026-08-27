@@ -164,15 +164,69 @@ scale).
   robots.txt/sitemap, `subscribe.html`-adjacent pages may still have a stray `alert()`
   somewhere worth a final check.
 
-## Phase 1 — Complete the Career Growth pillar — NOT STARTED
+## Phase 1 — Complete the Career Growth pillar — IN PROGRESS (Virtual Workspace)
 
-**User confirmed Virtual Workspace is the next module to build** (moved to the first
-card on the Career Growth page for this reason). From the original roadmap, six modules,
-three are visual upgrades of what exists, three are new builds:
-- Virtual Workspace — **next up.** Heaviest build: a simulated work environment with a
-  daily AI-manager loop assigning tasks and reviewing submissions. Promised on the
-  Career Growth page as "Soon"/"we're building this next," so there's user-facing
-  expectation once this starts.
+**Virtual Workspace — build started.** Full plan is in a private Claude artifact ("Virtual
+Workspace Blueprint," not committed to the repo — re-derive from this summary if the
+artifact is ever unreachable). Built from the user's own two prep documents: a 26-archetype
+AI character architecture (7 pressure families, 4 non-negotiable rules — only the Line
+Manager grades, characters know less than the learner, latency is a feature, hostility is
+capped) and a 152-tool enterprise integration matrix (4 access tiers: self-hosted container,
+learner's own free account + OAuth, desktop + artifact upload, not integrable).
+
+**Decisions locked (all six confirmed, nothing blocking engineering):**
+- **Pricing:** ₹1,999/month, a subscription entirely separate from the ₹499 Pro plan (no
+  shared entitlement either direction). 3-day free trial, coupon codes supported. Price is
+  calculated and charged only *after* the HR configuration wizard finishes (role → level →
+  team → schedule) — never guessed upfront.
+- **Schedule-based pricing:** learner picks Weekdays / Weekends / Custom at onboarding via a
+  switch UI. Price scales with days/week (₹1,999 full 5-day week, ₹799 weekends, ₹400 ×
+  custom days/week — proposed figures, adjust at build time if needed).
+- **Certification is a recurring milestone, not one-time:** a "training month" = 22 attended
+  days (a standard weekday month's count), applied uniformly regardless of schedule, so a
+  weekend learner's 3-month milestone takes ~2.5 calendar months but the same 66 attended
+  days. User-facing copy leads with the training requirement, not the price: "A minimum of
+  3 months of hands-on experience is required before your certificate is eligible." Learner
+  can keep training past the first milestone; every additional 66 days unlocks a re-issuable
+  updated certificate, released only when the learner confirms.
+- **Verification identity:** a permanent TenzorGrid **Employee ID** (`TG-EMP-{role
+  family}-{year}-{sequence}`), looked up at `tenzorgrid.com/verify/{id}`. Full name shown by
+  default on the public HR verification page (lookup requires the exact ID, which only
+  reaches an employer via the candidate — initials would defeat the page's purpose without
+  adding real privacy protection). Deeper content (transcripts, artifacts) stays
+  consent-gated. Mandatory disclaimer on every certificate/verification page: this is
+  simulated experience, not a record of paid employment.
+- **P0 launch role:** Data Analyst, individual-contributor track only, no certificate at
+  this stage — prove the experience is good before making it a credential.
+- **Added domain skins for Phase 2:** Legal & Paralegal, Manufacturing & Quality (Six
+  Sigma/ISO), Executive/Admin Coordination — each reuses existing archetypes, so it's
+  content authoring, not new engineering.
+
+**Engineering scoping call (mine, to unblock starting immediately):** deferring live
+per-learner tool containers (Tier A: SQL/Python/VS Code sandboxes) — that's a real
+container-orchestration infrastructure project Railway doesn't provide out of the box.
+First working version instead runs the Data Analyst role's SQL tasks against the app's own
+embedded `node:sqlite`, and the AI characters run on the Anthropic wrapper that already
+exists at `lib/ai.js` (`ANTHROPIC_API_KEY` is already live in Railway prod — confirmed, no
+new integration needed). Revisit real containers once there's a paying cohort to justify
+the infra spend. Real payment processing also doesn't exist yet (`/api/subscribe` is still
+the Phase 0 dev-mode stub) — Virtual Workspace can be fully built and tested against that
+stub; wiring a real gateway for ₹1,999/mo billing is a separate, later prerequisite before
+this can actually generate revenue.
+
+**Roadmap (P0 → P3), from the blueprint:**
+- **P0 (starting now):** data model (`sim_enrollments`, `sim_tasks`, `sim_messages`,
+  `sim_scores`, `sim_attendance`), the character engine (archetype + skin + instance →
+  system prompt → `callClaude()`), the task engine, and the Line Manager rubric grader.
+- **P1:** Data Analyst, IC track, full weekly loop (task → chat → submission → grading →
+  dashboard), attendance tracking. No certificate issuance yet.
+- **P2:** Manager track + team assembly wizard, Salesforce Admin as the second role, 5-6
+  more roles from the catalog, the three added domain skins.
+- **P3:** Employee ID issuance, certificate PDF, recurring-milestone re-issuance, the public
+  HR verification portal, defence-interview flow.
+
+Six modules total in this phase, three are visual upgrades of what exists, three are new
+builds:
 - Resume Prep — ATS score dial + live rewrite view
 - Career Upgrade — Skill Tree (this is where Three.js first gets used)
 - Career Transition — drag-slider resume morph
@@ -186,7 +240,8 @@ three are visual upgrades of what exists, three are new builds:
 
 ## Next immediate step
 
-Career Growth explainer page (full-width clickable grid, custom illustrations, routing
-fix) shipped and live as of PR #23. User has confirmed the next build is **Virtual
-Workspace** (Phase 1) — ask them to kick that off, or confirm scope first (it's the
-heaviest Phase 1 module: daily AI-manager loop, task assignment, submission review).
+Virtual Workspace engineering has started (P0: data model, character engine, task engine,
+rubric grader — see Phase 1 above for the full decision log). If resuming this after a
+context reset, re-read this file's Phase 1 section first, then check `lib/` for whatever
+P0 modules already exist (`sim_*` tables, a character/task engine file) before assuming
+nothing has been built yet.
