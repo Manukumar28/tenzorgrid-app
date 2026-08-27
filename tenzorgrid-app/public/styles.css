@@ -781,3 +781,115 @@ a.logo{cursor:pointer;}
 .ws-feedback{margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--accent-soft);font-size:13.5px;line-height:1.5;}
 .ws-feedback .score{font-weight:700;color:#067a55;margin-bottom:6px;display:block;}
 .ws-task-done{color:var(--text-faint);font-size:13px;}
+
+/* ---- Virtual Workspace: full sidebar app shell ----
+   Rebuilt from the two-panel P0 layout into a real sidebar app (Overview / Projects /
+   Tasks / Calendar / Emails / Team / Settings) matching the reference SaaS dashboard
+   structure the user asked to mirror, restyled with TenzorGrid's own tokens. */
+.wsapp-shell{max-width:1800px;margin:0 auto;padding:0 clamp(16px,3vw,40px) 60px;display:flex;gap:0;align-items:flex-start;min-height:calc(100vh - 64px);}
+.wsapp-sidebar{flex:0 0 232px;position:sticky;top:0;align-self:stretch;display:flex;flex-direction:column;background:#fff;border-right:1px solid var(--border);padding:26px 14px;margin:0 24px 0 -1px;min-height:calc(100vh - 64px);}
+.wsapp-role-badge{font-size:11.5px;font-weight:700;color:var(--primary-dark);background:var(--primary-soft);border-radius:10px;padding:10px 12px;margin-bottom:18px;line-height:1.4;}
+.wsapp-role-badge span{display:block;font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.wsapp-nav{display:flex;flex-direction:column;gap:2px;flex:1;}
+.wsapp-nav-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:10px 12px;border-radius:10px;border:none;background:none;cursor:pointer;
+  font-size:13.5px;font-weight:600;color:var(--text-soft);font-family:inherit;
+  transition:background .15s ease,color .15s ease;
+}
+.wsapp-nav-item svg{flex:0 0 auto;width:18px;height:18px;stroke:currentColor;}
+.wsapp-nav-item:hover{background:var(--surface-alt);color:var(--text);}
+.wsapp-nav-item.active{background:var(--primary-soft);color:var(--primary-dark);}
+.wsapp-sidebar-foot{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--border);padding-top:10px;margin-top:10px;}
+.wsapp-main{flex:1;min-width:0;padding:26px 4px 0 0;}
+.wsapp-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.wsapp-topbar h1{font-size:20px;margin:0;}
+.wsapp-topbar p{margin:2px 0 0;font-size:13px;color:var(--text-soft);}
+.wsapp-tab{display:none;}
+.wsapp-tab.active{display:block;}
+
+.wsapp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+@media (max-width:1100px){.wsapp-stats{grid-template-columns:repeat(2,1fr);}}
+.wsapp-stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:18px 18px 16px;box-shadow:var(--shadow-card);}
+.wsapp-stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.wsapp-stat-icon svg{width:19px;height:19px;stroke:#fff;}
+.wsapp-stat-icon.blue{background:linear-gradient(135deg,#4f46e5,#6366f1);}
+.wsapp-stat-icon.green{background:linear-gradient(135deg,#10b981,#34d399);}
+.wsapp-stat-icon.amber{background:linear-gradient(135deg,#f59e0b,#fbbf24);}
+.wsapp-stat-icon.purple{background:linear-gradient(135deg,#a855f7,#c084fc);}
+.wsapp-stat-card b{display:block;font-size:24px;line-height:1.1;}
+.wsapp-stat-card span{font-size:12.5px;color:var(--text-soft);}
+
+.wsapp-section-title{font-size:15px;margin:0 0 14px;}
+.wsapp-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:22px;box-shadow:var(--shadow-card);}
+.wsapp-card + .wsapp-card{margin-top:18px;}
+
+/* Projects: folder-style file browser */
+.wsfolder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-top:16px;}
+.wsfolder-item{border:1px solid var(--border);border-radius:12px;padding:16px 14px;text-align:left;background:var(--surface-alt);}
+.wsfolder-icon{width:34px;height:26px;background:var(--primary);border-radius:3px 6px 6px 6px;position:relative;margin-bottom:10px;}
+.wsfolder-icon::before{content:'';position:absolute;top:-6px;left:0;width:16px;height:6px;background:var(--primary);border-radius:3px 3px 0 0;}
+.wsfolder-item b{display:block;font-size:12.5px;line-height:1.4;margin-bottom:4px;word-break:break-word;}
+.wsfolder-item span{display:block;font-size:11px;color:var(--text-faint);}
+.wsfolder-score{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#067a55;background:var(--accent-soft);padding:2px 8px;border-radius:99px;}
+.wsfolder-empty{color:var(--text-faint);font-size:13px;padding:10px 0;}
+
+/* Tasks: list + detail */
+.wstask-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
+@media (max-width:820px){.wstask-layout{grid-template-columns:1fr;}}
+.wstask-list{display:flex;flex-direction:column;gap:8px;}
+.wstask-list-item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;background:#fff;transition:border-color .15s ease,background .15s ease;}
+.wstask-list-item:hover{border-color:var(--primary);}
+.wstask-list-item.active{border-color:var(--primary);background:var(--primary-soft);}
+.wstask-list-item b{display:block;font-size:13px;margin-bottom:4px;}
+.wstask-list-item span{font-size:11px;color:var(--text-faint);}
+.wstask-status{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:99px;margin-top:6px;}
+.wstask-status.assigned{background:var(--primary-soft);color:var(--primary-dark);}
+.wstask-status.graded{background:var(--accent-soft);color:#067a55;}
+.wstask-hours{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+/* Calendar */
+.wscal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.wscal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.wscal-dow{font-size:10.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;text-align:center;padding-bottom:4px;}
+.wscal-day{aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--text-soft);background:var(--surface-alt);}
+.wscal-day.empty{background:none;}
+.wscal-day.attended{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;font-weight:700;}
+.wscal-day.today{box-shadow:0 0 0 2px var(--primary) inset;}
+
+/* Emails: inbox + thread */
+.wsmail-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+@media (max-width:820px){.wsmail-layout{grid-template-columns:1fr;}}
+.wsmail-list{display:flex;flex-direction:column;gap:6px;max-height:520px;overflow-y:auto;}
+.wsmail-list-item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;background:#fff;}
+.wsmail-list-item:hover{border-color:var(--primary);}
+.wsmail-list-item.active{border-color:var(--primary);background:var(--primary-soft);}
+.wsmail-list-item b{display:block;font-size:13px;margin-bottom:3px;}
+.wsmail-list-item span{font-size:11.5px;color:var(--text-faint);display:block;}
+.wsmail-thread-msg{border-bottom:1px solid var(--border);padding:14px 0;}
+.wsmail-thread-msg:last-child{border-bottom:none;}
+.wsmail-thread-msg .who{font-size:12.5px;font-weight:700;margin-bottom:2px;}
+.wsmail-thread-msg .when{font-size:11px;color:var(--text-faint);margin-bottom:8px;}
+.wsmail-thread-msg .body{font-size:13.5px;line-height:1.55;white-space:pre-wrap;}
+#wsMailReply{width:100%;font-size:13px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);resize:vertical;margin:14px 0 8px;}
+
+/* Team: roster + per-person chat */
+.wsteam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.wsteam-card{border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;background:#fff;text-align:left;}
+.wsteam-card:hover{border-color:var(--primary);}
+.wsteam-card.active{border-color:var(--primary);background:var(--primary-soft);}
+.wsteam-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-bottom:10px;}
+.wsteam-card b{display:block;font-size:13.5px;}
+.wsteam-card span{font-size:11.5px;color:var(--text-faint);}
+#wsTeamChatBox{width:100%;font-size:13px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);resize:vertical;margin:14px 0 8px;}
+
+@media (max-width:900px){
+  .wsapp-shell{flex-direction:column;min-height:0;}
+  .wsapp-sidebar{position:static;flex-direction:row;overflow-x:auto;align-self:auto;min-height:0;width:100%;margin:0;border-right:none;border-bottom:1px solid var(--border);padding:14px;gap:6px;}
+  .wsapp-role-badge{display:none;}
+  .wsapp-nav{flex-direction:row;flex:0 0 auto;}
+  .wsapp-nav-item{white-space:nowrap;flex:0 0 auto;}
+  .wsapp-sidebar-foot{flex-direction:row;border-top:none;border-left:1px solid var(--border);padding:0 0 0 10px;margin:0 0 0 10px;}
+  .wsapp-main{padding:20px 0 0;}
+  .wstask-layout,.wsmail-layout{grid-template-columns:1fr;}
+}

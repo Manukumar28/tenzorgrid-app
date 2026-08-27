@@ -193,6 +193,9 @@ ensureColumn('jobs', 'nice_to_have_skills_json', 'TEXT');
 ensureColumn('jobs', 'source_domain', 'TEXT');
 ensureColumn('jobs', 'core_role', 'TEXT');
 ensureColumn('jobs', 'summary', 'TEXT');
+ensureColumn('sim_messages', 'subject', 'TEXT');
+ensureColumn('sim_tasks', 'est_hours', 'REAL');
+ensureColumn('sim_messages', 'thread_archetype', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

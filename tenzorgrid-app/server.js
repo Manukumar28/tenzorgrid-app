@@ -447,6 +447,20 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/messages' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.archetype || typeof body.archetype !== 'string') return sendJson(res, 400, { error: 'A recipient is required.' });
+    if (!body.body || typeof body.body !== 'string') return sendJson(res, 400, { error: 'A message is required.' });
+    try {
+      const state = await workspace.sendLearnerMessage(user.id, body.archetype, body.body, body.subject);
+      return sendJson(res, 200, { state });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   sendJson(res, 404, { error: 'Not found' });
 }
 
