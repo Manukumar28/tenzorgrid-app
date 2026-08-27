@@ -31,11 +31,11 @@
     <div class="section-eyebrow" style="margin-top:10px;">Everything Career Growth gives you</div>
     <div class="feature-grid" id="cgGrid">
 
-      <button type="button" class="feature-card soon" data-title="Virtual Workspace">
+      <a class="feature-card live-link" href="/signup.html" data-title="Virtual Workspace" data-hash="workspace-direct">
         <img class="feature-card-img" src="/assets/career-cards/virtual-workspace.svg" alt="" loading="lazy">
-        <span class="feature-card-badge soon">Soon</span>
-        <div class="feature-card-caption"><b>Virtual Workspace</b><span>A simulated work environment with an AI manager assigning real tasks and reviewing your submissions — build verifiable experience before your first job. We're building this next.</span></div>
-      </button>
+        <span class="feature-card-badge live">Live</span>
+        <div class="feature-card-caption"><b>Virtual Workspace</b><span>Data Analyst is live in early access — a real Line Manager assigns tasks, grades your SQL, and tracks your attendance toward a certificate. More roles coming.</span></div>
+      </a>
 
       <a class="feature-card live-link" href="/signup.html" data-title="Job Search" data-hash="job-search">
         <img class="feature-card-img" src="/assets/career-cards/job-search.svg" alt="" loading="lazy">
@@ -134,7 +134,8 @@ document.querySelectorAll('.feature-card.soon').forEach((card) => {
       el.textContent = label;
     });
     document.querySelectorAll('.feature-card.live-link').forEach((el) => {
-      const href = me.hasProfile ? (dest + '#' + el.dataset.hash) : dest;
+      if (!me.hasProfile) { el.setAttribute('href', dest); return; }
+      const href = el.dataset.hash === 'workspace-direct' ? '/workspace.html' : (dest + '#' + el.dataset.hash);
       el.setAttribute('href', href);
     });
     document.getElementById('navCta').innerHTML = `

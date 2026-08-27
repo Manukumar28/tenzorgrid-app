@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Workspace — TenzorGrid</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app-header">
+  <div class="container-app nav">
+    <a class="logo" href="/dashboard.html"><img src="/assets/icon.svg" alt="TenzorGrid"> <span class="logo-word">Tenzor<span class="g">Grid</span></span></a>
+    <div class="user-chip">
+      <a class="btn btn-ghost btn-sm" href="/dashboard.html">← Dashboard</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+</div>
+
+<div class="ws-wrap">
+
+  <div id="preEnroll" style="display:none;">
+    <div class="card">
+      <h2 style="margin-top:0;">Start your Virtual Workspace</h2>
+      <p style="color:var(--text-soft);font-size:14px;">Data Analyst is the only role in early access right now — real tasks, a Line Manager who grades your work, and a real chat thread. More roles are on the way.</p>
+      <div class="field">
+        <label for="wsLevel">Level</label>
+        <select id="wsLevel">
+          <option value="junior">Junior — more hand-holding, slower ramp</option>
+          <option value="senior">Senior — less hand-holding, higher quality bar</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="wsSchedule">Training schedule</label>
+        <select id="wsSchedule">
+          <option value="weekdays">Weekdays</option>
+          <option value="weekends">Weekends (Saturday + Sunday)</option>
+          <option value="custom">Custom days</option>
+        </select>
+      </div>
+      <div class="callout-box" style="background:var(--primary-soft);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--primary-dark);margin-bottom:18px;">
+        Free while Virtual Workspace is in early access. A minimum of 3 months of hands-on experience is required before a certificate becomes eligible — same for every schedule.
+      </div>
+      <button class="btn btn-primary" onclick="enroll()" id="enrollBtn">Start as a Data Analyst →</button>
+    </div>
+  </div>
+
+  <div id="wsMain" style="display:none;">
+    <div class="ws-stat-row">
+      <div>
+        <div class="ws-stat"><b id="wsAttended">0</b><span>/ <span id="wsMilestone">66</span> days toward your first certificate milestone</span></div>
+        <div class="ws-bar" style="width:280px;"><div class="ws-bar-fill" id="wsBarFill" style="width:0%"></div></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="checkinBtn" onclick="checkIn()">Check in for today</button>
+    </div>
+
+    <div class="ws-grid">
+      <div class="card" style="padding:22px;">
+        <h3 style="margin-top:0;font-size:15px;">Team Chat</h3>
+        <div id="wsMessages" class="ws-messages"></div>
+      </div>
+      <div class="card" style="padding:22px;">
+        <h3 style="margin-top:0;font-size:15px;">Current Task</h3>
+        <div id="wsTaskArea"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/animations.js"></script>
+<script>
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+const SENDER_LABEL = { line_manager: 'Asha Rao · Line Manager', people_partner: 'Neha Kulkarni · People Partner', learner: 'You' };
+
+function renderMessages(messages) {
+  const el = document.getElementById('wsMessages');
+  el.innerHTML = messages.map((m) => `
+    <div class="ws-msg ${m.sender_archetype === 'learner' ? 'learner' : ''}">
+      <div class="who">${escapeHtml(SENDER_LABEL[m.sender_archetype] || m.sender_name)}</div>
+      <div class="body">${escapeHtml(m.body)}</div>
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderTask(state) {
+  const el = document.getElementById('wsTaskArea');
+  const openTask = state.tasks.find((t) => t.status === 'assigned');
+  const lastGraded = [...state.tasks].reverse().find((t) => t.status === 'graded');
+
+  if (!openTask && lastGraded) {
+    el.innerHTML = `<p class="ws-task-done">No open task right now. Your last submission (${escapeHtml(lastGraded.title)}) was graded — see the feedback in Team Chat.</p>`;
+    return;
+  }
+  if (!openTask) {
+    el.innerHTML = `<p class="ws-task-done">No task assigned yet.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <p class="ws-task-brief"><b>${escapeHtml(openTask.title)}</b><br>${escapeHtml(openTask.brief)}</p>
+    <textarea id="wsSql" rows="6" placeholder="SELECT ..."></textarea>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitTask('${openTask.id}')">Submit</button>
+    <div id="wsError" style="color:var(--danger);font-size:13px;margin-top:8px;"></div>
+  `;
+}
+
+function renderState(state) {
+  document.getElementById('preEnroll').style.display = state ? 'none' : 'block';
+  document.getElementById('wsMain').style.display = state ? 'block' : 'none';
+  if (!state) return;
+  document.getElementById('wsAttended').textContent = state.attendance.attendedDays;
+  document.getElementById('wsMilestone').textContent = state.attendance.milestoneDays;
+  document.getElementById('wsBarFill').style.width = Math.min(100, (state.attendance.attendedDays / state.attendance.milestoneDays) * 100) + '%';
+  const checkinBtn = document.getElementById('checkinBtn');
+  checkinBtn.disabled = state.attendance.checkedInToday;
+  checkinBtn.textContent = state.attendance.checkedInToday ? "You're checked in for today" : 'Check in for today';
+  renderMessages(state.messages);
+  renderTask(state);
+}
+
+async function load() {
+  const me = await fetch('/api/me').then((r) => r.json());
+  if (!me.authenticated) { window.location.href = '/login.html'; return; }
+  if (!me.hasProfile) { window.location.href = '/welcome.html'; return; }
+  const data = await fetch('/api/workspace/state').then((r) => r.json());
+  renderState(data.state);
+}
+
+async function enroll() {
+  const btn = document.getElementById('enrollBtn');
+  btn.disabled = true;
+  btn.textContent = 'Starting…';
+  try {
+    const res = await fetch('/api/workspace/enroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ level: document.getElementById('wsLevel').value, scheduleType: document.getElementById('wsSchedule').value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not start Virtual Workspace.');
+    renderState(data.state);
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Start as a Data Analyst →';
+  }
+}
+
+async function checkIn() {
+  const res = await fetch('/api/workspace/checkin', { method: 'POST' });
+  const data = await res.json();
+  if (res.ok) renderState(data.state);
+}
+
+async function submitTask(taskId) {
+  const sqlBox = document.getElementById('wsSql');
+  const btn = document.getElementById('submitBtn');
+  const errBox = document.getElementById('wsError');
+  errBox.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    const res = await fetch(`/api/workspace/tasks/${taskId}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql: sqlBox.value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not submit that query.');
+    renderState(data.state);
+  } catch (e) {
+    errBox.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+  }
+}
+
+load().catch((e) => console.error(e));
+</script>
+</body>
+</html>
