@@ -13,6 +13,7 @@ const { listEducation, addEducation, deleteEducation } = require('./lib/educatio
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
 const { syncJobsFromAdzuna } = require('./lib/jobsync');
+const workspace = require('./lib/workspace');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -397,6 +398,52 @@ async function handleApi(req, res, url) {
     } catch (e) {
       console.error('Insights error:', e);
       return sendJson(res, 500, { error: 'Could not compute insights right now.' });
+    }
+  }
+
+  // ---- Virtual Workspace (P0: Data Analyst, IC track only, no billing gate yet) ----
+  if (pathname === '/api/workspace/state' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { state: workspace.getState(user.id) });
+  }
+
+  if (pathname === '/api/workspace/enroll' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    const level = ['junior', 'senior'].includes(body.level) ? body.level : 'junior';
+    const scheduleType = ['weekdays', 'weekends', 'custom'].includes(body.scheduleType) ? body.scheduleType : 'weekdays';
+    try {
+      const enrollment = workspace.startEnrollment(user.id, { level, scheduleType, scheduleDays: body.scheduleDays });
+      return sendJson(res, 200, { enrollment, state: workspace.getState(user.id) });
+    } catch (e) {
+      console.error('Workspace enroll error:', e);
+      return sendJson(res, 500, { error: 'Could not start Virtual Workspace right now.' });
+    }
+  }
+
+  if (pathname === '/api/workspace/checkin' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { state: workspace.checkIn(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  const taskSubmitMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-f0-9]+)\/submit$/);
+  if (taskSubmitMatch && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.sql || typeof body.sql !== 'string') return sendJson(res, 400, { error: 'A SQL query is required.' });
+    try {
+      const result = await workspace.submitTask(user.id, taskSubmitMatch[1], body.sql);
+      return sendJson(res, 200, { ...result, state: workspace.getState(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
     }
   }
 

@@ -116,6 +116,57 @@ CREATE TABLE IF NOT EXISTS job_ai_cache (
   nice_to_have_json TEXT,
   created_at TEXT NOT NULL
 );
+
+-- ---- Virtual Workspace (Career Growth Phase 1) ----
+-- P0 scope: one enrollment per user, one role (Data Analyst), IC track only.
+-- No payment wiring yet (/api/subscribe is still the dev-mode stub) — enrollment
+-- status just tracks 'trial' vs 'active' so the billing gate can be added later
+-- without a schema change.
+CREATE TABLE IF NOT EXISTS sim_enrollments (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  level TEXT NOT NULL,
+  track TEXT NOT NULL,
+  schedule_type TEXT NOT NULL,
+  schedule_days_json TEXT,
+  status TEXT NOT NULL DEFAULT 'trial',
+  trial_ends_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sim_tasks (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  task_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  brief TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'assigned',
+  submission TEXT,
+  score INTEGER,
+  feedback TEXT,
+  assigned_at TEXT NOT NULL,
+  submitted_at TEXT,
+  graded_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS sim_messages (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  sender_archetype TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  task_id TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sim_attendance (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  attended_on TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, attended_on)
+);
 `);
 
 // Safe migration helper for columns added after the DB was first created
