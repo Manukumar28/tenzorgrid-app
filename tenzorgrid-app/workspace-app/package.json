@@ -1,0 +1,25 @@
+{
+  "name": "workspace-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Virtual Workspace frontend — the only part of TenzorGrid built with a framework/build step. The rest of the app stays zero-dependency vanilla JS on purpose; this module is scoped to its own subdirectory so that choice doesn't leak into the rest of the site.",
+  "scripts": {
+    "build": "vite build && node postbuild.js",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.15.0",
+    "framer-motion": "^11.15.0",
+    "lucide-react": "^0.469.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20"
+  }
+}
