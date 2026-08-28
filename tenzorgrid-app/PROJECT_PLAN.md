@@ -245,6 +245,33 @@ this can actually generate revenue.
   when a key is configured, other archetypes get an honest canned acknowledgement — same
   "AI upgrades a heuristic, never required" pattern the grader already uses. Verified
   end-to-end with Playwright across all seven tabs before shipping.
+- **P0.6 — ✅ SHIPPED.** Premium React redesign of the Overview page. The user called the
+  P0.5 UI "very basic" and handed over a full design spec (Linear/Stripe-style "Bento box"
+  dashboard: React, Tailwind, Recharts, Framer Motion, Lucide-React). Architecture decision,
+  put to the user directly: the rest of TenzorGrid stays zero-npm-dependency vanilla JS on
+  purpose, so rather than pulling that stack into the whole app, it's scoped to a new
+  `workspace-app/` subproject (its own `package.json`/dependencies) that Vite builds
+  straight into `public/workspace.html` + `public/workspace-assets/` — the user chose to
+  adopt the full stack rather than fake the look in vanilla CSS. Root `package.json` gained
+  one `build` script Railway's Nixpacks runs automatically before `npm start`; confirmed
+  live via a real deploy (build ran, server booted clean, no errors). `public/workspace.html`
+  is now a gitignored build artifact, not a tracked file.
+  Overview is now a real Bento dashboard: animated KPI cards (tasks completed, average-score
+  sparkline, attendance, hours assigned), a skill-matrix radar chart, a leaderboard, a
+  task-progress list, a recent-activity feed, a weekly goal tracker + summary note, a
+  quick-tasks checklist, a suggested learning path, and career milestones — plus a
+  redesigned header/sidebar. All other tabs ported to the same component library for visual
+  consistency. Every number is real, per the product's standing no-fake-data rule: skill
+  matrix comes from a genuine per-axis breakdown the Line Manager's grading call now returns
+  (an axis a task doesn't exercise stays `null`, never synthesized); leaderboard is real
+  peers only (first name + last initial, no padded fake competitors — a learner training
+  alone just sees themselves); career milestones only track metrics actually recorded
+  (graded tasks, attendance days), no fabricated skill-leveling system; the header's
+  notification badge is a real open-task count. New `sim_tasks.skills_json` and
+  `sim_enrollments.checklist_json` columns back the skill matrix and the persisted
+  quick-tasks checklist. Caught and fixed two real bugs in Playwright testing before
+  shipping: the header toggle knob overlapping its own label, and the radar chart's
+  left-axis labels clipping against the card edge.
 - **P1 — next:** build out the task library beyond the single `da-001` task (multiple
   tasks per week, a Stakeholder message that changes a requirement mid-task per the
   architecture's non-negotiable design point), weekly 1:1 pacing, and a
@@ -272,11 +299,16 @@ builds:
 
 ## Next immediate step
 
-Virtual Workspace P0 + the P0.5 UI rebuild are shipped and live — Data Analyst is a real,
-working role at `/workspace.html`, presented as a full sidebar app (Overview / Projects /
-Tasks / Calendar / Emails / Team / Settings), no longer "Soon" anywhere in the app. Ask the
-user whether to go next with **P1** (more tasks + mid-task requirement changes + deeper
-performance-dashboard views) or jump to **P2** (manager track + team assembly + Salesforce
-Admin as the second role) — see Phase 1 above for the full roadmap. If resuming after a
-context reset, `lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the code to read
-first, not something to rebuild; `public/workspace.html` is the sidebar app shell.
+Virtual Workspace P0, P0.5, and the P0.6 React redesign are shipped and live — Data Analyst
+is a real, working role at `/workspace.html`, presented as a premium Bento-box React app
+(Overview / Projects / Tasks / Calendar / Emails / Team / Settings), no longer "Soon"
+anywhere in the app. The user said explicitly this is the first of several refinement
+rounds ("we will bring all the cases here" later) — don't start further UI work
+unprompted; wait for the next specific ask. When it comes, or when picking P1/P2 back up:
+`lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the backend to read first, not
+something to rebuild; the frontend now lives in `workspace-app/` (React/Vite/Tailwind/
+Recharts/Framer Motion — its own subproject, own `package.json`) and builds into
+`public/workspace.html` + `public/workspace-assets/`, which are gitignored generated
+artifacts, not tracked files — after any backend change, `cd workspace-app && npm run build`
+(or root `npm run build`) regenerates them before testing locally. See Phase 1 above for the
+full P1/P2/P3 roadmap once the user is ready to move past refinement.
