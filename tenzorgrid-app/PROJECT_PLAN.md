@@ -54,6 +54,21 @@ its own onboarding that only triggers when activated.
    action of any resumed session, even if the previous turn was cut off mid-work.
 7. **PR flow:** Create PR against `main`, squash-merge, confirm Railway deploy status
    before telling the user it's live (Railway only auto-deploys from `main`).
+8. **Whenever the user asks for a design upgrade, always look for premium icons/images
+   and premium design quality first** — don't default to basic/flat icon libraries
+   (Lucide, Heroicons, emoji) for anything the user will actually look at. Source real
+   illustrated/3D-style assets and polish, matching the bar set by the Virtual Workspace
+   redesign: a first pass using DiceBear's flat "notionists" line-art for character
+   avatars was explicitly rejected ("why don't we use advanced 3D Avatar Illustration
+   Icon Set designs") in favor of self-hosted 3D illustrations from the user's own Figma
+   account. The user has a Figma account connected (`mcp__Figma__*` tools) — when premium
+   icons/avatars are needed, check there first (existing files, or a well-matched Figma
+   Community pack the user duplicates in); self-host the result under
+   `public/assets/...` rather than hotlinking a third-party generator API (matches the
+   zero-external-dependency stack decision above, and avoids repeating the DiceBear
+   mismatch). Only fall back to a plain icon library when the user hasn't specifically
+   asked for a design upgrade, or for icons that are genuinely incidental (not part of
+   the visual identity being upgraded).
 
 ## Live infrastructure
 
@@ -302,13 +317,42 @@ builds:
 Virtual Workspace P0, P0.5, and the P0.6 React redesign are shipped and live — Data Analyst
 is a real, working role at `/workspace.html`, presented as a premium Bento-box React app
 (Overview / Projects / Tasks / Calendar / Emails / Team / Settings), no longer "Soon"
-anywhere in the app. The user said explicitly this is the first of several refinement
-rounds ("we will bring all the cases here" later) — don't start further UI work
-unprompted; wait for the next specific ask. When it comes, or when picking P1/P2 back up:
+anywhere in the app. Since P0.6 shipped: sidebar/KPI/section icons and avatars were sized
+up twice more (user feedback both times — "icons look too small") and every card's text
+was bumped off a too-small baseline for legibility at desktop width — all shipped and live.
 `lib/workspace.js` and the `sim_*` tables in `lib/db.js` are the backend to read first, not
-something to rebuild; the frontend now lives in `workspace-app/` (React/Vite/Tailwind/
+something to rebuild; the frontend lives in `workspace-app/` (React/Vite/Tailwind/
 Recharts/Framer Motion — its own subproject, own `package.json`) and builds into
 `public/workspace.html` + `public/workspace-assets/`, which are gitignored generated
 artifacts, not tracked files — after any backend change, `cd workspace-app && npm run build`
-(or root `npm run build`) regenerates them before testing locally. See Phase 1 above for the
-full P1/P2/P3 roadmap once the user is ready to move past refinement.
+(or root `npm run build`) regenerates them before testing locally.
+
+**In progress, not yet shipped:** sourcing premium 3D icons for the Overview KPI cards
+(Tasks completed / Average score / Attendance days / Hours assigned currently use plain
+Lucide icons in colored badges — see decision 8 above, this is the case that prompted that
+rule). Team-character avatars are already done (self-hosted 3D illustrations, see the
+"Self-host the 3D avatar set" PR) — `lib/avatars.js` + `public/assets/avatars/` is the
+pattern to follow for the KPI icons too once sourced. Sourcing is happening via the user's
+Google Drive (figma.com itself is unreachable from this sandbox — confirmed blocked at the
+network egress layer, don't retry direct Figma asset downloads or curl figma.com again) at
+folder `https://drive.google.com/drive/folders/1PILKzBUee8lX50GlwwsrHNnKgrc-i9SM`. The
+`mcp__Google_Drive__download_file_content` tool works but caps at 10MB/file — a "Free
+Finance 3D Icons" pack (4.2MB) was already pulled and decoded successfully (proves the
+mechanism: download → response saved to a local tool-result file → decode its base64
+`content` field with Python → real file). A better pack, "3dicons - Open source 3D icon
+library" (40.7MB, genuinely open-source, higher quality/more consistent than the
+"Community"-relabeled packs), is too big for that path — the user is splitting it into
+~5 smaller zips locally and re-uploading to the same Drive folder; pull each with
+`download_file_content` once under 10MB. A third pack ("165 files", 112MB, uncertain
+license) was deliberately deprioritized/skipped. Once the icons are in: pick 4 matching
+Tasks/Score/Calendar/Hours, self-host under `public/assets/icons/` (or similar, mirroring
+`public/assets/avatars/`), wire into `workspace-app/src/components/Overview.jsx`'s
+`KpiCard`, build, test, ship. Downloaded-but-not-yet-integrated files so far live only in
+this session's scratchpad (`/tmp/.../scratchpad/icon-packs/finance.zip`) — ephemeral,
+re-download from Drive if resuming after a session reset rather than assuming it's still
+there.
+
+The user also said UI refinement is ongoing/iterative ("we will bring all the cases here"
+one at a time) — don't start further unprompted UI work beyond what's already mid-flight
+above; wait for the next specific ask. See Phase 1 above for the full P1/P2/P3 roadmap once
+the user is ready to move past refinement.
