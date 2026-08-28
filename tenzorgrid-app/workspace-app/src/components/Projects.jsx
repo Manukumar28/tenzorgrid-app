@@ -9,28 +9,28 @@ export default function Projects({ state }) {
   return (
     <div className="space-y-5">
       <BentoCard index={0}>
-        <h3 className="text-base font-extrabold mb-1">{p.title}</h3>
-        <p className="text-sm text-gray-400 mb-4">{p.description}</p>
+        <h3 className="text-lg font-extrabold mb-1.5">{p.title}</h3>
+        <p className="text-sm text-gray-500 mb-4">{p.description}</p>
         <ProgressBar value={p.tasksTotal ? (p.tasksCompleted / p.tasksTotal) * 100 : 0} max={100} />
-        <p className="text-xs text-gray-400 mt-2">{p.tasksCompleted} of {p.tasksTotal} tasks completed</p>
+        <p className="text-sm text-gray-500 mt-2.5">{p.tasksCompleted} of {p.tasksTotal} tasks completed</p>
       </BentoCard>
 
       <BentoCard index={1}>
-        <h3 className="text-sm font-bold mb-3">Files</h3>
+        <h3 className="text-base font-bold mb-3.5">Files</h3>
         {p.files.length ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {p.files.map((f) => (
-              <div key={f.taskId} className="border border-gray-100 bg-gray-50 rounded-lg p-3.5">
-                <Folder size={22} className="text-indigo-500 fill-indigo-100 mb-2.5" strokeWidth={1.8} />
-                <div className="text-xs font-bold leading-snug">{f.title}</div>
-                <div className="text-[10.5px] text-gray-400 mt-1">{f.name}</div>
-                <div className="text-[10.5px] text-gray-300">{new Date(f.submittedAt).toLocaleDateString()}</div>
-                <Pill className="bg-teal-50 text-teal-600 mt-2">{f.score}/100</Pill>
+              <div key={f.taskId} className="border border-gray-100 bg-gray-50 rounded-lg p-4">
+                <Folder size={26} className="text-indigo-500 fill-indigo-100 mb-3" strokeWidth={1.8} />
+                <div className="text-sm font-bold leading-snug">{f.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{f.name}</div>
+                <div className="text-xs text-gray-400">{new Date(f.submittedAt).toLocaleDateString()}</div>
+                <Pill className="bg-teal-50 text-teal-600 mt-2.5">{f.score}/100</Pill>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-300">Nothing submitted yet — completed task files will show up here.</p>
+          <p className="text-sm text-gray-400">Nothing submitted yet — completed task files will show up here.</p>
         )}
       </BentoCard>
     </div>

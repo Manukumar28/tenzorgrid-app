@@ -14,7 +14,7 @@ export function BentoCard({ children, className = '', index = 0, hover = true, .
       animate="show"
       custom={index}
       whileHover={hover ? { y: -3, boxShadow: '0 12px 24px -8px rgba(15,23,42,.12)' } : undefined}
-      className={`bg-white border border-gray-100 rounded-xl shadow-sm p-5 ${className}`}
+      className={`bg-white border border-gray-100 rounded-xl shadow-sm p-6 ${className}`}
       {...rest}
     >
       {children}
@@ -56,7 +56,7 @@ export function CircularProgress({ value, max = 100, size = 56, strokeWidth = 6,
 }
 
 export function Pill({ children, className = '' }) {
-  return <span className={`inline-block text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-full ${className}`}>{children}</span>;
+  return <span className={`inline-block text-[11px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full ${className}`}>{children}</span>;
 }
 
 // `photoUrl` is a real uploaded photo (only ever the current learner's own — never
