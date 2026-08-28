@@ -41,9 +41,10 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, children }) {
 }
 
 export default function Overview({ state, learnerName, learnerPhotoUrl, onStateChange }) {
-  const { performance, attendance, tasks, skillMatrix, scoreHistory, leaderboard, checklist, learningPath, milestone, messages } = state;
+  const { performance, attendance, tasks, skillMatrix, scoreHistory, leaderboard, checklist, learningPath, milestone, messages, roster } = state;
 
   const activity = messages.filter((m) => !m.body.startsWith('Submitted:') && m.sender_archetype !== 'learner').slice(-6).reverse();
+  const rosterByArchetype = Object.fromEntries(roster.map((p) => [p.archetype, p]));
 
   async function toggleItem(item) {
     const data = await api.toggleChecklist(item.key, !item.checked);
@@ -126,7 +127,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                 <div key={m.id} className="flex items-start gap-3">
                   <Avatar
                     name={m.sender_name}
-                    seed={m.sender_archetype !== 'learner' ? m.sender_archetype : undefined}
+                    avatarUrl={rosterByArchetype[m.sender_archetype]?.avatarUrl}
                     photoUrl={m.sender_archetype === 'learner' ? learnerPhotoUrl : undefined}
                     size={30}
                   />
