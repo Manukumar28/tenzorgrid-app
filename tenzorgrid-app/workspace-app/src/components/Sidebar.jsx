@@ -44,7 +44,7 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout })
               tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
             }`}
           >
-            <Icon size={17} strokeWidth={2.1} />
+            <Icon size={21} strokeWidth={2.1} className="shrink-0" />
             {label}
           </button>
         ))}
