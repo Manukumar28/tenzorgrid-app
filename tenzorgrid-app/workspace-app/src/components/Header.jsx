@@ -1,13 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut } from 'lucide-react';
+import { Avatar } from './ui.jsx';
 
-export default function Header({ name, roleLabel, checkedIn, onToggleCheckIn, onLogout, pendingCount }) {
+export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleCheckIn, onLogout, pendingCount }) {
   return (
     <div className="flex items-start justify-between gap-6 mb-6 flex-wrap">
-      <div>
-        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Welcome back, {name} — {roleLabel}</h1>
-        <p className="text-sm text-gray-400 mt-1">Here's how your Virtual Workspace is going.</p>
+      <div className="flex items-center gap-3.5">
+        <Avatar name={name} photoUrl={photoUrl} size={44} className="ring-2 ring-white shadow-sm" />
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Welcome back, {name} — {roleLabel}</h1>
+          <p className="text-sm text-gray-400 mt-1">Here's how your Virtual Workspace is going.</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

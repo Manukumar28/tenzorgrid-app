@@ -40,7 +40,7 @@ export default function Team({ state, onStateChange }) {
               onClick={() => setSelected(p.archetype)}
               className={`text-left border rounded-lg p-3.5 ${p.archetype === selected ? 'border-indigo-300 bg-indigo-50' : 'border-gray-100 hover:border-gray-200'}`}
             >
-              <Avatar name={p.name} size={34} className="mb-2.5" />
+              <Avatar name={p.name} seed={p.archetype} size={34} className="mb-2.5" />
               <div className="text-xs font-bold">{p.name}</div>
               <div className="text-[10.5px] text-gray-400">{p.title}</div>
             </button>
@@ -52,12 +52,18 @@ export default function Team({ state, onStateChange }) {
         <BentoCard index={1} hover={false}>
           {isEmailOnly ? (
             <>
-              <h3 className="text-sm font-bold mb-1">{person.name}</h3>
+              <div className="flex items-center gap-3 mb-1">
+                <Avatar name={person.name} seed={person.archetype} size={38} />
+                <h3 className="text-sm font-bold">{person.name}</h3>
+              </div>
               <p className="text-sm text-gray-400">External contacts like {person.name} are reached through Emails, not Team Chat.</p>
             </>
           ) : (
             <>
-              <h3 className="text-sm font-bold mb-3">{person.name} · {person.title}</h3>
+              <div className="flex items-center gap-3 mb-3">
+                <Avatar name={person.name} seed={person.archetype} size={38} />
+                <h3 className="text-sm font-bold">{person.name} · {person.title}</h3>
+              </div>
               <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1 mb-3">
                 {thread.length ? thread.map((m) => (
                   <div key={m.id} className={`rounded-lg px-3.5 py-2.5 text-[13px] ${m.sender_archetype === 'learner' ? 'bg-indigo-50 ml-6' : 'bg-gray-50'}`}>

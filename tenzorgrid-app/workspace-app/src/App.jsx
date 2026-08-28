@@ -16,6 +16,7 @@ const ROLE_LABEL = { data_analyst: 'Data Analyst' };
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [learnerName, setLearnerName] = useState('');
+  const [learnerPhotoUrl, setLearnerPhotoUrl] = useState(null);
   const [state, setState] = useState(null);
   const [tab, setTab] = useState('overview');
 
@@ -25,6 +26,7 @@ export default function App() {
       if (!me.authenticated) { window.location.href = '/login.html'; return; }
       if (!me.hasProfile) { window.location.href = '/welcome.html'; return; }
       setLearnerName(((me.profile && me.profile.name) || '').split(' ')[0] || 'there');
+      setLearnerPhotoUrl((me.profile && me.profile.photoUrl) || null);
       const data = await api.getState();
       setState(data.state);
       setLoading(false);
@@ -59,6 +61,7 @@ export default function App() {
       <main className="flex-1 min-w-0 px-6 md:px-8 py-6">
         <Header
           name={learnerName}
+          photoUrl={learnerPhotoUrl}
           roleLabel={roleLabel}
           checkedIn={state.attendance.checkedInToday}
           onToggleCheckIn={toggleCheckIn}
@@ -66,7 +69,7 @@ export default function App() {
           pendingCount={pendingCount}
         />
 
-        {tab === 'overview' && <Overview state={state} learnerName={learnerName} onStateChange={setState} />}
+        {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'projects' && <Projects state={state} />}
         {tab === 'tasks' && <Tasks state={state} onStateChange={setState} />}
         {tab === 'calendar' && <CalendarTab state={state} />}
