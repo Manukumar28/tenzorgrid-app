@@ -14,6 +14,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const { db, cryptoRandomId } = require('./db');
 const ai = require('./ai');
+const { pickAvatar } = require('./avatars');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -25,12 +26,22 @@ const ROLE_CATALOG = {
 
 // The Team tab roster. Manager-track direct reports get added here once team
 // assembly ships (P2) — for the IC track this fixed cast is the whole org chart
-// above the learner.
+// above the learner. `gender` is required on every entry: it's what picks a fitting
+// avatar illustration out of the pool (see lib/avatars.js) — new characters added
+// later (more roles, the manager track) just need a name/title/gender here and get a
+// real avatar automatically, no manual picking required.
 const ROSTER = [
-  { archetype: 'line_manager', name: LINE_MANAGER_NAME, title: 'Line Manager' },
-  { archetype: 'people_partner', name: PEOPLE_PARTNER_NAME, title: 'People Partner (HR)' },
-  { archetype: 'stakeholder', name: STAKEHOLDER_NAME, title: 'Business Stakeholder' },
+  { archetype: 'line_manager', name: LINE_MANAGER_NAME, title: 'Line Manager', gender: 'female' },
+  { archetype: 'people_partner', name: PEOPLE_PARTNER_NAME, title: 'People Partner (HR)', gender: 'female' },
+  { archetype: 'stakeholder', name: STAKEHOLDER_NAME, title: 'Business Stakeholder', gender: 'male' },
 ];
+
+// Assigns each roster member a stable avatar from their gender's pool, guaranteeing no
+// two characters shown together end up with the same picture.
+function rosterWithAvatars() {
+  const used = new Set();
+  return ROSTER.map((p) => ({ ...p, avatarUrl: pickAvatar(p.archetype, p.gender, used) }));
+}
 
 // Archetypes whose messages surface in the Emails tab (external-facing, formal)
 // rather than Team Chat (internal). Only Vikram exists in P0; customer/client
@@ -283,7 +294,7 @@ function getState(userId) {
     enrollment,
     messages,
     tasks,
-    roster: ROSTER,
+    roster: rosterWithAvatars(),
     emailArchetypes: EMAIL_ARCHETYPES,
     project,
     performance: {

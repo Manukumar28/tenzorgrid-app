@@ -60,15 +60,14 @@ export function Pill({ children, className = '' }) {
 }
 
 // `photoUrl` is a real uploaded photo (only ever the current learner's own — never
-// synthesized for a real person). `seed` generates a stable "3D-style" character avatar
-// for the fictional cast (Line Manager, People Partner, Stakeholder) via DiceBear's
-// notionists style — same seed always renders the same face, so a character doesn't
-// change appearance between page loads. If the image fails to load (offline, blocked),
-// it falls back to initials rather than showing a broken image.
-export function Avatar({ name, size = 32, className = '', photoUrl, seed }) {
+// synthesized for a real person). `avatarUrl` is a self-hosted 3D illustration
+// (public/assets/avatars/) already picked server-side for a fictional cast member
+// (see lib/avatars.js) — same character always gets the same picture. If the image
+// fails to load, it falls back to initials rather than showing a broken image.
+export function Avatar({ name, size = 32, className = '', photoUrl, avatarUrl }) {
   const [failed, setFailed] = React.useState(false);
   const initials = (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const src = photoUrl || (seed ? `https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(seed)}&backgroundType=gradientLinear&backgroundColor=c7d2fe,99f6e4` : null);
+  const src = photoUrl || avatarUrl;
 
   if (src && !failed) {
     return (
