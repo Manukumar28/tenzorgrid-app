@@ -2,12 +2,13 @@
   "name": "tenzorgrid-app",
   "version": "0.1.0",
   "private": true,
-  "description": "TenzorGrid Career Growth — real signup, onboarding, and profile dashboard. Zero external dependencies (built on Node's built-in http server and node:sqlite).",
+  "description": "TenzorGrid Career Growth — real signup, onboarding, and profile dashboard. Zero external dependencies (built on Node's built-in http server and node:sqlite). The one exception is workspace-app/ — a scoped React build for the Virtual Workspace page only; everything else stays vanilla on purpose.",
   "engines": {
     "node": ">=22.5.0"
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "cd workspace-app && npm install && npm run build"
   }
 }

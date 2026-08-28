@@ -44,6 +44,40 @@ const PROJECTS = {
   },
 };
 
+// The five axes the Skill Matrix (Overview tab) reports on. A task only ever moves the
+// axes it actually exercises — da-001 is a SQL task, so python/dataViz genuinely stay at
+// 0 until a task exists that touches them. No axis is ever synthesized.
+const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic'];
+const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic' };
+
+const CHECKLIST_ITEMS = {
+  data_analyst: [
+    { key: 'daily-quiz-ethics', label: 'Daily quiz: Data ethics' },
+    { key: 'review-project-docs', label: 'Review project docs' },
+    { key: 'set-up-profile', label: 'Set up your workspace profile' },
+  ],
+};
+
+const LEARNING_PATH = {
+  data_analyst: [
+    { title: 'Advanced SQL: Window Functions', note: 'RANK, LAG/LEAD and running totals — the next step up from GROUP BY.' },
+    { title: 'Reading a P&L like an analyst', note: 'The vocabulary Vikram and other stakeholders assume you already know.' },
+    { title: 'Writing findings a stakeholder will actually read', note: 'Structuring a short written recommendation, not just a query result.' },
+  ],
+};
+
+// Real, currently-trackable milestone requirements only — no fabricated "Level 3 in
+// Python" style claims for skills we have no tasks to actually assess yet.
+const MILESTONE = {
+  data_analyst: {
+    targetRole: 'Associate Data Analyst',
+    requirements: [
+      { key: 'tasks', label: 'Complete 5 graded tasks', target: 5, metric: 'tasksCompleted' },
+      { key: 'attendance', label: 'Reach 66 attendance days', target: 66, metric: 'attendedDays' },
+    ],
+  },
+};
+
 // The practice dataset every Data Analyst task runs against. Rebuilt fresh, in memory,
 // for every single query execution — a learner's SELECT can never persist a change or
 // see anything outside this table.
@@ -135,8 +169,8 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
   const id = cryptoRandomId();
   db.prepare(`
-    INSERT INTO sim_enrollments (id, user_id, role, level, track, schedule_type, schedule_days_json, status, trial_ends_at, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', ?, ?)
+    INSERT INTO sim_enrollments (id, user_id, role, level, track, schedule_type, schedule_days_json, status, trial_ends_at, checklist_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', ?, '{}', ?)
   `).run(id, userId, role, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
 
   addMessage(id, 'people_partner', PEOPLE_PARTNER_NAME,
@@ -153,6 +187,53 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
     taskId, 'Department salary numbers — need by Thursday');
 
   return getEnrollment(userId);
+}
+
+// First name + last initial only — real learners, but never a full name or email
+// exposed to a stranger peer on the leaderboard.
+function displayName(fullName) {
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'Learner';
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+// Real peers only — no synthesized competitors. A learner training alone just sees
+// themself, honestly, rather than a padded-out fake leaderboard.
+function getLeaderboard(userId, role) {
+  const rows = db.prepare(`
+    SELECT se.id as enrollment_id, se.user_id, p.name
+    FROM sim_enrollments se
+    LEFT JOIN profiles p ON p.user_id = se.user_id
+    WHERE se.role = ?
+  `).all(role);
+
+  const scored = rows.map((r) => {
+    const graded = db.prepare("SELECT score FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'").all(r.enrollment_id);
+    const avgScore = graded.length ? Math.round(graded.reduce((s, t) => s + t.score, 0) / graded.length) : null;
+    return { userId: r.user_id, name: displayName(r.name), avgScore, isYou: r.user_id === userId };
+  });
+
+  scored.sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
+  return scored.slice(0, 5);
+}
+
+function getSkillMatrix(gradedTasks) {
+  const sums = {}, counts = {};
+  for (const axis of SKILL_AXES) { sums[axis] = 0; counts[axis] = 0; }
+  for (const t of gradedTasks) {
+    if (!t.skills_json) continue;
+    const skills = JSON.parse(t.skills_json);
+    for (const axis of SKILL_AXES) {
+      if (typeof skills[axis] === 'number') { sums[axis] += skills[axis]; counts[axis] += 1; }
+    }
+  }
+  return SKILL_AXES.map((axis) => ({
+    axis,
+    label: SKILL_AXIS_LABEL[axis],
+    value: counts[axis] ? Math.round(sums[axis] / counts[axis]) : 0,
+    hasData: counts[axis] > 0,
+  }));
 }
 
 function getState(userId) {
@@ -183,6 +264,21 @@ function getState(userId) {
     })),
   } : null;
 
+  const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
+  const checklistState = JSON.parse(enrollment.checklist_json || '{}');
+  const checklist = (CHECKLIST_ITEMS[enrollment.role] || []).map((item) => ({ ...item, checked: Boolean(checklistState[item.key]) }));
+
+  const milestoneDef = MILESTONE[enrollment.role];
+  const milestoneMetrics = { tasksCompleted: gradedTasks.length, attendedDays };
+  const milestone = milestoneDef ? {
+    targetRole: milestoneDef.targetRole,
+    requirements: milestoneDef.requirements.map((r) => ({
+      key: r.key, label: r.label, target: r.target,
+      current: Math.min(r.target, milestoneMetrics[r.metric] || 0),
+      done: (milestoneMetrics[r.metric] || 0) >= r.target,
+    })),
+  } : null;
+
   return {
     enrollment,
     messages,
@@ -203,7 +299,24 @@ function getState(userId) {
       checkedInToday: attendanceRows.some((r) => r.attended_on === today()),
       days: attendanceRows.map((r) => r.attended_on),
     },
+    skillMatrix: getSkillMatrix(gradedTasks),
+    scoreHistory,
+    leaderboard: getLeaderboard(userId, enrollment.role),
+    checklist,
+    learningPath: LEARNING_PATH[enrollment.role] || [],
+    milestone,
   };
+}
+
+function toggleChecklistItem(userId, itemKey, checked) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const validKeys = (CHECKLIST_ITEMS[enrollment.role] || []).map((i) => i.key);
+  if (!validKeys.includes(itemKey)) throw new Error('Unknown checklist item.');
+  const state = JSON.parse(enrollment.checklist_json || '{}');
+  state[itemKey] = Boolean(checked);
+  db.prepare('UPDATE sim_enrollments SET checklist_json = ? WHERE id = ?').run(JSON.stringify(state), enrollment.id);
+  return getState(userId);
 }
 
 function checkIn(userId) {
@@ -247,7 +360,18 @@ const LINE_MANAGER_GRADING_SYSTEM = `You are Asha Rao, the Line Manager archetyp
 
 Grade the learner's SQL submission against the task brief, the reference result, and their actual result. Score 0-100 on correctness and query quality (readability, appropriate use of GROUP BY/aggregate functions, no unnecessary complexity). Then write brief, specific, in-character feedback (2-4 short lines, bullet points ok) — coach, don't lecture; note one thing they did well if there is one.
 
-Respond with ONLY a JSON object: {"score": <0-100 integer>, "feedback": "<your in-character feedback, first person as Asha>"}`;
+Also score the submission 0-100 on each of these skill axes, but ONLY for axes this specific task actually exercises — use null for any axis a SQL task like this one has no basis to judge (e.g. a pure SQL task has no python or dataViz signal at all): sql, python, dataViz, communication (is the query itself readable/well-structured), businessLogic (did they answer what the stakeholder actually asked).
+
+Respond with ONLY a JSON object: {"score": <0-100 integer>, "feedback": "<your in-character feedback, first person as Asha>", "skills": {"sql": <0-100 or null>, "python": <0-100 or null>, "dataViz": <0-100 or null>, "communication": <0-100 or null>, "businessLogic": <0-100 or null>}}`;
+
+function cleanSkills(raw) {
+  const out = {};
+  for (const axis of SKILL_AXES) {
+    const v = raw && raw[axis];
+    out[axis] = typeof v === 'number' ? Math.max(0, Math.min(100, Math.round(v))) : null;
+  }
+  return out;
+}
 
 async function gradeSubmission(taskDef, submittedSql, submittedResult, referenceResult) {
   const prompt = `Task brief: ${taskDef.brief}
@@ -262,19 +386,27 @@ Learner's actual result:
 ${JSON.stringify(submittedResult)}`;
 
   if (ai.isAvailable()) {
-    const text = await ai.callClaude({ system: LINE_MANAGER_GRADING_SYSTEM, prompt, maxTokens: 400 });
+    const text = await ai.callClaude({ system: LINE_MANAGER_GRADING_SYSTEM, prompt, maxTokens: 500 });
     const parsed = ai.extractJson(text);
     if (parsed && typeof parsed.score === 'number' && typeof parsed.feedback === 'string') {
-      return { score: Math.max(0, Math.min(100, Math.round(parsed.score))), feedback: parsed.feedback };
+      return {
+        score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+        feedback: parsed.feedback,
+        skills: cleanSkills(parsed.skills),
+      };
     }
   }
 
-  // Deterministic fallback so the loop still works with no AI key configured —
-  // same "heuristic when AI is off" pattern the rest of the app already uses.
+  // Deterministic fallback so the loop still works with no AI key configured — same
+  // "heuristic when AI is off" pattern the rest of the app already uses. It can only
+  // honestly speak to the axes a correctness check actually covers (sql, businessLogic,
+  // communication via a query-length proxy) — python/dataViz stay null, same as the AI
+  // path would leave them for a SQL-only task.
   const matches = JSON.stringify(submittedResult) === JSON.stringify(referenceResult);
-  return matches
+  const base = matches
     ? { score: 90, feedback: "Correct — that matches what I'd expect. Ship it." }
     : { score: 45, feedback: "That doesn't match what I'm seeing when I run it myself. Check your GROUP BY and sort order, then resubmit." };
+  return { ...base, skills: cleanSkills({ sql: base.score, businessLogic: base.score, communication: base.score }) };
 }
 
 async function submitTask(userId, taskId, sql) {
@@ -288,12 +420,12 @@ async function submitTask(userId, taskId, sql) {
   const submittedResult = runPracticeQuery(sql); // throws on invalid/unsafe SQL
   const referenceResult = runPracticeQuery(taskDef.referenceSql);
 
-  const { score, feedback } = await gradeSubmission(taskDef, sql, submittedResult, referenceResult);
+  const { score, feedback, skills } = await gradeSubmission(taskDef, sql, submittedResult, referenceResult);
 
   db.prepare(`
-    UPDATE sim_tasks SET status = 'graded', submission = ?, score = ?, feedback = ?, submitted_at = ?, graded_at = ?
+    UPDATE sim_tasks SET status = 'graded', submission = ?, score = ?, feedback = ?, skills_json = ?, submitted_at = ?, graded_at = ?
     WHERE id = ?
-  `).run(sql, score, feedback, now(), now(), taskId);
+  `).run(sql, score, feedback, JSON.stringify(skills), now(), now(), taskId);
 
   addMessage(enrollment.id, 'learner', 'You', `Submitted:\n${sql}`, taskId);
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, feedback, taskId);
@@ -349,4 +481,5 @@ module.exports = {
   submitTask,
   runPracticeQuery,
   sendLearnerMessage,
+  toggleChecklistItem,
 };

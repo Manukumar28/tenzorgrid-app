@@ -461,6 +461,19 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/checklist' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.itemKey || typeof body.itemKey !== 'string') return sendJson(res, 400, { error: 'An item key is required.' });
+    try {
+      const state = workspace.toggleChecklistItem(user.id, body.itemKey, Boolean(body.checked));
+      return sendJson(res, 200, { state });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   sendJson(res, 404, { error: 'Not found' });
 }
 
