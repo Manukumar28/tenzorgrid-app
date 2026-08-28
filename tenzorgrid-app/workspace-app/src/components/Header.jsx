@@ -39,7 +39,7 @@ export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleC
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm"
           >
-            <LogOut size={14} /> Log out
+            <LogOut size={17} /> Log out
           </button>
           {pendingCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-gray-50">
