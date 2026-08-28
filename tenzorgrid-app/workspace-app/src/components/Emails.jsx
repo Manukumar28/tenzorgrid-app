@@ -59,26 +59,26 @@ export default function Emails({ state, onStateChange }) {
             onClick={() => setSelectedKey(t.key)}
             className={`w-full text-left border rounded-lg px-3.5 py-3 ${t.key === selectedKey ? 'border-indigo-300 bg-indigo-50' : 'border-gray-100 hover:border-gray-200'}`}
           >
-            <div className="text-xs font-bold">{t.last.subject || t.key}</div>
-            <div className="text-[10.5px] text-gray-400">{SENDER_LABEL[t.msgs.find((m) => m.sender_archetype !== 'learner')?.sender_archetype] || t.key}</div>
-            <div className="text-[10.5px] text-gray-300">{new Date(t.last.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric' })}</div>
+            <div className="text-sm font-bold">{t.last.subject || t.key}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{SENDER_LABEL[t.msgs.find((m) => m.sender_archetype !== 'learner')?.sender_archetype] || t.key}</div>
+            <div className="text-xs text-gray-400">{new Date(t.last.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric' })}</div>
           </button>
         ))}
-        {!threads.length && <p className="text-sm text-gray-300">No emails yet.</p>}
+        {!threads.length && <p className="text-sm text-gray-400">No emails yet.</p>}
       </BentoCard>
 
       <BentoCard index={1} hover={false}>
         {!activeThread ? (
-          <p className="text-sm text-gray-300">Select a thread.</p>
+          <p className="text-sm text-gray-400">Select a thread.</p>
         ) : (
           <>
-            <h3 className="text-sm font-bold mb-3">{activeThread.last.subject || activeThread.key}</h3>
+            <h3 className="text-base font-bold mb-3.5">{activeThread.last.subject || activeThread.key}</h3>
             <div className="divide-y divide-gray-100">
               {activeThread.msgs.map((m) => (
-                <div key={m.id} className="py-3">
-                  <div className="text-xs font-bold">{SENDER_LABEL[m.sender_archetype] || m.sender_name}</div>
-                  <div className="text-[10.5px] text-gray-300 mb-1.5">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-                  <div className="text-[13px] text-gray-600 whitespace-pre-wrap">{m.body}</div>
+                <div key={m.id} className="py-3.5">
+                  <div className="text-sm font-bold">{SENDER_LABEL[m.sender_archetype] || m.sender_name}</div>
+                  <div className="text-xs text-gray-400 mb-2">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                  <div className="text-sm text-gray-600 whitespace-pre-wrap">{m.body}</div>
                 </div>
               ))}
             </div>

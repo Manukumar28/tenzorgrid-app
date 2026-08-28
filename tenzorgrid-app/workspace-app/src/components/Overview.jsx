@@ -30,11 +30,11 @@ function summaryNote(state) {
 function KpiCard({ index, icon: Icon, iconClass, label, value, children }) {
   return (
     <BentoCard index={index} className="flex flex-col">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${iconClass}`}>
-        <Icon size={22} className="text-white" strokeWidth={2.2} />
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-3 ${iconClass}`}>
+        <Icon size={26} className="text-white" strokeWidth={2.1} />
       </div>
-      <div className="text-2xl font-extrabold leading-none">{value}</div>
-      <div className="text-xs text-gray-400 font-medium mt-1 mb-2">{label}</div>
+      <div className="text-3xl font-extrabold leading-none">{value}</div>
+      <div className="text-[13px] text-gray-500 font-medium mt-1.5 mb-2">{label}</div>
       <div className="mt-auto">{children}</div>
     </BentoCard>
   );
@@ -56,14 +56,14 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
     : 0;
 
   return (
-    <div className="grid grid-cols-12 gap-5">
-      <div className="col-span-12 xl:col-span-9 space-y-5">
+    <div className="grid grid-cols-12 gap-6">
+      <div className="col-span-12 xl:col-span-9 space-y-6">
 
         {/* KPI row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <KpiCard index={0} icon={CheckCircle2} iconClass="bg-gradient-to-br from-indigo-500 to-indigo-400" label="Tasks completed" value={`${performance.tasksCompleted}/${performance.tasksTotal}`}>
             <div className="flex items-center justify-center">
-              <CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={54} strokeWidth={5.5} colorClass="text-indigo-500" />
+              <CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={56} strokeWidth={5.5} colorClass="text-indigo-500" />
             </div>
           </KpiCard>
           <KpiCard index={1} icon={TrendingUp} iconClass="bg-gradient-to-br from-teal-500 to-teal-400" label="Average score" value={performance.avgScore === null ? '—' : performance.avgScore}>
@@ -78,116 +78,116 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         </div>
 
         {/* Middle row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <BentoCard index={4}>
-            <h3 className="text-sm font-bold mb-3">Task progress</h3>
-            <div className="space-y-2.5">
+            <h3 className="text-base font-bold mb-3.5">Task progress</h3>
+            <div className="space-y-3">
               {tasks.map((t) => (
                 <div key={t.id} className="flex items-center gap-2.5">
-                  <CheckCircle2 size={19} className={t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'} strokeWidth={2.3} />
-                  <span className={`text-[13px] font-medium ${t.status === 'graded' ? 'line-through text-gray-350 text-gray-400' : 'text-gray-700'}`}>{t.title}</span>
+                  <CheckCircle2 size={20} className={t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'} strokeWidth={2.3} />
+                  <span className={`text-sm font-medium ${t.status === 'graded' ? 'line-through text-gray-400' : 'text-gray-700'}`}>{t.title}</span>
                 </div>
               ))}
-              {!tasks.length && <p className="text-[13px] text-gray-300">No tasks assigned yet.</p>}
+              {!tasks.length && <p className="text-sm text-gray-400">No tasks assigned yet.</p>}
             </div>
           </BentoCard>
 
           <BentoCard index={5}>
-            <h3 className="text-sm font-bold mb-1">Skill matrix</h3>
+            <h3 className="text-base font-bold mb-1">Skill matrix</h3>
             <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} />
           </BentoCard>
 
           <BentoCard index={6}>
-            <h3 className="text-sm font-bold mb-3">Leaderboard</h3>
-            <div className="space-y-3">
+            <h3 className="text-base font-bold mb-3.5">Leaderboard</h3>
+            <div className="space-y-3.5">
               {leaderboard.map((row) => (
-                <div key={row.userId} className="flex items-center gap-2.5">
-                  <Avatar name={row.name} photoUrl={row.isYou ? learnerPhotoUrl : null} size={26} />
+                <div key={row.userId} className="flex items-center gap-3">
+                  <Avatar name={row.name} photoUrl={row.isYou ? learnerPhotoUrl : null} size={34} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-semibold truncate">{row.isYou ? `${row.name} (you)` : row.name}</div>
+                    <div className="text-sm font-semibold truncate">{row.isYou ? `${row.name} (you)` : row.name}</div>
                     {row.avgScore === null ? (
-                      <div className="text-[10.5px] text-gray-300">No graded tasks yet</div>
+                      <div className="text-xs text-gray-400">No graded tasks yet</div>
                     ) : (
                       <ProgressBar value={row.avgScore} max={100} height="h-1.5" colorClass="from-indigo-500 to-teal-400" />
                     )}
                   </div>
                 </div>
               ))}
-              {leaderboard.length === 1 && <p className="text-[11px] text-gray-300 pt-1">You're the only one training right now.</p>}
+              {leaderboard.length === 1 && <p className="text-xs text-gray-400 pt-1">You're the only one training right now.</p>}
             </div>
           </BentoCard>
         </div>
 
         {/* Bottom row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <BentoCard index={7} className="lg:col-span-2">
-            <h3 className="text-sm font-bold mb-3">Recent activity</h3>
-            <div className="space-y-3">
+            <h3 className="text-base font-bold mb-3.5">Recent activity</h3>
+            <div className="space-y-4">
               {activity.map((m) => (
-                <div key={m.id} className="flex items-start gap-3">
+                <div key={m.id} className="flex items-start gap-3.5">
                   <Avatar
                     name={m.sender_name}
                     avatarUrl={rosterByArchetype[m.sender_archetype]?.avatarUrl}
                     photoUrl={m.sender_archetype === 'learner' ? learnerPhotoUrl : undefined}
-                    size={30}
+                    size={38}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[12.5px] font-bold">{m.sender_name}</span>
+                      <span className="text-sm font-bold">{m.sender_name}</span>
                       <Pill className={ROLE_BADGE[m.sender_archetype] || ROLE_BADGE.learner}>{(ROLE_TITLE[m.sender_archetype] || m.sender_archetype).toUpperCase()}</Pill>
-                      <span className="text-[10.5px] text-gray-300">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <p className="text-[12.5px] text-gray-500 mt-0.5 line-clamp-2">{m.body}</p>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{m.body}</p>
                   </div>
                 </div>
               ))}
-              {!activity.length && <p className="text-[13px] text-gray-300">Nothing yet.</p>}
+              {!activity.length && <p className="text-sm text-gray-400">Nothing yet.</p>}
             </div>
           </BentoCard>
 
-          <div className="space-y-5">
+          <div className="space-y-6">
             <BentoCard index={8}>
-              <div className="flex items-center gap-2 mb-2">
-                <Target size={21} className="text-indigo-500" />
-                <h3 className="text-sm font-bold">Weekly goal: 80% performance score</h3>
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <Target size={22} className="text-indigo-500" />
+                <h3 className="text-base font-bold">Weekly goal: 80% performance score</h3>
               </div>
               <ProgressBar value={performance.avgScore || 0} max={80} colorClass="from-indigo-500 to-teal-400" />
-              <p className="text-[11px] text-gray-400 mt-2">{performance.avgScore === null ? 'No graded tasks yet.' : `Currently at ${performance.avgScore}.`}</p>
+              <p className="text-xs text-gray-500 mt-2.5">{performance.avgScore === null ? 'No graded tasks yet.' : `Currently at ${performance.avgScore}.`}</p>
             </BentoCard>
             <BentoCard index={9} hover={false} className="bg-gradient-to-br from-indigo-50 to-teal-50 border-0">
-              <p className="text-[12.5px] text-indigo-900 leading-relaxed">{summaryNote(state)}</p>
+              <p className="text-sm text-indigo-900 leading-relaxed">{summaryNote(state)}</p>
             </BentoCard>
           </div>
         </div>
       </div>
 
       {/* Far right column */}
-      <div className="col-span-12 xl:col-span-3 space-y-5">
+      <div className="col-span-12 xl:col-span-3 space-y-6">
         <BentoCard index={2}>
-          <div className="flex items-center gap-2 mb-3">
-            <ClipboardList size={21} className="text-indigo-500" />
-            <h3 className="text-sm font-bold">Quick tasks</h3>
+          <div className="flex items-center gap-2.5 mb-3.5">
+            <ClipboardList size={22} className="text-indigo-500" />
+            <h3 className="text-base font-bold">Quick tasks</h3>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {checklist.map((item) => (
               <label key={item.key} className="flex items-center gap-2.5 cursor-pointer select-none">
                 <input type="checkbox" checked={item.checked} onChange={() => toggleItem(item)} className="w-4 h-4 rounded accent-indigo-500" />
-                <span className={`text-[12.5px] ${item.checked ? 'line-through text-gray-300' : 'text-gray-600'}`}>{item.label}</span>
+                <span className={`text-sm ${item.checked ? 'line-through text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
               </label>
             ))}
           </div>
         </BentoCard>
 
         <BentoCard index={3}>
-          <div className="flex items-center gap-2 mb-3">
-            <GraduationCap size={21} className="text-teal-500" />
-            <h3 className="text-sm font-bold">Suggested learning path</h3>
+          <div className="flex items-center gap-2.5 mb-3.5">
+            <GraduationCap size={22} className="text-teal-500" />
+            <h3 className="text-base font-bold">Suggested learning path</h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {learningPath.map((m) => (
               <div key={m.title}>
-                <div className="text-[12.5px] font-semibold text-gray-700">{m.title}</div>
-                <div className="text-[11px] text-gray-400 leading-snug">{m.note}</div>
+                <div className="text-sm font-semibold text-gray-700">{m.title}</div>
+                <div className="text-xs text-gray-500 leading-snug mt-0.5">{m.note}</div>
               </div>
             ))}
           </div>
@@ -195,17 +195,17 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
 
         {milestone && (
           <BentoCard index={4}>
-            <div className="flex items-center gap-2 mb-1">
-              <Trophy size={21} className="text-amber-500" />
-              <h3 className="text-sm font-bold">Career milestones</h3>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <Trophy size={22} className="text-amber-500" />
+              <h3 className="text-base font-bold">Career milestones</h3>
             </div>
-            <p className="text-[11.5px] text-gray-400 mb-2">Target: <span className="font-semibold text-gray-600">{milestone.targetRole}</span></p>
+            <p className="text-sm text-gray-500 mb-2.5">Target: <span className="font-semibold text-gray-700">{milestone.targetRole}</span></p>
             <ProgressBar value={milestonePct} max={100} colorClass="from-amber-500 to-orange-400" />
-            <div className="space-y-2 mt-3">
+            <div className="space-y-2.5 mt-3.5">
               {milestone.requirements.map((r) => (
                 <div key={r.key} className="flex items-center gap-2.5">
-                  <CheckCircle2 size={19} className={r.done ? 'text-amber-500' : 'text-gray-200'} strokeWidth={2.3} />
-                  <span className="text-[12px] text-gray-600">{r.label} <span className="text-gray-300">({r.current}/{r.target})</span></span>
+                  <CheckCircle2 size={20} className={r.done ? 'text-amber-500' : 'text-gray-200'} strokeWidth={2.3} />
+                  <span className="text-sm text-gray-700">{r.label} <span className="text-gray-400">({r.current}/{r.target})</span></span>
                 </div>
               ))}
             </div>
