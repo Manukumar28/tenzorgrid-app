@@ -59,8 +59,28 @@ export function Pill({ children, className = '' }) {
   return <span className={`inline-block text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-full ${className}`}>{children}</span>;
 }
 
-export function Avatar({ name, size = 32, className = '' }) {
+// `photoUrl` is a real uploaded photo (only ever the current learner's own — never
+// synthesized for a real person). `seed` generates a stable "3D-style" character avatar
+// for the fictional cast (Line Manager, People Partner, Stakeholder) via DiceBear's
+// notionists style — same seed always renders the same face, so a character doesn't
+// change appearance between page loads. If the image fails to load (offline, blocked),
+// it falls back to initials rather than showing a broken image.
+export function Avatar({ name, size = 32, className = '', photoUrl, seed }) {
+  const [failed, setFailed] = React.useState(false);
   const initials = (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const src = photoUrl || (seed ? `https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(seed)}&backgroundType=gradientLinear&backgroundColor=c7d2fe,99f6e4` : null);
+
+  if (src && !failed) {
+    return (
+      <img
+        src={src}
+        alt={name || 'avatar'}
+        onError={() => setFailed(true)}
+        className={`rounded-full object-cover shrink-0 bg-gray-100 ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <div
       className={`flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 text-white font-semibold shrink-0 ${className}`}

@@ -40,7 +40,7 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, children }) {
   );
 }
 
-export default function Overview({ state, learnerName, onStateChange }) {
+export default function Overview({ state, learnerName, learnerPhotoUrl, onStateChange }) {
   const { performance, attendance, tasks, skillMatrix, scoreHistory, leaderboard, checklist, learningPath, milestone, messages } = state;
 
   const activity = messages.filter((m) => !m.body.startsWith('Submitted:') && m.sender_archetype !== 'learner').slice(-6).reverse();
@@ -93,7 +93,7 @@ export default function Overview({ state, learnerName, onStateChange }) {
 
           <BentoCard index={5}>
             <h3 className="text-sm font-bold mb-1">Skill matrix</h3>
-            <SkillRadar axes={skillMatrix} learnerName={learnerName} />
+            <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} />
           </BentoCard>
 
           <BentoCard index={6}>
@@ -101,7 +101,7 @@ export default function Overview({ state, learnerName, onStateChange }) {
             <div className="space-y-3">
               {leaderboard.map((row) => (
                 <div key={row.userId} className="flex items-center gap-2.5">
-                  <Avatar name={row.name} size={26} />
+                  <Avatar name={row.name} photoUrl={row.isYou ? learnerPhotoUrl : null} size={26} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[12.5px] font-semibold truncate">{row.isYou ? `${row.name} (you)` : row.name}</div>
                     {row.avgScore === null ? (
@@ -124,7 +124,12 @@ export default function Overview({ state, learnerName, onStateChange }) {
             <div className="space-y-3">
               {activity.map((m) => (
                 <div key={m.id} className="flex items-start gap-3">
-                  <Avatar name={m.sender_name} size={30} />
+                  <Avatar
+                    name={m.sender_name}
+                    seed={m.sender_archetype !== 'learner' ? m.sender_archetype : undefined}
+                    photoUrl={m.sender_archetype === 'learner' ? learnerPhotoUrl : undefined}
+                    size={30}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[12.5px] font-bold">{m.sender_name}</span>

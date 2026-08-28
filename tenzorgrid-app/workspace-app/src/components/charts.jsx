@@ -17,7 +17,7 @@ export function Sparkline({ data }) {
   );
 }
 
-export function SkillRadar({ axes, learnerName }) {
+export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
   const hasAnyData = axes.some((a) => a.hasData);
   return (
     <div className="relative h-64 -mx-2">
@@ -30,7 +30,7 @@ export function SkillRadar({ axes, learnerName }) {
         </RadarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <Avatar name={learnerName} size={30} />
+        <Avatar name={learnerName} photoUrl={learnerPhotoUrl} size={34} className="ring-2 ring-white shadow" />
       </div>
       {!hasAnyData && (
         <p className="absolute bottom-0 inset-x-0 text-center text-[11px] text-gray-300 font-medium">Complete a task to populate your skill matrix</p>
