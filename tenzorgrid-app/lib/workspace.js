@@ -256,9 +256,9 @@ function assignTask(enrollmentId, taskKey) {
   const id = cryptoRandomId();
   const assignedAt = now();
   // A real deadline, set when the work is handed over — that's what makes "due today",
-  // "overdue" and the on-time rate computable rather than decorative. Tasks assigned
-  // before this column existed simply have no deadline and are excluded from those
-  // figures instead of being back-dated into a deadline they were never given.
+  // "overdue" and the on-time rate computable rather than decorative. Rows written
+  // before this column existed get the same deadline reconstructed at read time from
+  // assigned_at + dueInDays (see getTasksView).
   const dueAt = def.dueInDays
     ? new Date(Date.parse(assignedAt) + def.dueInDays * 24 * 60 * 60 * 1000).toISOString()
     : null;
@@ -556,10 +556,19 @@ function getTasksView(role, tasks, projects, nowMs) {
     const stagePct = graded ? 100 : t.submission ? 50 : 0;
     const priority = t.priority || def.priority || 'medium';
 
+    // Tasks assigned before due_at existed still carry a deadline implicitly: dueInDays
+    // is a fixed property of the task definition and assigned_at is a real recorded
+    // timestamp, so this reconstructs the deadline the task always had rather than
+    // inventing one. Without it, every account created before that column shipped would
+    // show permanently empty health and on-time cards.
+    const dueAt = t.due_at || (t.assigned_at && def.dueInDays
+      ? new Date(Date.parse(t.assigned_at) + def.dueInDays * DAY_MS).toISOString()
+      : null);
+
     let outcome = null; // only meaningful once there is a deadline to judge against
-    if (t.due_at) {
-      if (graded) outcome = Date.parse(t.graded_at) <= Date.parse(t.due_at) ? 'onTime' : 'late';
-      else outcome = nowMs > Date.parse(t.due_at) ? 'overdue' : 'inProgress';
+    if (dueAt) {
+      if (graded) outcome = Date.parse(t.graded_at) <= Date.parse(dueAt) ? 'onTime' : 'late';
+      else outcome = nowMs > Date.parse(dueAt) ? 'overdue' : 'inProgress';
     }
 
     return {
@@ -572,8 +581,8 @@ function getTasksView(role, tasks, projects, nowMs) {
       estHours: t.est_hours,
       priority,
       priorityLabel: PRIORITY_LABEL[priority],
-      dueAt: t.due_at || null,
-      dueLabel: t.due_at ? dueLabel(t.due_at, nowMs) : null,
+      dueAt,
+      dueLabel: dueAt ? dueLabel(dueAt, nowMs) : null,
       overdue: outcome === 'overdue',
       outcome,
       stage,
