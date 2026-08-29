@@ -84,6 +84,34 @@ its own onboarding that only triggers when activated.
    manager praise — and every one of them must be computed from stored rows. The standing
    no-fake-data rule applies with full force here: an invented streak or a synthesized
    compliment is worse than an honest empty state.
+11. **Storage target: one Supabase Postgres, a schema per pillar, files in Storage.**
+   Decided after checking the live instance. `core` (users, subscriptions, payments with
+   UTR, certificates), then `career` / `business` / `trading` / `ai`. One database rather
+   than four, because shared identity across pillars is the platform proposition and a
+   founder can't answer "how many users across all products" across four databases.
+   Postgres covers all five pillars without extra infrastructure — the project already has
+   `vector` (AI/semantic search), `pg_partman` (time-series partitioning for trading),
+   `pgmq` (queues) and `pg_cron` (the simulation tick) available to enable. Revisit only
+   if trading needs tick-level market data at volume, or files pass a few TB (then move
+   files to S3, keep Postgres). **Deferred by the user to the end of development** — the
+   schema will have stabilised, so it's one migration instead of chasing a moving target.
+   Three things to carry into that migration:
+   - **Photos must leave the database.** They're base64 in `profiles.photo_data_url`;
+     on Supabase's 500 MB free tier that caps you at ~365 users instead of ~14,000.
+   - **Move the app, not the database.** Supabase is in `ap-southeast-1` (Singapore),
+     well placed for Indian users; Railway is in `ams` (Amsterdam), which is not.
+   - **Upgrade off free before real users.** Free has no backups at all and pauses after
+     a week idle — which already happened, and is what the `ENOTFOUND` job-sync error was.
+12. **Don't self-host an LLM; don't hand-author a thousand projects.** Two costings done
+   against real numbers. (a) At Haiku pricing the workload is ~$0.16/learner/month
+   realistic, ~$1.02 at the daily caps maxed — self-hosting needs a GPU box at a few
+   hundred a month fixed (Railway has no GPUs at all), so break-even is north of a
+   thousand active learners before counting ops burden and quality loss. Spend on grading
+   quality instead; use the Batch API (50%) for pool generation. (b) Content should be
+   **templates × datasets**, not stored projects: ~25 parameterised task templates × ~8
+   datasets × 3 difficulties ≈ 600 tasks from ~33 authored artifacts, and each template
+   generates its own reference solution, so every combination is verifiable by
+   construction. AI writes only the narrative wrapper, where an error is cosmetic.
 
 ## Live infrastructure
 
