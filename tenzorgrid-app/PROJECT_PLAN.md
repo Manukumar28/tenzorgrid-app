@@ -489,6 +489,31 @@ so a cell can never disagree with its own attendance mark.
 Note: date-fns was specified but not added — the month maths is ~15 lines of native `Date`
 and the bundle is already over Vite's 500 kB warning threshold.
 
+**Team tab, rebuild (shipped):** profile pane + member grid + analytics, over the three
+real characters. The spec's "Sarah J." and "David K." were **not** added — inventing
+colleagues who do not exist in the simulation would be fabrication, and the mockup listed
+David K. twice anyway. `getTeam()` returns, per character: the projects they actually own
+(from `PROJECT_CATALOG.stakeholder`, with live status), real message counts / unread / last
+contact, and whether they grade (only the Line Manager does — a load-bearing rule of the
+character engine, which is why "Ask for a review" appears for Asha alone).
+
+Two things the spec wanted that had no honest source, reworked rather than faked:
+1. **Per-member skill radar.** These are archetypes, not assessed employees; no competency
+   data exists. Instead the panel shows **the skill mix their projects demand**, which is
+   real catalog content and more useful ("working with Asha means SQL + Data Viz"). Rendered
+   as bars, not the specified radar: a person owns one or two projects, so only two or three
+   of five axes are ever non-zero and the radar collapsed into a sliver that read as broken.
+2. **Online/Offline presence.** There is no presence system, and these characters reply on
+   demand. The dot now reports something real — whether a reply can actually be had right
+   now, given the remaining daily AI message allowance (`DAILY_AI_LIMITS.messages`). When
+   the cap is hit it reads "Daily message limit reached" and the send buttons disable.
+
+"Team Skill Average" became **"Your skill levels"** (real `skillMatrix` gauges) — a team
+average would require inventing competency numbers for the cast. The action buttons send
+real messages through the same API as Emails, each with its own intent line, rather than
+being decorative. Note the Emails/Team overlap remains: Emails is the unified inbox, Team is
+the people view; both read the same `sim_messages` rows.
+
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
 prompted that rule). The user paused this ("okk icon i will give later") and will supply icons
