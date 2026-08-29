@@ -213,18 +213,24 @@ const TASKS = {
     brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) that returns each department's average salary, sorted highest to lowest.",
     referenceSql: 'SELECT department, AVG(salary) AS avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC',
     estHours: 3,
+    priority: 'high',
+    dueInDays: 2,
   },
   'da-002': {
     title: 'Hiring trend by year',
     brief: "Asha wants to see how hiring has moved year on year. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each hire_year, how many people were hired and their average salary, oldest year first.",
     referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
     estHours: 2,
+    priority: 'medium',
+    dueInDays: 3,
   },
   'da-003': {
     title: 'Pay spread by role',
     brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first.",
     referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees GROUP BY role ORDER BY spread DESC',
     estHours: 4,
+    priority: 'high',
+    dueInDays: 4,
   },
 };
 
@@ -248,10 +254,18 @@ function assignTask(enrollmentId, taskKey) {
   const def = TASKS[taskKey];
   if (!def) throw new Error('Unknown task: ' + taskKey);
   const id = cryptoRandomId();
+  const assignedAt = now();
+  // A real deadline, set when the work is handed over — that's what makes "due today",
+  // "overdue" and the on-time rate computable rather than decorative. Tasks assigned
+  // before this column existed simply have no deadline and are excluded from those
+  // figures instead of being back-dated into a deadline they were never given.
+  const dueAt = def.dueInDays
+    ? new Date(Date.parse(assignedAt) + def.dueInDays * 24 * 60 * 60 * 1000).toISOString()
+    : null;
   db.prepare(`
-    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours)
-    VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?)
-  `).run(id, enrollmentId, taskKey, def.title, def.brief, now(), def.estHours || null);
+    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours, priority, due_at)
+    VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?, ?, ?)
+  `).run(id, enrollmentId, taskKey, def.title, def.brief, assignedAt, def.estHours || null, def.priority || 'medium', dueAt);
   return id;
 }
 
@@ -500,6 +514,189 @@ function getProjects(role, tasks, streaks) {
   };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+const PRIORITY_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
+
+function startOfDay(ms) {
+  const d = new Date(ms);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+// Whole calendar days from now until a deadline: 0 is today, 1 tomorrow, negative overdue.
+function daysUntil(dueAt, nowMs) {
+  return Math.round((startOfDay(Date.parse(dueAt)) - startOfDay(nowMs)) / DAY_MS);
+}
+
+function dueLabel(dueAt, nowMs) {
+  const d = daysUntil(dueAt, nowMs);
+  if (d < 0) return `Overdue by ${Math.abs(d)} day${Math.abs(d) === 1 ? '' : 's'}`;
+  if (d === 0) return 'Today';
+  if (d === 1) return 'Tomorrow';
+  if (d <= 6) return new Date(Date.parse(dueAt)).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+  return new Date(Date.parse(dueAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+// Everything the Tasks tab shows. A task in this product is completed by submitting work
+// and being graded — there is no "mark done" flag — so `stage` reports where the task
+// genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
+function getTasksView(role, tasks, projects, nowMs) {
+  const catalog = PROJECT_CATALOG[role] || [];
+  const projectByTaskKey = {};
+  for (const p of catalog) {
+    for (const k of p.taskKeys) projectByTaskKey[k] = p;
+  }
+  const projectStatus = Object.fromEntries(projects.projects.map((p) => [p.key, p]));
+
+  const rows = tasks.map((t) => {
+    const def = TASKS[t.task_key] || {};
+    const proj = projectByTaskKey[t.task_key];
+    const graded = t.status === 'graded';
+    const stage = graded ? 'Graded' : t.submission ? 'Submitted' : 'Assigned';
+    const stagePct = graded ? 100 : t.submission ? 50 : 0;
+    const priority = t.priority || def.priority || 'medium';
+
+    let outcome = null; // only meaningful once there is a deadline to judge against
+    if (t.due_at) {
+      if (graded) outcome = Date.parse(t.graded_at) <= Date.parse(t.due_at) ? 'onTime' : 'late';
+      else outcome = nowMs > Date.parse(t.due_at) ? 'overdue' : 'inProgress';
+    }
+
+    return {
+      id: t.id,
+      title: t.title,
+      brief: t.brief,
+      status: t.status,
+      score: t.score,
+      feedback: t.feedback,
+      estHours: t.est_hours,
+      priority,
+      priorityLabel: PRIORITY_LABEL[priority],
+      dueAt: t.due_at || null,
+      dueLabel: t.due_at ? dueLabel(t.due_at, nowMs) : null,
+      overdue: outcome === 'overdue',
+      outcome,
+      stage,
+      stagePct,
+      projectKey: proj ? proj.key : null,
+      projectTitle: proj ? proj.title : null,
+    };
+  });
+
+  rows.sort((a, b) => {
+    if ((a.status === 'graded') !== (b.status === 'graded')) return a.status === 'graded' ? 1 : -1;
+    const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+    if (p) return p;
+    return (a.dueAt || '').localeCompare(b.dueAt || '');
+  });
+
+  const open = rows.filter((r) => r.status !== 'graded');
+
+  // Tasks sitting behind a project gate the learner hasn't cleared yet — a real lock,
+  // with the real requirement attached, not a teaser.
+  const locked = [];
+  for (const p of catalog) {
+    const st = projectStatus[p.key];
+    if (!st || st.status !== 'locked') continue;
+    for (const k of p.taskKeys) {
+      const def = TASKS[k];
+      if (!def) continue;
+      locked.push({
+        taskKey: k,
+        title: def.title,
+        brief: def.brief,
+        priority: def.priority || 'medium',
+        priorityLabel: PRIORITY_LABEL[def.priority || 'medium'],
+        estHours: def.estHours || null,
+        projectTitle: p.title,
+        difficulty: p.difficulty,
+        requirement: st.requirement,
+      });
+    }
+  }
+
+  // Health is only computed for tasks that actually carry a deadline; anything without
+  // one is reported separately rather than being silently counted as on time.
+  const withDeadline = rows.filter((r) => r.outcome);
+  const healthCounts = { onTime: 0, late: 0, overdue: 0, inProgress: 0 };
+  for (const r of withDeadline) healthCounts[r.outcome] += 1;
+  const health = [
+    { key: 'onTime', label: 'On time', value: healthCounts.onTime },
+    { key: 'inProgress', label: 'In progress', value: healthCounts.inProgress },
+    { key: 'late', label: 'Late', value: healthCounts.late },
+    { key: 'overdue', label: 'Overdue', value: healthCounts.overdue },
+  ].filter((s) => s.value > 0);
+
+  // Turnaround: real hours from hand-over to grade, averaged per priority.
+  const buckets = {};
+  for (const t of tasks) {
+    if (t.status !== 'graded' || !t.assigned_at || !t.graded_at) continue;
+    const pr = t.priority || (TASKS[t.task_key] || {}).priority || 'medium';
+    const minutes = (Date.parse(t.graded_at) - Date.parse(t.assigned_at)) / (60 * 1000);
+    (buckets[pr] = buckets[pr] || []).push(minutes);
+  }
+  // Reported in minutes so a fast turnaround stays a real, visible value instead of
+  // rounding to "0h"; the chart picks whether to render it as minutes or hours.
+  const velocity = ['high', 'medium', 'low']
+    .filter((p) => buckets[p] && buckets[p].length)
+    .map((p) => ({
+      priority: p,
+      label: PRIORITY_LABEL[p],
+      minutes: Math.round(buckets[p].reduce((s, m) => s + m, 0) / buckets[p].length),
+      count: buckets[p].length,
+    }));
+
+  // Delivery record over time, and the running on-time rate after each delivery.
+  const delivered = rows
+    .filter((r) => r.outcome === 'onTime' || r.outcome === 'late')
+    .sort((a, b) => (a.dueAt || '').localeCompare(b.dueAt || ''));
+  let onTimeSoFar = 0;
+  const trend = delivered.map((r, i) => {
+    if (r.outcome === 'onTime') onTimeSoFar += 1;
+    return { n: i + 1, rate: Math.round((onTimeSoFar / (i + 1)) * 100), title: r.title };
+  });
+  const onTimeRate = delivered.length ? Math.round((onTimeSoFar / delivered.length) * 100) : null;
+
+  // Who the work actually comes from — real counts of who assigned and who graded,
+  // not a ranking of simulated people against each other.
+  const sources = {};
+  for (const p of catalog) {
+    for (const k of p.taskKeys) {
+      if (!rows.some((r) => r.projectKey === p.key)) continue;
+      const person = ROSTER.find((x) => x.archetype === p.stakeholder);
+      if (!person) continue;
+      sources[person.archetype] = sources[person.archetype] || { archetype: person.archetype, name: person.name, title: person.title, assigned: 0, graded: 0 };
+    }
+  }
+  for (const r of rows) {
+    const p = catalog.find((x) => x.key === r.projectKey);
+    if (!p) continue;
+    const person = ROSTER.find((x) => x.archetype === p.stakeholder);
+    if (!person || !sources[person.archetype]) continue;
+    sources[person.archetype].assigned += 1;
+    if (r.status === 'graded') sources[person.archetype].graded += 1;
+  }
+  const taskSources = Object.values(sources).sort((a, b) => b.assigned - a.assigned);
+
+  return {
+    rows,
+    locked,
+    counts: {
+      open: open.length,
+      dueToday: open.filter((r) => r.dueAt && daysUntil(r.dueAt, nowMs) === 0).length,
+      highPriority: open.filter((r) => r.priority === 'high').length,
+      overdue: open.filter((r) => r.overdue).length,
+      total: rows.length,
+      withoutDeadline: rows.length - withDeadline.length,
+    },
+    health,
+    velocity,
+    onTimeRate,
+    trend,
+    taskSources,
+  };
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
@@ -531,6 +728,7 @@ function getState(userId) {
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
   const projects = getProjects(enrollment.role, tasks, streaks);
+  const taskBoard = getTasksView(enrollment.role, tasks, projects, Date.now());
 
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
   const checklistState = JSON.parse(enrollment.checklist_json || '{}');
@@ -554,6 +752,7 @@ function getState(userId) {
     roster: rosterWithAvatars(),
     emailArchetypes: EMAIL_ARCHETYPES,
     projects,
+    taskBoard,
     performance: {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,

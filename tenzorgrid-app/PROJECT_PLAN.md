@@ -389,6 +389,33 @@ measure across categories is a single series, so all bars share one hue — colo
 encodes nothing. Same reasoning for the spec's sidebar/header, which already existed as
 shared components and were left alone rather than duplicated per-tab.
 
+**Tasks tab, full rebuild (shipped):** the two-pane task list became a premium board built
+to a user-supplied design spec, **without losing the submission workspace** — that flow is
+the core loop of the product and is preserved intact inside the new page. Tasks gained real
+`priority` and `due_at` columns (both via `ensureColumn`, so the live Railway volume
+migrates safely); deadlines are set in `assignTask()` from the catalog's `dueInDays`, which
+is what makes "due today", "overdue" and the on-time rate genuinely computable. New
+`getTasksView()` derives: per-task stage, due labels, overdue flags, a task-health split, a
+turnaround chart (real minutes from assigned to graded, per priority), an on-time delivery
+rate with a running trend, and the locked tasks sitting behind unstarted project gates.
+
+Three spec departures worth remembering, all deliberate:
+1. **No "Mark Complete" button.** A task here is completed by submitting work and being
+   graded. A button that just flipped a flag would let learners skip the work and would
+   make every downstream number (scores, skill points, project completion) meaningless.
+   The card action is "Open task" -> the submission workspace instead.
+2. **No progress percentage per task.** There are no sub-steps to measure, so the bar
+   reports the real stage (Assigned -> Submitted -> Graded). A "70% done" would be invented.
+3. **No "Top Contributor" leaderboard.** The user removed leaderboards from Overview one
+   iteration earlier (decision above), and the only other "contributors" here are simulated
+   characters — ranking them against the learner would be fabrication. That slot became
+   **"Task owners"**: real counts of who assigned and who graded, no ranking.
+
+Health is computed only for tasks that actually carry a deadline; any without one are
+excluded and reported as a count rather than being silently counted as on time. Turnaround
+is stored in minutes and the chart picks minutes-or-hours, because a fast submission would
+otherwise round to a meaningless "0h" bar with no height.
+
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
 prompted that rule). The user paused this ("okk icon i will give later") and will supply icons
