@@ -22,7 +22,7 @@ function useClock() {
 
 const WEATHER_BY_HOUR = (h) => (h < 6 ? 'clear night' : h < 12 ? 'mostly clear' : h < 17 ? 'partly cloudy' : h < 20 ? 'mostly clear' : 'clear night');
 
-export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout }) {
+export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, unreadCount = 0 }) {
   const now = useClock();
   const time = now.toTimeString().slice(0, 5);
   const date = `${String(now.getDate()).padStart(2, '0')}-${now.toLocaleString('en', { month: 'short' }).toUpperCase()}-${now.getFullYear()}`;
@@ -45,7 +45,12 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout })
             }`}
           >
             <Icon size={26} strokeWidth={2} className="shrink-0" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {key === 'emails' && unreadCount > 0 && (
+              <span className="shrink-0 min-w-[20px] px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold text-center">
+                {unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>

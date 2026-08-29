@@ -57,6 +57,7 @@ export default function App() {
         roleLabel={(ROLE_LABEL[state.enrollment.role] || 'Data Analyst').toUpperCase()}
         levelLabel={state.enrollment.level === 'senior' ? 'Senior' : 'Junior'}
         onLogout={logout}
+        unreadCount={state.inbox ? state.inbox.counts.unread : 0}
       />
       <main className="flex-1 min-w-0 px-6 md:px-8 py-6">
         <Header

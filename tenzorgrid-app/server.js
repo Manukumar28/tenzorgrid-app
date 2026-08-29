@@ -472,6 +472,21 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/emails/mark' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      const state = workspace.markMessages(user.id, body.ids, {
+        read: typeof body.read === 'boolean' ? body.read : undefined,
+        starred: typeof body.starred === 'boolean' ? body.starred : undefined,
+      });
+      return sendJson(res, 200, { state });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/checklist' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

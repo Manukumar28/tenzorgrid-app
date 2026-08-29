@@ -434,6 +434,31 @@ card shows the weighted breakdown so the number is always explainable. The trend
 *replayed* — each point recomputes the score from only the tasks and check-ins that existed
 at that moment — so it is real history without storing daily snapshots.
 
+**Emails tab, unified inbox (shipped):** rebuilt as a Gmail-style split pane over the
+learner's **real** `sim_messages` rows. The spec asked for "mock email data structured by
+role category" — that was not built, since the messages a learner has actually received
+are real records and hardcoding invented ones would be exactly the fabrication decision 3
+forbids. `sim_messages` gained `read_at` and `starred` (via `ensureColumn`), which makes
+Inbox / Unread / Starred counts and the sidebar's red badge real rather than mockup
+numbers. `getInbox()` groups messages into threads by archetype + normalised subject;
+read/starred are stored per message but presented per thread, which is how a mail client
+actually behaves. `markMessages()` is scoped to the caller's own enrollment and validates
+id shape, so a crafted request cannot touch another learner's mail.
+
+Category tabs are **generated from categories that actually have mail** — the spec listed
+Customer, My Team, Project Team, Coworkers and Promo, none of which have a sending
+archetype yet, and a permanently-empty folder is worse than no folder. `MAIL_CATEGORY` maps
+archetype -> label/tone, so those tabs appear automatically the first time such an archetype
+sends something (customer/client archetypes are already on the roadmap). Drafts are
+localStorage-backed, which is genuinely what an unsent draft is here — nothing has been
+sent, so there is no server record to show. Forward and "Mark as handled" were not built:
+there is no recipient beyond the three characters to forward to, and "handled" would just
+duplicate read state.
+
+Note the overlap this creates: Emails now covers all three archetypes, while the Team tab
+still offers per-person chat over the same rows. That mirrors real workplaces (Slack and
+email both exist) but is worth revisiting if the user wants Team slimmed to a directory.
+
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
 prompted that rule). The user paused this ("okk icon i will give later") and will supply icons

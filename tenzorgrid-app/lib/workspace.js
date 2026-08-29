@@ -780,6 +780,96 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
   };
 }
 
+// Inbox categories. Every category maps to a real sender archetype — the tab bar only
+// ever renders categories that actually have mail, so it can never advertise a folder
+// that is permanently empty. Archetypes added later (customer, client, direct reports on
+// the manager track) get a tab automatically the first time they send something.
+const MAIL_CATEGORY = {
+  stakeholder: { key: 'stakeholder', label: 'Stakeholder', tone: 'amber' },
+  line_manager: { key: 'line_manager', label: 'Line Manager', tone: 'emerald' },
+  people_partner: { key: 'people_partner', label: 'HR', tone: 'purple' },
+};
+
+function normalizedSubject(m) {
+  return (m.subject || '').replace(/^(Re:\s*)+/i, '').trim();
+}
+
+// Groups the learner's messages into threads. Read and starred state is stored per
+// message but presented per thread, which is how a mail client actually behaves: opening
+// a conversation clears its unread count, starring flags the whole exchange.
+function getInbox(messages, nowMs) {
+  const threads = new Map();
+
+  for (const m of messages) {
+    const archetype = m.thread_archetype || m.sender_archetype;
+    if (archetype === 'learner') continue; // a learner's own note is never its own thread
+    const subject = normalizedSubject(m);
+    const key = `${archetype}::${subject || 'direct'}`;
+    if (!threads.has(key)) {
+      threads.set(key, { key, archetype, subject, msgs: [] });
+    }
+    threads.get(key).msgs.push(m);
+  }
+
+  const list = [...threads.values()].map((t) => {
+    const msgs = [...t.msgs].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const last = msgs[msgs.length - 1];
+    const fromOthers = msgs.filter((m) => m.sender_archetype !== 'learner');
+    // Only incoming mail can be unread — the learner's own replies never count.
+    const unread = fromOthers.filter((m) => !m.read_at).length;
+    const category = MAIL_CATEGORY[t.archetype] || { key: t.archetype, label: t.archetype, tone: 'gray' };
+    const senderName = (fromOthers[0] || last).sender_name;
+
+    return {
+      key: t.key,
+      archetype: t.archetype,
+      category: category.key,
+      categoryLabel: category.label,
+      tone: category.tone,
+      senderName,
+      subject: t.subject || `Messages with ${senderName}`,
+      snippet: (last.body || '').replace(/\s+/g, ' ').trim().slice(0, 140),
+      lastAt: last.created_at,
+      unread,
+      starred: msgs.some((m) => m.starred),
+      ids: msgs.map((m) => m.id),
+      messages: msgs.map((m) => ({
+        id: m.id,
+        senderArchetype: m.sender_archetype,
+        senderName: m.sender_name,
+        body: m.body,
+        createdAt: m.created_at,
+        readAt: m.read_at || null,
+        taskId: m.task_id || null,
+      })),
+    };
+  });
+
+  list.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+
+  // Category counts drive the tab bar, so a tab only exists where mail exists.
+  const categories = [];
+  for (const t of list) {
+    let c = categories.find((x) => x.key === t.category);
+    if (!c) {
+      c = { key: t.category, label: t.categoryLabel, tone: t.tone, total: 0, unread: 0 };
+      categories.push(c);
+    }
+    c.total += 1;
+    c.unread += t.unread > 0 ? 1 : 0;
+  }
+
+  return {
+    threads: list,
+    categories,
+    counts: {
+      total: list.length,
+      unread: list.filter((t) => t.unread > 0).length,
+      starred: list.filter((t) => t.starred).length,
+    },
+  };
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
@@ -840,6 +930,7 @@ function getState(userId) {
     emailArchetypes: EMAIL_ARCHETYPES,
     projects,
     taskBoard,
+    inbox: getInbox(messages, Date.now()),
     performance: {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,
@@ -894,6 +985,29 @@ function startProject(userId, projectKey) {
     const task = TASKS[key];
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
       `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+  }
+  return getState(userId);
+}
+
+// Read/star updates. Scoped to the caller's own enrollment, so a crafted request can
+// never touch another learner's mail even if it guesses valid message ids.
+function markMessages(userId, ids, patch) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (!Array.isArray(ids) || !ids.length) throw new Error('No messages specified.');
+  if (ids.length > 200) throw new Error('Too many messages in one request.');
+  if (!ids.every((id) => typeof id === 'string' && /^[a-f0-9]{1,64}$/i.test(id))) {
+    throw new Error('Invalid message id.');
+  }
+
+  const placeholders = ids.map(() => '?').join(',');
+  if (typeof patch.read === 'boolean') {
+    db.prepare(`UPDATE sim_messages SET read_at = ? WHERE enrollment_id = ? AND id IN (${placeholders})`)
+      .run(patch.read ? now() : null, enrollment.id, ...ids);
+  }
+  if (typeof patch.starred === 'boolean') {
+    db.prepare(`UPDATE sim_messages SET starred = ? WHERE enrollment_id = ? AND id IN (${placeholders})`)
+      .run(patch.starred ? 1 : 0, enrollment.id, ...ids);
   }
   return getState(userId);
 }
@@ -1079,4 +1193,5 @@ module.exports = {
   sendLearnerMessage,
   toggleChecklistItem,
   startProject,
+  markMessages,
 };

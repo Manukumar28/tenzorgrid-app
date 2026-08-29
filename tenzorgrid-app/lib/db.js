@@ -200,6 +200,8 @@ ensureColumn('sim_tasks', 'skills_json', 'TEXT');
 ensureColumn('sim_enrollments', 'checklist_json', 'TEXT');
 ensureColumn('sim_tasks', 'priority', 'TEXT');
 ensureColumn('sim_tasks', 'due_at', 'TEXT');
+ensureColumn('sim_messages', 'read_at', 'TEXT');
+ensureColumn('sim_messages', 'starred', 'INTEGER');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.
