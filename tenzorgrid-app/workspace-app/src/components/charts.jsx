@@ -1,6 +1,48 @@
 import React from 'react';
-import { LineChart, Line, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import {
+  LineChart, Line, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  BarChart, Bar, XAxis, CartesianGrid, Tooltip, LabelList,
+} from 'recharts';
 import { Avatar } from './ui.jsx';
+
+// Skill points per axis. This is ONE measure compared across categories, so every bar
+// takes the same hue — colouring each bar differently would encode rank, which carries
+// no information and is a well-known chart anti-pattern. Values are direct-labelled, so
+// the y-axis is dropped entirely and the grid stays recessive.
+export function SkillPointsBar({ data }) {
+  if (!data || !data.length) {
+    return (
+      <div className="h-44 flex items-center justify-center text-sm text-gray-400 font-medium text-center px-4">
+        No skill points yet — they're earned when a task is graded.
+      </div>
+    );
+  }
+  return (
+    <div className="h-44 -mx-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 22, right: 8, bottom: 0, left: 8 }}>
+          <CartesianGrid vertical={false} stroke="#f1f5f9" />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 11.5, fill: '#64748b', fontWeight: 600 }}
+            axisLine={false}
+            tickLine={false}
+            interval={0}
+          />
+          <Tooltip
+            cursor={{ fill: '#f8fafc' }}
+            contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12, boxShadow: '0 6px 16px -6px rgba(15,23,42,.15)' }}
+            labelStyle={{ fontWeight: 700, color: '#334155' }}
+            formatter={(v) => [`${v} pts`, 'Skill points']}
+          />
+          <Bar dataKey="points" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive>
+            <LabelList dataKey="points" position="top" style={{ fill: '#334155', fontSize: 11.5, fontWeight: 700 }} />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export function Sparkline({ data }) {
   if (!data || data.length < 2) {

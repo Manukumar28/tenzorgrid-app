@@ -363,6 +363,32 @@ and 20 learner messages per enrollment per day, enforced in `submitTask`/`sendLe
 with a friendly "come back tomorrow" error. Counted from existing rows via `countTodaysAiUse`,
 so no schema change was needed. Revisit those two numbers if real usage or AI pricing shifts.
 
+**Projects tab, full rebuild (shipped):** the placeholder Projects tab (one card + a file
+list) became a real, premium three-section page built to a user-supplied design spec. The
+backend gained a **`PROJECT_CATALOG`** in `lib/workspace.js` — authored curriculum, exactly
+like `TASKS`/`MILESTONE`, where `impactValue` is the value a simulated project *represents*,
+never a claim about the learner — plus `getProjects()`, which derives every displayed number
+from the learner's own `sim_tasks` rows. Four real states: `active` (tasks assigned),
+`completed` (all its tasks graded), `available` (unlock gate cleared), `locked` (not yet).
+`unlockAfter` is a genuine gate enforced server-side in `startProject()`, not just hidden in
+the UI. Two new tasks (`da-002` hiring trend, `da-003` pay spread) were added so `available`
+and `locked` are reachable states rather than decoration; both query the same `employees`
+practice table — **project titles must stay inside that dataset**, since a brief promising a
+churn or inventory table would be one no learner could actually complete. Derived metrics:
+skill points (`score / 20`, so a perfect task = 5.0 on an axis), grade letters from real
+averages, total impact summed over *completed* projects only, and 4 achievement badges with
+real earn conditions. Frontend is `Projects.jsx` + `projectCards.jsx` (4 card components) +
+`SkillPointsBar` in `charts.jsx`; the three filter dropdowns genuinely filter, and their
+options are built from the catalog so they can never offer a choice matching nothing.
+
+Note on that build: the design spec's sample numbers (`+$12,400`, `$85,000`, `Skill Points: 15`,
+`Energy: 85%`) were mockup filler, and per decision 3 none of them were hardcoded — every one
+is computed or, where there's no data source (the "Energy" pill), left out and flagged to the
+user. The spec's per-bar rainbow on the skill chart was also deliberately not followed: one
+measure across categories is a single series, so all bars share one hue — colouring by rank
+encodes nothing. Same reasoning for the spec's sidebar/header, which already existed as
+shared components and were left alone rather than duplicated per-tab.
+
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
 prompted that rule). The user paused this ("okk icon i will give later") and will supply icons
