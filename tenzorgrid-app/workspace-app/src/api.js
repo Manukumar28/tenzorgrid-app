@@ -18,4 +18,5 @@ export const api = {
   sendMessage: (archetype, body, subject) => jsonFetch('/api/workspace/messages', { method: 'POST', body: JSON.stringify({ archetype, body, subject }) }),
   toggleChecklist: (itemKey, checked) => jsonFetch('/api/workspace/checklist', { method: 'POST', body: JSON.stringify({ itemKey, checked }) }),
   startProject: (projectKey) => jsonFetch(`/api/workspace/projects/${projectKey}/start`, { method: 'POST' }),
+  markEmails: (ids, patch) => jsonFetch('/api/workspace/emails/mark', { method: 'POST', body: JSON.stringify({ ids, ...patch }) }),
 };
