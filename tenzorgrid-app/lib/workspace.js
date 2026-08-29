@@ -61,6 +61,22 @@ const PROJECTS = {
 const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic'];
 const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic' };
 
+// Self-paced product: a learner is never expected to sit here for a full workday.
+// Two hours is the realistic daily pace, and it's what "how long is my open workload"
+// estimates are measured against.
+const HOURS_PER_DAY_TARGET = 2;
+
+// Every graded submission and every learner-sent chat/email costs an AI call, so
+// those — not the hours figure — are what actually drive cost. These are per-learner,
+// per-day ceilings generous enough that nobody working normally will ever reach them,
+// but low enough that a runaway loop or someone spamming the chat box can't run up a
+// bill. Counted from existing rows (no extra table needed): see countTodaysAiUse.
+const DAILY_AI_LIMITS = { submissions: 6, messages: 20 };
+
+// A grade at or above this is treated as genuinely good work — the threshold for
+// Asha's feedback being surfaced as a shoutout rather than just routine feedback.
+const SHOUTOUT_SCORE = 80;
+
 const CHECKLIST_ITEMS = {
   data_analyst: [
     { key: 'daily-quiz-ethics', label: 'Daily quiz: Data ethics' },
@@ -200,6 +216,65 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   return getEnrollment(userId);
 }
 
+function shiftDay(dateStr, delta) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+// Consecutive check-in days, from real attendance rows only. The current streak is
+// still alive if the learner checked in today OR yesterday — breaking it the moment
+// today starts would punish someone who simply hasn't logged in yet this morning.
+function computeStreaks(days) {
+  if (!days.length) return { current: 0, longest: 0 };
+  const attended = new Set(days);
+
+  let longest = 0, run = 0, prev = null;
+  for (const day of days) {
+    run = prev && shiftDay(prev, 1) === day ? run + 1 : 1;
+    if (run > longest) longest = run;
+    prev = day;
+  }
+
+  const todayStr = today();
+  let cursor = attended.has(todayStr) ? todayStr : shiftDay(todayStr, -1);
+  let current = 0;
+  while (attended.has(cursor)) { current += 1; cursor = shiftDay(cursor, -1); }
+
+  return { current, longest };
+}
+
+// The learner's own best-ever grade — self-referential progress, which (unlike peer
+// ranking) stays motivating whether they're top of the cohort or not.
+function computePersonalBest(gradedTasks) {
+  if (!gradedTasks.length) return null;
+  const best = gradedTasks.reduce((a, b) => ((b.score || 0) > (a.score || 0) ? b : a));
+  return { score: best.score, title: best.title, date: best.graded_at };
+}
+
+// Asha's real grading feedback on work that actually scored well. Never synthesized —
+// if nothing has cleared the bar yet the card says so honestly.
+function getShoutouts(gradedTasks) {
+  return gradedTasks
+    .filter((t) => (t.score || 0) >= SHOUTOUT_SCORE && t.feedback)
+    .sort((a, b) => (b.graded_at || '').localeCompare(a.graded_at || ''))
+    .slice(0, 3)
+    .map((t) => ({ taskId: t.id, title: t.title, score: t.score, feedback: t.feedback, date: t.graded_at, from: LINE_MANAGER_NAME }));
+}
+
+// Today's AI spend for one enrollment, derived from rows we already write: a graded
+// task means a grading call, a learner-sent message means a reply call.
+function countTodaysAiUse(enrollmentId) {
+  const todayStr = today();
+  const submissions = db.prepare(
+    "SELECT COUNT(*) AS c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded' AND substr(graded_at, 1, 10) = ?"
+  ).get(enrollmentId, todayStr).c;
+  const messages = db.prepare(
+    "SELECT COUNT(*) AS c FROM sim_messages WHERE enrollment_id = ? AND sender_archetype = 'learner' AND task_id IS NULL AND substr(created_at, 1, 10) = ?"
+  ).get(enrollmentId, todayStr).c;
+  return { submissions, messages };
+}
+
 function getSkillMatrix(gradedTasks) {
   const sums = {}, counts = {};
   for (const axis of SKILL_AXES) { sums[axis] = 0; counts[axis] = 0; }
@@ -233,6 +308,8 @@ function getState(userId) {
     ? Math.round(gradedTasks.reduce((sum, t) => sum + (t.score || 0), 0) / gradedTasks.length)
     : null;
   const hoursAssigned = tasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
+  const hoursCompleted = gradedTasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
+  const hoursOpen = Math.max(0, hoursAssigned - hoursCompleted);
 
   // Real day-over-day movement only: compare the running average including today's
   // grades against what it was before any grade landed today. If every graded task so
@@ -290,16 +367,22 @@ function getState(userId) {
       avgGrade: avgScore,
       scoreDeltaToday,
       hoursAssigned,
-      hoursTarget: 8,
+      hoursCompleted,
+      hoursOpen,
+      hoursPerDayTarget: HOURS_PER_DAY_TARGET,
+      daysAtPace: Math.ceil(hoursOpen / HOURS_PER_DAY_TARGET),
+      personalBest: computePersonalBest(gradedTasks),
     },
     attendance: {
       attendedDays,
       milestoneDays,
       checkedInToday: attendanceRows.some((r) => r.attended_on === today()),
       days: attendanceRows.map((r) => r.attended_on),
+      streak: computeStreaks(attendanceRows.map((r) => r.attended_on)),
     },
     skillMatrix: getSkillMatrix(gradedTasks),
     scoreHistory,
+    shoutouts: getShoutouts(gradedTasks),
     checklist,
     learningPath: LEARNING_PATH[enrollment.role] || [],
     milestone,
@@ -414,6 +497,9 @@ async function submitTask(userId, taskId, sql) {
   if (!task) throw new Error('Task not found');
   const taskDef = TASKS[task.task_key];
   if (!taskDef) throw new Error('Unknown task definition');
+  if (countTodaysAiUse(enrollment.id).submissions >= DAILY_AI_LIMITS.submissions) {
+    throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.submissions} graded submissions. Come back tomorrow — your work is saved.`);
+  }
 
   const submittedResult = runPracticeQuery(sql); // throws on invalid/unsafe SQL
   const referenceResult = runPracticeQuery(taskDef.referenceSql);
@@ -461,6 +547,9 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
   if (!person) throw new Error('Unknown recipient.');
   const clean = (body || '').trim();
   if (!clean) throw new Error('Message cannot be empty.');
+  if (countTodaysAiUse(enrollment.id).messages >= DAILY_AI_LIMITS.messages) {
+    throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.messages} messages. Your team will pick this up again tomorrow.`);
+  }
 
   addMessage(enrollment.id, 'learner', 'You', clean, null, subject || null, archetype);
   const reply = await replyAsArchetype(archetype, clean);
