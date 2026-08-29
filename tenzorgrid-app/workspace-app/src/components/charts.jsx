@@ -155,6 +155,64 @@ export function TaskVelocityBar({ data }) {
   );
 }
 
+// A single-value meter. One hue per gauge because each is its own magnitude, not a
+// category being compared — and the value is printed, so the reading never depends on
+// judging an arc by eye.
+export function SkillGauge({ label, value, hasData }) {
+  const pct = Math.max(0, Math.min(100, value || 0));
+  const data = [{ v: pct }, { v: 100 - pct }];
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-24 h-12">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data} dataKey="v" cx="50%" cy="100%"
+              startAngle={180} endAngle={0}
+              innerRadius="70%" outerRadius="100%"
+              stroke="none" isAnimationActive
+            >
+              <Cell fill={hasData ? '#6366f1' : '#e2e8f0'} />
+              <Cell fill="#f1f5f9" />
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-x-0 bottom-0 text-center">
+          <span className={`text-sm font-extrabold ${hasData ? 'text-slate-900' : 'text-slate-300'}`}>
+            {hasData ? pct : '—'}
+          </span>
+        </div>
+      </div>
+      <span className="text-[11px] font-bold text-slate-500 mt-1">{label}</span>
+    </div>
+  );
+}
+
+// Progress per project. One measure across categories, so a single hue.
+export function MilestoneBars({ data }) {
+  if (!data || !data.length) {
+    return <div className="h-40 flex items-center justify-center text-sm text-slate-400 font-medium">No projects yet.</div>;
+  }
+  return (
+    <div className="h-40 -mx-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 22, right: 8, bottom: 0, left: 8 }}>
+          <CartesianGrid vertical={false} stroke="#f1f5f9" />
+          <XAxis dataKey="short" tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} interval={0} />
+          <Tooltip
+            cursor={{ fill: '#f8fafc' }}
+            contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+            formatter={(v, n, p) => [`${v}% — ${p.payload.status}`, p.payload.title]}
+          />
+          <Bar dataKey="progressPct" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={46} isAnimationActive>
+            <LabelList dataKey="progressPct" position="top" formatter={(v) => `${v}%`} style={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
   const hasAnyData = axes.some((a) => a.hasData);
   return (

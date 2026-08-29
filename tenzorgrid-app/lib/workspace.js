@@ -934,6 +934,66 @@ function getCalendar(enrollment, tasks, messages, nowMs) {
   };
 }
 
+// The Team tab's per-character data. Nothing about a character is invented here.
+//
+// In particular there is no competency score for these people — they are archetypes, not
+// assessed employees — so instead of fabricating "Asha: SQL 82", the radar reports the
+// skill mix that character's projects genuinely demand, which is real catalog content and
+// actually useful: it tells the learner what working with them will require.
+//
+// Availability is likewise real rather than a decorative presence dot: it reflects whether
+// the learner can actually get a reply right now, given the daily AI message allowance.
+function getTeam(role, rosterList, projects, messages, messagesRemaining) {
+  const catalog = PROJECT_CATALOG[role] || [];
+  const projectStatus = Object.fromEntries(projects.projects.map((p) => [p.key, p]));
+
+  return rosterList.map((person) => {
+    const mine = catalog.filter((p) => p.stakeholder === person.archetype);
+
+    const owned = mine.map((p) => {
+      const st = projectStatus[p.key] || {};
+      return {
+        key: p.key,
+        title: p.title,
+        status: st.status || 'locked',
+        progressPct: st.progressPct || 0,
+      };
+    });
+
+    const demand = {};
+    for (const axis of SKILL_AXES) demand[axis] = 0;
+    for (const p of mine) for (const axis of p.skillFocus) demand[axis] += 1;
+    const peak = Math.max(1, ...Object.values(demand));
+    const skillDemand = SKILL_AXES.map((axis) => ({
+      axis,
+      label: SKILL_AXIS_LABEL[axis],
+      value: Math.round((demand[axis] / peak) * 100),
+      projects: demand[axis],
+    }));
+
+    const thread = messages.filter((m) => (m.thread_archetype || m.sender_archetype) === person.archetype);
+    const incoming = thread.filter((m) => m.sender_archetype !== 'learner');
+    const last = thread[thread.length - 1];
+
+    return {
+      archetype: person.archetype,
+      name: person.name,
+      title: person.title,
+      avatarUrl: person.avatarUrl,
+      // Only the Line Manager grades — a real, load-bearing rule of the character engine,
+      // not a label. It's why "Review work" only makes sense for one person.
+      grades: person.archetype === 'line_manager',
+      owned,
+      skillDemand,
+      hasDemand: Object.values(demand).some((v) => v > 0),
+      messageCount: thread.length,
+      unread: incoming.filter((m) => !m.read_at).length,
+      lastContactAt: last ? last.created_at : null,
+      available: messagesRemaining > 0,
+    };
+  });
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
@@ -965,6 +1025,9 @@ function getState(userId) {
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
   const projects = getProjects(enrollment.role, tasks, streaks);
+  const rosterList = rosterWithAvatars();
+  const aiUse = countTodaysAiUse(enrollment.id);
+  const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
   const taskBoard = getTasksView(
     enrollment.role, tasks, projects, Date.now(),
     attendanceRows.map((r) => r.attended_on),
@@ -990,12 +1053,14 @@ function getState(userId) {
     enrollment,
     messages,
     tasks,
-    roster: rosterWithAvatars(),
+    roster: rosterList,
     emailArchetypes: EMAIL_ARCHETYPES,
     projects,
     taskBoard,
     inbox: getInbox(messages, Date.now()),
     calendar: getCalendar(enrollment, tasks, messages, Date.now()),
+    team: getTeam(enrollment.role, rosterList, projects, messages, messagesRemaining),
+    messagesRemaining,
     performance: {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,

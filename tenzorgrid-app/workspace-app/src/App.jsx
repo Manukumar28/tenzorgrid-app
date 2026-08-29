@@ -75,7 +75,7 @@ export default function App() {
         {tab === 'tasks' && <Tasks state={state} onStateChange={setState} />}
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
-        {tab === 'team' && <Team state={state} onStateChange={setState} />}
+        {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'settings' && <SettingsTab />}
       </main>
     </div>
