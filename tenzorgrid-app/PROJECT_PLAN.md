@@ -69,6 +69,21 @@ its own onboarding that only triggers when activated.
    mismatch). Only fall back to a plain icon library when the user hasn't specifically
    asked for a design upgrade, or for icons that are genuinely incidental (not part of
    the visual identity being upgraded).
+9. **Cap AI cost at the AI call, not at a proxy for it.** Every graded submission and
+   every learner-sent chat/email is a real API call and the only meaningful cost driver
+   in the Virtual Workspace — time-on-platform figures are not. So per-learner, per-day
+   ceilings live in `DAILY_AI_LIMITS` (`lib/workspace.js`) and are enforced where the
+   calls actually happen (`submitTask`, `sendLearnerMessage`), returning a friendly
+   "come back tomorrow" rather than a hard error. They're counted from rows already
+   written (`countTodaysAiUse`), so adding or tuning a cap needs no schema change. Any
+   future AI-backed feature gets the same treatment before it ships, not after.
+10. **Motivate with the learner's own progress, not peer ranking.** The Overview
+   leaderboard was removed deliberately: peer comparison demotivates everyone who isn't
+   near the top, which is most people, and a solo learner just saw themself. Engagement
+   cards should key off self-referential progress instead — streaks, personal bests, real
+   manager praise — and every one of them must be computed from stored rows. The standing
+   no-fake-data rule applies with full force here: an invented streak or a synthesized
+   compliment is worse than an honest empty state.
 
 ## Live infrastructure
 
@@ -327,30 +342,36 @@ Recharts/Framer Motion — its own subproject, own `package.json`) and builds in
 artifacts, not tracked files — after any backend change, `cd workspace-app && npm run build`
 (or root `npm run build`) regenerates them before testing locally.
 
-**In progress, not yet shipped:** sourcing premium 3D icons for the Overview KPI cards
-(Tasks completed / Average score / Attendance days / Hours assigned currently use plain
-Lucide icons in colored badges — see decision 8 above, this is the case that prompted that
-rule). Team-character avatars are already done (self-hosted 3D illustrations, see the
-"Self-host the 3D avatar set" PR) — `lib/avatars.js` + `public/assets/avatars/` is the
-pattern to follow for the KPI icons too once sourced. Sourcing is happening via the user's
-Google Drive (figma.com itself is unreachable from this sandbox — confirmed blocked at the
-network egress layer, don't retry direct Figma asset downloads or curl figma.com again) at
-folder `https://drive.google.com/drive/folders/1PILKzBUee8lX50GlwwsrHNnKgrc-i9SM`. The
-`mcp__Google_Drive__download_file_content` tool works but caps at 10MB/file — a "Free
-Finance 3D Icons" pack (4.2MB) was already pulled and decoded successfully (proves the
-mechanism: download → response saved to a local tool-result file → decode its base64
-`content` field with Python → real file). A better pack, "3dicons - Open source 3D icon
-library" (40.7MB, genuinely open-source, higher quality/more consistent than the
-"Community"-relabeled packs), is too big for that path — the user is splitting it into
-~5 smaller zips locally and re-uploading to the same Drive folder; pull each with
-`download_file_content` once under 10MB. A third pack ("165 files", 112MB, uncertain
-license) was deliberately deprioritized/skipped. Once the icons are in: pick 4 matching
-Tasks/Score/Calendar/Hours, self-host under `public/assets/icons/` (or similar, mirroring
-`public/assets/avatars/`), wire into `workspace-app/src/components/Overview.jsx`'s
-`KpiCard`, build, test, ship. Downloaded-but-not-yet-integrated files so far live only in
-this session's scratchpad (`/tmp/.../scratchpad/icon-packs/finance.zip`) — ephemeral,
-re-download from Drive if resuming after a session reset rather than assuming it's still
-there.
+**Overview page, second refinement pass (shipped):** the Tasks-completed progress ring was
+realigned into the KPI icon row; "Average score" became a **Performance Score** card (big %,
+`Avg Grade` sub-line, and a real `+X% today` delta computed by comparing the running average
+with today's grades against the average before today's grades landed — no fabricated number);
+the **Leaderboard was removed entirely** (card + `getLeaderboard`/`displayName` backend), on
+the reasoning that peer ranking demotivates everyone not near the top; and two
+engagement/sentiment cards were added in its place — **"Your momentum"** (consecutive
+check-in-day streak + longest streak + personal-best score, all from existing
+`sim_attendance`/`sim_tasks` rows) and **"Manager shoutouts"** (Asha's real grading feedback
+on tasks that scored >= 80). All of it reads off data already stored; nothing is synthesized.
+
+**Hours / AI-cost decision (decision 9 below):** the old flat "8 hours assigned" daily target
+was unrealistic for a self-paced product and, more importantly, was the wrong lever for cost
+control — hours are just a scheduling expectation, whereas the actual AI spend comes from
+grading calls and chat/email replies. So the card became **"Open workload"** (open hours
+remaining, with a `≈N days at 2h/day` pace estimate against `HOURS_PER_DAY_TARGET = 2`), and
+cost is now genuinely capped by `DAILY_AI_LIMITS` in `lib/workspace.js` — 6 graded submissions
+and 20 learner messages per enrollment per day, enforced in `submitTask`/`sendLearnerMessage`
+with a friendly "come back tomorrow" error. Counted from existing rows via `countTodaysAiUse`,
+so no schema change was needed. Revisit those two numbers if real usage or AI pricing shifts.
+
+**Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
+still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
+prompted that rule). The user paused this ("okk icon i will give later") and will supply icons
+directly; don't restart Drive/Figma sourcing unprompted. Context if it resumes: figma.com is
+blocked at this sandbox's network egress layer (confirmed — don't retry direct Figma downloads
+or curl figma.com), `mcp__Google_Drive__download_file_content` works but fails above ~8MB
+despite a documented 10MB cap, and team-character avatars are already done and are the pattern
+to follow (`lib/avatars.js` + `public/assets/avatars/`, self-hosted, deterministic per-character
+picking). Any previously downloaded icon zips lived only in a session scratchpad and are gone.
 
 The user also said UI refinement is ongoing/iterative ("we will bring all the cases here"
 one at a time) — don't start further unprompted UI work beyond what's already mid-flight

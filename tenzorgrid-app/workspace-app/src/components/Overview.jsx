@@ -1,7 +1,7 @@
 import React from 'react';
-import { CheckCircle2, TrendingUp, CalendarDays, Clock, Trophy, GraduationCap, ClipboardList, Target } from 'lucide-react';
+import { CheckCircle2, BarChart3, CalendarDays, Clock, Trophy, GraduationCap, ClipboardList, Target, Flame, Award, Quote } from 'lucide-react';
 import { BentoCard, ProgressBar, CircularProgress, Pill, Avatar } from './ui.jsx';
-import { Sparkline, SkillRadar } from './charts.jsx';
+import { SkillRadar } from './charts.jsx';
 import { api } from '../api.js';
 
 const ROLE_BADGE = {
@@ -27,11 +27,14 @@ function summaryNote(state) {
   return base + focus;
 }
 
-function KpiCard({ index, icon: Icon, iconClass, label, value, children }) {
+function KpiCard({ index, icon: Icon, iconClass, label, value, corner, children }) {
   return (
     <BentoCard index={index} className="flex flex-col">
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-3 ${iconClass}`}>
-        <Icon size={26} className="text-white" strokeWidth={2.1} />
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${iconClass}`}>
+          <Icon size={26} className="text-white" strokeWidth={2.1} />
+        </div>
+        {corner}
       </div>
       <div className="text-3xl font-extrabold leading-none">{value}</div>
       <div className="text-[13px] text-gray-500 font-medium mt-1.5 mb-2">{label}</div>
@@ -41,7 +44,9 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, children }) {
 }
 
 export default function Overview({ state, learnerName, learnerPhotoUrl, onStateChange }) {
-  const { performance, attendance, tasks, skillMatrix, scoreHistory, leaderboard, checklist, learningPath, milestone, messages, roster } = state;
+  const { performance, attendance, tasks, skillMatrix, shoutouts, checklist, learningPath, milestone, messages, roster } = state;
+  const streak = attendance.streak;
+  const personalBest = performance.personalBest;
 
   const activity = messages.filter((m) => !m.body.startsWith('Submitted:') && m.sender_archetype !== 'learner').slice(-6).reverse();
   const rosterByArchetype = Object.fromEntries(roster.map((p) => [p.archetype, p]));
@@ -54,6 +59,8 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
   const milestonePct = milestone
     ? Math.round((milestone.requirements.reduce((s, r) => s + r.current / r.target, 0) / milestone.requirements.length) * 100)
     : 0;
+  const tasksPct = performance.tasksTotal ? Math.round((performance.tasksCompleted / performance.tasksTotal) * 100) : 0;
+  const delta = performance.scoreDeltaToday;
 
   return (
     <div className="grid grid-cols-12 gap-6">
@@ -61,30 +68,47 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
 
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <KpiCard index={0} icon={CheckCircle2} iconClass="bg-gradient-to-br from-indigo-500 to-indigo-400" label="Tasks completed" value={`${performance.tasksCompleted}/${performance.tasksTotal}`}>
-            <div className="flex items-center justify-center">
-              <CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={56} strokeWidth={5.5} colorClass="text-indigo-500" />
-            </div>
+          <KpiCard
+            index={0} icon={CheckCircle2} iconClass="bg-gradient-to-br from-indigo-500 to-indigo-400"
+            label="Tasks completed" value={`${performance.tasksCompleted}/${performance.tasksTotal}`}
+            corner={<CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={40} strokeWidth={4.5} colorClass="text-indigo-500" />}
+          >
+            <div className="text-xs font-semibold text-indigo-500">{tasksPct}% complete</div>
           </KpiCard>
-          <KpiCard index={1} icon={TrendingUp} iconClass="bg-gradient-to-br from-teal-500 to-teal-400" label="Average score" value={performance.avgScore === null ? '—' : performance.avgScore}>
-            <Sparkline data={scoreHistory} />
+          <KpiCard
+            index={1} icon={BarChart3} iconClass="bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500"
+            label="Performance Score" value={performance.avgScore === null ? '—' : `${performance.avgScore}%`}
+          >
+            <div className="text-xs text-gray-500 font-medium">
+              Avg Grade: <span className="text-gray-700 font-semibold">{performance.avgGrade === null ? '—' : `${performance.avgGrade}%`}</span>
+            </div>
+            {delta !== null && (
+              <div className={`text-xs font-bold mt-0.5 ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                {delta > 0 ? '+' : ''}{delta}% today
+              </div>
+            )}
           </KpiCard>
           <KpiCard index={2} icon={CalendarDays} iconClass="bg-gradient-to-br from-amber-500 to-amber-400" label="Attendance days" value={`${attendance.attendedDays}/${attendance.milestoneDays}`}>
             <ProgressBar value={attendance.attendedDays} max={attendance.milestoneDays} colorClass="from-amber-500 to-amber-300" />
           </KpiCard>
-          <KpiCard index={3} icon={Clock} iconClass="bg-gradient-to-br from-purple-500 to-purple-400" label="Hours assigned" value={`${performance.hoursAssigned}/${performance.hoursTarget}h`}>
-            <ProgressBar value={performance.hoursAssigned} max={performance.hoursTarget} colorClass="from-purple-500 to-indigo-400" />
+          <KpiCard index={3} icon={Clock} iconClass="bg-gradient-to-br from-purple-500 to-purple-400" label="Open workload" value={`${performance.hoursOpen}h`}>
+            <ProgressBar value={performance.hoursCompleted} max={performance.hoursAssigned || 1} colorClass="from-purple-500 to-indigo-400" />
+            <p className="text-xs text-gray-500 mt-2">
+              {performance.hoursOpen === 0
+                ? 'All caught up — nice work.'
+                : `≈${performance.daysAtPace} ${performance.daysAtPace === 1 ? 'day' : 'days'} at ${performance.hoursPerDayTarget}h/day`}
+            </p>
           </KpiCard>
         </div>
 
-        {/* Middle row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <BentoCard index={4}>
+        {/* Middle row — the skill radar needs the widest slot, its axis labels clip below ~300px */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <BentoCard index={4} className="lg:col-span-3">
             <h3 className="text-base font-bold mb-3.5">Task progress</h3>
             <div className="space-y-3">
               {tasks.map((t) => (
-                <div key={t.id} className="flex items-center gap-2.5">
-                  <CheckCircle2 size={20} className={t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'} strokeWidth={2.3} />
+                <div key={t.id} className="flex items-start gap-2.5">
+                  <CheckCircle2 size={20} className={`shrink-0 mt-px ${t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'}`} strokeWidth={2.3} />
                   <span className={`text-sm font-medium ${t.status === 'graded' ? 'line-through text-gray-400' : 'text-gray-700'}`}>{t.title}</span>
                 </div>
               ))}
@@ -92,28 +116,46 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
             </div>
           </BentoCard>
 
-          <BentoCard index={5}>
+          <BentoCard index={5} className="lg:col-span-5">
             <h3 className="text-base font-bold mb-1">Skill matrix</h3>
             <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} />
           </BentoCard>
 
-          <BentoCard index={6}>
-            <h3 className="text-base font-bold mb-3.5">Leaderboard</h3>
-            <div className="space-y-3.5">
-              {leaderboard.map((row) => (
-                <div key={row.userId} className="flex items-center gap-3">
-                  <Avatar name={row.name} photoUrl={row.isYou ? learnerPhotoUrl : null} size={34} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{row.isYou ? `${row.name} (you)` : row.name}</div>
-                    {row.avgScore === null ? (
-                      <div className="text-xs text-gray-400">No graded tasks yet</div>
-                    ) : (
-                      <ProgressBar value={row.avgScore} max={100} height="h-1.5" colorClass="from-indigo-500 to-teal-400" />
-                    )}
-                  </div>
+          <BentoCard index={6} className="lg:col-span-4 flex flex-col">
+            <h3 className="text-base font-bold mb-3.5">Your momentum</h3>
+
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shrink-0">
+                <Flame size={26} className="text-white" strokeWidth={2.1} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-3xl font-extrabold leading-none">{streak.current}</div>
+                <div className="text-[13px] text-gray-500 font-medium mt-1">
+                  {streak.current === 1 ? 'day streak' : 'day streak'}
                 </div>
-              ))}
-              {leaderboard.length === 1 && <p className="text-xs text-gray-400 pt-1">You're the only one training right now.</p>}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              {streak.current === 0
+                ? 'Check in today to start a streak.'
+                : attendance.checkedInToday
+                  ? `Longest streak: ${streak.longest} ${streak.longest === 1 ? 'day' : 'days'}.`
+                  : "Check in today to keep it alive."}
+            </p>
+
+            <div className="border-t border-gray-100 mt-4 pt-4">
+              <div className="flex items-center gap-2.5 mb-2">
+                <Award size={20} className="text-teal-500" strokeWidth={2.3} />
+                <span className="text-sm font-bold">Personal best</span>
+              </div>
+              {personalBest ? (
+                <>
+                  <div className="text-2xl font-extrabold leading-none">{personalBest.score}%</div>
+                  <p className="text-xs text-gray-500 mt-1.5 leading-snug">{personalBest.title}</p>
+                </>
+              ) : (
+                <p className="text-xs text-gray-400">Complete a task to set your first best score.</p>
+              )}
             </div>
           </BentoCard>
         </div>
@@ -180,6 +222,30 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
 
         <BentoCard index={3}>
           <div className="flex items-center gap-2.5 mb-3.5">
+            <Quote size={22} className="text-amber-500" />
+            <h3 className="text-base font-bold">Manager shoutouts</h3>
+          </div>
+          {shoutouts.length ? (
+            <div className="space-y-4">
+              {shoutouts.map((s) => (
+                <div key={s.taskId} className="border-l-2 border-amber-300 pl-3">
+                  <p className="text-sm text-gray-700 leading-snug line-clamp-4">{s.feedback}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Avatar name={s.from} avatarUrl={rosterByArchetype.line_manager?.avatarUrl} size={22} />
+                    <span className="text-xs font-semibold text-gray-600">{s.from}</span>
+                    <Pill className="bg-amber-50 text-amber-600">{s.score}%</Pill>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 truncate">{s.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 leading-snug">Score 80% or higher on a task and your manager's feedback shows up here.</p>
+          )}
+        </BentoCard>
+
+        <BentoCard index={4}>
+          <div className="flex items-center gap-2.5 mb-3.5">
             <GraduationCap size={22} className="text-teal-500" />
             <h3 className="text-base font-bold">Suggested learning path</h3>
           </div>
@@ -194,7 +260,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         </BentoCard>
 
         {milestone && (
-          <BentoCard index={4}>
+          <BentoCard index={5}>
             <div className="flex items-center gap-2.5 mb-1.5">
               <Trophy size={22} className="text-amber-500" />
               <h3 className="text-base font-bold">Career milestones</h3>
