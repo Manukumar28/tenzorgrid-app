@@ -411,10 +411,28 @@ Three spec departures worth remembering, all deliberate:
    characters — ranking them against the learner would be fabrication. That slot became
    **"Task owners"**: real counts of who assigned and who graded, no ranking.
 
-Health is computed only for tasks that actually carry a deadline; any without one are
-excluded and reported as a count rather than being silently counted as on time. Turnaround
-is stored in minutes and the chart picks minutes-or-hours, because a fast submission would
-otherwise round to a meaningless "0h" bar with no height.
+Turnaround is stored in minutes and the chart picks minutes-or-hours, because a fast
+submission would otherwise round to a meaningless "0h" bar with no height.
+
+**Deadlines for pre-migration rows (fix, shipped):** health and on-time were initially
+computed only for tasks carrying a stored deadline, which left both cards permanently empty
+for every account enrolled before `due_at` shipped — the user hit exactly this. Deadlines
+are now reconstructed at read time from `assigned_at + dueInDays` when the column is null.
+That is a reconstruction, not a back-date: `dueInDays` is a fixed property of the task
+definition and `assigned_at` is a real timestamp, so the derived value equals what would
+have been stored had the column existed. Nothing is written back, so it self-heals.
+
+**Productivity score (shipped):** replaced the "On-time delivery" card. Deliberately a
+*blend* rather than a restatement of grade quality, since Overview's Performance Score
+already reports that alone — Quality 50% (average grade), Timeliness 30% (share of
+deliveries meeting their deadline), Consistency 20% (check-ins across the last 14 days,
+suppressed until 3 days have elapsed since there isn't enough history before that to call
+something a habit). A component with no data is **excluded and the remaining weights
+renormalised**, never counted as a zero, so a learner is not marked down for a signal they
+have not had the chance to produce; with nothing at all the score is `null`, not 0. The
+card shows the weighted breakdown so the number is always explainable. The trend line is
+*replayed* — each point recomputes the score from only the tasks and check-ins that existed
+at that moment — so it is real history without storing daily snapshots.
 
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that

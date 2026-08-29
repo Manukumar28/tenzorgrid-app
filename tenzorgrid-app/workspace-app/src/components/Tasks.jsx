@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ClipboardCheck, Users, Gauge } from 'lucide-react';
-import { BentoCard, Avatar } from './ui.jsx';
+import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
 import { api } from '../api.js';
@@ -156,7 +156,7 @@ export default function Tasks({ state, onStateChange }) {
   const lockedVisible = priorityFilter || projectFilter ? [] : taskBoard.locked;
   const selected = taskBoard.rows.find((r) => r.id === selectedId);
   const filtersOn = priorityFilter || projectFilter;
-  const { counts, health, velocity, onTimeRate, trend, taskSources } = taskBoard;
+  const { counts, health, velocity, onTimeRate, productivity, trend, taskSources } = taskBoard;
 
   return (
     <div className="space-y-6">
@@ -286,24 +286,55 @@ export default function Tasks({ state, onStateChange }) {
 
           <BentoCard index={3}>
             <div className="flex items-center gap-2 mb-0.5">
-              <Gauge size={17} className="text-teal-500" />
-              <h3 className="text-base font-bold">On-time delivery</h3>
+              <Gauge size={17} className="text-teal-500 shrink-0" />
+              <h3 className="text-base font-bold">Productivity score</h3>
             </div>
-            <p className="text-xs text-gray-400 mb-3">Share of tasks delivered by their deadline</p>
-            <div className="text-4xl font-extrabold text-gray-900 leading-none mb-1">
-              {onTimeRate === null ? '—' : `${onTimeRate}%`}
+            <p className="text-xs text-gray-400 mb-2.5">Quality, timeliness and consistency</p>
+
+            <div className="flex items-baseline gap-1.5 mb-3">
+              <span className="text-4xl font-extrabold text-gray-900 leading-none">
+                {productivity.score === null ? '—' : productivity.score}
+              </span>
+              {productivity.score !== null && <span className="text-sm font-bold text-gray-400">/ 100</span>}
             </div>
-            <p className="text-xs text-gray-500 mb-2">
-              {onTimeRate === null
-                ? 'No graded tasks with a deadline yet.'
-                : `Across ${trend.length} delivered task${trend.length === 1 ? '' : 's'}.`}
-            </p>
-            <Sparkline
-              data={trend}
-              dataKey="rate"
-              color="#14b8a6"
-              emptyNote={trend.length === 1 ? 'Trend appears after a second delivery.' : 'No deliveries yet.'}
-            />
+
+            {productivity.score === null ? (
+              <p className="text-xs text-gray-500">Complete a task to see your score.</p>
+            ) : (
+              <div className="space-y-2">
+                {productivity.parts.map((p) => (
+                  <div key={p.key}>
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <span className="text-[11px] font-semibold text-gray-600 truncate">
+                        {p.label} <span className="text-gray-400 font-medium">{Math.round(p.weight * 100)}%</span>
+                      </span>
+                      <span className={`text-[11px] font-bold shrink-0 ${p.value === null ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {p.value === null ? 'n/a' : p.value}
+                      </span>
+                    </div>
+                    {/* A component with no data yet is shown as an empty track and left out
+                        of the score entirely, rather than counted as a zero. */}
+                    <ProgressBar
+                      value={p.value === null ? 0 : p.value}
+                      max={100}
+                      height="h-1.5"
+                      colorClass={p.value === null ? 'from-gray-200 to-gray-200' : 'from-teal-500 to-emerald-400'}
+                    />
+                  </div>
+                ))}
+                {productivity.parts.some((p) => p.value === null) && (
+                  <p className="text-[10px] text-gray-400 pt-0.5">
+                    Parts marked n/a aren't scored yet and don't count against you.
+                  </p>
+                )}
+                {trend.length > 1 && (
+                  <div className="pt-1">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Trend</div>
+                    <Sparkline data={trend} dataKey="score" color="#14b8a6" height="h-8" />
+                  </div>
+                )}
+              </div>
+            )}
           </BentoCard>
         </div>
       </section>

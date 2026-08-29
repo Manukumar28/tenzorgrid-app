@@ -537,10 +537,63 @@ function dueLabel(dueAt, nowMs) {
   return new Date(Date.parse(dueAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+// The Productivity score deliberately blends three different real signals rather than
+// restating grade quality, which the Overview's Performance Score already reports on its
+// own — a second card showing the same number would be noise:
+//   Quality     50%  average grade across graded tasks
+//   Timeliness  30%  share of deliveries that met their deadline
+//   Consistency 20%  days checked in across the last fortnight
+// Quality carries the most weight because it measures the work itself; timeliness is
+// professional behaviour around that work; consistency is the habit underneath both.
+const PRODUCTIVITY_PARTS = [
+  { key: 'quality', label: 'Quality', note: 'Average grade', weight: 0.5 },
+  { key: 'timeliness', label: 'Timeliness', note: 'Met the deadline', weight: 0.3 },
+  { key: 'consistency', label: 'Consistency', note: 'Check-ins, last 14 days', weight: 0.2 },
+];
+const CONSISTENCY_WINDOW_DAYS = 14;
+// Below this there simply isn't enough history to call something a habit, so consistency
+// stays absent rather than scoring a brand-new learner down for days they never had.
+const CONSISTENCY_MIN_DAYS = 3;
+
+function consistencyAt(attendanceDays, enrollStartMs, atMs) {
+  const elapsed = Math.floor((startOfDay(atMs) - startOfDay(enrollStartMs)) / DAY_MS) + 1;
+  if (elapsed < CONSISTENCY_MIN_DAYS) return null;
+  const windowDays = Math.min(CONSISTENCY_WINDOW_DAYS, elapsed);
+  const windowStart = startOfDay(atMs) - (windowDays - 1) * DAY_MS;
+  const attended = attendanceDays.filter((d) => {
+    const ms = Date.parse(`${d}T00:00:00Z`);
+    return ms >= windowStart && ms <= startOfDay(atMs);
+  }).length;
+  return Math.round((attended / windowDays) * 100);
+}
+
+// A component with no data yet is left out and the remaining weights are renormalised, so
+// a learner is never marked down for a signal they haven't had the chance to produce. With
+// nothing to go on at all the score is null rather than zero.
+function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartMs, atMs) {
+  const values = {
+    quality: gradedUpTo.length
+      ? Math.round(gradedUpTo.reduce((s, t) => s + (t.score || 0), 0) / gradedUpTo.length)
+      : null,
+    timeliness: deliveriesUpTo.length
+      ? Math.round((deliveriesUpTo.filter((d) => d.outcome === 'onTime').length / deliveriesUpTo.length) * 100)
+      : null,
+    consistency: consistencyAt(attendanceDays, enrollStartMs, atMs),
+  };
+
+  const parts = PRODUCTIVITY_PARTS.map((p) => ({ ...p, value: values[p.key] }));
+  const active = parts.filter((p) => p.value !== null);
+  const totalWeight = active.reduce((s, p) => s + p.weight, 0);
+  const score = totalWeight
+    ? Math.round(active.reduce((s, p) => s + p.weight * p.value, 0) / totalWeight)
+    : null;
+  return { score, parts };
+}
+
 // Everything the Tasks tab shows. A task in this product is completed by submitting work
 // and being graded — there is no "mark done" flag — so `stage` reports where the task
 // genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
-function getTasksView(role, tasks, projects, nowMs) {
+function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs) {
   const catalog = PROJECT_CATALOG[role] || [];
   const projectByTaskKey = {};
   for (const p of catalog) {
@@ -579,6 +632,7 @@ function getTasksView(role, tasks, projects, nowMs) {
       score: t.score,
       feedback: t.feedback,
       estHours: t.est_hours,
+      gradedAt: t.graded_at || null,
       priority,
       priorityLabel: PRIORITY_LABEL[priority],
       dueAt,
@@ -655,16 +709,35 @@ function getTasksView(role, tasks, projects, nowMs) {
       count: buckets[p].length,
     }));
 
-  // Delivery record over time, and the running on-time rate after each delivery.
   const delivered = rows
     .filter((r) => r.outcome === 'onTime' || r.outcome === 'late')
-    .sort((a, b) => (a.dueAt || '').localeCompare(b.dueAt || ''));
-  let onTimeSoFar = 0;
-  const trend = delivered.map((r, i) => {
-    if (r.outcome === 'onTime') onTimeSoFar += 1;
-    return { n: i + 1, rate: Math.round((onTimeSoFar / (i + 1)) * 100), title: r.title };
-  });
-  const onTimeRate = delivered.length ? Math.round((onTimeSoFar / delivered.length) * 100) : null;
+    .sort((a, b) => (a.gradedAt || '').localeCompare(b.gradedAt || ''));
+  const onTimeRate = delivered.length
+    ? Math.round((delivered.filter((d) => d.outcome === 'onTime').length / delivered.length) * 100)
+    : null;
+
+  const gradedRows = rows
+    .filter((r) => r.status === 'graded' && r.gradedAt)
+    .sort((a, b) => a.gradedAt.localeCompare(b.gradedAt));
+
+  const productivity = productivityAt(gradedRows, delivered, attendanceDays, enrollStartMs, nowMs);
+
+  // The trend is replayed, not stored: each point recomputes the score from only the
+  // tasks and check-ins that existed at that moment, so the line is a real history rather
+  // than today's score projected backwards.
+  const trend = gradedRows
+    .map((r, i) => {
+      const atMs = Date.parse(r.gradedAt);
+      const { score } = productivityAt(
+        gradedRows.slice(0, i + 1),
+        delivered.filter((d) => d.gradedAt && Date.parse(d.gradedAt) <= atMs),
+        attendanceDays,
+        enrollStartMs,
+        atMs,
+      );
+      return { n: i + 1, score, title: r.title };
+    })
+    .filter((p) => p.score !== null);
 
   // Who the work actually comes from — real counts of who assigned and who graded,
   // not a ranking of simulated people against each other.
@@ -701,6 +774,7 @@ function getTasksView(role, tasks, projects, nowMs) {
     health,
     velocity,
     onTimeRate,
+    productivity,
     trend,
     taskSources,
   };
@@ -737,7 +811,11 @@ function getState(userId) {
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
   const projects = getProjects(enrollment.role, tasks, streaks);
-  const taskBoard = getTasksView(enrollment.role, tasks, projects, Date.now());
+  const taskBoard = getTasksView(
+    enrollment.role, tasks, projects, Date.now(),
+    attendanceRows.map((r) => r.attended_on),
+    Date.parse(enrollment.created_at),
+  );
 
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
   const checklistState = JSON.parse(enrollment.checklist_json || '{}');
