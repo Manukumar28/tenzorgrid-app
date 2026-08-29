@@ -48,12 +48,72 @@ function rosterWithAvatars() {
 // archetypes join this list as later roles add them.
 const EMAIL_ARCHETYPES = ['stakeholder'];
 
-const PROJECTS = {
-  data_analyst: {
-    title: 'Q1 Compensation Review',
-    description: "A departmental pay analysis for the leadership team, run out of the Data & Analytics function.",
-  },
+// The project catalog for a role. This is authored curriculum — the scenario a learner
+// works inside — in the same way TASKS and MILESTONE already are. `impactValue` is the
+// business value the simulated project represents; it is NOT a claim about anything the
+// learner has earned. What they've actually banked is computed from their own graded
+// rows (getProjects), and Total impact only ever counts projects genuinely finished.
+//
+// Every project queries the same `employees` practice table, so the titles stay inside
+// the data we actually seed. A project promising a churn or inventory dataset would be
+// a brief no learner could complete, because no such table exists to query.
+//
+// `unlockAfter` is the number of projects that must be completed first — a real gate,
+// checked against real completions, not decoration.
+const PROJECT_CATALOG = {
+  data_analyst: [
+    {
+      key: 'compensation-review',
+      title: 'Q1 Compensation Review',
+      description: 'A departmental pay analysis for the leadership team, run out of the Data & Analytics function.',
+      kind: 'analysis',
+      stakeholder: 'stakeholder',
+      difficulty: 'Medium',
+      taskKeys: ['da-001'],
+      skillFocus: ['sql', 'businessLogic'],
+      impactValue: 12400,
+      unlockAfter: 0,
+    },
+    {
+      key: 'headcount-trends',
+      title: 'Headcount & Hiring Trends',
+      description: 'People Ops wants the hiring pattern by year, and what each intake cost on average.',
+      kind: 'dashboard',
+      stakeholder: 'line_manager',
+      difficulty: 'Medium',
+      taskKeys: ['da-002'],
+      skillFocus: ['sql', 'dataViz'],
+      impactValue: 8000,
+      unlockAfter: 1,
+    },
+    {
+      key: 'pay-equity-audit',
+      title: 'Pay Equity Audit',
+      description: 'A role-by-role look at pay spread, to find where the same job is paid very differently.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      taskKeys: ['da-003'],
+      skillFocus: ['sql', 'businessLogic', 'communication'],
+      impactValue: 15000,
+      unlockAfter: 2,
+    },
+  ],
 };
+
+// A graded task scores 0-100 on each skill axis it exercises. Skill *points* are that
+// score on a 0-5 scale (score / 20), so one perfect task is worth 5.0 points on an
+// axis. Defined here so the Projects tab and any later view agree on what a point is.
+const SKILL_POINTS_PER_SCORE = 1 / 20;
+
+// Grade bands for a completed project, from the real average score of its tasks.
+const GRADE_BANDS = [
+  { min: 90, letter: 'A' },
+  { min: 80, letter: 'B' },
+  { min: 70, letter: 'C' },
+  { min: 60, letter: 'D' },
+  { min: 0, letter: 'E' },
+];
 
 // The five axes the Skill Matrix (Overview tab) reports on. A task only ever moves the
 // axes it actually exercises — da-001 is a SQL task, so python/dataViz genuinely stay at
@@ -153,6 +213,18 @@ const TASKS = {
     brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) that returns each department's average salary, sorted highest to lowest.",
     referenceSql: 'SELECT department, AVG(salary) AS avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC',
     estHours: 3,
+  },
+  'da-002': {
+    title: 'Hiring trend by year',
+    brief: "Asha wants to see how hiring has moved year on year. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each hire_year, how many people were hired and their average salary, oldest year first.",
+    referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
+    estHours: 2,
+  },
+  'da-003': {
+    title: 'Pay spread by role',
+    brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first.",
+    referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees GROUP BY role ORDER BY spread DESC',
+    estHours: 4,
   },
 };
 
@@ -293,6 +365,141 @@ function getSkillMatrix(gradedTasks) {
   }));
 }
 
+function gradeLetter(score) {
+  return (GRADE_BANDS.find((b) => score >= b.min) || GRADE_BANDS[GRADE_BANDS.length - 1]).letter;
+}
+
+// Skill points earned by a set of graded tasks, per axis. An axis the grader had no
+// basis to judge comes back null in skills_json and contributes nothing at all — it is
+// never counted as a zero, which would quietly drag the total down.
+function skillPointsFor(gradedTasks) {
+  const points = {};
+  for (const axis of SKILL_AXES) points[axis] = 0;
+  for (const t of gradedTasks) {
+    if (!t.skills_json) continue;
+    let skills;
+    try { skills = JSON.parse(t.skills_json); } catch { continue; }
+    for (const axis of SKILL_AXES) {
+      if (typeof skills[axis] === 'number') points[axis] += skills[axis] * SKILL_POINTS_PER_SCORE;
+    }
+  }
+  return points;
+}
+
+function round1(n) { return Math.round(n * 10) / 10; }
+
+// Everything the Projects tab renders, derived entirely from the learner's own task
+// rows. A project is `active` once its tasks are assigned, `completed` when every one of
+// them is graded, `available` when its unlock gate is cleared, and `locked` until then.
+// Nothing here is assumed: a learner who has finished nothing gets zeroes and empty
+// states, not a populated-looking dashboard.
+function getProjects(role, tasks, streaks) {
+  const catalog = PROJECT_CATALOG[role] || [];
+  const byKey = {};
+  for (const t of tasks) (byKey[t.task_key] = byKey[t.task_key] || []).push(t);
+
+  // Pass 1 — real progress per project, independent of any unlock rule.
+  const base = catalog.map((def) => {
+    const taskRows = def.taskKeys.flatMap((k) => byKey[k] || []);
+    const graded = taskRows.filter((t) => t.status === 'graded');
+    const started = taskRows.length > 0;
+    const completed = started && graded.length === def.taskKeys.length;
+
+    // A graded task counts in full, one submitted but not yet graded counts half.
+    const weighted = taskRows.reduce((sum, t) => sum + (t.status === 'graded' ? 1 : t.submission ? 0.5 : 0), 0);
+    const progressPct = def.taskKeys.length ? Math.round((weighted / def.taskKeys.length) * 100) : 0;
+
+    const avg = graded.length ? Math.round(graded.reduce((s, t) => s + (t.score || 0), 0) / graded.length) : null;
+    const openTask = taskRows.find((t) => t.status !== 'graded');
+
+    return {
+      def,
+      started,
+      completed,
+      progressPct,
+      avgScore: avg,
+      grade: avg === null ? null : gradeLetter(avg),
+      // The phase is the task actually open right now, not an invented milestone name.
+      phase: openTask ? openTask.title : completed ? 'Delivered' : null,
+      skillPoints: skillPointsFor(graded),
+      estHours: def.taskKeys.reduce((s, k) => s + ((TASKS[k] && TASKS[k].estHours) || 0), 0),
+      tasks: taskRows.map((t) => ({
+        id: t.id, title: t.title, status: t.status, score: t.score,
+        feedback: t.feedback, submittedAt: t.submitted_at,
+      })),
+    };
+  });
+
+  const completedCount = base.filter((p) => p.completed).length;
+
+  const projects = base.map((p) => {
+    const unlocked = completedCount >= p.def.unlockAfter;
+    const status = p.completed ? 'completed' : p.started ? 'active' : unlocked ? 'available' : 'locked';
+    return {
+      key: p.def.key,
+      title: p.def.title,
+      description: p.def.description,
+      kind: p.def.kind,
+      difficulty: p.def.difficulty,
+      stakeholderArchetype: p.def.stakeholder,
+      skillFocus: p.def.skillFocus.map((axis) => ({ axis, label: SKILL_AXIS_LABEL[axis] })),
+      impactValue: p.def.impactValue,
+      estHours: p.estHours,
+      status,
+      progressPct: p.progressPct,
+      phase: p.phase,
+      avgScore: p.avgScore,
+      grade: p.grade,
+      // Only what this project actually moved, so an empty project shows no tags.
+      skillsGained: SKILL_AXES
+        .filter((axis) => p.skillPoints[axis] > 0)
+        .map((axis) => ({ axis, label: SKILL_AXIS_LABEL[axis], points: round1(p.skillPoints[axis]) })),
+      tasks: p.tasks,
+      // What is actually standing between the learner and this project.
+      requirement: unlocked ? null : `Complete ${p.def.unlockAfter} project${p.def.unlockAfter === 1 ? '' : 's'} first`,
+      unlockAfter: p.def.unlockAfter,
+    };
+  });
+
+  const gradedAll = tasks.filter((t) => t.status === 'graded');
+  const pointsByAxis = skillPointsFor(gradedAll);
+  const skillPoints = SKILL_AXES
+    .map((axis) => ({ axis, label: SKILL_AXIS_LABEL[axis], points: round1(pointsByAxis[axis]) }))
+    .filter((s) => s.points > 0);
+  const skillPointsTotal = round1(skillPoints.reduce((s, a) => s + a.points, 0));
+
+  // Impact only ever counts finished work. Nothing is banked for a project in flight.
+  const totalImpact = projects.filter((p) => p.status === 'completed').reduce((s, p) => s + p.impactValue, 0);
+
+  // The stakeholder behind the most projects the learner has actually touched.
+  const stakeholderCounts = {};
+  for (const p of projects) {
+    if (p.status === 'locked' || p.status === 'available') continue;
+    stakeholderCounts[p.stakeholderArchetype] = (stakeholderCounts[p.stakeholderArchetype] || 0) + 1;
+  }
+  const topArchetype = Object.keys(stakeholderCounts).sort((a, b) => stakeholderCounts[b] - stakeholderCounts[a])[0] || null;
+  const topStakeholder = topArchetype ? (ROSTER.find((r) => r.archetype === topArchetype) || {}).name || null : null;
+
+  const bestScore = gradedAll.reduce((best, t) => Math.max(best, t.score || 0), 0);
+  const badges = [
+    { key: 'first-delivery', label: 'First Delivery', note: 'Complete your first project', earned: completedCount >= 1 },
+    { key: 'top-marks', label: 'Top Marks', note: 'Score 90 or above on a task', earned: bestScore >= 90 },
+    { key: 'streak-keeper', label: 'Streak Keeper', note: 'Check in 5 days in a row', earned: (streaks.longest || 0) >= 5 },
+    { key: 'full-sweep', label: 'Full Sweep', note: 'Complete every project in the track', earned: catalog.length > 0 && completedCount === catalog.length },
+  ];
+
+  return {
+    projects,
+    skillPoints,
+    skillPointsTotal,
+    totalImpact,
+    topStakeholder,
+    badges,
+    activeCount: projects.filter((p) => p.status === 'active').length,
+    completedCount,
+  };
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
@@ -322,17 +529,8 @@ function getState(userId) {
     : null;
   const scoreDeltaToday = avgScore === null ? null : avgScore - (avgScoreBeforeToday === null ? 0 : avgScoreBeforeToday);
 
-  const projectDef = PROJECTS[enrollment.role];
-  const project = projectDef ? {
-    title: projectDef.title,
-    description: projectDef.description,
-    tasksCompleted: gradedTasks.length,
-    tasksTotal: tasks.length,
-    files: tasks.filter((t) => t.submission).map((t) => ({
-      taskId: t.id, name: t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.sql',
-      title: t.title, submittedAt: t.submitted_at, score: t.score,
-    })),
-  } : null;
+  const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
+  const projects = getProjects(enrollment.role, tasks, streaks);
 
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
   const checklistState = JSON.parse(enrollment.checklist_json || '{}');
@@ -355,7 +553,7 @@ function getState(userId) {
     tasks,
     roster: rosterWithAvatars(),
     emailArchetypes: EMAIL_ARCHETYPES,
-    project,
+    projects,
     performance: {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,
@@ -378,7 +576,7 @@ function getState(userId) {
       milestoneDays,
       checkedInToday: attendanceRows.some((r) => r.attended_on === today()),
       days: attendanceRows.map((r) => r.attended_on),
-      streak: computeStreaks(attendanceRows.map((r) => r.attended_on)),
+      streak: streaks,
     },
     skillMatrix: getSkillMatrix(gradedTasks),
     scoreHistory,
@@ -387,6 +585,31 @@ function getState(userId) {
     learningPath: LEARNING_PATH[enrollment.role] || [],
     milestone,
   };
+}
+
+// Starts an available project by assigning its tasks. The unlock gate is enforced here,
+// not just hidden in the UI — calling this directly for a locked project is refused.
+function startProject(userId, projectKey) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const def = (PROJECT_CATALOG[enrollment.role] || []).find((p) => p.key === projectKey);
+  if (!def) throw new Error('Unknown project.');
+
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const attendanceRows = db.prepare('SELECT attended_on FROM sim_attendance WHERE enrollment_id = ?').all(enrollment.id);
+  const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
+  const current = getProjects(enrollment.role, tasks, streaks).projects.find((p) => p.key === projectKey);
+
+  if (current.status === 'locked') throw new Error(`${current.requirement} before starting this one.`);
+  if (current.status !== 'available') throw new Error('That project is already underway.');
+
+  for (const key of def.taskKeys) {
+    const taskId = assignTask(enrollment.id, key);
+    const task = TASKS[key];
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+  }
+  return getState(userId);
 }
 
 function toggleChecklistItem(userId, itemKey, checked) {
@@ -569,4 +792,5 @@ module.exports = {
   runPracticeQuery,
   sendLearnerMessage,
   toggleChecklistItem,
+  startProject,
 };

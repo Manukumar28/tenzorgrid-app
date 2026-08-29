@@ -447,6 +447,17 @@ async function handleApi(req, res, url) {
     }
   }
 
+  const projectStartMatch = pathname.match(/^\/api\/workspace\/projects\/([a-z0-9-]+)\/start$/);
+  if (projectStartMatch && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { state: workspace.startProject(user.id, projectStartMatch[1]) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/messages' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
