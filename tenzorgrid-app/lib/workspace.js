@@ -200,35 +200,6 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   return getEnrollment(userId);
 }
 
-// First name + last initial only — real learners, but never a full name or email
-// exposed to a stranger peer on the leaderboard.
-function displayName(fullName) {
-  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return 'Learner';
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
-}
-
-// Real peers only — no synthesized competitors. A learner training alone just sees
-// themself, honestly, rather than a padded-out fake leaderboard.
-function getLeaderboard(userId, role) {
-  const rows = db.prepare(`
-    SELECT se.id as enrollment_id, se.user_id, p.name
-    FROM sim_enrollments se
-    LEFT JOIN profiles p ON p.user_id = se.user_id
-    WHERE se.role = ?
-  `).all(role);
-
-  const scored = rows.map((r) => {
-    const graded = db.prepare("SELECT score FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'").all(r.enrollment_id);
-    const avgScore = graded.length ? Math.round(graded.reduce((s, t) => s + t.score, 0) / graded.length) : null;
-    return { userId: r.user_id, name: displayName(r.name), avgScore, isYou: r.user_id === userId };
-  });
-
-  scored.sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
-  return scored.slice(0, 5);
-}
-
 function getSkillMatrix(gradedTasks) {
   const sums = {}, counts = {};
   for (const axis of SKILL_AXES) { sums[axis] = 0; counts[axis] = 0; }
@@ -262,6 +233,17 @@ function getState(userId) {
     ? Math.round(gradedTasks.reduce((sum, t) => sum + (t.score || 0), 0) / gradedTasks.length)
     : null;
   const hoursAssigned = tasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
+
+  // Real day-over-day movement only: compare the running average including today's
+  // grades against what it was before any grade landed today. If every graded task so
+  // far was graded today, the whole score was earned today, so the delta equals the
+  // score itself rather than being fabricated as 0.
+  const todayStr = today();
+  const gradedBeforeToday = gradedTasks.filter((t) => (t.graded_at || '').slice(0, 10) !== todayStr);
+  const avgScoreBeforeToday = gradedBeforeToday.length
+    ? Math.round(gradedBeforeToday.reduce((sum, t) => sum + (t.score || 0), 0) / gradedBeforeToday.length)
+    : null;
+  const scoreDeltaToday = avgScore === null ? null : avgScore - (avgScoreBeforeToday === null ? 0 : avgScoreBeforeToday);
 
   const projectDef = PROJECTS[enrollment.role];
   const project = projectDef ? {
@@ -301,6 +283,12 @@ function getState(userId) {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,
       avgScore,
+      // Performance Score and Avg Grade both read off the same real average today —
+      // there's only one scoring signal in P0. They're kept as separate fields because
+      // once composite scoring (factoring in attendance/consistency, not just task
+      // grades) ships, Performance Score will diverge from the raw grade average.
+      avgGrade: avgScore,
+      scoreDeltaToday,
       hoursAssigned,
       hoursTarget: 8,
     },
@@ -312,7 +300,6 @@ function getState(userId) {
     },
     skillMatrix: getSkillMatrix(gradedTasks),
     scoreHistory,
-    leaderboard: getLeaderboard(userId, enrollment.role),
     checklist,
     learningPath: LEARNING_PATH[enrollment.role] || [],
     milestone,
