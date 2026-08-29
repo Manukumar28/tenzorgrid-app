@@ -459,6 +459,36 @@ Note the overlap this creates: Emails now covers all three archetypes, while the
 still offers per-person chat over the same rows. That mirrors real workplaces (Slack and
 email both exist) but is worth revisiting if the user wants Team slimmed to a directory.
 
+**Calendar tab, rebuild (shipped):** month grid + day agenda, driven by real dated records.
+`getCalendar()` emits events only from things that actually happened — task assigned, task
+due (reconstructed for pre-migration rows the same way the Tasks tab does), task graded,
+and messages received. **No meetings were invented.** The spec asked for "Churn Model
+Review, 9:30 AM, [Join Meeting]" — there is no meeting or video-call model in this product,
+so that card would have been fiction behind a dead button. If scheduled meetings are wanted
+they need building for real (the character engine could generate them).
+
+Two user-specified requirements, both real:
+1. **Regional holidays.** `workspace-app/src/lib/holidays.js` detects region from the
+   browser's IANA timezone (Asia/Kolkata -> IN, Europe/London -> GB, US zones -> US), with a
+   manual override persisted in localStorage. Deliberately conservative: **fixed-date and
+   exactly-rule-defined national holidays only** (e.g. "4th Thursday in November", plus a
+   Meeus/Jones/Butcher Easter computation for UK Good Friday/Easter Monday). Lunar-calendar
+   dates (Diwali, Eid, Holi) and state-level holidays are NOT guessed — a wrong date on a
+   learner's calendar is worse than none. An unrecognised timezone resolves to **no** holiday
+   calendar with a visible note, never silently to one country's holidays.
+2. **Pre-joining days blocked.** Days before `enrollment.created_at` are disabled, padlocked
+   and unclickable; the joining day is marked with a star and its own indigo cell.
+
+Attendance verdicts are derived, not stored: Present = a real `sim_attendance` row; Absent =
+a past working day, after joining, not a weekend/holiday, with no row. A learner is never
+marked Absent before joining, in the future, or **on the joining day itself** — enrolling is
+not something you can miss. "Not checked in yet" only nudges on a day they were actually
+expected to work. Day keys are UTC throughout, matching how `attended_on` is already stored,
+so a cell can never disagree with its own attendance mark.
+
+Note: date-fns was specified but not added — the month maths is ~15 lines of native `Date`
+and the bundle is already over Vite's 500 kB warning threshold.
+
 **Deferred, waiting on the user:** sourcing premium 3D icons for the Overview KPI cards (they
 still use plain Lucide icons in colored badges — see decision 8 above, this is the case that
 prompted that rule). The user paused this ("okk icon i will give later") and will supply icons

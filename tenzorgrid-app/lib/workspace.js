@@ -870,6 +870,70 @@ function getInbox(messages, nowMs) {
   };
 }
 
+// Calendar events are real dated records only — when a task was handed over, when it is
+// due, when it was graded, and when a character wrote to the learner. There is no meeting
+// or video-call model in this product, so no meetings are invented here: a "9:30 Churn
+// Model Review" with a Join button would be a fiction with a dead button behind it.
+//
+// Dates are UTC day keys, matching how sim_attendance already stores attended_on, so a
+// day never disagrees with its own attendance mark.
+function dayKey(iso) {
+  return new Date(Date.parse(iso)).toISOString().slice(0, 10);
+}
+
+function getCalendar(enrollment, tasks, messages, nowMs) {
+  const events = [];
+
+  for (const t of tasks) {
+    const def = TASKS[t.task_key] || {};
+    const priority = t.priority || def.priority || 'medium';
+    if (t.assigned_at) {
+      events.push({
+        id: `${t.id}-assigned`, date: dayKey(t.assigned_at), at: t.assigned_at,
+        kind: 'assigned', title: t.title, detail: 'Task assigned to you', priority, taskId: t.id,
+      });
+    }
+    const due = t.due_at || (t.assigned_at && def.dueInDays
+      ? new Date(Date.parse(t.assigned_at) + def.dueInDays * DAY_MS).toISOString()
+      : null);
+    if (due) {
+      events.push({
+        id: `${t.id}-due`, date: dayKey(due), at: due,
+        kind: t.status === 'graded' ? 'due-done' : 'due',
+        title: t.title,
+        detail: t.status === 'graded' ? 'Deadline (delivered)' : 'Deadline',
+        priority, taskId: t.id,
+      });
+    }
+    if (t.graded_at) {
+      events.push({
+        id: `${t.id}-graded`, date: dayKey(t.graded_at), at: t.graded_at,
+        kind: 'graded', title: t.title,
+        detail: `Graded${typeof t.score === 'number' ? ` — ${t.score}/100` : ''}`,
+        priority, taskId: t.id,
+      });
+    }
+  }
+
+  for (const m of messages) {
+    if (m.sender_archetype === 'learner') continue;
+    events.push({
+      id: `${m.id}-msg`, date: dayKey(m.created_at), at: m.created_at,
+      kind: 'message', title: m.subject || `Message from ${m.sender_name}`,
+      detail: (m.body || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+      archetype: m.sender_archetype, senderName: m.sender_name, priority: null,
+    });
+  }
+
+  events.sort((a, b) => a.at.localeCompare(b.at));
+
+  return {
+    joinedOn: dayKey(enrollment.created_at),
+    today: new Date(nowMs).toISOString().slice(0, 10),
+    events,
+  };
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
@@ -931,6 +995,7 @@ function getState(userId) {
     projects,
     taskBoard,
     inbox: getInbox(messages, Date.now()),
+    calendar: getCalendar(enrollment, tasks, messages, Date.now()),
     performance: {
       tasksCompleted: gradedTasks.length,
       tasksTotal: tasks.length,
