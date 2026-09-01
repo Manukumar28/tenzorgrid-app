@@ -19,4 +19,10 @@ export const api = {
   toggleChecklist: (itemKey, checked) => jsonFetch('/api/workspace/checklist', { method: 'POST', body: JSON.stringify({ itemKey, checked }) }),
   startProject: (projectKey) => jsonFetch(`/api/workspace/projects/${projectKey}/start`, { method: 'POST' }),
   markEmails: (ids, patch) => jsonFetch('/api/workspace/emails/mark', { method: 'POST', body: JSON.stringify({ ids, ...patch }) }),
+
+  // Project document + workbench.
+  projectBrief: (key) => jsonFetch(`/api/workspace/projects/${key}/brief`),
+  workbench: (taskId) => jsonFetch(`/api/workspace/tasks/${taskId}/workbench`),
+  // Scratch execution — not graded, not rate limited, run as often as you like.
+  runQuery: (taskId, sql) => jsonFetch(`/api/workspace/tasks/${taskId}/run`, { method: 'POST', body: JSON.stringify({ sql }) }),
 };
