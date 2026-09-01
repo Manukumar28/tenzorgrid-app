@@ -113,6 +113,23 @@ its own onboarding that only triggers when activated.
    generates its own reference solution, so every combination is verifiable by
    construction. AI writes only the narrative wrapper, where an error is cosmetic.
 
+13. **Character memory is built but HELD, unmerged, on cost grounds (2026-09-01).**
+   Branch `claude/tenzorgrid-project-transfer-0cm81z`, commit `eae3fdb`. Built, tested
+   (26 checks green), pushed, no PR opened — `main` and production are untouched.
+   Founder's call: don't take the spend increase yet. What it does: personas for all
+   three characters, live learner situation, and per-archetype thread history in every
+   reply, replacing a single-message prompt with no memory. Costed at Haiku pricing
+   ($1/M in, $5/M out): a chat reply goes from ~170 to ~1,450 input tokens, ~$0.00047 to
+   ~$0.0018 per message, i.e. ~3.8x. Per learner per month that is ~$0.04 -> ~$0.16 at a
+   realistic 4 messages/day, or ~$0.21 -> ~$0.79 with the 20/day cap maxed out. The
+   absolute numbers are small; the decision is to not add recurring cost before revenue.
+   Cheaper variants if this is revisited, best lever first: (a) cut the daily message cap
+   from 20 — it bounds this cost with or without memory; (b) history 14 -> 6 turns and
+   body cap 800 -> 300 chars, roughly halving typical input; (c) memory for Asha only,
+   leaving Vikram and Neha canned, which drops most conversations back to near-zero cost.
+   Prompt caching does NOT help here — the stable part of the prompt (persona + rules) is
+   ~450 tokens and Haiku's cache minimum is 1,024.
+
 ## Live infrastructure
 
 - **Domain:** `tenzorgrid.com` (GoDaddy) → forwards to `www.tenzorgrid.com` → Railway
