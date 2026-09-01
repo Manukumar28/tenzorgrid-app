@@ -1270,22 +1270,175 @@ async function submitTask(userId, taskId, sql) {
   return { score, feedback, result: submittedResult };
 }
 
-// Canned, in-character responses for archetypes that don't warrant an AI call for
-// every reply — keeps the Team/Emails chat honest (a message always gets an answer)
-// without spending an AI call on People Ops small talk.
+// ---------------------------------------------------------------------------
+// Character memory.
+//
+// A character reply is generated from three inputs, never fewer:
+//   1. PERSONA    — who this character is. Fixed, per archetype.
+//   2. SITUATION  — who they are talking to and what that person is actually working
+//                   on right now, read from the learner's own rows.
+//   3. HISTORY    — what has already been said in this thread, as real conversation
+//                   turns so the model sees its own prior replies as its own.
+//
+// Without 2 and 3 a character resets on every message: it re-introduces itself to
+// someone it has spoken to twenty times, and cannot refer to the task it assigned.
+// That is the single most immersion-breaking thing in the simulator, so memory is
+// assembled for every archetype, not just the one that grades.
+
+const CHARACTER_MEMORY_TURNS = 14; // ~7 exchanges of thread history
+
+// Persona: stable across every conversation. Everything situational lives in the
+// situation block, so these never need editing as the simulator grows.
+const CHARACTER_PERSONAS = {
+  line_manager: `You are Asha Rao, Line Manager in the Data & Analytics team. You are the learner's direct manager and the only person who grades their work.
+
+Voice: short, direct, warm but never soft. 1-3 sentences, bullets when listing. You give a straight answer and stop. You unblock people by asking the question that gets them unstuck, not by handing over the answer.`,
+
+  people_partner: `You are Neha Kulkarni, People Partner (HR) supporting the Data & Analytics team. You own onboarding, leave, policy, working patterns and wellbeing. You are not in the learner's reporting line and you do not assess their work.
+
+Voice: warm, plain, unhurried. 1-3 sentences. You answer policy questions directly and you check in like a person, not a form. If someone raises something technical or asks how their work is landing, you send them to Asha rather than guessing.`,
+
+  stakeholder: `You are Vikram Nair, a business stakeholder who commissions analysis from the Data & Analytics team. You own the business question, not the method. You care about the answer, what it means, and when it lands. SQL is not your job and you do not comment on it.
+
+Voice: brisk, professional email register, 1-3 sentences. You ask "so what does that tell us?" and you chase timing. You are demanding but never rude, and you say thank you when something genuinely helps.`,
+};
+
+// Non-negotiable behavioural rules, appended to every persona. These encode the
+// character architecture (only the manager grades; nobody does the learner's work)
+// and the anti-fabrication rule the rest of this file already follows.
+const CHARACTER_RULES = `
+Rules, which override your voice if they ever conflict:
+- Never write, rewrite, debug or solve the learner's SQL or their task for them. Clarifying what is being asked is fine; doing it for them is not.
+- Only Asha Rao grades work, and only on formal submission. If you are not Asha, never score or judge the quality of their analysis — point them at her.
+- You have a memory. The situation block and the conversation so far are given to you. Use them: never greet or re-introduce yourself to someone you have already been talking to, and never say you don't know what they're working on when it is listed for you.
+- Never invent facts. No meetings, deadlines, colleagues, company details, or numbers that are not in the situation block. If you don't know, say so.
+- You are a colleague, not an assistant. Do not offer to help with anything else, and do not sign off with your name.
+- Reply with ONLY your message text. No preamble, no subject line, no JSON, no quotation marks around it.`;
+
+// Canned, in-character responses used when no AI key is configured — the same
+// "heuristic when AI is off" pattern the rest of the app uses. The chat loop stays
+// honest (a message always gets an answer) with zero AI dependency.
 const CANNED_REPLIES = {
+  line_manager: "Noted — thanks for keeping me posted. Keep going on what's open and flag it here if you get stuck.",
   people_partner: "Thanks for flagging — noted. Ping me any time about policy or onboarding.",
   stakeholder: "Thanks for the update, appreciate it — let me know if anything changes on timing.",
 };
 
-const LINE_MANAGER_CHAT_SYSTEM = `You are Asha Rao, the Line Manager archetype in TenzorGrid's Virtual Workspace — a behavioural work simulator. Your comms style is short, direct, warm but never soft, 1-3 sentences. Reply in character to the learner's chat message. You are not grading anything here — that only happens on task submission. Never rewrite or solve their task for them.
+function daysBetween(fromIso, toMs) {
+  const from = Date.parse(fromIso);
+  if (!Number.isFinite(from)) return null;
+  return Math.max(0, Math.floor((toMs - from) / DAY_MS));
+}
 
-Respond with ONLY the reply text, no preamble, no JSON.`;
+// The learner's real, current state in plain prose. Every line is read from their own
+// rows — nothing here is invented, and a line is omitted entirely rather than filled
+// with a placeholder when there is no data for it. That omission matters: it is what
+// stops a character asserting "you have no open tasks" to someone whose board simply
+// hasn't loaded.
+function buildSituation(userId, enrollment, tasks, attendanceDays, nowMs) {
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId);
+  const learnerName = (profile && profile.name || '').trim();
+  const role = (ROLE_CATALOG[enrollment.role] || {}).label || enrollment.role;
+  const dayNo = daysBetween(enrollment.created_at, nowMs);
 
-async function replyAsArchetype(archetype, learnerBody) {
-  if (archetype === 'line_manager' && ai.isAvailable()) {
-    const reply = await ai.callClaude({ system: LINE_MANAGER_CHAT_SYSTEM, prompt: learnerBody, maxTokens: 200 });
-    if (reply) return reply.trim();
+  const lines = [];
+  lines.push(`Today is ${new Date(nowMs).toISOString().slice(0, 10)}.`);
+
+  const who = [
+    learnerName ? `You are talking to ${learnerName}.` : 'You are talking to the learner.',
+    `They are a ${role} on the individual-contributor track.`,
+    dayNo === null ? null : `They are on day ${dayNo + 1} of the programme.`,
+    attendanceDays ? `They have checked in on ${attendanceDays} day${attendanceDays === 1 ? '' : 's'} so far.` : null,
+  ].filter(Boolean);
+  lines.push(who.join(' '));
+
+  const open = [];
+  const graded = [];
+  for (const t of tasks) {
+    const def = TASKS[t.task_key] || {};
+    const dueAt = t.due_at || (t.assigned_at && def.dueInDays
+      ? new Date(Date.parse(t.assigned_at) + def.dueInDays * DAY_MS).toISOString()
+      : null);
+    if (t.status === 'graded') {
+      graded.push(`"${t.title}" scored ${t.score}/100`);
+      continue;
+    }
+    const bits = [t.submission ? 'submitted, awaiting grading' : 'not submitted yet'];
+    if (dueAt) {
+      const daysLeft = Math.ceil((Date.parse(dueAt) - nowMs) / DAY_MS);
+      bits.push(daysLeft < 0
+        ? `OVERDUE by ${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? '' : 's'}`
+        : daysLeft === 0 ? 'due today' : `due in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`);
+    }
+    bits.push(`${t.priority || def.priority || 'medium'} priority`);
+    open.push(`"${t.title}" (${bits.join(', ')})`);
+  }
+  if (open.length) lines.push(`Open work: ${open.join('; ')}.`);
+  else if (tasks.length) lines.push('They have no open tasks right now — everything assigned has been graded.');
+  if (graded.length) lines.push(`Already graded: ${graded.join('; ')}.`);
+
+  return `<situation>\n${lines.join('\n')}\n</situation>`;
+}
+
+// Everything already said in this archetype's thread, oldest first, as alternating
+// conversation turns. Task submissions are recorded against the learner's own thread
+// but are, in substance, part of the conversation with the manager who graded them —
+// so Asha sees them, which is what lets her say "same issue as your last submission".
+function threadHistory(messages, archetype) {
+  const mine = messages.filter((m) => {
+    const thread = m.thread_archetype || m.sender_archetype;
+    if (thread === archetype) return true;
+    return archetype === 'line_manager' && m.sender_archetype === 'learner' && Boolean(m.task_id);
+  });
+
+  return mine.slice(-CHARACTER_MEMORY_TURNS).map((m) => ({
+    role: m.sender_archetype === 'learner' ? 'user' : 'assistant',
+    content: String(m.body || '').slice(0, 800),
+  }));
+}
+
+// The Messages API requires strictly alternating roles starting with `user`, so
+// consecutive turns from the same side are folded together. Since the situation block
+// is always the first turn and the new message is always the last, both ends are
+// already `user` and no turn is ever dropped.
+function alternate(turns) {
+  const out = [];
+  for (const t of turns) {
+    if (!t.content) continue;
+    const last = out[out.length - 1];
+    if (last && last.role === t.role) last.content += '\n\n' + t.content;
+    else out.push({ role: t.role, content: t.content });
+  }
+  return out;
+}
+
+// Assembles everything a character knows before it answers: the learner's live
+// situation plus this thread's history. Called once per reply, before the new message
+// is written, and handed straight to replyAsArchetype.
+function buildCharacterMemory(userId, enrollment, archetype) {
+  const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
+  const attendance = db.prepare('SELECT COUNT(*) AS c FROM sim_attendance WHERE enrollment_id = ?').get(enrollment.id);
+  return {
+    situation: buildSituation(userId, enrollment, tasks, (attendance && attendance.c) || 0, Date.now()),
+    history: threadHistory(messages, archetype),
+  };
+}
+
+async function replyAsArchetype(archetype, learnerBody, memory) {
+  const persona = CHARACTER_PERSONAS[archetype];
+  if (persona && ai.isAvailable()) {
+    const turns = alternate([
+      { role: 'user', content: memory ? memory.situation : '' },
+      ...(memory ? memory.history : []),
+      { role: 'user', content: learnerBody },
+    ]);
+    const reply = await ai.callClaude({
+      system: persona + '\n' + CHARACTER_RULES,
+      messages: turns,
+      maxTokens: 300,
+    });
+    if (reply && reply.trim()) return reply.trim();
   }
   return CANNED_REPLIES[archetype] || "Got it, thanks — noted.";
 }
@@ -1304,8 +1457,12 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
     throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.messages} messages. Your team will pick this up again tomorrow.`);
   }
 
+  // Read the thread before writing, so the message being answered arrives as the
+  // final turn rather than appearing twice — once in history, once as the prompt.
+  const memory = buildCharacterMemory(userId, enrollment, archetype);
+
   addMessage(enrollment.id, 'learner', 'You', clean, null, subject || null, archetype);
-  const reply = await replyAsArchetype(archetype, clean);
+  const reply = await replyAsArchetype(archetype, clean, memory);
   const replySubject = subject ? 'Re: ' + subject.replace(/^Re:\s*/i, '') : null;
   addMessage(enrollment.id, archetype, person.name, reply, null, replySubject, archetype);
 

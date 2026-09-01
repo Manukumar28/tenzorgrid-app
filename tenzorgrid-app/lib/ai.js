@@ -18,11 +18,14 @@ function isAvailable() {
   return Boolean(API_KEY);
 }
 
-// `content` may be a plain prompt string, or an array of content blocks (e.g. a PDF
-// document block plus a text block) for callers that need to hand Claude a file
-// directly instead of pre-extracted text. `prompt` remains as a convenience for the
-// plain-text case.
-function callClaude({ system, prompt, content, maxTokens }) {
+// Three ways to supply the input, in order of precedence:
+//   messages - a full [{role, content}] conversation, for callers that need Claude to
+//              see prior turns (the Virtual Workspace characters, which must remember
+//              a thread rather than answering each message cold).
+//   content  - an array of content blocks (e.g. a PDF document block plus a text
+//              block), for handing Claude a file instead of pre-extracted text.
+//   prompt   - a plain string, the convenience case.
+function callClaude({ system, prompt, content, messages, maxTokens }) {
   return new Promise((resolve) => {
     if (!API_KEY) return resolve(null);
     let payload;
@@ -31,7 +34,9 @@ function callClaude({ system, prompt, content, maxTokens }) {
         model: MODEL,
         max_tokens: maxTokens || 1024,
         ...(system ? { system } : {}),
-        messages: [{ role: 'user', content: content || prompt }],
+        messages: Array.isArray(messages) && messages.length
+          ? messages
+          : [{ role: 'user', content: content || prompt }],
       });
     } catch (e) {
       return resolve(null);
