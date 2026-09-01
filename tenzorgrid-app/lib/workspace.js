@@ -14,7 +14,7 @@
 const { db, cryptoRandomId } = require('./db');
 const ai = require('./ai');
 const { pickAvatar } = require('./avatars');
-const { buildDatasetDb, describeDataset, DEFAULT_DATASET } = require('./datasets');
+const { buildDatasetDb, describeDataset, dumpDataset, DEFAULT_DATASET } = require('./datasets');
 const { getProjectDoc, TOOLS } = require('./projectdocs');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
@@ -106,8 +106,8 @@ const PROJECT_CATALOG = {
       kind: 'audit',
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
-      taskKeys: ['da-003'],
-      skillFocus: ['sql', 'businessLogic', 'communication'],
+      taskKeys: ['da-003', 'da-005'],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 15000,
       unlockAfter: 2,
     },
@@ -194,6 +194,7 @@ const TASKS = {
     brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query returning each department's NAME and its average salary, highest first. Two things to get right: department names live in `departments`, not `employees`, and the employees table still holds people who have left (exit_year is set) — leadership is asking about current staff.",
     referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_salary DESC',
     datasetKey: 'hr_core',
+    tool: 'sql',
     estHours: 3,
     priority: 'high',
     dueInDays: 2,
@@ -203,6 +204,7 @@ const TASKS = {
     brief: "Asha wants to see how hiring has moved year on year for next year's plan. Write ONE SQL SELECT query returning, for each hire_year, how many people were hired and their average salary, oldest year first. Someone hired in 2019 who has since left was still a 2019 hire — this question is about intake, not current headcount.",
     referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
     datasetKey: 'hr_core',
+    tool: 'sql',
     estHours: 2,
     priority: 'medium',
     dueInDays: 3,
@@ -212,6 +214,7 @@ const TASKS = {
     brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first. Current employees only — a leaver's old salary is not evidence about today's pay.",
     referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY spread DESC',
     datasetKey: 'hr_core',
+    tool: 'sql',
     estHours: 4,
     priority: 'high',
     dueInDays: 4,
@@ -221,9 +224,40 @@ const TASKS = {
     brief: "Customer Success has to decide who gets compensated after the billing-sync outage, and they need the damage quantified first. Write ONE SQL SELECT query listing each AFFECTED, STILL-ACTIVE client with their tier, monthly recurring revenue, how many incidents hit them and the total rows corrupted — ordered so the accounts putting the most recurring revenue at risk come first. One account has already churned; recommending a retention package for them would be an error.",
     referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
     datasetKey: 'saas_ops',
+    tool: 'sql',
     estHours: 5,
     priority: 'high',
     dueInDays: 5,
+  },
+  'da-005': {
+    title: 'Median pay by department',
+    brief: "Averages are being skewed by a handful of very senior people, so Asha wants the MEDIAN salary per department instead — the midpoint, which a couple of large salaries cannot drag around. SQLite has no MEDIAN function, which is exactly why this one is a Python task. The dataset is already loaded for you as `tables` — a dict of table name to a list of plain dict rows. Produce a list of dicts, one per department, each containing the department NAME, its median salary, and its current headcount, sorted by median salary highest first. The standard library is available (`statistics.median` is the obvious tool); there is no pandas. Current employees only. Assign your answer to a variable called `result`.",
+    // No referenceSql: this is the point of the task. The expected answer is computed
+    // here, in JavaScript, from the same rows the notebook receives — so it stays an
+    // independent oracle rather than being whatever the learner's code happened to say.
+    referenceCompute: (tables) => {
+      const deptName = new Map(tables.departments.map((d) => [d.id, d.name]));
+      const byDept = new Map();
+      for (const e of tables.employees) {
+        if (e.exit_year !== null && e.exit_year !== undefined) continue;
+        const name = deptName.get(e.department_id);
+        if (!byDept.has(name)) byDept.set(name, []);
+        byDept.get(name).push(e.salary);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((x, y) => x - y);
+        const mid = Math.floor(a.length / 2);
+        return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+      };
+      return [...byDept.entries()]
+        .map(([department, sals]) => ({ department, median_salary: median(sals), headcount: sals.length }))
+        .sort((a, b) => b.median_salary - a.median_salary);
+    },
+    datasetKey: 'hr_core',
+    tool: 'python',
+    estHours: 3,
+    priority: 'medium',
+    dueInDays: 4,
   },
 };
 
@@ -1271,23 +1305,41 @@ function getWorkbench(userId, taskId) {
   const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
   if (!task) throw new Error('Task not found');
   const datasetKey = datasetForTask(task.task_key);
+  const def = TASKS[task.task_key] || {};
+  const tool = def.tool || 'sql';
   return {
     taskId: task.id,
     taskKey: task.task_key,
     title: task.title,
     brief: task.brief,
     status: task.status,
+    score: task.score,
+    feedback: task.feedback,
     submission: task.submission || '',
+    tool,
     dataset: describeDataset(datasetKey),
-    tools: [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+    tools: tool === 'python'
+      ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
+      : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
   };
+}
+
+// The dataset as JSON, for the Python notebook to load into pandas. Only ever the
+// generated practice fixture — there is no real user data in it to leak.
+function getTaskData(userId, taskId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  if (!task) throw new Error('Task not found');
+  const datasetKey = datasetForTask(task.task_key);
+  return { datasetKey, tables: dumpDataset(datasetKey) };
 }
 
 const LINE_MANAGER_GRADING_SYSTEM = `You are Asha Rao, the Line Manager archetype in TenzorGrid's Virtual Workspace — a behavioural work simulator. You are the ONLY character who grades. Your comms style is short, direct, bullet points, warm but never soft. You never do the learner's thinking for them and you never rewrite their query — you assess what they submitted.
 
 Grade the learner's SQL submission against the task brief, the reference result, and their actual result. Score 0-100 on correctness and query quality (readability, appropriate use of GROUP BY/aggregate functions, no unnecessary complexity). Then write brief, specific, in-character feedback (2-4 short lines, bullet points ok) — coach, don't lecture; note one thing they did well if there is one.
 
-Also score the submission 0-100 on each of these skill axes, but ONLY for axes this specific task actually exercises — use null for any axis a SQL task like this one has no basis to judge (e.g. a pure SQL task has no python or dataViz signal at all): sql, python, dataViz, communication (is the query itself readable/well-structured), businessLogic (did they answer what the stakeholder actually asked).
+Also score the submission 0-100 on each of these skill axes, but ONLY for axes this specific task actually exercises — use null for any axis this submission gives you no basis to judge (a pure SQL task has no python or dataViz signal at all, and a Python task has no sql signal): sql, python, dataViz, communication (is the code itself readable/well-structured), businessLogic (did they answer what the stakeholder actually asked).
 
 Respond with ONLY a JSON object: {"score": <0-100 integer>, "feedback": "<your in-character feedback, first person as Asha>", "skills": {"sql": <0-100 or null>, "python": <0-100 or null>, "dataViz": <0-100 or null>, "communication": <0-100 or null>, "businessLogic": <0-100 or null>}}`;
 
@@ -1300,17 +1352,24 @@ function cleanSkills(raw) {
   return out;
 }
 
-async function gradeSubmission(taskDef, submittedSql, submittedResult, referenceResult) {
+async function gradeSubmission(taskDef, submittedCode, submittedResult, referenceResult, tool) {
+  const lang = tool === 'python' ? 'Python' : 'SQL';
   const prompt = `Task brief: ${taskDef.brief}
+
+Language: ${lang}
 
 Reference (correct) result:
 ${JSON.stringify(referenceResult)}
 
-Learner's submitted SQL:
-${submittedSql}
+Learner's submitted ${lang}:
+${submittedCode}
 
 Learner's actual result:
-${JSON.stringify(submittedResult)}`;
+${JSON.stringify(submittedResult)}${tool === 'python' ? `
+
+Note: this Python ran in the learner's browser, so the result above is what they
+reported rather than something we re-ran. Weight the CODE heavily — if the code could
+not plausibly produce the reported result, say so and score accordingly.` : ''}`;
 
   if (ai.isAvailable()) {
     const text = await ai.callClaude({ system: LINE_MANAGER_GRADING_SYSTEM, prompt, maxTokens: 500 });
@@ -1329,14 +1388,39 @@ ${JSON.stringify(submittedResult)}`;
   // honestly speak to the axes a correctness check actually covers (sql, businessLogic,
   // communication via a query-length proxy) — python/dataViz stay null, same as the AI
   // path would leave them for a SQL-only task.
-  const matches = JSON.stringify(submittedResult) === JSON.stringify(referenceResult);
+  const matches = rowsMatch(submittedResult, referenceResult);
   const base = matches
     ? { score: 90, feedback: "Correct — that matches what I'd expect. Ship it." }
     : { score: 45, feedback: "That doesn't match what I'm seeing when I run it myself. Check your GROUP BY and sort order, then resubmit." };
-  return { ...base, skills: cleanSkills({ sql: base.score, businessLogic: base.score, communication: base.score }) };
+  // Only claim the axis the submission actually exercised.
+  const axis = tool === 'python' ? 'python' : 'sql';
+  return { ...base, skills: cleanSkills({ [axis]: base.score, businessLogic: base.score, communication: base.score }) };
 }
 
-async function submitTask(userId, taskId, sql) {
+// Normalises a result set so two correct answers that differ only cosmetically compare
+// equal: numbers that are integers in one engine and floats in the other, column order,
+// and pandas' habit of emitting NaN where SQL emits NULL.
+function normaliseRows(rows) {
+  if (!Array.isArray(rows)) return null;
+  return rows.map((r) => {
+    const out = {};
+    for (const k of Object.keys(r || {}).sort()) {
+      let v = r[k];
+      if (typeof v === 'number') {
+        if (!Number.isFinite(v)) v = null;                       // NaN / Infinity -> NULL
+        else v = Math.round(v * 1e6) / 1e6;                      // kill float noise
+      }
+      out[k.toLowerCase()] = v;
+    }
+    return out;
+  });
+}
+
+function rowsMatch(a, b) {
+  return JSON.stringify(normaliseRows(a)) === JSON.stringify(normaliseRows(b));
+}
+
+async function submitTask(userId, taskId, code, computedResult) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled');
   const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
@@ -1347,19 +1431,45 @@ async function submitTask(userId, taskId, sql) {
     throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.submissions} graded submissions. Come back tomorrow — your work is saved.`);
   }
 
-  // Both queries run against the same dataset, so the comparison is apples to apples.
   const datasetKey = datasetForTask(task.task_key);
-  const submittedResult = runPracticeQuery(sql, datasetKey).rows; // throws on invalid/unsafe SQL
-  const referenceResult = runPracticeQuery(taskDef.referenceSql, datasetKey).rows;
+  const tool = taskDef.tool || 'sql';
 
-  const { score, feedback, skills } = await gradeSubmission(taskDef, sql, submittedResult, referenceResult);
+  let submittedResult;
+  let referenceResult;
+
+  if (tool === 'python') {
+    // Python runs in the learner's own browser under Pyodide, so — unlike SQL — the
+    // server never executes their code and CANNOT independently reproduce their output.
+    // The result they send is therefore a claim, not a proof: a determined learner could
+    // post the right rows without writing the code that produces them.
+    //
+    // That is an accepted trade. Running Python server-side would mean sandboxing
+    // arbitrary user code, which is a genuinely hard security problem and not one worth
+    // taking on to grade a training exercise. What protects the assessment is that the
+    // grader reads the CODE, not just the answer, and the reference below is computed
+    // here from the same rows — so a mismatch is always caught even though a match is
+    // not, on its own, proof of work.
+    if (!Array.isArray(computedResult)) {
+      throw new Error('Run your code first — the notebook needs a `result` to submit.');
+    }
+    submittedResult = computedResult;
+    referenceResult = typeof taskDef.referenceCompute === 'function'
+      ? taskDef.referenceCompute(dumpDataset(datasetKey))
+      : [];
+  } else {
+    // Both queries run against the same dataset, so the comparison is apples to apples.
+    submittedResult = runPracticeQuery(code, datasetKey).rows; // throws on invalid/unsafe SQL
+    referenceResult = runPracticeQuery(taskDef.referenceSql, datasetKey).rows;
+  }
+
+  const { score, feedback, skills } = await gradeSubmission(taskDef, code, submittedResult, referenceResult, tool);
 
   db.prepare(`
     UPDATE sim_tasks SET status = 'graded', submission = ?, score = ?, feedback = ?, skills_json = ?, submitted_at = ?, graded_at = ?
     WHERE id = ?
-  `).run(sql, score, feedback, JSON.stringify(skills), now(), now(), taskId);
+  `).run(code, score, feedback, JSON.stringify(skills), now(), now(), taskId);
 
-  addMessage(enrollment.id, 'learner', 'You', `Submitted:\n${sql}`, taskId);
+  addMessage(enrollment.id, 'learner', 'You', `Submitted:\n${code}`, taskId);
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, feedback, taskId);
 
   return { score, feedback, result: submittedResult };
@@ -1574,6 +1684,7 @@ module.exports = {
   runPracticeQuery,
   runScratchQuery,
   getWorkbench,
+  getTaskData,
   getProjectBrief,
   sendLearnerMessage,
   toggleChecklistItem,

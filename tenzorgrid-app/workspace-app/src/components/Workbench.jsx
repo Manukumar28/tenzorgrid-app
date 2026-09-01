@@ -8,6 +8,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { Play, Send, Database, Table2, ChevronRight, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { api } from '../api.js';
+import PythonNotebook from './PythonNotebook.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -113,7 +114,7 @@ function SchemaBrowser({ dataset, onInsert }) {
               {t.columns.map((c) => (
                 <button
                   key={c.name}
-                  onClick={() => onInsert(c.name)}
+                  onClick={() => onInsert && onInsert(c.name)}
                   title={c.note || `${c.name} — ${c.type}`}
                   className="w-full flex items-baseline gap-2 pl-8 pr-3 py-1 hover:bg-indigo-50 text-left group"
                 >
@@ -239,9 +240,12 @@ export default function Workbench({ taskId, onGraded }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)] min-h-[26rem]">
         <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
-          <SchemaBrowser dataset={wb.dataset} onInsert={insertAtCursor} />
+          <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' ? null : insertAtCursor} />
         </div>
 
+        {wb.tool === 'python' ? (
+          <PythonNotebook wb={wb} onGraded={onGraded} />
+        ) : (
         <div className="flex flex-col min-w-0">
           <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">SQL Editor</span>
@@ -295,6 +299,7 @@ export default function Workbench({ taskId, onGraded }) {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {(graded || wb.status === 'graded') && (

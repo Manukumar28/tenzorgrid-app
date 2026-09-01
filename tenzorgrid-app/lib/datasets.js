@@ -421,4 +421,24 @@ function describeDataset(key) {
   }
 }
 
-module.exports = { DATASETS, DEFAULT_DATASET, getDataset, buildDatasetDb, describeDataset, makeRng };
+// The whole dataset as plain JSON, for the Python notebook.
+//
+// SQL tasks execute server-side against SQLite; Python executes in the learner's own
+// browser under Pyodide, so the data has to travel to them. It is the same generated
+// fixture either way — no real user data is ever in it — so shipping it to the client
+// gives nothing away. Rows come out of the built database rather than straight from the
+// generator, so the notebook and the SQL terminal can never disagree about what a table
+// contains.
+function dumpDataset(key) {
+  const def = getDataset(key);
+  const mem = buildDatasetDb(key);
+  try {
+    const out = {};
+    for (const t of def.tables) out[t.name] = mem.prepare(`SELECT * FROM ${t.name}`).all();
+    return out;
+  } finally {
+    mem.close();
+  }
+}
+
+module.exports = { DATASETS, DEFAULT_DATASET, getDataset, buildDatasetDb, describeDataset, dumpDataset, makeRng };

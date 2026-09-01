@@ -44,6 +44,13 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
   '.json': 'application/json; charset=utf-8',
+  // Needed by the self-hosted Python runtime: a browser refuses to import a module
+  // served as octet-stream, and WebAssembly.instantiateStreaming refuses anything that
+  // is not application/wasm.
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.zip': 'application/zip',
+  '.map': 'application/json; charset=utf-8',
 };
 
 function readJsonBody(req) {
@@ -122,7 +129,14 @@ function serveStatic(req, res, urlPath) {
       return res.end('Not found');
     }
     const ext = path.extname(fullPath);
-    res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
+    // The Python runtime is ~14MB of immutable, version-pinned files. Without a long
+    // cache a learner re-downloads all of it on every visit, which would make the
+    // notebook feel broken on a slow connection.
+    const headers = { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' };
+    if (filePath.startsWith('/pyodide/') || filePath.startsWith('/workspace-assets/')) {
+      headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
@@ -438,9 +452,12 @@ async function handleApi(req, res, url) {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     const body = await readJsonBody(req);
-    if (!body.sql || typeof body.sql !== 'string') return sendJson(res, 400, { error: 'A SQL query is required.' });
+    // `sql` for the Data Terminal, `code` + `result` for the Python notebook (whose
+    // output is computed in the browser, since that is where Pyodide runs).
+    const code = typeof body.code === 'string' ? body.code : body.sql;
+    if (!code || typeof code !== 'string') return sendJson(res, 400, { error: 'Your work is required.' });
     try {
-      const result = await workspace.submitTask(user.id, taskSubmitMatch[1], body.sql);
+      const result = await workspace.submitTask(user.id, taskSubmitMatch[1], code, body.result);
       return sendJson(res, 200, { ...result, state: workspace.getState(user.id) });
     } catch (e) {
       return sendJson(res, 400, { error: e.message });
@@ -466,6 +483,18 @@ async function handleApi(req, res, url) {
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     try {
       return sendJson(res, 200, { workbench: workspace.getWorkbench(user.id, workbenchMatch[1]) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  // The project dataset as JSON, for the Python notebook to load into pandas.
+  const taskDataMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-zA-Z0-9_-]+)\/data$/);
+  if (taskDataMatch && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, workspace.getTaskData(user.id, taskDataMatch[1]));
     } catch (e) {
       return sendJson(res, 400, { error: e.message });
     }
@@ -556,7 +585,12 @@ function applySecurityHeaders(req, res) {
   res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    // 'wasm-unsafe-eval' is what lets the self-hosted Python runtime compile. It permits
+    // WebAssembly compilation ONLY — it does not re-enable eval() or new Function() for
+    // JavaScript, which is why it is used here in preference to the much broader
+    // 'unsafe-eval'. Without it the notebook does not fail loudly: Pyodide logs a
+    // CompileError and then hangs, so the learner sees a spinner forever.
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "connect-src 'self'",
