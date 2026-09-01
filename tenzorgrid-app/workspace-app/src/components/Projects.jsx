@@ -5,6 +5,7 @@ import { BentoCard } from './ui.jsx';
 import { SkillPointsBar } from './charts.jsx';
 import { ActiveProjectCard, AvailableProjectCard, LockedProjectCard, CompletedProjectCard, money } from './projectCards.jsx';
 import { api } from '../api.js';
+import ProjectBrief from './ProjectBrief.jsx';
 
 const BADGE_ICON = {
   'first-delivery': Medal,
@@ -114,18 +115,9 @@ export default function Projects({ state, onStateChange, onTab }) {
   const others = visible.filter((p) => p.status !== 'active');
   const filtersOn = statusFilter || skillFilter || stakeholderFilter;
 
-  async function startProject(key) {
-    setStarting(key);
-    setError(null);
-    try {
-      const res = await api.startProject(key);
-      onStateChange(res.state);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setStarting(null);
-    }
-  }
+  // Opening the brief IS the start flow — the actual start happens from inside the
+  // document, once the learner has read the objective and the constraints.
+  const [briefKey, setBriefKey] = useState(null);
 
   const trackLabel = `${enrollment.level === 'senior' ? 'Senior' : 'Junior'} Data Analyst track`;
 
@@ -174,6 +166,7 @@ export default function Projects({ state, onStateChange, onTab }) {
                 person={personByArchetype[p.stakeholderArchetype]}
                 index={i}
                 onOpenTasks={() => onTab('tasks')}
+                onOpenBrief={() => setBriefKey(p.key)}
               />
             ))}
           </div>
@@ -187,7 +180,7 @@ export default function Projects({ state, onStateChange, onTab }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {others.map((p, i) => {
               const person = personByArchetype[p.stakeholderArchetype];
-              if (p.status === 'completed') return <CompletedProjectCard key={p.key} project={p} person={person} index={i} />;
+              if (p.status === 'completed') return <CompletedProjectCard key={p.key} project={p} person={person} index={i} onOpenBrief={() => setBriefKey(p.key)} />;
               if (p.status === 'available') {
                 return (
                   <AvailableProjectCard
@@ -196,11 +189,12 @@ export default function Projects({ state, onStateChange, onTab }) {
                     person={person}
                     index={i}
                     starting={starting === p.key}
-                    onStart={() => startProject(p.key)}
+                    onStart={() => setBriefKey(p.key)}
+                    onOpenBrief={() => setBriefKey(p.key)}
                   />
                 );
               }
-              return <LockedProjectCard key={p.key} project={p} person={person} index={i} />;
+              return <LockedProjectCard key={p.key} project={p} person={person} index={i} onOpenBrief={() => setBriefKey(p.key)} />;
             })}
           </div>
         </section>
@@ -255,6 +249,14 @@ export default function Projects({ state, onStateChange, onTab }) {
           </BentoCard>
         </div>
       </section>
+
+      {briefKey && (
+        <ProjectBrief
+          projectKey={briefKey}
+          onClose={() => setBriefKey(null)}
+          onStarted={(state) => onStateChange(state)}
+        />
+      )}
     </div>
   );
 }

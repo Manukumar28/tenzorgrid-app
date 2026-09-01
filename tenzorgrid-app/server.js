@@ -447,6 +447,47 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // The project document a learner reads before starting. Read-only.
+  const projectBriefMatch = pathname.match(/^\/api\/workspace\/projects\/([a-z0-9-]+)\/brief$/);
+  if (projectBriefMatch && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { brief: workspace.getProjectBrief(user.id, projectBriefMatch[1]) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  // Workbench bootstrap: the task, plus the schema of the dataset it is graded against.
+  const workbenchMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-zA-Z0-9_-]+)\/workbench$/);
+  if (workbenchMatch && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { workbench: workspace.getWorkbench(user.id, workbenchMatch[1]) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  // Scratch run — execute SQL without submitting or grading it. Deliberately NOT rate
+  // limited by the AI budget, because no AI call happens here: it is pure SQLite over a
+  // throwaway in-memory database. Learners should explore as much as they want.
+  const taskRunMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-zA-Z0-9_-]+)\/run$/);
+  if (taskRunMatch && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.sql || typeof body.sql !== 'string') return sendJson(res, 400, { error: 'A SQL query is required.' });
+    try {
+      return sendJson(res, 200, workspace.runScratchQuery(user.id, taskRunMatch[1], body.sql));
+    } catch (e) {
+      // A syntax error is expected, normal feedback here — not a server fault.
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   const projectStartMatch = pathname.match(/^\/api\/workspace\/projects\/([a-z0-9-]+)\/start$/);
   if (projectStartMatch && req.method === 'POST') {
     const user = getCurrentUser(req);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight } from 'lucide-react';
+import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight, FileText} from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
 export function money(n) {
@@ -77,7 +77,23 @@ function ActionButton({ children, onClick, variant = 'primary', disabled = false
   );
 }
 
-export function ActiveProjectCard({ project, person, index, onOpenTasks }) {
+// Every card gets this, in every state: the brief is a reference document, not a
+// one-time gate. A learner mid-task who has forgotten the constraint should be able to
+// reopen it without abandoning their work.
+export function BriefLink({ onClick }) {
+  if (!onClick) return null;
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Read the project brief"
+      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
+    >
+      <FileText size={12} />Read brief
+    </button>
+  );
+}
+
+export function ActiveProjectCard({ project, person, index, onOpenTasks, onOpenBrief }) {
   return (
     <BentoCard index={index} className="flex flex-col">
       <div className="flex items-start gap-3.5 mb-4">
@@ -106,16 +122,19 @@ export function ActiveProjectCard({ project, person, index, onOpenTasks }) {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Not banked yet — this project is still open, so it reads as a target. */}
           <span className="text-xs font-bold text-emerald-600">{money(project.impactValue)} on delivery</span>
-          <ActionButton onClick={onOpenTasks}>
-            Continue <ArrowRight size={14} />
-          </ActionButton>
+          <div className="flex items-center gap-3">
+            <BriefLink onClick={onOpenBrief} />
+            <ActionButton onClick={onOpenTasks}>
+              Continue <ArrowRight size={14} />
+            </ActionButton>
+          </div>
         </div>
       </div>
     </BentoCard>
   );
 }
 
-export function AvailableProjectCard({ project, person, index, onStart, starting }) {
+export function AvailableProjectCard({ project, person, index, onStart, starting, onOpenBrief }) {
   return (
     <BentoCard index={index} className="flex flex-col">
       <div className="flex items-start gap-3 mb-3">
@@ -147,14 +166,15 @@ export function AvailableProjectCard({ project, person, index, onStart, starting
         <div className="text-xs font-bold text-emerald-600">{money(project.impactValue)} on delivery</div>
         <div className="mb-0.5"><Stakeholder person={person} /></div>
         <ActionButton onClick={onStart} disabled={starting} className="w-full">
-          {starting ? 'Starting…' : 'Start project'}
+          {starting ? 'Opening…' : 'View brief & start'}
         </ActionButton>
+        <div className="pt-0.5"><BriefLink onClick={onOpenBrief} /></div>
       </div>
     </BentoCard>
   );
 }
 
-export function LockedProjectCard({ project, person, index }) {
+export function LockedProjectCard({ project, person, index, onOpenBrief }) {
   return (
     <BentoCard index={index} hover={false} className="flex flex-col bg-gray-50/60">
       <div className="flex items-start gap-3 mb-3">
@@ -182,6 +202,8 @@ export function LockedProjectCard({ project, person, index }) {
         )}
       </div>
 
+      <div className="mt-auto"><BriefLink onClick={onOpenBrief} /></div>
+
       <div className="mt-auto opacity-70"><Stakeholder person={person} /></div>
     </BentoCard>
   );
@@ -195,7 +217,7 @@ const GRADE_RING = {
   E: 'border-red-400 text-red-500',
 };
 
-export function CompletedProjectCard({ project, person, index }) {
+export function CompletedProjectCard({ project, person, index, onOpenBrief }) {
   const [open, setOpen] = useState(false);
   // Only ever real grader feedback — a task with none simply isn't listed.
   const feedback = project.tasks.filter((t) => t.feedback);

@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ClipboardCheck, Users, Gauge } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
 import { api } from '../api.js';
+const Workbench = lazy(() => import('./Workbench.jsx'));
 
 const PRIORITY_OPTIONS = [
   { value: 'high', label: 'High' },
@@ -47,28 +48,12 @@ function SectionTitle({ children, count }) {
   );
 }
 
-// The submission workspace — unchanged in substance from the original Tasks tab, because
-// this is the actual completion path: work is submitted, graded, and only then done.
+// The submission workspace. For an ungraded task this is now the full Workbench — a
+// real editor with the dataset schema beside it and a free Run button — rather than a
+// bare textarea. Graded tasks keep the compact feedback panel, since there is nothing
+// left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
+// don't pay to download a code editor.
 function TaskWorkspace({ task, onStateChange }) {
-  const [sql, setSql] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => { setSql(''); setError(''); }, [task.id]);
-
-  async function submit() {
-    setBusy(true);
-    setError('');
-    try {
-      const data = await api.submitTask(task.id, sql);
-      onStateChange(data.state);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <BentoCard hover={false}>
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
@@ -79,33 +64,18 @@ function TaskWorkspace({ task, onStateChange }) {
         <span className={`inline-flex text-[11px] font-bold rounded-md px-2 py-1 ${PRIORITY_PILL[task.priority]}`}>{task.priorityLabel}</span>
       </div>
 
-      <p className="text-sm text-gray-600 leading-relaxed mb-4">{task.brief}</p>
-
       {task.status === 'graded' ? (
-        <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3.5">
-          <div className="text-emerald-700 font-bold text-sm mb-1.5">Score: {task.score}/100</div>
-          <div className="text-sm text-emerald-900 whitespace-pre-wrap leading-relaxed">{task.feedback}</div>
-        </div>
-      ) : (
         <>
-          <p className="text-xs text-gray-400 mb-2">This task's tool: SQL editor. Write your query below and submit it for grading.</p>
-          <textarea
-            value={sql}
-            onChange={(e) => setSql(e.target.value)}
-            rows={6}
-            placeholder="SELECT ..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 font-mono text-sm mb-3 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
-          />
-          {error && <div className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3">{error}</div>}
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={submit}
-            disabled={busy || !sql.trim()}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {busy ? 'Submitting…' : 'Submit for grading'}
-          </motion.button>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">{task.brief}</p>
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3.5">
+            <div className="text-emerald-700 font-bold text-sm mb-1.5">Score: {task.score}/100</div>
+            <div className="text-sm text-emerald-900 whitespace-pre-wrap leading-relaxed">{task.feedback}</div>
+          </div>
         </>
+      ) : (
+        <Suspense fallback={<p className="text-sm text-gray-400 font-medium py-6">Loading the editor…</p>}>
+          <Workbench taskId={task.id} onGraded={onStateChange} />
+        </Suspense>
       )}
     </BentoCard>
   );

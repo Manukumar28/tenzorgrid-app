@@ -11,10 +11,11 @@
 // callClaude(). Only the Line Manager grades (non-negotiable rule from the character
 // architecture) — every other character just applies pressure or narrates.
 
-const { DatabaseSync } = require('node:sqlite');
 const { db, cryptoRandomId } = require('./db');
 const ai = require('./ai');
 const { pickAvatar } = require('./avatars');
+const { buildDatasetDb, describeDataset, DEFAULT_DATASET } = require('./datasets');
+const { getProjectDoc, TOOLS } = require('./projectdocs');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -85,6 +86,18 @@ const PROJECT_CATALOG = {
       skillFocus: ['sql', 'dataViz'],
       impactValue: 8000,
       unlockAfter: 1,
+    },
+    {
+      key: 'outage-recovery',
+      title: 'Project Phoenix: Outage Impact & Client Recovery',
+      description: 'Quantify who the billing-sync outage really hurt, so Customer Success knows where to spend the compensation budget.',
+      kind: 'analysis',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      taskKeys: ['da-004'],
+      skillFocus: ['sql', 'businessLogic', 'communication'],
+      impactValue: 21000,
+      unlockAfter: 3,
     },
     {
       key: 'pay-equity-audit',
@@ -168,69 +181,49 @@ const MILESTONE = {
 // The practice dataset every Data Analyst task runs against. Rebuilt fresh, in memory,
 // for every single query execution — a learner's SELECT can never persist a change or
 // see anything outside this table.
-const PRACTICE_SCHEMA = `
-  CREATE TABLE employees (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    department TEXT NOT NULL,
-    role TEXT NOT NULL,
-    salary INTEGER NOT NULL,
-    hire_year INTEGER NOT NULL
-  );
-`;
-const PRACTICE_ROWS = [
-  [1, 'Ananya Iyer', 'Engineering', 'Software Engineer', 1450000, 2022],
-  [2, 'Rohan Mehta', 'Engineering', 'Senior Engineer', 2100000, 2019],
-  [3, 'Kavya Reddy', 'Engineering', 'Software Engineer', 1380000, 2023],
-  [4, 'Arjun Nair', 'Engineering', 'Engineering Manager', 2900000, 2017],
-  [5, 'Priya Menon', 'Sales', 'Account Executive', 980000, 2021],
-  [6, 'Karthik Rao', 'Sales', 'Sales Manager', 1900000, 2018],
-  [7, 'Ishita Shah', 'Sales', 'Account Executive', 1050000, 2022],
-  [8, 'Aditya Kapoor', 'Marketing', 'Marketing Specialist', 890000, 2023],
-  [9, 'Meera Pillai', 'Marketing', 'Marketing Manager', 1650000, 2019],
-  [10, 'Rahul Verma', 'Support', 'Support Agent', 620000, 2023],
-  [11, 'Sneha Joshi', 'Support', 'Support Lead', 1050000, 2020],
-  [12, 'Vivaan Malhotra', 'Support', 'Support Agent', 650000, 2022],
-  [13, 'Diya Chandra', 'Finance', 'Financial Analyst', 1250000, 2021],
-  [14, 'Aarav Bose', 'Finance', 'Finance Manager', 2250000, 2018],
-  [15, 'Sanya Kulkarni', 'Engineering', 'Senior Engineer', 2050000, 2020],
-  [16, 'Ibrahim Sheikh', 'Sales', 'Sales Manager', 1950000, 2017],
-];
-
-function buildPracticeDb() {
-  const mem = new DatabaseSync(':memory:');
-  mem.exec(PRACTICE_SCHEMA);
-  const insert = mem.prepare('INSERT INTO employees (id, name, department, role, salary, hire_year) VALUES (?, ?, ?, ?, ?, ?)');
-  for (const row of PRACTICE_ROWS) insert.run(...row);
-  return mem;
-}
-
-// da-001 is the only task in P0 — enough to prove the whole loop end to end before
-// building out a task library.
+// The task library. Every task names the dataset it is graded against, so a learner's
+// query and the reference query always run over the same tables — see lib/datasets.js
+// for why that determinism is what makes grading possible at all.
+//
+// `brief` deliberately does NOT list the columns any more: the Schema Browser in the
+// workbench shows them live, which means the brief can never drift out of date with
+// the data, and reading a schema is itself part of the job.
 const TASKS = {
   'da-001': {
     title: 'Department salary breakdown',
-    brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) that returns each department's average salary, sorted highest to lowest.",
-    referenceSql: 'SELECT department, AVG(salary) AS avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC',
+    brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query returning each department's NAME and its average salary, highest first. Two things to get right: department names live in `departments`, not `employees`, and the employees table still holds people who have left (exit_year is set) — leadership is asking about current staff.",
+    referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_salary DESC',
+    datasetKey: 'hr_core',
     estHours: 3,
     priority: 'high',
     dueInDays: 2,
   },
   'da-002': {
     title: 'Hiring trend by year',
-    brief: "Asha wants to see how hiring has moved year on year. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each hire_year, how many people were hired and their average salary, oldest year first.",
+    brief: "Asha wants to see how hiring has moved year on year for next year's plan. Write ONE SQL SELECT query returning, for each hire_year, how many people were hired and their average salary, oldest year first. Someone hired in 2019 who has since left was still a 2019 hire — this question is about intake, not current headcount.",
     referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
+    datasetKey: 'hr_core',
     estHours: 2,
     priority: 'medium',
     dueInDays: 3,
   },
   'da-003': {
     title: 'Pay spread by role',
-    brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query against the `employees` table (columns: id, name, department, role, salary, hire_year) returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first.",
-    referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees GROUP BY role ORDER BY spread DESC',
+    brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first. Current employees only — a leaver's old salary is not evidence about today's pay.",
+    referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY spread DESC',
+    datasetKey: 'hr_core',
     estHours: 4,
     priority: 'high',
     dueInDays: 4,
+  },
+  'da-004': {
+    title: 'Outage impact by client',
+    brief: "Customer Success has to decide who gets compensated after the billing-sync outage, and they need the damage quantified first. Write ONE SQL SELECT query listing each AFFECTED, STILL-ACTIVE client with their tier, monthly recurring revenue, how many incidents hit them and the total rows corrupted — ordered so the accounts putting the most recurring revenue at risk come first. One account has already churned; recommending a retention package for them would be an error.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops',
+    estHours: 5,
+    priority: 'high',
+    dueInDays: 5,
   },
 };
 
@@ -1179,15 +1172,115 @@ function assertReadOnlySelect(sql) {
   return trimmed;
 }
 
-function runPracticeQuery(sql) {
+// Runs one read-only SELECT against a freshly built copy of the named dataset. A new
+// in-memory database per call means a learner's query can never see another learner's
+// state, and can never see anything we did not seed on purpose.
+//
+// `limit` caps what comes back to the browser. A learner exploring with SELECT * on a
+// 100-row table is fine; the cap exists so a cross join can't return a million rows
+// and lock up their tab.
+function runPracticeQuery(sql, datasetKey, limit) {
   const clean = assertReadOnlySelect(sql);
-  const mem = buildPracticeDb();
+  const mem = buildDatasetDb(datasetKey || DEFAULT_DATASET);
   try {
     const rows = mem.prepare(clean).all();
-    return rows;
+    if (limit && rows.length > limit) {
+      return { rows: rows.slice(0, limit), truncated: true, totalRows: rows.length };
+    }
+    return { rows, truncated: false, totalRows: rows.length };
   } finally {
     mem.close();
   }
+}
+
+// The dataset a task is graded against, resolved from the task definition.
+function datasetForTask(taskKey) {
+  const def = TASKS[taskKey];
+  return (def && def.datasetKey) || DEFAULT_DATASET;
+}
+
+// Scratch execution from the workbench — run as often as you like, nothing is recorded
+// and nothing is graded. This is the single most important affordance in the tool: a
+// learner who cannot see their own intermediate results is guessing, not analysing.
+function runScratchQuery(userId, taskId, sql) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  if (!task) throw new Error('Task not found');
+  const datasetKey = datasetForTask(task.task_key);
+  const started = Date.now();
+  const out = runPracticeQuery(sql, datasetKey, 200);
+  return {
+    ...out,
+    columns: out.rows.length ? Object.keys(out.rows[0]) : [],
+    elapsedMs: Date.now() - started,
+    datasetKey,
+  };
+}
+
+// The pre-start project document. Returns the authored brief plus this learner's real
+// position on it — whether it is unlocked, and how its tasks are going — so the reader
+// sees one page rather than a brief here and a status somewhere else.
+function getProjectBrief(userId, projectKey) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+
+  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const entry = catalog.find((p) => p.key === projectKey);
+  if (!entry) throw new Error('Unknown project.');
+
+  const doc = getProjectDoc(projectKey);
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
+  const gradedCount = tasks.filter((t) => t.status === 'graded').length;
+
+  const myTasks = entry.taskKeys.map((key) => {
+    const row = tasks.find((t) => t.task_key === key);
+    const def = TASKS[key] || {};
+    return {
+      taskKey: key,
+      taskId: row ? row.id : null,
+      title: def.title || key,
+      estHours: def.estHours || null,
+      priority: def.priority || 'medium',
+      status: row ? row.status : 'not-started',
+      score: row ? row.score : null,
+    };
+  });
+
+  return {
+    projectKey,
+    // Catalog facts stay the source of truth for gating and value, so the brief can
+    // never disagree with the Projects board about whether something is unlocked.
+    title: entry.title,
+    difficulty: entry.difficulty,
+    impactValue: entry.impactValue,
+    skillFocus: entry.skillFocus,
+    unlocked: gradedCount >= (entry.unlockAfter || 0),
+    unlockAfter: entry.unlockAfter || 0,
+    gradedCount,
+    started: myTasks.some((t) => t.taskId),
+    tasks: myTasks,
+    doc,
+  };
+}
+
+// Schema for the browser panel beside the editor.
+function getWorkbench(userId, taskId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  if (!task) throw new Error('Task not found');
+  const datasetKey = datasetForTask(task.task_key);
+  return {
+    taskId: task.id,
+    taskKey: task.task_key,
+    title: task.title,
+    brief: task.brief,
+    status: task.status,
+    submission: task.submission || '',
+    dataset: describeDataset(datasetKey),
+    tools: [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+  };
 }
 
 const LINE_MANAGER_GRADING_SYSTEM = `You are Asha Rao, the Line Manager archetype in TenzorGrid's Virtual Workspace — a behavioural work simulator. You are the ONLY character who grades. Your comms style is short, direct, bullet points, warm but never soft. You never do the learner's thinking for them and you never rewrite their query — you assess what they submitted.
@@ -1254,8 +1347,10 @@ async function submitTask(userId, taskId, sql) {
     throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.submissions} graded submissions. Come back tomorrow — your work is saved.`);
   }
 
-  const submittedResult = runPracticeQuery(sql); // throws on invalid/unsafe SQL
-  const referenceResult = runPracticeQuery(taskDef.referenceSql);
+  // Both queries run against the same dataset, so the comparison is apples to apples.
+  const datasetKey = datasetForTask(task.task_key);
+  const submittedResult = runPracticeQuery(sql, datasetKey).rows; // throws on invalid/unsafe SQL
+  const referenceResult = runPracticeQuery(taskDef.referenceSql, datasetKey).rows;
 
   const { score, feedback, skills } = await gradeSubmission(taskDef, sql, submittedResult, referenceResult);
 
@@ -1477,6 +1572,9 @@ module.exports = {
   checkIn,
   submitTask,
   runPracticeQuery,
+  runScratchQuery,
+  getWorkbench,
+  getProjectBrief,
   sendLearnerMessage,
   toggleChecklistItem,
   startProject,
