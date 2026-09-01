@@ -6,3 +6,5 @@ workspace-app/node_modules/
 # every Railway deploy, never hand-edited, so it doesn't belong in git.
 public/workspace.html
 public/workspace-assets/
+public/pyodide/
+public/pyodide-probe.html
