@@ -64,9 +64,9 @@ const TOOLS = {
     key: 'python-notebook',
     label: 'Python Notebook',
     icon: 'FileCode2',
-    status: 'planned',
-    summary: 'Run Python with pandas directly in the browser.',
-    detail: 'Not yet available. Projects that need it are marked so you are not caught out mid-task.',
+    status: 'live',
+    summary: 'Run real Python in the browser, with the standard library.',
+    detail: 'Real CPython 3.12 with the full standard library — statistics, collections, itertools, json. The project dataset is pre-loaded as a `tables` dict of plain rows, so there are no file paths to fight with. Runs entirely on your machine, so nothing you try is sent anywhere. There is no pandas yet. First run downloads the runtime, which takes a few seconds.',
   },
   'crm': {
     key: 'crm',
@@ -175,14 +175,16 @@ const PROJECT_DOCS = {
     ],
     deliverables: [
       { text: 'A SQL query giving min, max, average and spread per role, widest spread first.', via: 'sql-terminal' },
-      { text: 'Submit it for grading.', via: 'sql-terminal' },
+      { text: 'A Python analysis returning the MEDIAN salary and headcount per department, highest median first. SQLite has no MEDIAN function, so this half genuinely cannot be done in SQL.', via: 'python-notebook' },
+      { text: 'Submit each for grading.', via: 'sql-terminal' },
     ],
     watchOutFor: [
       'A wide spread inside one role is not automatically unfair — a Staff Engineer and a new joiner can share a title band.',
       'Roles with only one person have a spread of zero. Decide whether they belong in the answer.',
       'At least one senior individual contributor out-earns their own manager. That is real, not a data error.',
+      'Median and average are not the same number here, and the gap between them is itself the finding — a few very large salaries pull the average away from what a typical person in that department actually earns.',
     ],
-    toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat'],
+    toolKeys: ['sql-terminal', 'python-notebook', 'schema-browser', 'email-client', 'team-chat'],
     datasetKey: 'hr_core',
   },
 
