@@ -1195,15 +1195,78 @@ function checkIn(userId) {
 // Only SELECT is ever allowed, and only a single statement — enforced even though the
 // query already runs against a disposable in-memory DB with nothing sensitive in it.
 // Defense in depth costs nothing here.
+// Removes SQL comments and blanks out string literals, so the safety checks below see
+// only executable code. Three things were wrong without this: the editor's own starter
+// template begins with `-- Write your query here.`, so the very first Run was rejected
+// for "not starting with SELECT"; a comment like `-- don't delete this` tripped the
+// keyword blocklist; and a semicolon or an apostrophe inside a string was read as a
+// second statement.
+//
+// String literals are blanked rather than removed so their position is preserved but
+// their CONTENTS can never satisfy a check — a query is not allowed to smuggle
+// `; DROP` past the guard by hiding it in quotes. What is left is exactly what SQLite
+// will execute, minus the text it ignores.
+function stripSqlNoise(sql) {
+  let out = '';
+  let i = 0;
+  while (i < sql.length) {
+    const c = sql[i];
+    const next = sql[i + 1];
+
+    if (c === '-' && next === '-') {                 // line comment
+      const nl = sql.indexOf('\n', i);
+      i = nl === -1 ? sql.length : nl;
+      out += ' ';
+      continue;
+    }
+    if (c === '/' && next === '*') {                 // block comment
+      const end = sql.indexOf('*/', i + 2);
+      i = end === -1 ? sql.length : end + 2;
+      out += ' ';
+      continue;
+    }
+    if (c === "'" || c === '"') {                    // string literal / quoted identifier
+      const quote = c;
+      i += 1;
+      while (i < sql.length) {
+        if (sql[i] === quote) {
+          if (sql[i + 1] === quote) { i += 2; continue; } // doubled quote is an escape
+          i += 1;
+          break;
+        }
+        i += 1;
+      }
+      out += quote + quote;                          // keep it a literal, drop its contents
+      continue;
+    }
+    out += c;
+    i += 1;
+  }
+  return out;
+}
+
 function assertReadOnlySelect(sql) {
-  const trimmed = sql.trim().replace(/;+\s*$/, '');
-  if (!trimmed) throw new Error('Query is empty.');
-  if (trimmed.includes(';')) throw new Error('Only a single statement is allowed.');
-  if (!/^select\b/i.test(trimmed)) throw new Error('Only SELECT queries are allowed here.');
-  if (/\b(insert|update|delete|drop|alter|attach|pragma|create|replace)\b/i.test(trimmed)) {
+  const original = String(sql || '').trim();
+  if (!original) throw new Error('Query is empty.');
+
+  // Every check runs against the code with comments and string contents removed.
+  const code = stripSqlNoise(original).trim().replace(/;+\s*$/, '');
+  if (!code) throw new Error('Query is empty.');
+  if (code.includes(';')) throw new Error('Only a single statement is allowed.');
+
+  // WITH is allowed as well as SELECT: a common table expression is ordinary analyst
+  // work and is read-only on its own. It cannot be used to smuggle a write, because the
+  // keyword blocklist below still applies to the whole statement.
+  if (!/^(select|with)\b/i.test(code)) {
+    throw new Error('Only SELECT queries are allowed here.');
+  }
+  if (/\b(insert|update|delete|drop|alter|attach|detach|pragma|create|replace|vacuum|reindex|analyze)\b/i.test(code)) {
     throw new Error('Only read-only SELECT queries are allowed here.');
   }
-  return trimmed;
+
+  // The ORIGINAL text is returned and executed — comments are harmless to SQLite and
+  // keeping them means the learner runs exactly what they wrote.
+  return original.replace(/;+\s*$/, '');
 }
 
 // Runs one read-only SELECT against a freshly built copy of the named dataset. A new
