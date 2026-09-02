@@ -60,6 +60,12 @@ const TOOLS = {
     summary: 'Ask your line manager or People Partner a question.',
     detail: 'Found in the Team tab. Internal and quick. Your manager will unblock you but will not do the work for you.',
   },
+  'chart-builder': {
+    name: 'Chart Builder',
+    status: 'live',
+    blurb: 'Choose how a result set is presented — chart type, axes, ordering, baseline — with a live preview.',
+  },
+
   'python-notebook': {
     key: 'python-notebook',
     label: 'Python Notebook',

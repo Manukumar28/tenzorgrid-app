@@ -9,6 +9,7 @@ import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { Play, Send, Database, Table2, ChevronRight, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { api } from '../api.js';
 import PythonNotebook from './PythonNotebook.jsx';
+import ChartBuilder from './ChartBuilder.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -214,9 +215,19 @@ export default function Workbench({ taskId, onGraded }) {
   async function submit() {
     const q = currentSql().trim();
     if (!q) return;
+    return send(q);
+  }
+
+  // A chart task submits its choices as JSON rather than code. Same endpoint, same
+  // review flow afterwards — only what is being submitted differs.
+  async function submitChoices(payload) {
+    return send(payload);
+  }
+
+  async function send(payload) {
     setSubmitting(true); setRunError('');
     try {
-      const d = await api.submitTask(taskId, q);
+      const d = await api.submitTask(taskId, payload);
       setGraded({ score: d.score, feedback: d.feedback });
       onGraded && onGraded(d.state);
     } catch (e) {
@@ -245,6 +256,8 @@ export default function Workbench({ taskId, onGraded }) {
 
         {wb.tool === 'python' ? (
           <PythonNotebook wb={wb} onGraded={onGraded} />
+        ) : wb.tool === 'chart' ? (
+          <ChartBuilder wb={wb} onGraded={onGraded} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (
         <div className="flex flex-col min-w-0">
           <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
