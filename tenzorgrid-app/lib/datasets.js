@@ -227,7 +227,12 @@ function generateSaasOps(seed) {
         service: pick(rng, SERVICES),
         severity,
         started_at: started,
-        resolved_at: stillOpen ? null : started.replace(/T\d\d/, `T${pad(intBetween(rng, 0, 23))}`),
+        // Resolution used to be "the same day, at a random hour", which produced
+        // incidents that resolved BEFORE they started and made any duration analysis
+        // nonsense. It is now a real elapsed time: one to seventy-two hours after the
+        // start, so time-to-resolve is a question the data can actually answer. (Same
+        // single random draw as before, so every other generated value is unchanged.)
+        resolved_at: stillOpen ? null : addHours(started, intBetween(rng, 1, 72)),
         rows_corrupted: severity === 'SEV1' ? intBetween(rng, damageBase, damageBase * 3) : intBetween(rng, 500, damageBase),
       });
     }
@@ -380,6 +385,13 @@ function getDataset(key) {
 
 // Builds a fresh, isolated in-memory database for one execution. Callers MUST close it
 // (see runQuery's finally block) — one of these is created per query run.
+// `iso` plus n hours, in the same 'YYYY-MM-DDTHH:MM:00Z' shape the generator emits.
+function addHours(iso, n) {
+  const d = new Date(iso);
+  d.setUTCHours(d.getUTCHours() + n);
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/:\d\dZ$/, ':00Z');
+}
+
 function buildDatasetDb(key) {
   const def = getDataset(key);
   const mem = new DatabaseSync(':memory:');

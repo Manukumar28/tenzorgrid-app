@@ -219,6 +219,76 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat', 'crm'],
     datasetKey: 'saas_ops',
   },
+
+  // ---- Senior track -------------------------------------------------------------
+  // Written to a senior brief, not a longer one: the objective is a recommendation, the
+  // constraints leave a judgement call open rather than closing it, and 'watch out for'
+  // names the traps without saying which side to come down on.
+  'reliability-review': {
+    projectTitle: 'Platform Reliability Review',
+    companyName: 'Acme Logistics SaaS',
+    companyBlurb: 'A logistics platform serving 16 enterprise and mid-market accounts.',
+    yourRole: 'Senior Data Analyst, embedded with Platform Engineering',
+    roleResponsibilities: [
+      'Decide what belongs in the numbers. Nobody senior will be told which rows to exclude.',
+      'Report the shape of the data, not just its middle. An average that hides the worst case is not a reliability picture.',
+      'Say what you would do about it. A senior analysis that stops at the table has stopped early.',
+    ],
+    scenario:
+      'Engineering leadership is planning next quarter and cannot agree on where the time goes. Frequency and cost are being used interchangeably in the argument, and they are not the same thing: the service that breaks most often is not necessarily the one that costs the most to fix. Meanwhile Customer Success needs to know which accounts are walking into their QBRs with an unresolved backlog.',
+    estimatedMinutes: 90,
+    difficulty: 'Hard',
+    primaryObjective: 'Establish which service costs the most engineering time per failure, and which active accounts carry the worst unresolved backlog — with a recommendation on where next quarter should go.',
+    constraints: [
+      { label: 'Data scope', value: 'Active clients for the backlog view. Your call on the incident view — and be ready to defend it.' },
+      { label: 'Open incidents', value: 'Some incidents have no resolved_at. They cannot contribute to a resolution time. Whether they belong in the count is the question.' },
+      { label: 'Query style', value: 'One SELECT per deliverable. No temporary tables.' },
+    ],
+    deliverables: [
+      { text: 'A SQL query giving time-to-resolve per service, slowest first.', via: 'sql-terminal' },
+      { text: 'A SQL query giving unresolved backlog and SEV1 exposure per active client.', via: 'sql-terminal' },
+    ],
+    watchOutFor: [
+      'A count of all incidents printed beside an average over only the closed ones is internally inconsistent — and it is the kind of table people quietly believe.',
+      "'Not resolved' covers open AND pending. Counting only 'open' understates every account's backlog.",
+      'A client with no tickets still has a backlog of zero. That row is information, not an absence.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat', 'crm'],
+    datasetKey: 'saas_ops',
+  },
+
+  'account-economics': {
+    projectTitle: 'Account Economics Review',
+    companyName: 'Acme Logistics SaaS',
+    companyBlurb: 'A logistics platform serving 16 enterprise and mid-market accounts.',
+    yourRole: 'Senior Data Analyst, embedded with Finance',
+    roleResponsibilities: [
+      'Normalise before you compare. A big account raising more tickets is not the same as a costly account.',
+      'Keep the rows that make the point, including the empty ones.',
+      'Give Finance a number they can put in a pricing conversation, not a table they have to interpret.',
+    ],
+    scenario:
+      'Finance is rebuilding the pricing model and suspects some accounts cost more to serve than they return. Raw ticket counts favour the biggest customers and tell them nothing. Separately, the platform team wants the distribution of engineering time by severity — medians and worst cases, not averages, because the outliers are the argument.',
+    estimatedMinutes: 90,
+    difficulty: 'Hard',
+    primaryObjective: 'Produce a cost-to-serve ranking that survives being divided by revenue, and a severity-level picture of engineering time that shows the tail as well as the middle.',
+    constraints: [
+      { label: 'Data scope', value: 'Active clients only for the economics view.' },
+      { label: 'Business rule', value: 'Support load must be expressed per unit of revenue, or the largest customer always looks worst.' },
+      { label: 'Tooling', value: 'SQLite has no median. The distribution work belongs in the notebook.' },
+    ],
+    deliverables: [
+      { text: 'A SQL query giving tickets per 100k of MRR for every active client.', via: 'sql-terminal' },
+      { text: 'A Python analysis giving median and worst-case resolution hours by severity.', via: 'python-notebook' },
+    ],
+    watchOutFor: [
+      'One account has churned and still has tickets against it. Without the status filter it lands mid-table and Finance prices for a customer we no longer have.',
+      'Dividing by MRR without casting will do integer division in some engines. Check your zero-decimal results.',
+      'Median is not average. If they agree here, you have probably computed the average twice.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat', 'crm'],
+    datasetKey: 'saas_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no
