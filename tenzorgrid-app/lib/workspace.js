@@ -183,9 +183,151 @@ const PROJECT_CATALOG = {
 
 // Junior and senior see different catalogues. A project with no `level` is junior-track;
 // this is the one place the split is decided, so nothing downstream has to know about it.
-function catalogFor(role, level) {
+//
+// `touchedKeys` is what a promoted learner has already worked on. Those projects stay in
+// their catalogue for good: promotion must never erase the record of how they got there,
+// which is the whole thing they are meant to walk into an interview with.
+function catalogFor(role, level, touchedKeys) {
   const all = PROJECT_CATALOG[role] || [];
-  return all.filter((p) => (p.level || 'junior') === (level === 'senior' ? 'senior' : 'junior'));
+  const want = level === 'senior' ? 'senior' : 'junior';
+  const touched = touchedKeys instanceof Set ? touchedKeys : new Set(touchedKeys || []);
+  return all.filter((p) => (p.level || 'junior') === want || touched.has(p.key));
+}
+
+// Which projects this learner has actually worked on, from their own task rows. A
+// promoted learner keeps these in their catalogue for good.
+function touchedProjectKeys(role, tasks) {
+  const keys = new Set();
+  const have = new Set(tasks.map((t) => t.task_key));
+  for (const p of PROJECT_CATALOG[role] || []) {
+    if (p.taskKeys.some((k) => have.has(k))) keys.add(p.key);
+  }
+  return keys;
+}
+
+// The promotion review.
+//
+// The user's rule, in their words: promote on "performance AND training done". Both, not
+// either — finishing four projects badly is not a promotion, and one brilliant project
+// out of four is not a body of work. The two criteria are reported separately with real
+// numbers, because "you were not promoted" is a sentence that has to come with the
+// arithmetic behind it.
+const PROMOTION = {
+  from: 'junior',
+  to: 'senior',
+  // One month of the programme: four projects at five working days each.
+  projectsRequired: 4,
+  // A grade average, not a productivity blend. Timeliness and check-in consistency are
+  // real signals but they are not competence, and a promotion is about competence.
+  minAverage: 70,
+  title: 'Senior Data Analyst',
+};
+
+function getPromotion(enrollment, projects, gradedTasks, tasks) {
+  if ((enrollment.level || 'junior') !== PROMOTION.from && !enrollment.promoted_at) return null;
+
+  const juniorKeys = new Set(
+    (PROJECT_CATALOG[enrollment.role] || [])
+      .filter((p) => (p.level || 'junior') === PROMOTION.from)
+      .map((p) => p.key),
+  );
+  const completed = projects.filter((p) => juniorKeys.has(p.key) && p.status === 'completed').length;
+  const average = gradedTasks.length
+    ? Math.round(gradedTasks.reduce((s, t) => s + (t.score || 0), 0) / gradedTasks.length)
+    : null;
+
+  const trainingDone = completed >= PROMOTION.projectsRequired;
+  const performanceMet = average !== null && average >= PROMOTION.minAverage;
+
+  // A parked task keeps its project out of `completed`, so a learner who reached the end
+  // of the track with parked work would sit in silence forever, never told why the
+  // review never came. `atTheEnd` is what actually triggers the conversation: every
+  // junior project started, and every task in them resolved one way or the other.
+  const juniorTaskKeys = new Set(
+    (PROJECT_CATALOG[enrollment.role] || [])
+      .filter((p) => juniorKeys.has(p.key))
+      .flatMap((p) => p.taskKeys),
+  );
+  const mine = (tasks || []).filter((t) => juniorTaskKeys.has(t.task_key));
+  const startedProjects = projects.filter((p) => juniorKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
+  const parked = mine.filter((t) => t.status === 'parked');
+  const atTheEnd = startedProjects >= PROMOTION.projectsRequired
+    && mine.length > 0
+    && mine.every((t) => t.status === 'graded' || t.status === 'parked');
+
+  return {
+    awarded: Boolean(enrollment.promoted_at),
+    awardedAt: enrollment.promoted_at || null,
+    toTitle: PROMOTION.title,
+    eligible: trainingDone && performanceMet,
+    criteria: [
+      {
+        key: 'training',
+        label: `Complete all ${PROMOTION.projectsRequired} junior projects`,
+        met: trainingDone,
+        value: completed,
+        target: PROMOTION.projectsRequired,
+        detail: `${completed} of ${PROMOTION.projectsRequired} delivered`,
+      },
+      {
+        key: 'performance',
+        label: `Average score of ${PROMOTION.minAverage} or above`,
+        met: performanceMet,
+        value: average,
+        target: PROMOTION.minAverage,
+        detail: average === null
+          ? 'No graded work yet'
+          : `${average} across ${gradedTasks.length} graded task${gradedTasks.length === 1 ? '' : 's'}`,
+      },
+    ],
+    // Only meaningful while short on score: work they could genuinely lift.
+    shortfall: !performanceMet && average !== null ? PROMOTION.minAverage - average : null,
+    // Internal: whether the review is due, and what is holding it up.
+    atTheEnd,
+    parked: parked.map((t) => ({ id: t.id, title: t.title })),
+  };
+}
+
+// Runs the review at read time. Promotion is announced to you in a real job — you do not
+// click a button to claim it — so this fires by itself once both criteria hold.
+function runPromotionReview(enrollment, promotion, tasks) {
+  if (!promotion || promotion.awarded) return false;
+
+  if (promotion.eligible) {
+    const at = now();
+    db.prepare('UPDATE sim_enrollments SET level = ?, promoted_at = ? WHERE id = ?')
+      .run(PROMOTION.to, at, enrollment.id);
+    const perf = promotion.criteria.find((c) => c.key === 'performance');
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `I've put you forward for ${PROMOTION.title} and it's gone through.\n\nFour projects delivered and an average of ${perf.value} across them — that's the bar, and you cleared it on both counts rather than scraping one. What changes: you'll get different work, not the same work with less hand-holding. It's less "answer this question" and more "decide what the question should be", and I'll be reviewing your judgement as much as your SQL.\n\nYour first senior project is on your board now.`,
+      null, `Promotion — ${PROMOTION.title}`);
+    addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
+      `Congratulations — your promotion to ${PROMOTION.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
+      null, 'Promotion confirmed');
+    return true;
+  }
+
+  // Not eligible. Say so ONCE, with the arithmetic — but only once they are actually at
+  // the end of the track. Telling someone mid-project that they are short is just noise,
+  // and leaving someone who HAS reached the end in silence is worse: they would never
+  // learn why the review did not come.
+  const training = promotion.criteria.find((c) => c.key === 'training');
+  const perf = promotion.criteria.find((c) => c.key === 'performance');
+  if (!promotion.atTheEnd || enrollment.promotion_told_at) return false;
+
+  // Parked work comes first, because it is both the reason the review is blocked and the
+  // one thing they can genuinely act on today. A parked task can be resubmitted; a
+  // signed-off one cannot, so promising improvement with nothing to improve would be a lie.
+  let body;
+  if (promotion.parked.length) {
+    const n = promotion.parked.length;
+    body = `We've reached the end of the junior track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
+  } else {
+    body = `We've done the promotion round and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training half done. The other half is an average of ${PROMOTION.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
+  }
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, body, null, 'Promotion round — where you stand');
+  db.prepare('UPDATE sim_enrollments SET promotion_told_at = ? WHERE id = ?').run(now(), enrollment.id);
+  return false;
 }
 
 // A graded task scores 0-100 on each skill axis it exercises. Skill *points* are that
@@ -242,9 +384,14 @@ const LEARNING_PATH = {
 
 // Real, currently-trackable milestone requirements only — no fabricated "Level 3 in
 // Python" style claims for skills we have no tasks to actually assess yet.
+// The certificate milestone. This used to name a target ROLE ("Associate Data Analyst"),
+// which now contradicts the promotion track sitting beside it on the same page — a
+// learner promoted to Senior was still being told to work towards Associate. They are
+// different things and should read as different things: promotion is the job you hold,
+// the milestone is the credential you can take away.
 const MILESTONE = {
   data_analyst: {
-    targetRole: 'Associate Data Analyst',
+    targetRole: 'Certificate of Simulated Experience',
     requirements: [
       { key: 'tasks', label: 'Complete 5 graded tasks', target: 5, metric: 'tasksCompleted' },
       { key: 'attendance', label: 'Reach 66 attendance days', target: 66, metric: 'attendedDays' },
@@ -740,7 +887,7 @@ function projectWeek(run, def, taskRows, nowMs) {
 }
 
 function getProjects(role, tasks, streaks, enrollmentId, level) {
-  const catalog = catalogFor(role, level);
+  const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const byKey = {};
   for (const t of tasks) (byKey[t.task_key] = byKey[t.task_key] || []).push(t);
 
@@ -936,7 +1083,7 @@ function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartM
 // and being graded — there is no "mark done" flag — so `stage` reports where the task
 // genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
 function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level) {
-  const catalog = catalogFor(role, level);
+  const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const projectByTaskKey = {};
   for (const p of catalog) {
     for (const k of p.taskKeys) projectByTaskKey[k] = p;
@@ -1416,7 +1563,9 @@ function reconcileProjectTasks(enrollment) {
 }
 
 function getState(userId) {
-  const enrollment = getEnrollment(userId);
+  // `let`, not `const`: the promotion round below can change the learner's level
+  // part-way through this read, and everything after it must see the new one.
+  let enrollment = getEnrollment(userId);
   if (!enrollment) return null;
 
   // Catch up any project whose task list grew after the learner started it, before
@@ -1456,7 +1605,23 @@ function getState(userId) {
   const skillTest = getSkillTest(enrollment);
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
-  const projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
+  let projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
+
+  // The promotion round runs here, before anything is rendered: a learner who has just
+  // cleared the bar should see the senior board on this load, not the next one.
+  let promotion = getPromotion(enrollment, projects.projects, gradedTasks, tasks);
+  if (promotion && runPromotionReview(enrollment, promotion, tasks)) {
+    enrollment = getEnrollment(userId);
+    projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
+    promotion = getPromotion(enrollment, projects.projects, gradedTasks, tasks);
+    // The senior track has to actually start, or the promotion message points at an
+    // empty board.
+    beginNextProject(enrollment);
+    const refreshed = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
+    tasks.length = 0;
+    tasks.push(...refreshed);
+    projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
+  }
   closeCompletedRuns(enrollment, projects.projects);
   const rosterList = rosterWithAvatars();
   const aiUse = countTodaysAiUse(enrollment.id);
@@ -1520,6 +1685,7 @@ function getState(userId) {
       streak: streaks,
     },
     skillTest,
+    promotion,
     standup: getStandup(userId),
     skillMatrix: getSkillMatrix(gradedTasks, baseline),
     scoreHistory,
@@ -1640,16 +1806,18 @@ function closeCompletedRuns(enrollment, projects) {
   }
 }
 
-// The first project, handed over once the skills check is in. Kept separate from
-// startEnrollment so the order of the day-one experience is visible in one place:
-// welcome -> skills check -> project. Which project that is comes from the learner's
-// LEVEL — junior and senior get different catalogues, so this takes the first project
-// on theirs rather than naming one.
-function beginFirstProject(enrollment) {
-  const already = db.prepare('SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ?').get(enrollment.id).c;
-  if (already > 0) return null;
+// Hands over the next project on the learner's own catalogue. Used twice: once when the
+// skills check is done (welcome -> skills check -> project, the day-one order), and again
+// the moment they are promoted, so the promotion message never points at an empty board.
+function beginNextProject(enrollment) {
+  const tasks = db.prepare('SELECT task_key FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const have = new Set(tasks.map((t) => t.task_key));
 
-  const def = catalogFor(enrollment.role, enrollment.level)[0];
+  // The first project on their CURRENT catalogue that they have not started. On day one
+  // that is their first project; the moment they are promoted it is their first senior
+  // one, which is why this is not called beginFirstProject any more.
+  const def = catalogFor(enrollment.role, enrollment.level)
+    .find((p) => !p.taskKeys.some((k) => have.has(k)));
   if (!def) return null;
 
   const run = startProjectRun(enrollment.id, def.key);
@@ -1660,7 +1828,7 @@ function beginFirstProject(enrollment) {
   }
   const task = TASKS[def.taskKeys[0]];
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
-    `Thanks for doing that. You're on ${def.title} — first task: ${task.title}. ${task.brief}`, firstId);
+    `You're on ${def.title} — first task: ${task.title}. ${task.brief}`, firstId);
   // The stakeholder's note names the actual project. It used to hardcode the junior
   // compensation brief, which read as a mistake the moment a senior learner arrived.
   addMessage(enrollment.id, 'stakeholder', STAKEHOLDER_NAME,
@@ -1715,7 +1883,7 @@ function submitSkillTest(userId, answers) {
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
     `Got your skills check — ${result.correct} of ${result.answered}. ${line}\n\nNothing here is a verdict; it's the line we measure from. Every task you deliver updates these, and in twelve weeks you'll be able to show the difference rather than assert it.`);
 
-  beginFirstProject(getEnrollment(userId));
+  beginNextProject(getEnrollment(userId));
   return { result, state: getState(userId) };
 }
 

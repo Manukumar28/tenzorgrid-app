@@ -461,8 +461,44 @@ task teaches nothing and cannot be graded.
   account. Authoring it also surfaced a real data bug — the generator was resolving
   incidents *before* they started, which made any duration analysis nonsense; fixed
   without changing the random draw sequence, so every other generated value is unchanged.
-- **Phase 5.** The 12-week arc: roughly 30 tasks per role authored against that same gate,
-  the weekly retro/1:1, the performance record, and the interview defence.
+- **Phase 4b — ✅ SHIPPED. The promotion round.** The user's rule, in their words:
+  promote on *"performance AND training done"* — both, not either. Four junior projects
+  delivered **and** an average of 70 or above. The two criteria are reported separately
+  with real numbers, because "you were not promoted" is a sentence that has to come with
+  the arithmetic behind it. Promotion fires by itself at read time (you are told about a
+  promotion, you do not claim one), switches the catalogue to the senior track and starts
+  the first senior project immediately, and **keeps every junior project on the board** —
+  `catalogFor` takes the projects the learner has touched, because a promotion that
+  erased the record would delete the very thing they are meant to walk into an interview
+  with. Building it found a design hole: a **parked task keeps its project out of
+  `completed`**, so a learner who reached the end of the track with parked work would sit
+  in silence forever, never told why the review never came. The review now triggers on
+  *every junior task resolved* (graded or parked), and Asha names the parked work as the
+  one thing they can fix today. Also separated two progression systems that had started
+  to contradict each other on the same page: the milestone is now the **certificate**,
+  not a competing job title.
+
+### The 12-week shape (the user's arithmetic, confirmed)
+
+**30 tasks per project · 6 per day · 5 days per project · 4 projects per month · promote
+after month one.** Three consequences, all of which change what gets built next:
+
+1. **A task must be roughly 20 minutes.** Six a day against `HOURS_PER_DAY_TARGET = 2`.
+   The tasks currently in `TASKS` are 2–5 estimated hours each — an order of magnitude
+   too big. The unit has to shrink before any authoring starts.
+2. **`DAILY_AI_LIMITS.submissions = 6` is exactly six**, with no headroom: one parked
+   task retried and the learner is locked out for the day. **Raise it to 8.**
+3. **Six tasks a day cannot all be SQL.** The user's answer, when asked: a realistic
+   day's mix, *but it must cover every skill the role needs — visualisation, analysis,
+   communication, all of it.* So the task engine needs a **type system** — analysis
+   (SQL), notebook (Python), **chart** (currently the `dataViz` axis has NO task that
+   exercises it — a real hole), **write-up** (an email to a stakeholder), **review**
+   (critique a colleague's query), **decision** (make the recommendation). Not everything
+   needs a reference query, which is also what makes 360 tasks authorable at all.
+
+- **Phase 5 — next. The task type system**, then the 12-week arc: ~30 tasks per project
+  authored against the validation gate, the weekly retro/1:1, the performance record, and
+  the interview defence.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
 built and tested against the five tasks that exist today; authoring the ~30-task arc is a
