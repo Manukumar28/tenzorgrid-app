@@ -213,6 +213,12 @@ ensureColumn('sim_tasks', 'est_hours', 'REAL');
 ensureColumn('sim_messages', 'thread_archetype', 'TEXT');
 ensureColumn('sim_tasks', 'skills_json', 'TEXT');
 ensureColumn('sim_enrollments', 'checklist_json', 'TEXT');
+
+// The entry skill test: the learner's starting point, taken before the first project so
+// the skill matrix has something to measure improvement against. Stored as one JSON blob
+// rather than five columns because it is written once and always read whole.
+ensureColumn('sim_enrollments', 'baseline_json', 'TEXT');
+ensureColumn('sim_enrollments', 'baseline_at', 'TEXT');
 ensureColumn('sim_tasks', 'priority', 'TEXT');
 ensureColumn('sim_tasks', 'due_at', 'TEXT');
 ensureColumn('sim_messages', 'read_at', 'TEXT');
