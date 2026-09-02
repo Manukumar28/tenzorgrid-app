@@ -201,6 +201,13 @@ ensureColumn('sim_enrollments', 'checklist_json', 'TEXT');
 ensureColumn('sim_tasks', 'priority', 'TEXT');
 ensureColumn('sim_tasks', 'due_at', 'TEXT');
 ensureColumn('sim_messages', 'read_at', 'TEXT');
+// The verification gate. A task is only DONE when the line manager has questioned the
+// learner about it and accepted the answer — so `status` gains 'in_review' and 'parked'
+// between 'submitted' and 'graded'. Rows written before this shipped have review_state
+// NULL and are treated as already accepted, so no existing progress is undone.
+ensureColumn('sim_tasks', 'review_state', 'TEXT');
+ensureColumn('sim_tasks', 'review_rounds', 'INTEGER');
+ensureColumn('sim_tasks', 'review_question', 'TEXT');
 ensureColumn('sim_messages', 'starred', 'INTEGER');
 
 // Seed a small starter set of jobs the first time the DB is created, so the

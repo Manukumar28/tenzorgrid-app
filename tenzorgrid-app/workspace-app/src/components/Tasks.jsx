@@ -6,6 +6,7 @@ import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
 import { api } from '../api.js';
 const Workbench = lazy(() => import('./Workbench.jsx'));
+import ReviewPanel from './ReviewPanel.jsx';
 
 const PRIORITY_OPTIONS = [
   { value: 'high', label: 'High' },
@@ -53,7 +54,7 @@ function SectionTitle({ children, count }) {
 // bare textarea. Graded tasks keep the compact feedback panel, since there is nothing
 // left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
 // don't pay to download a code editor.
-function TaskWorkspace({ task, onStateChange }) {
+function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange }) {
   return (
     <BentoCard hover={false}>
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
@@ -64,11 +65,24 @@ function TaskWorkspace({ task, onStateChange }) {
         <span className={`inline-flex text-[11px] font-bold rounded-md px-2 py-1 ${PRIORITY_PILL[task.priority]}`}>{task.priorityLabel}</span>
       </div>
 
-      {task.status === 'graded' ? (
+      {/* Three states, in the order a task actually moves through them: waiting on the
+          manager's sign-off, done, or still being worked on. */}
+      {task.reviewState === 'pending' ? (
+        <>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">{task.brief}</p>
+          <ReviewPanel
+            task={task}
+            manager={manager}
+            learnerName={learnerName}
+            learnerPhotoUrl={learnerPhotoUrl}
+            onStateChange={onStateChange}
+          />
+        </>
+      ) : task.status === 'graded' ? (
         <>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">{task.brief}</p>
           <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3.5">
-            <div className="text-emerald-700 font-bold text-sm mb-1.5">Score: {task.score}/100</div>
+            <div className="text-emerald-700 font-bold text-sm mb-1.5">Signed off — {task.score}/100</div>
             <div className="text-sm text-emerald-900 whitespace-pre-wrap leading-relaxed">{task.feedback}</div>
           </div>
         </>
@@ -81,7 +95,7 @@ function TaskWorkspace({ task, onStateChange }) {
   );
 }
 
-export default function Tasks({ state, onStateChange }) {
+export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange }) {
   const { taskBoard, roster, projects } = state;
   const [priorityFilter, setPriorityFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
@@ -215,9 +229,17 @@ export default function Tasks({ state, onStateChange }) {
       {/* Selected task workspace */}
       {selected && (
         <section>
-          <SectionTitle>{selected.status === 'graded' ? 'Feedback' : 'Workspace'}</SectionTitle>
+          <SectionTitle>
+            {selected.reviewState === 'pending' ? 'Sign-off' : selected.status === 'graded' ? 'Feedback' : 'Workspace'}
+          </SectionTitle>
           <span ref={workspaceRef} className="block scroll-mt-4" aria-hidden="true" />
-          <TaskWorkspace task={selected} onStateChange={onStateChange} />
+          <TaskWorkspace
+            task={selected}
+            manager={personByArchetype.line_manager}
+            learnerName={learnerName}
+            learnerPhotoUrl={learnerPhotoUrl}
+            onStateChange={onStateChange}
+          />
         </section>
       )}
 
