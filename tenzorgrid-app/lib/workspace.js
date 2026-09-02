@@ -18,6 +18,7 @@ const { buildDatasetDb, describeDataset, dumpDataset, DEFAULT_DATASET } = requir
 const { getProjectDoc, TOOLS } = require('./projectdocs');
 const skilltest = require('./skilltest');
 const charttasks = require('./charttasks');
+const tasktypes = require('./tasktypes');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -72,8 +73,8 @@ const PROJECT_CATALOG = {
       kind: 'analysis',
       stakeholder: 'stakeholder',
       difficulty: 'Medium',
-      taskKeys: ['da-001', 'da-006'],
-      skillFocus: ['sql', 'dataViz', 'businessLogic'],
+      taskKeys: ['da-100', 'da-101', 'da-001', 'da-102', 'da-103', 'da-104', 'da-006'],
+      skillFocus: ['sql', 'dataViz', 'businessLogic', 'communication'],
       impactValue: 12400,
       // The rest of the project, so the learner can see their part of a whole rather
       // than a task list. These are named participants in the scenario, NOT members of
@@ -411,6 +412,11 @@ const MILESTONE = {
 // query and the reference query always run over the same tables — see lib/datasets.js
 // for why that determinism is what makes grading possible at all.
 //
+// `estHours` is what the task actually takes a learner, in hours — so most are fractions.
+// They used to be whole hours, written when a project was a single task and the number was
+// decorative. Six tasks a day against a two-hour daily target means a task is twenty
+// minutes, and a day that adds up to eighteen hours is a promise the product cannot keep.
+//
 // `brief` deliberately does NOT list the columns any more: the Schema Browser in the
 // workbench shows them live, which means the brief can never drift out of date with
 // the data, and reading a schema is itself part of the job.
@@ -421,7 +427,7 @@ const TASKS = {
     referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_salary DESC',
     datasetKey: 'hr_core',
     tool: 'sql',
-    estHours: 3,
+    estHours: 0.4,
     priority: 'high',
     dueInDays: 2,
     // Opens on working day 1 of the project week.
@@ -434,7 +440,7 @@ const TASKS = {
     referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
     datasetKey: 'hr_core',
     tool: 'sql',
-    estHours: 2,
+    estHours: 0.3,
     priority: 'medium',
     dueInDays: 3,
     // Opens on working day 1 of the project week.
@@ -447,7 +453,7 @@ const TASKS = {
     referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY spread DESC',
     datasetKey: 'hr_core',
     tool: 'sql',
-    estHours: 4,
+    estHours: 0.4,
     priority: 'high',
     dueInDays: 4,
     // Opens on working day 1 of the project week.
@@ -460,13 +466,149 @@ const TASKS = {
     referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
     datasetKey: 'saas_ops',
     tool: 'sql',
-    estHours: 5,
+    estHours: 0.6,
     priority: 'high',
     dueInDays: 5,
     // Opens on working day 1 of the project week.
     day: 1,
     difficulty: 'hard',
   },
+  // ---- Day 1, in full ----------------------------------------------------------------
+  //
+  // A learner who finishes one query in ten minutes and then has nothing to do for the
+  // rest of the day has not had a day at work. This is what the first day of the
+  // compensation review actually looks like: scope it, look at the data, do the analysis,
+  // check a colleague's work, decide what you can honestly claim, then write to the
+  // stakeholder. Six tasks, about 85 minutes, and only two of them are queries.
+  'da-100': {
+    title: 'Scope the request',
+    brief: "Before you write any SQL: read Vikram's email again and work out what he is actually asking for. Tick everything that is genuinely part of this request. Getting this wrong costs a day, because you find out at the end.",
+    tool: 'choice',
+    datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Which of these are part of what Vikram asked for?',
+      exhibit: {
+        kind: 'email',
+        from: 'Vikram Nair, Business Stakeholder',
+        subject: 'Department salary numbers — need by Thursday',
+        body: "Hi — following up on the department pay numbers Asha mentioned. I need to know which function is paying the most on average and by how much it leads the next one, for the leadership review on Thursday. This is about what we're paying people now, not historically. Let me know if anything's unclear about what I'm after.",
+      },
+      options: [
+        { key: 'avg', correct: true, label: 'Average salary for each department', why: 'He asked which function is paying the most on average — this is the core of it.' },
+        { key: 'gap', correct: true, label: 'The gap between the top department and the next one', why: '"By how much it leads the next one" is a second, separate number. It is easy to read past and it is half the request.' },
+        { key: 'current', correct: true, label: 'Current employees only', why: '"What we\'re paying people now, not historically" rules out anyone who has left.' },
+        { key: 'individuals', correct: false, label: 'A list of the highest-paid individuals', why: 'He asked about departments. Individual salaries are a different question, and circulating them would be a real problem.' },
+        { key: 'trend', correct: false, label: 'How pay has changed over the last three years', why: 'Explicitly not what he asked — he said now, not historically. Answering a bigger question than the one asked is how deadlines get missed.' },
+        { key: 'benchmark', correct: false, label: 'How our pay compares to the market', why: 'There is no market data in this dataset. Promising it would be a commitment you cannot keep.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+      whyRight: 'You read what was asked rather than what would be interesting, and you spotted that "by how much it leads" is a second deliverable.',
+    },
+    estHours: 0.1,
+    priority: 'high',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'easy',
+  },
+
+  'da-101': {
+    title: 'Get your bearings in the data',
+    brief: "Before the real query, check what you are working with. Write ONE SQL SELECT that returns how many CURRENT employees there are and how many departments — two numbers, one row. This takes two minutes and it is the difference between spotting a problem now and spotting it in front of leadership.",
+    referenceSql: 'SELECT (SELECT COUNT(*) FROM employees WHERE exit_year IS NULL) AS current_employees, (SELECT COUNT(*) FROM departments) AS departments',
+    datasetKey: 'hr_core',
+    tool: 'sql',
+    estHours: 0.15,
+    priority: 'medium',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'easy',
+  },
+
+  'da-102': {
+    title: "Review Rahul's query",
+    brief: "Rahul on the data engineering side sent over a query he wrote for the same question, to save you time. Read it properly before you use it. Flag what is actually wrong — and only what is actually wrong. Flagging everything is not review, it is noise, and it is scored as such here.",
+    tool: 'choice',
+    datasetKey: 'hr_core',
+    choice: {
+      prompt: "What is wrong with this query? Tick only the real problems.",
+      exhibit: {
+        kind: 'sql',
+        from: 'Rahul Verma, Data Engineer',
+        body: "SELECT e.department_id, AVG(e.salary) AS avg_salary\nFROM employees e\nWHERE e.exit_year = NULL\nGROUP BY e.department_id\nORDER BY avg_salary DESC",
+      },
+      options: [
+        { key: 'nullcmp', correct: true, label: '`exit_year = NULL` will not match anything', why: 'NULL is never equal to anything, so this returns zero rows. It is the single most common SQL mistake and it fails silently — no error, just an empty result.' },
+        { key: 'deptname', correct: true, label: 'It returns department_id, not the department name', why: 'Vikram is not going to read "department 4". The names live in the departments table, which means a JOIN.' },
+        { key: 'gap', correct: true, label: 'It does not give the gap to the next department', why: 'Half the request. The query answers "who is highest" but not "by how much".' },
+        { key: 'orderby', correct: false, label: 'You cannot ORDER BY an alias', why: 'You can in SQLite — ORDER BY sees the select list. This one is fine.' },
+        { key: 'groupby', correct: false, label: 'GROUP BY is on the wrong column', why: 'Grouping by department is exactly right for a per-department average.' },
+        { key: 'avg', correct: false, label: 'AVG is the wrong function here', why: 'He asked for the average. AVG is the right tool; whether an average is the right STATISTIC is a fair question, but it is not an error in the query.' },
+      ],
+      skills: { sql: 100, businessLogic: 90 },
+      whyRight: 'You found the silent one. `= NULL` returning nothing is the failure that reaches production, because it looks like a working query.',
+    },
+    estHours: 0.25,
+    priority: 'high',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'medium',
+  },
+
+  'da-103': {
+    title: 'What can you actually claim?',
+    brief: "You have your numbers. Before they go anywhere: which of these statements does your result genuinely support? This is the difference between an analyst leadership trusts and one they stop inviting.",
+    tool: 'choice',
+    datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Your analysis shows Engineering has the highest average salary and Support the lowest. Which statements does that support?',
+      options: [
+        { key: 'highest', correct: true, label: 'Engineering has the highest average salary of any department', why: 'This is a restatement of what you measured. It is safe because it claims nothing beyond the number.' },
+        { key: 'gapfact', correct: true, label: 'The gap between the top two departments is [X]', why: 'Also directly measured, and it is the second half of what Vikram asked for.' },
+        { key: 'underpaid', correct: false, label: 'Support is underpaid', why: '"Underpaid" is a comparison against something — market rate, internal bands, peers in the same role. You have not measured any of those. This is the claim that gets an analysis thrown out in the meeting.' },
+        { key: 'valuable', correct: false, label: 'Engineering is the most valuable function', why: 'Pay is what we spend, not what we get back. Nothing here measures value.' },
+        { key: 'raise', correct: false, label: 'Support needs a pay rise', why: 'A recommendation, not a finding. It might be right, but your data does not establish it — seniority mix alone could explain the whole gap.' },
+        { key: 'seniority', correct: false, label: 'Engineering staff are more senior on average', why: 'Plausible, and it might even be why the gap exists — but you have not looked at seniority. Do not assert the explanation you happen to believe.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+      whyRight: 'You separated what you measured from what you suspect. Most of the wrong answers here are things that might well be true — the point is that this analysis does not show them.',
+    },
+    estHours: 0.2,
+    priority: 'high',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'medium',
+  },
+
+  'da-104': {
+    title: 'Write to Vikram',
+    brief: "Send Vikram the answer. He is a business stakeholder preparing for a leadership review, not an analyst — he wants the number and what it means, not your method. Keep it under 120 words. Lead with the answer: he decides whether to keep reading in the first line.",
+    tool: 'writeup',
+    datasetKey: 'hr_core',
+    writeup: {
+      to: 'Vikram Nair, Business Stakeholder',
+      subject: 'Re: Department salary numbers',
+      prompt: 'Write the email. Under 120 words.',
+      maxWords: 120,
+      exhibit: {
+        kind: 'table',
+        from: 'Your result',
+        body: 'Engineering    2,391,000\nFinance        1,893,000\nSales          1,704,000\nPeople Ops     1,497,000\nMarketing      1,168,000\nSupport          855,000',
+      },
+      rubric: [
+        { key: 'answer', label: 'The answer, in the first line', markers: ['engineering'], why: 'He asked which department pays most. Name it before anything else — a busy reader decides in the first sentence whether to keep going.' },
+        { key: 'gap', label: 'The gap to the next department', markers: ['gap|ahead|lead|next|finance|ahead of|more than'], why: 'He asked for this explicitly. Leaving it out means he has to come back and ask, which costs you a day and some credibility.' },
+        { key: 'scope', label: 'What the number covers', markers: ["current|still (?:here|employed|with us)|leaver|excluded|people who (?:have )?left"], why: 'You excluded leavers. Saying so briefly protects you if anyone reconciles your figure against headcount — and it shows you thought about it.' },
+        { key: 'next', label: 'What happens next, or what you need', markers: ['let me know|happy to|if you|any questions|shout|before thursday|ahead of|next step|come back'], why: 'End with a handle. An email that just stops leaves the reader to work out whether anything is expected of them.' },
+      ],
+      whyRight: 'Answer first, the second number he asked for, an honest word about scope, and a clear ending. That is the whole job of this email.',
+    },
+    estHours: 0.35,
+    priority: 'high',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'medium',
+  },
+
   // ---- Presentation ------------------------------------------------------------------
   // A chart task is graded on judgement, not syntax: which chart, what on each axis, how
   // ordered, and whether the value axis starts at zero. Deterministic, so it costs
@@ -491,7 +633,7 @@ const TASKS = {
         baselineZero: 'A bar\'s meaning is its length. Starting the axis at 800,000 makes a 3% gap look like a 3x gap — it genuinely uses the space better, which is exactly why it is a tempting mistake rather than an obvious one.',
       },
     },
-    estHours: 0.5,
+    estHours: 0.25,
     priority: 'medium',
     dueInDays: 2,
     day: 2,
@@ -518,7 +660,7 @@ const TASKS = {
         sort: 'Do not sort a time series by value. Reordering the years destroys the only thing the chart is meant to show.',
       },
     },
-    estHours: 0.5,
+    estHours: 0.25,
     priority: 'medium',
     dueInDays: 3,
     day: 2,
@@ -536,7 +678,7 @@ const TASKS = {
     referenceSql: "SELECT service, COUNT(*) AS incidents, AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY avg_hours DESC",
     datasetKey: 'saas_ops',
     tool: 'sql',
-    estHours: 4,
+    estHours: 0.5,
     priority: 'high',
     dueInDays: 2,
     day: 1,
@@ -548,7 +690,7 @@ const TASKS = {
     referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(t.id) AS tickets, (COUNT(t.id) * 100000.0) / c.mrr AS tickets_per_100k FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier, c.mrr ORDER BY tickets_per_100k DESC",
     datasetKey: 'saas_ops',
     tool: 'sql',
-    estHours: 5,
+    estHours: 0.6,
     priority: 'high',
     dueInDays: 3,
     day: 1,
@@ -560,7 +702,7 @@ const TASKS = {
     referenceSql: "SELECT c.company, c.tier, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS unresolved_tickets, (SELECT COUNT(*) FROM incidents i WHERE i.client_id = c.id AND i.severity = 'SEV1') AS sev1_incidents FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier ORDER BY unresolved_tickets DESC",
     datasetKey: 'saas_ops',
     tool: 'sql',
-    estHours: 3,
+    estHours: 0.4,
     priority: 'medium',
     dueInDays: 4,
     day: 3,
@@ -593,7 +735,7 @@ const TASKS = {
     },
     datasetKey: 'saas_ops',
     tool: 'python',
-    estHours: 4,
+    estHours: 0.6,
     priority: 'medium',
     dueInDays: 4,
     day: 3,
@@ -625,7 +767,7 @@ const TASKS = {
     },
     datasetKey: 'hr_core',
     tool: 'python',
-    estHours: 3,
+    estHours: 0.5,
     priority: 'medium',
     dueInDays: 4,
     // Opens on working day 3 of the project week.
@@ -795,9 +937,16 @@ function getShoutouts(gradedTasks) {
 // task means a grading call, a learner-sent message means a reply call.
 function countTodaysAiUse(enrollmentId) {
   const todayStr = today();
+  // Only the task types that actually cost an AI call are counted. Grading a query or a
+  // notebook calls the model three times over (mark it, ask the review question, judge the
+  // answer); a chart, a judgement and a write-up are all graded deterministically and only
+  // touch the model once, at sign-off. Charging them at the same rate meant a learner
+  // doing the intended six-task day could be locked out by work that cost nothing.
+  const AI_GRADED = new Set(['sql', 'python']);
   const submissions = db.prepare(
-    "SELECT COUNT(*) AS c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded' AND substr(graded_at, 1, 10) = ?"
-  ).get(enrollmentId, todayStr).c;
+    "SELECT task_key FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded' AND substr(graded_at, 1, 10) = ?"
+  ).all(enrollmentId, todayStr)
+    .filter((r) => AI_GRADED.has((TASKS[r.task_key] || {}).tool || 'sql')).length;
   // The stand-up is excluded: this cap exists to bound AI SPEND, and the stand-up is
   // scripted and answered without an AI call. Charging it against the chat allowance
   // would mean doing the daily ritual costs you a question you might need later.
@@ -1783,7 +1932,7 @@ const OVERDUE_NUDGES = [
     afterDays: 1,
     from: 'line_manager',
     subject: 'Where are we on {project}?',
-    body: "{name}, the deadline for {project} was yesterday and {open} still isn't signed off.\n\nI'm not chasing to nag — I need to tell Vikram something. Reply here with where you've got to and what's in the way, and I'll manage his expectations.",
+    body: "{name}, the deadline for {project} was yesterday and {open} {be} still not signed off.\n\nI'm not chasing to nag — I need to tell Vikram something. Reply here with where you've got to and what's in the way, and I'll manage his expectations.",
   },
   {
     afterDays: 3,
@@ -1836,7 +1985,10 @@ function nudgeOverdueProjects(userId, enrollment) {
       // the email itself.
       .replace(/\{open\}/g, open.length <= 2
         ? open.map((t) => `"${t.title}"`).join(' and ')
-        : `${open.length} tasks`);
+        : `${open.length} tasks`)
+      // "7 tasks still isn't signed off" — the template was written when the only
+      // substitution was a single named task.
+      .replace(/\{be\}/g, open.length === 1 ? 'is' : 'are');
 
     addMessage(enrollment.id, next.from, person.name, fill(next.body), null, fill(next.subject), next.from);
     db.prepare('UPDATE sim_project_runs SET nudge_level = ? WHERE id = ?').run(level + 1, run.id);
@@ -2350,11 +2502,17 @@ function getWorkbench(userId, taskId) {
     chart: tool === 'chart' && def.chart
       ? { ...charttasks.present(def.chart), rows: runPracticeQuery(def.chart.sourceSql, datasetKey, 200).rows }
       : null,
+    choice: tool === 'choice' && def.choice ? tasktypes.presentChoice(def.choice) : null,
+    writeup: tool === 'writeup' && def.writeup ? tasktypes.presentWriteup(def.writeup) : null,
     tools: tool === 'python'
       ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
       : tool === 'chart'
         ? [TOOLS['chart-builder'], TOOLS['schema-browser']]
-        : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+        : tool === 'writeup'
+          ? [TOOLS['email-client']]
+          : tool === 'choice'
+            ? [TOOLS['schema-browser']]
+            : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
   };
 }
 
@@ -2635,6 +2793,26 @@ function safeJson(text) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+// Asha's question for a judgement or a piece of writing. Always about something they
+// actually did — the specific thing they missed, or the specific claim they made.
+function judgementReviewQuestion(taskDef, tool, answer, marked) {
+  if (tool === 'writeup') {
+    const missed = (marked.detail.missed || [])[0];
+    const point = missed && (taskDef.writeup.rubric.find((r) => r.key === missed) || {}).label;
+    if (point) {
+      return `Before this goes out — you've left out ${point.toLowerCase()}. Was that deliberate, or did it get lost in the edit? Tell me how you'd handle it if Vikram reads this and comes back asking.`;
+    }
+    return `That reads well. One thing: if Vikram forwards it to someone who wasn't in the original conversation, does it still stand on its own? Talk me through what they'd take from it.`;
+  }
+  if (marked.detail.falseAlarms) {
+    return `You flagged something that isn't actually a problem. Walk me through what you thought was wrong with it — I'd rather know how you read it than just correct you.`;
+  }
+  if (marked.detail.found < marked.detail.total) {
+    return `You got ${marked.detail.found} of ${marked.detail.total}. Take another look at what you left — what would have to be true for the ones you skipped to be fine?`;
+  }
+  return `All of them, and nothing extra. Tell me which one you'd have caught last — the one that took you longest to be sure about.`;
+}
+
 // Asha's sign-off question for a chart. Deterministic, and always about a choice they
 // actually made — asked about the first thing they got wrong if there is one, and about
 // the load-bearing choice if there is not. A generic "why this chart?" would fit any
@@ -2672,6 +2850,37 @@ async function submitTask(userId, taskId, code, computedResult) {
 
   let submittedResult;
   let referenceResult;
+
+  // Choice and write-up tasks are graded against an authored spec rather than a dataset
+  // comparison — there is no query to run. Both still go to Asha for sign-off afterwards,
+  // because being able to explain the judgement is the point of every task here.
+  if (tool === 'choice' || tool === 'writeup') {
+    const answer = tool === 'choice' ? safeJson(code) : String(code || '');
+    if (tool === 'choice' && !Array.isArray(answer)) {
+      throw new Error('Pick your answers before submitting.');
+    }
+    if (tool === 'writeup' && !answer.trim()) {
+      throw new Error('Write something before submitting.');
+    }
+    const marked = tool === 'choice'
+      ? tasktypes.gradeChoice(taskDef.choice, answer)
+      : tasktypes.gradeWriteup(taskDef.writeup, answer);
+
+    const stored = tool === 'choice' ? JSON.stringify(answer) : answer;
+    db.prepare(`
+      UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+        submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
+      WHERE id = ?
+    `).run(stored, marked.score, marked.feedback, JSON.stringify(marked.skills), now(), taskId);
+
+    addMessage(enrollment.id, 'learner', 'You',
+      tool === 'writeup' ? answer : `Flagged ${answer.length} item${answer.length === 1 ? '' : 's'}.`, taskId);
+
+    const question = judgementReviewQuestion(taskDef, tool, answer, marked);
+    db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+    return { inReview: true, question, result: marked.detail };
+  }
 
   // A chart is graded field by field against an authored spec, with no AI call and no
   // dataset comparison — the rows were given, so what is under assessment is entirely

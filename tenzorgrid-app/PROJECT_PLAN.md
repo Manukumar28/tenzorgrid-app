@@ -518,11 +518,37 @@ after month one.** Three consequences, all of which change what gets built next:
   — so a fullPage capture of a fresh chart photographs an empty one. Scope the capture to
   the element.
 
-- **Phase 5b — next. The remaining task types**, then the 12-week arc. Still to build:
-  **write-up** (an email to a stakeholder — the Communication axis is in the same position
-  `dataViz` was), **review** (critique a colleague's query), and **decision** (make the
-  recommendation). Then ~30 tasks per project authored against the validation gate, the
-  weekly retro/1:1, the performance record, and the interview defence.
+- **Phase 5b — ✅ SHIPPED. A real day, and the last two task types.** The user tested it
+  live and hit the gap exactly: *"i completed the 1st task in 10min what should i do rest
+  of the hours?"* — day one had one task on it. It now has **six, totalling ~1.45 hours**,
+  and only two are queries: scope the request → get your bearings in the data → the
+  analysis → **review Rahul's query** → what can you actually claim? → **write to Vikram**.
+  Two new graders in `lib/tasktypes.js`, both deterministic:
+  - **`choice`** — a structured judgement over an exhibit (a colleague's query, a
+    stakeholder's email). Scored on what was picked *and what was left*: **ticking every
+    box scores zero**, because "flag everything" is not review, it is noise, and a grader
+    that rewarded it would teach the wrong habit. The UI says so before they answer.
+  - **`writeup`** — a real email composer with the recipient, subject and word budget
+    shown, graded against an authored rubric. Going over the word limit costs marks and
+    is named as the reason.
+  **Every task estimate was re-cut**: they were whole hours, written when a project was a
+  single task and the number was decorative. Day one added up to 4 hours before, 18 if
+  scaled to six tasks. All five matrix axes are now reachable by some task.
+  Two accounting bugs this surfaced: the daily submission cap was counting **task types
+  that make no AI call** (a chart and a judgement are graded deterministically), so a
+  learner doing the intended six-task day could be locked out by work that cost nothing —
+  only `sql` and `python` count now. And Asha's overdue chase read *"7 tasks still isn't
+  signed off"*, a template written when the only substitution was one named task.
+  Test debt paid off too: four suites broke every time a project gained a task, because
+  each knew how to answer `da-001` and nothing else. `scratchpad/answers.js` is now the
+  one place a correct answer for any task lives.
+
+- **Phase 5c — next. The rest of the week, then the arc.** Day 1 of one project is
+  authored; **days 2–5 are still nearly empty** (day 2 has one chart task, days 4 and 5
+  have nothing at all, so no learner has ever seen a Friday). The pattern is proven and
+  the shape is right — what remains is authoring, at roughly 30 tasks per project, against
+  the validation gate. Then the weekly retro/1:1, the performance record, and the
+  interview defence.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
 built and tested against the five tasks that exist today; authoring the ~30-task arc is a

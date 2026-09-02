@@ -10,6 +10,7 @@ import { Play, Send, Database, Table2, ChevronRight, AlertCircle, CheckCircle2, 
 import { api } from '../api.js';
 import PythonNotebook from './PythonNotebook.jsx';
 import ChartBuilder from './ChartBuilder.jsx';
+import JudgementTask from './JudgementTask.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -249,15 +250,22 @@ export default function Workbench({ taskId, onGraded }) {
         <p className="text-xs text-slate-500 mt-1 leading-relaxed">{wb.brief}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)] min-h-[26rem]">
-        <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
-          <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' ? null : insertAtCursor} />
-        </div>
+      {/* A write-up has no schema pane, so it gets the full width rather than an empty
+          220px column beside it. */}
+      <div className={`grid grid-cols-1 min-h-[26rem] ${
+        wb.tool === 'writeup' ? '' : 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]'}`}>
+        {wb.tool !== 'writeup' && (
+          <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
+            <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' || wb.tool === 'choice' ? null : insertAtCursor} />
+          </div>
+        )}
 
         {wb.tool === 'python' ? (
           <PythonNotebook wb={wb} onGraded={onGraded} />
         ) : wb.tool === 'chart' ? (
           <ChartBuilder wb={wb} onGraded={onGraded} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
+        ) : (wb.tool === 'choice' || wb.tool === 'writeup') ? (
+          <JudgementTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (
         <div className="flex flex-col min-w-0">
           <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
