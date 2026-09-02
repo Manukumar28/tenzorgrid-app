@@ -229,6 +229,13 @@ ensureColumn('sim_enrollments', 'checklist_json', 'TEXT');
 // rather than five columns because it is written once and always read whole.
 ensureColumn('sim_enrollments', 'baseline_json', 'TEXT');
 ensureColumn('sim_enrollments', 'baseline_at', 'TEXT');
+
+// Promotion: when the learner cleared the junior track, and whether they have already
+// been told they fell short. Both are durable because a promotion is an event, not a
+// derived flag — and because "have we already had this conversation?" must survive a
+// page reload.
+ensureColumn('sim_enrollments', 'promoted_at', 'TEXT');
+ensureColumn('sim_enrollments', 'promotion_told_at', 'TEXT');
 ensureColumn('sim_tasks', 'priority', 'TEXT');
 ensureColumn('sim_tasks', 'due_at', 'TEXT');
 ensureColumn('sim_messages', 'read_at', 'TEXT');

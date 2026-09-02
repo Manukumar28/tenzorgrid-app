@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, BarChart3, CalendarDays, Clock, Trophy, GraduationCap, ClipboardList, Target, Flame, Award, Quote } from 'lucide-react';
+import { CheckCircle2, BarChart3, CalendarDays, Clock, Trophy, GraduationCap, ClipboardList, Target, Flame, Award, Quote, TrendingUp } from 'lucide-react';
 import { BentoCard, ProgressBar, CircularProgress, Pill, Avatar } from './ui.jsx';
 import { SkillRadar } from './charts.jsx';
 import { api } from '../api.js';
@@ -44,7 +44,7 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, corner, children 
 }
 
 export default function Overview({ state, learnerName, learnerPhotoUrl, onStateChange }) {
-  const { performance, attendance, tasks, skillMatrix, shoutouts, checklist, learningPath, milestone, messages, roster } = state;
+  const { performance, attendance, tasks, skillMatrix, shoutouts, checklist, learningPath, milestone, promotion, messages, roster } = state;
   const streak = attendance.streak;
   const personalBest = performance.personalBest;
 
@@ -259,13 +259,54 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
           </div>
         </BentoCard>
 
+        {/* Promotion. The two criteria are shown separately with their real numbers,
+            because "you were not promoted" is a sentence that has to come with the
+            arithmetic behind it — a single bar would hide which half is short. */}
+        {promotion && (
+          <BentoCard index={5} className={promotion.awarded ? 'border-emerald-200 bg-emerald-50/40' : ''}>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <TrendingUp size={22} className={promotion.awarded ? 'text-emerald-600' : 'text-indigo-500'} />
+              <h3 className="text-base font-bold">
+                {promotion.awarded ? 'Promoted' : 'Promotion track'}
+              </h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-3.5">
+              {promotion.awarded ? (
+                <>You are now <span className="font-semibold text-gray-800">{promotion.toTitle}</span></>
+              ) : (
+                <>Next level: <span className="font-semibold text-gray-700">{promotion.toTitle}</span></>
+              )}
+            </p>
+            <div className="space-y-3">
+              {promotion.criteria.map((c) => (
+                <div key={c.key} className="flex items-start gap-2.5">
+                  <CheckCircle2
+                    size={20}
+                    className={c.met ? 'text-emerald-500 mt-px' : 'text-gray-200 mt-px'}
+                    strokeWidth={2.3}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm text-gray-700 leading-snug">{c.label}</p>
+                    <p className={`text-xs font-semibold ${c.met ? 'text-emerald-600' : 'text-gray-500'}`}>{c.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {!promotion.awarded && promotion.shortfall !== null && (
+              <p className="text-xs text-gray-500 mt-3.5 leading-relaxed">
+                {promotion.shortfall} points short on average score. Every task you deliver moves it.
+              </p>
+            )}
+          </BentoCard>
+        )}
+
         {milestone && (
-          <BentoCard index={5}>
+          <BentoCard index={6}>
             <div className="flex items-center gap-2.5 mb-1.5">
               <Trophy size={22} className="text-amber-500" />
               <h3 className="text-base font-bold">Career milestones</h3>
             </div>
-            <p className="text-sm text-gray-500 mb-2.5">Target: <span className="font-semibold text-gray-700">{milestone.targetRole}</span></p>
+            <p className="text-sm text-gray-500 mb-2.5">Working towards: <span className="font-semibold text-gray-700">{milestone.targetRole}</span></p>
             <ProgressBar value={milestonePct} max={100} colorClass="from-amber-500 to-orange-400" />
             <div className="space-y-2.5 mt-3.5">
               {milestone.requirements.map((r) => (
