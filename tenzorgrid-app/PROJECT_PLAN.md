@@ -496,9 +496,33 @@ after month one.** Three consequences, all of which change what gets built next:
    (critique a colleague's query), **decision** (make the recommendation). Not everything
    needs a reference query, which is also what makes 360 tasks authorable at all.
 
-- **Phase 5 — next. The task type system**, then the 12-week arc: ~30 tasks per project
-  authored against the validation gate, the weekly retro/1:1, the performance record, and
-  the interview defence.
+- **Phase 5a — ✅ SHIPPED. Chart tasks, and the daily cap raised.** `dataViz` had been an
+  axis on the skill matrix since the beginning with **no task that could ever move it** —
+  worse than not having the axis, because it reported a permanent zero on a skill the
+  learner was never given a chance to show. A chart task hands over the rows already
+  queried and grades the *presentation*: chart type, both axes, ordering, and whether the
+  value axis starts at zero. Deterministic, no AI call, so it can run as often as the week
+  needs. Two of them are authored as a **pair that punishes pattern-matching**: da-006 is
+  categories (bar, sorted by value, zero baseline); da-007 is a time series, where
+  repeating that answer scores 35 instead of 100. `DAILY_AI_LIMITS.submissions` raised
+  6 → 8, since six tasks a day against a cap of exactly six left no room to resubmit a
+  parked task.
+  Two things this build surfaced: the offline review judge rejected a genuinely good
+  chart answer because its reasoning markers were tuned to SQL prose, and it told the
+  learner their answer described "the code" on a task that has none. And a browser
+  assertion that only checked `.recharts-surface` exists passed against an empty chart —
+  it now asserts on bar geometry, and proves the lesson: at a zero baseline the
+  biggest:smallest bar ratio is **2.8x**, truncated it is **28.6x**.
+  *Note for future browser tests:* a `fullPage` screenshot resizes the viewport, which
+  makes `ResponsiveContainer` re-render and Recharts replay its entry animation from zero
+  — so a fullPage capture of a fresh chart photographs an empty one. Scope the capture to
+  the element.
+
+- **Phase 5b — next. The remaining task types**, then the 12-week arc. Still to build:
+  **write-up** (an email to a stakeholder — the Communication axis is in the same position
+  `dataViz` was), **review** (critique a colleague's query), and **decision** (make the
+  recommendation). Then ~30 tasks per project authored against the validation gate, the
+  weekly retro/1:1, the performance record, and the interview defence.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
 built and tested against the five tasks that exist today; authoring the ~30-task arc is a

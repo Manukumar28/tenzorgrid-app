@@ -17,6 +17,7 @@ const { pickAvatar } = require('./avatars');
 const { buildDatasetDb, describeDataset, dumpDataset, DEFAULT_DATASET } = require('./datasets');
 const { getProjectDoc, TOOLS } = require('./projectdocs');
 const skilltest = require('./skilltest');
+const charttasks = require('./charttasks');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -71,8 +72,8 @@ const PROJECT_CATALOG = {
       kind: 'analysis',
       stakeholder: 'stakeholder',
       difficulty: 'Medium',
-      taskKeys: ['da-001'],
-      skillFocus: ['sql', 'businessLogic'],
+      taskKeys: ['da-001', 'da-006'],
+      skillFocus: ['sql', 'dataViz', 'businessLogic'],
       impactValue: 12400,
       // The rest of the project, so the learner can see their part of a whole rather
       // than a task list. These are named participants in the scenario, NOT members of
@@ -91,7 +92,7 @@ const PROJECT_CATALOG = {
       kind: 'dashboard',
       stakeholder: 'line_manager',
       difficulty: 'Medium',
-      taskKeys: ['da-002'],
+      taskKeys: ['da-002', 'da-007'],
       skillFocus: ['sql', 'dataViz'],
       impactValue: 8000,
       contributors: [
@@ -360,7 +361,11 @@ const HOURS_PER_DAY_TARGET = 2;
 // per-day ceilings generous enough that nobody working normally will ever reach them,
 // but low enough that a runaway loop or someone spamming the chat box can't run up a
 // bill. Counted from existing rows (no extra table needed): see countTodaysAiUse.
-const DAILY_AI_LIMITS = { submissions: 6, messages: 20 };
+// Six tasks a day is the intended pace, so a ceiling of exactly six left no headroom:
+// one parked task resubmitted and the learner was locked out until tomorrow. Eight gives
+// two retries a day, which is enough to recover from a bad morning and still far below
+// anything that could run up a bill.
+const DAILY_AI_LIMITS = { submissions: 8, messages: 20 };
 
 // A grade at or above this is treated as genuinely good work — the threshold for
 // Asha's feedback being surfaced as a shoutout rather than just routine feedback.
@@ -462,6 +467,64 @@ const TASKS = {
     day: 1,
     difficulty: 'hard',
   },
+  // ---- Presentation ------------------------------------------------------------------
+  // A chart task is graded on judgement, not syntax: which chart, what on each axis, how
+  // ordered, and whether the value axis starts at zero. Deterministic, so it costs
+  // nothing and can run as often as the week needs.
+  'da-006': {
+    title: 'Chart the department pay gap',
+    brief: "Vikram is putting your department salary numbers in front of the leadership team on Thursday and wants one chart, not a table. Choose how to present it: the chart type, what goes on each axis, how it is ordered, and where the value axis starts. He is comparing one number across eight departments — that constraint should decide most of your choices for you.",
+    tool: 'chart',
+    datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Average salary by department, for current staff.',
+      // The rows the learner is charting. Graded on presentation, not on producing them.
+      sourceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_salary DESC',
+      columns: ['department', 'avg_salary'],
+      correct: { type: 'bar', x: 'department', y: 'avg_salary', sort: 'desc', baselineZero: true },
+      whyRight: 'Bars compare magnitudes across categories, sorting does half the reader\'s work, and a zero baseline keeps the differences honest.',
+      why: {
+        type: 'Averages across departments are not parts of a whole, so a pie is a category error — they do not sum to anything. A line implies these categories have an order they do not have. Bars compare magnitudes, which is the question being asked.',
+        x: 'The categories go on the category axis. Putting salary there leaves nothing to compare across.',
+        y: 'The measured value belongs on the value axis — that is the thing whose length carries the meaning.',
+        sort: 'Sorting by value does half the reader\'s work for them. Leadership is asking which department leads and by how much; an alphabetical chart makes them find that out themselves.',
+        baselineZero: 'A bar\'s meaning is its length. Starting the axis at 800,000 makes a 3% gap look like a 3x gap — it genuinely uses the space better, which is exactly why it is a tempting mistake rather than an obvious one.',
+      },
+    },
+    estHours: 0.5,
+    priority: 'medium',
+    dueInDays: 2,
+    day: 2,
+    difficulty: 'easy',
+  },
+  'da-007': {
+    title: 'Chart the hiring trend',
+    brief: "People Ops wants your hiring-by-year numbers on one slide for the planning session. Same decisions as before — chart type, axes, ordering, baseline — but this is a different shape of question from the last one, and the answer that was right there is not automatically right here. Think about what these categories are before you pick.",
+    tool: 'chart',
+    datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Headcount hired per year.',
+      sourceSql: 'SELECT hire_year, COUNT(*) AS headcount FROM employees GROUP BY hire_year ORDER BY hire_year',
+      columns: ['hire_year', 'headcount'],
+      // The trap: the previous task rewarded bar + sorted-by-value. Years are an ORDERED
+      // sequence, so both of those are now wrong. A learner who pattern-matches the last
+      // answer loses exactly the marks they should.
+      correct: { type: 'line', x: 'hire_year', y: 'headcount', sort: 'none' },
+      whyRight: 'Years are an ordered sequence, so a line shows the trend and the order carries meaning of its own.',
+      why: {
+        type: 'Years are ordered and evenly spaced, which is exactly what a line chart is for — it shows the direction of travel between them. Bars would work, but they invite the reader to compare 2019 with 2023 as if they were unrelated categories rather than points on a trend.',
+        x: 'The year is the sequence you are plotting along.',
+        y: 'Headcount is the measured value.',
+        sort: 'Do not sort a time series by value. Reordering the years destroys the only thing the chart is meant to show.',
+      },
+    },
+    estHours: 0.5,
+    priority: 'medium',
+    dueInDays: 3,
+    day: 2,
+    difficulty: 'medium',
+  },
+
   // ---- Senior track -----------------------------------------------------------------
   // The user was explicit that junior and senior differ by PROJECT, not by the same
   // brief written vaguer. So these are different questions, not harder wording: they
@@ -1768,7 +1831,12 @@ function nudgeOverdueProjects(userId, enrollment) {
     const fill = (t) => t
       .replace(/\{name\}/g, learner)
       .replace(/\{project\}/g, def.title)
-      .replace(/\{open\}/g, open.length === 1 ? `"${open[0].title}"` : `${open.length} tasks`);
+      // Name the work rather than counting it wherever that is still readable. "2 tasks"
+      // makes the learner go and look; naming them means the chase can be acted on from
+      // the email itself.
+      .replace(/\{open\}/g, open.length <= 2
+        ? open.map((t) => `"${t.title}"`).join(' and ')
+        : `${open.length} tasks`);
 
     addMessage(enrollment.id, next.from, person.name, fill(next.body), null, fill(next.subject), next.from);
     db.prepare('UPDATE sim_project_runs SET nudge_level = ? WHERE id = ?').run(level + 1, run.id);
@@ -2276,9 +2344,17 @@ function getWorkbench(userId, taskId) {
     submission: task.submission || '',
     tool,
     dataset: describeDataset(datasetKey),
+    // A chart task is graded on presentation, so the rows are given rather than queried
+    // — asking them to rewrite a query they have already been marked on would be busywork
+    // and would confuse what the task is actually assessing.
+    chart: tool === 'chart' && def.chart
+      ? { ...charttasks.present(def.chart), rows: runPracticeQuery(def.chart.sourceSql, datasetKey, 200).rows }
+      : null,
     tools: tool === 'python'
       ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
-      : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+      : tool === 'chart'
+        ? [TOOLS['chart-builder'], TOOLS['schema-browser']]
+        : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
   };
 }
 
@@ -2492,13 +2568,20 @@ ${round >= MAX_REVIEW_ROUNDS ? 'This is their final attempt — if it is still n
   // attempt through than to block a learner behind a rule that cannot read.
   const a = String(answer || '').trim();
   const words = a.split(/\s+/).filter(Boolean).length;
-  const explains = /\bbecause\b|\bsince\b|\bso that\b|\bto avoid\b|\bwould\b|\botherwise\b/i.test(a);
+  // Reasoning does not always announce itself with "because". A good explanation of a
+  // chart choice — "bars compare a value across categories, and sorting puts the answer
+  // first for the reader" — carries its argument in the structure rather than in a
+  // connective, and the narrower list rejected exactly that.
+  const explains = /\bbecause\b|\bsince\b|\bso that\b|\bto avoid\b|\bwould\b|\botherwise\b|\brather than\b|\bwhich means\b|\bif (?:you|we|i)\b|\bthat way\b|\bmakes? (?:it|the|them)\b|\bputs?\b|\bshows?\b|\bhides?\b|\bskews?\b/i.test(a);
   if (words >= 12 && explains) {
     return { accept: true, reply: "That's the reasoning I wanted to hear. Signed off — next one's yours." };
   }
+  // A chart task has no code, so telling the learner their answer described "the code"
+  // reads as a bug in the product rather than feedback on their work.
+  const noun = (taskDef && taskDef.tool) === 'chart' ? 'the chart shows' : 'the code does';
   return {
     accept: false,
-    reply: "That tells me what the code does, not why you chose it. Give me the reason — what would go wrong if you'd done it the other way?",
+    reply: `That tells me what ${noun}, not why you chose it. Give me the reason — what would go wrong if you'd done it the other way?`,
   };
 }
 
@@ -2548,6 +2631,31 @@ async function answerReview(userId, taskId, answer) {
   return { accepted: false, parked: false, reply, roundsLeft: MAX_REVIEW_ROUNDS - round, state: getState(userId) };
 }
 
+function safeJson(text) {
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+// Asha's sign-off question for a chart. Deterministic, and always about a choice they
+// actually made — asked about the first thing they got wrong if there is one, and about
+// the load-bearing choice if there is not. A generic "why this chart?" would fit any
+// submission, which is the definition of a failed question.
+function chartReviewQuestion(taskDef, answer, marked) {
+  const wrong = marked.notes.find((n) => !n.ok);
+  if (wrong) {
+    if (wrong.field === 'type') {
+      return `You went with a ${answer.type} here. Talk me through that — what is it about this data that made a ${answer.type} the right shape for it?`;
+    }
+    if (wrong.field === 'sort') {
+      return `On the ordering — you chose "${answer.sort}". Who is reading this chart, and what do you want them to notice first?`;
+    }
+    if (wrong.field === 'baselineZero') {
+      return `Your value axis doesn't start at zero. That's a deliberate choice with a real effect on how the chart reads — what was your thinking?`;
+    }
+    return `You put "${answer[wrong.field]}" on the ${wrong.field} axis. Why that one round rather than the other?`;
+  }
+  return `That's the chart I'd have made. Before I take it to Vikram — if he asks you why not a pie chart, what do you tell him?`;
+}
+
 async function submitTask(userId, taskId, code, computedResult) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled');
@@ -2564,6 +2672,30 @@ async function submitTask(userId, taskId, code, computedResult) {
 
   let submittedResult;
   let referenceResult;
+
+  // A chart is graded field by field against an authored spec, with no AI call and no
+  // dataset comparison — the rows were given, so what is under assessment is entirely
+  // the presentation choices.
+  if (tool === 'chart') {
+    const answer = typeof code === 'string' ? safeJson(code) : code;
+    if (!answer || typeof answer !== 'object') {
+      throw new Error('Make your chart choices before submitting.');
+    }
+    const marked = charttasks.grade(taskDef.chart, answer);
+    db.prepare(`
+      UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+        submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
+      WHERE id = ?
+    `).run(JSON.stringify(answer), marked.score, marked.feedback, JSON.stringify(marked.skills), now(), taskId);
+
+    addMessage(enrollment.id, 'learner', 'You',
+      `Submitted a ${answer.type || 'chart'}: ${answer.x} against ${answer.y}.`, taskId);
+
+    const question = chartReviewQuestion(taskDef, answer, marked);
+    db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+    return { inReview: true, question, result: marked.notes };
+  }
 
   if (tool === 'python') {
     // Python runs in the learner's own browser under Pyodide, so — unlike SQL — the
