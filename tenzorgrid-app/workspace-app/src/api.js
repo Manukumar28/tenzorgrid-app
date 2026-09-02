@@ -14,6 +14,7 @@ export const api = {
   getState: () => jsonFetch('/api/workspace/state'),
   enroll: (level, scheduleType) => jsonFetch('/api/workspace/enroll', { method: 'POST', body: JSON.stringify({ level, scheduleType }) }),
   checkIn: () => jsonFetch('/api/workspace/checkin', { method: 'POST' }),
+  submitSkillTest: (answers) => jsonFetch('/api/workspace/skill-test', { method: 'POST', body: JSON.stringify({ answers }) }),
   submitTask: (taskId, sql) => jsonFetch(`/api/workspace/tasks/${taskId}/submit`, { method: 'POST', body: JSON.stringify({ sql }) }),
   sendMessage: (archetype, body, subject) => jsonFetch('/api/workspace/messages', { method: 'POST', body: JSON.stringify({ archetype, body, subject }) }),
   toggleChecklist: (itemKey, checked) => jsonFetch('/api/workspace/checklist', { method: 'POST', body: JSON.stringify({ itemKey, checked }) }),

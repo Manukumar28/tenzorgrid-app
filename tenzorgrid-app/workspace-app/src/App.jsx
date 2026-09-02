@@ -9,6 +9,7 @@ import Emails from './components/Emails.jsx';
 import Team from './components/Team.jsx';
 import SettingsTab from './components/SettingsTab.jsx';
 import EnrollForm from './components/EnrollForm.jsx';
+import SkillTest from './components/SkillTest.jsx';
 import { api } from './api.js';
 
 const ROLE_LABEL = { data_analyst: 'Data Analyst' };
@@ -45,6 +46,20 @@ export default function App() {
 
   if (loading) return null;
   if (!state) return <EnrollForm onEnrolled={setState} />;
+
+  // Day one is the skills check, and until it is done there is genuinely nothing else on
+  // the dashboard — no project, no tasks. Showing the empty shell behind a dismissable
+  // modal would just invite people to skip past it and then wonder why the board is bare.
+  if (state.skillTest && state.skillTest.required) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-6">
+        <SkillTest
+          skillTest={state.skillTest}
+          onDone={(next) => { if (next) setState(next); }}
+        />
+      </div>
+    );
+  }
 
   const roleLabel = `${state.enrollment.level === 'senior' ? 'Senior' : 'Junior'} ${ROLE_LABEL[state.enrollment.role] || 'Data Analyst'}`;
   const pendingCount = state.tasks.filter((t) => t.status === 'assigned').length;

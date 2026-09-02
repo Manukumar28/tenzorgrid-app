@@ -16,6 +16,7 @@ const ai = require('./ai');
 const { pickAvatar } = require('./avatars');
 const { buildDatasetDb, describeDataset, dumpDataset, DEFAULT_DATASET } = require('./datasets');
 const { getProjectDoc, TOOLS } = require('./projectdocs');
+const skilltest = require('./skilltest');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -360,20 +361,12 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   `).run(id, userId, role, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
 
   addMessage(id, 'people_partner', PEOPLE_PARTNER_NAME,
-    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Your Line Manager is Asha Rao — she'll assign your first task shortly. Ping me any time about policy or onboarding.`);
+    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
+  // Day one is the skill test, not the first task. The learner asked for this ordering
+  // and their reasoning was better than mine: the test is the BASELINE for the skill
+  // matrix. Without it, "your SQL improved" is a claim with nothing behind it.
   addMessage(id, 'line_manager', LINE_MANAGER_NAME,
-    `Hi, welcome to the team. Take a bit to settle in — I'll send your first task in a moment.`);
-
-  // The first project starts the moment they enrol — the welcome IS day 1, so the
-  // week's clock has to start here rather than on the first getState.
-  const run = startProjectRun(id, 'compensation-review');
-  const taskId = assignTask(id, 'da-001', run.started_at);
-  const task = TASKS['da-001'];
-  addMessage(id, 'line_manager', LINE_MANAGER_NAME,
-    `First task: ${task.title}. ${task.brief}`, taskId);
-  addMessage(id, 'stakeholder', STAKEHOLDER_NAME,
-    "Hi — following up on the department pay numbers Asha mentioned. I need this for a leadership review, so ideally by end of day Thursday. Let me know if anything's unclear about what I'm after.",
-    taskId, 'Department salary numbers — need by Thursday');
+    "Hi, welcome to the team. Before I hand you a project, I'd like a quick read on where you're strong — there's a short skills check on your dashboard, about fifteen minutes. It isn't a pass/fail: I use it to pitch your first project at the right level, and you'll be able to watch these numbers move as you deliver work.");
 
   return getEnrollment(userId);
 }
@@ -478,7 +471,13 @@ function countTodaysAiUse(enrollmentId) {
   return { submissions, messages };
 }
 
-function getSkillMatrix(gradedTasks) {
+// `baseline` is the entry skill test, when one was taken. It is what turns the matrix
+// from a snapshot into evidence: the learner can point at the movement, which is the
+// thing an interview or a salary conversation actually needs.
+//
+// An axis the test did not cover, or that no graded task has exercised, stays null and
+// reports no movement. A delta computed against nothing is worse than no delta.
+function getSkillMatrix(gradedTasks, baseline) {
   const sums = {}, counts = {};
   for (const axis of SKILL_AXES) { sums[axis] = 0; counts[axis] = 0; }
   for (const t of gradedTasks) {
@@ -488,12 +487,21 @@ function getSkillMatrix(gradedTasks) {
       if (typeof skills[axis] === 'number') { sums[axis] += skills[axis]; counts[axis] += 1; }
     }
   }
-  return SKILL_AXES.map((axis) => ({
-    axis,
-    label: SKILL_AXIS_LABEL[axis],
-    value: counts[axis] ? Math.round(sums[axis] / counts[axis]) : 0,
-    hasData: counts[axis] > 0,
-  }));
+  const base = (baseline && baseline.skills) || {};
+  return SKILL_AXES.map((axis) => {
+    const hasData = counts[axis] > 0;
+    const value = hasData ? Math.round(sums[axis] / counts[axis]) : 0;
+    const start = typeof base[axis] === 'number' ? base[axis] : null;
+    return {
+      axis,
+      label: SKILL_AXIS_LABEL[axis],
+      value,
+      hasData,
+      baseline: start,
+      // Movement is only real when there are two real numbers to subtract.
+      delta: hasData && start !== null ? value - start : null,
+    };
+  });
 }
 
 function gradeLetter(score) {
@@ -1318,6 +1326,9 @@ function getState(userId) {
     : null;
   const scoreDeltaToday = avgScore === null ? null : avgScore - (avgScoreBeforeToday === null ? 0 : avgScoreBeforeToday);
 
+  const baseline = enrollment.baseline_json ? JSON.parse(enrollment.baseline_json) : null;
+  const skillTest = getSkillTest(enrollment);
+
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
   const projects = getProjects(enrollment.role, tasks, streaks, enrollment.id);
   closeCompletedRuns(enrollment, projects.projects);
@@ -1381,7 +1392,8 @@ function getState(userId) {
       days: attendanceRows.map((r) => r.attended_on),
       streak: streaks,
     },
-    skillMatrix: getSkillMatrix(gradedTasks),
+    skillTest,
+    skillMatrix: getSkillMatrix(gradedTasks, baseline),
     scoreHistory,
     shoutouts: getShoutouts(gradedTasks),
     checklist,
@@ -1498,6 +1510,83 @@ function closeCompletedRuns(enrollment, projects) {
     db.prepare("UPDATE sim_project_runs SET completed_at = ? WHERE enrollment_id = ? AND project_key = ? AND completed_at IS NULL")
       .run(now(), enrollment.id, p.key);
   }
+}
+
+// The first project, handed over once the skills check is in. Kept separate from
+// startEnrollment so the order of the day-one experience is visible in one place:
+// welcome -> skills check -> project.
+const FIRST_PROJECT = 'compensation-review';
+
+function beginFirstProject(enrollment) {
+  const already = db.prepare('SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ?').get(enrollment.id).c;
+  if (already > 0) return null;
+
+  const def = (PROJECT_CATALOG[enrollment.role] || []).find((p) => p.key === FIRST_PROJECT);
+  if (!def) return null;
+
+  const run = startProjectRun(enrollment.id, def.key);
+  let firstId = null;
+  for (const key of def.taskKeys) {
+    const taskId = assignTask(enrollment.id, key, run.started_at);
+    if ((TASKS[key].day || 1) === 1 && !firstId) firstId = taskId;
+  }
+  const task = TASKS[def.taskKeys[0]];
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    `Thanks for doing that. You're on ${def.title} — first task: ${task.title}. ${task.brief}`, firstId);
+  addMessage(enrollment.id, 'stakeholder', STAKEHOLDER_NAME,
+    "Hi — following up on the department pay numbers Asha mentioned. I need this for a leadership review, so ideally by end of day Thursday. Let me know if anything's unclear about what I'm after.",
+    firstId, 'Department salary numbers — need by Thursday');
+  return run;
+}
+
+// The skills check, as the learner sees it. `pending` is the gate: until it is done the
+// dashboard has no project on it, which is the point — the test is the first thing that
+// happens, not a side quest tucked in a menu.
+//
+// An account enrolled BEFORE this shipped already has tasks. Those learners are offered
+// the test but never blocked by it: retro-fitting a gate onto someone mid-project would
+// take work away from them to make a number tidier.
+function getSkillTest(enrollment) {
+  const taken = Boolean(enrollment.baseline_at);
+  const hasWork = db.prepare('SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ?').get(enrollment.id).c > 0;
+  return {
+    taken,
+    // Only a learner with no work yet is held here.
+    required: !taken && !hasWork,
+    optional: !taken && hasWork,
+    takenAt: enrollment.baseline_at || null,
+    result: taken ? JSON.parse(enrollment.baseline_json || 'null') : null,
+    questions: taken ? [] : skilltest.getQuestions(),
+    minutes: 15,
+  };
+}
+
+function submitSkillTest(userId, answers) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (enrollment.baseline_at) throw new Error('You have already taken the skills check.');
+
+  const result = skilltest.score(answers);
+  if (!result.answered) throw new Error('Answer at least one question before submitting.');
+
+  db.prepare('UPDATE sim_enrollments SET baseline_json = ?, baseline_at = ? WHERE id = ?')
+    .run(JSON.stringify({ skills: result.skills, overall: result.overall, answered: result.answered, correct: result.correct, total: result.total }),
+         now(), enrollment.id);
+
+  // Asha reacts to what the test actually showed. Naming the strongest and weakest axis
+  // is the difference between a score and a conversation — and it is derived, so it can
+  // never contradict the numbers on the matrix.
+  const scored = Object.entries(result.skills).filter(([, v]) => typeof v === 'number');
+  const sorted = [...scored].sort((a, b) => b[1] - a[1]);
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  const line = best && worst && best[0] !== worst[0]
+    ? `Your strongest area is ${SKILL_AXIS_LABEL[best[0]]} (${best[1]}) and the one with the most room is ${SKILL_AXIS_LABEL[worst[0]]} (${worst[1]}).`
+    : 'That gives me a starting point to measure against.';
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    `Got your skills check — ${result.correct} of ${result.answered}. ${line}\n\nNothing here is a verdict; it's the line we measure from. Every task you deliver updates these, and in twelve weeks you'll be able to show the difference rather than assert it.`);
+
+  beginFirstProject(getEnrollment(userId));
+  return { result, state: getState(userId) };
 }
 
 function startProject(userId, projectKey) {
@@ -2158,5 +2247,6 @@ module.exports = {
   sendLearnerMessage,
   toggleChecklistItem,
   startProject,
+  submitSkillTest,
   markMessages,
 };
