@@ -136,8 +136,57 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 2,
     },
+
+    // ---- Senior track -------------------------------------------------------------
+    // The user's call, and the right one: a senior learner gets DIFFERENT projects, not
+    // the same brief written vaguer. These sit on the ops dataset rather than HR, ask
+    // for rates and distributions rather than totals, and leave the learner to decide
+    // what to exclude — which is most of what seniority actually is.
+    {
+      key: 'reliability-review',
+      title: 'Platform Reliability Review',
+      description: 'Engineering leadership needs to know which service costs the most time when it breaks, and where the backlog is concentrated.',
+      kind: 'analysis',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      taskKeys: ['sa-001', 'sa-003'],
+      skillFocus: ['sql', 'businessLogic', 'communication'],
+      impactValue: 28000,
+      contributors: [
+        { name: 'Sneha Joshi', role: 'Support Lead', does: 'Logged and triaged every incident', day: 1 },
+        { name: null, role: 'Senior Data Analyst', does: 'The reliability and backlog analysis', day: 1, throughDay: 5 },
+        { name: 'Arjun Rao', role: 'Engineering Manager', does: 'Plans next quarter from your findings', day: 5, needsYou: true },
+      ],
+      unlockAfter: 0,
+    },
+    {
+      key: 'account-economics',
+      title: 'Account Economics Review',
+      description: 'Finance wants to know which accounts cost more to support than they return, and where the engineering time actually goes.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      taskKeys: ['sa-002', 'sa-004'],
+      skillFocus: ['sql', 'python', 'businessLogic'],
+      impactValue: 34000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Supplied the revenue baseline', day: 1 },
+        { name: null, role: 'Senior Data Analyst', does: 'The cost-to-serve analysis', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes the pricing case to the board', day: 5, needsYou: true },
+      ],
+      unlockAfter: 1,
+    },
   ],
 };
+
+// Junior and senior see different catalogues. A project with no `level` is junior-track;
+// this is the one place the split is decided, so nothing downstream has to know about it.
+function catalogFor(role, level) {
+  const all = PROJECT_CATALOG[role] || [];
+  return all.filter((p) => (p.level || 'junior') === (level === 'senior' ? 'senior' : 'junior'));
+}
 
 // A graded task scores 0-100 on each skill axis it exercises. Skill *points* are that
 // score on a 0-5 scale (score / 20), so one perfect task is worth 5.0 points on an
@@ -264,6 +313,80 @@ const TASKS = {
     dueInDays: 5,
     // Opens on working day 1 of the project week.
     day: 1,
+    difficulty: 'hard',
+  },
+  // ---- Senior track -----------------------------------------------------------------
+  // The user was explicit that junior and senior differ by PROJECT, not by the same
+  // brief written vaguer. So these are different questions, not harder wording: they
+  // ask for a rate rather than a total, make the learner decide what to exclude, and
+  // end with a recommendation the data does not hand them.
+  'sa-001': {
+    title: 'Time to resolve, by service',
+    brief: "Engineering leadership wants to know which service is costing us the most time when it breaks — not how often it breaks. Write ONE SQL SELECT query returning, per service, how many incidents you counted and the average hours from start to resolution, slowest first. The judgement call is yours: some incidents are still open, and an incident with no resolution time cannot contribute to an average of resolution times. Decide what to do with them and make sure your count reflects that decision — a count of all incidents beside an average of only the closed ones is the kind of table that gets quietly believed and is wrong.",
+    referenceSql: "SELECT service, COUNT(*) AS incidents, AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY avg_hours DESC",
+    datasetKey: 'saas_ops',
+    tool: 'sql',
+    estHours: 4,
+    priority: 'high',
+    dueInDays: 2,
+    day: 1,
+    difficulty: 'hard',
+  },
+  'sa-002': {
+    title: 'Support load against revenue',
+    brief: "Finance wants to know which accounts cost more to support than they are worth. Write ONE SQL SELECT query returning, for every ACTIVE client, their company, tier, monthly recurring revenue, how many tickets they have raised, and tickets per 100,000 of MRR — heaviest support load per revenue first. One account has already churned — it is still in the table and it has raised tickets, so leaving the status filter out puts a customer we no longer have into a pricing decision. Use a LEFT JOIN so an account with no tickets would still appear with a zero, and watch the division: without a decimal, some engines will hand you integers.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(t.id) AS tickets, (COUNT(t.id) * 100000.0) / c.mrr AS tickets_per_100k FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier, c.mrr ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops',
+    tool: 'sql',
+    estHours: 5,
+    priority: 'high',
+    dueInDays: 3,
+    day: 1,
+    difficulty: 'hard',
+  },
+  'sa-003': {
+    title: 'Unresolved backlog by client',
+    brief: "Before the quarterly business reviews, Customer Success needs to know who is walking in angry. Write ONE SQL SELECT query returning, for each ACTIVE client, their company, tier, how many tickets are still open or pending, and how many SEV1 incidents they have taken — worst backlog first. 'Not resolved' covers both open and pending; treating pending as handled is how a QBR goes badly.",
+    referenceSql: "SELECT c.company, c.tier, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS unresolved_tickets, (SELECT COUNT(*) FROM incidents i WHERE i.client_id = c.id AND i.severity = 'SEV1') AS sev1_incidents FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier ORDER BY unresolved_tickets DESC",
+    datasetKey: 'saas_ops',
+    tool: 'sql',
+    estHours: 3,
+    priority: 'medium',
+    dueInDays: 4,
+    day: 3,
+    difficulty: 'medium',
+  },
+  'sa-004': {
+    title: 'Where the engineering time went',
+    brief: "The platform team is arguing about where to spend next quarter. Averages hide the outliers, so they want the shape of it: for each severity, the number of RESOLVED incidents, the median hours to resolve, and the single worst case. The dataset is loaded for you as `tables` — a dict of table name to a list of plain dict rows; timestamps are ISO 8601 strings. SQLite has no median, which is why this one is Python. Return a list of dicts with keys `severity`, `resolved`, `median_hours` and `worst_hours`, sorted by median hours highest first. Standard library only, no pandas. Assign your answer to `result`.",
+    referenceCompute: (tables) => {
+      const bySev = new Map();
+      for (const i of tables.incidents) {
+        if (!i.resolved_at) continue;
+        const hours = (Date.parse(i.resolved_at) - Date.parse(i.started_at)) / 3600000;
+        if (!bySev.has(i.severity)) bySev.set(i.severity, []);
+        bySev.get(i.severity).push(hours);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((x, y) => x - y);
+        const mid = Math.floor(a.length / 2);
+        return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+      };
+      return [...bySev.entries()]
+        .map(([severity, hs]) => ({
+          severity,
+          resolved: hs.length,
+          median_hours: median(hs),
+          worst_hours: Math.max(...hs),
+        }))
+        .sort((a, b) => b.median_hours - a.median_hours);
+    },
+    datasetKey: 'saas_ops',
+    tool: 'python',
+    estHours: 4,
+    priority: 'medium',
+    dueInDays: 4,
+    day: 3,
     difficulty: 'hard',
   },
   'da-005': {
@@ -616,8 +739,8 @@ function projectWeek(run, def, taskRows, nowMs) {
   };
 }
 
-function getProjects(role, tasks, streaks, enrollmentId) {
-  const catalog = PROJECT_CATALOG[role] || [];
+function getProjects(role, tasks, streaks, enrollmentId, level) {
+  const catalog = catalogFor(role, level);
   const byKey = {};
   for (const t of tasks) (byKey[t.task_key] = byKey[t.task_key] || []).push(t);
 
@@ -812,8 +935,8 @@ function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartM
 // Everything the Tasks tab shows. A task in this product is completed by submitting work
 // and being graded — there is no "mark done" flag — so `stage` reports where the task
 // genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
-function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs) {
-  const catalog = PROJECT_CATALOG[role] || [];
+function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level) {
+  const catalog = catalogFor(role, level);
   const projectByTaskKey = {};
   for (const p of catalog) {
     for (const k of p.taskKeys) projectByTaskKey[k] = p;
@@ -1182,8 +1305,8 @@ function getCalendar(enrollment, tasks, messages, nowMs) {
 //
 // Availability is likewise real rather than a decorative presence dot: it reflects whether
 // the learner can actually get a reply right now, given the daily AI message allowance.
-function getTeam(role, rosterList, projects, messages, messagesRemaining) {
-  const catalog = PROJECT_CATALOG[role] || [];
+function getTeam(role, rosterList, projects, messages, messagesRemaining, level) {
+  const catalog = catalogFor(role, level);
   const projectStatus = Object.fromEntries(projects.projects.map((p) => [p.key, p]));
 
   return rosterList.map((person) => {
@@ -1247,7 +1370,7 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining) {
 // explaining where the new work came from. It is a no-op for everyone already in sync,
 // and it makes every future catalog change safe by construction.
 function reconcileProjectTasks(enrollment) {
-  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const catalog = catalogFor(enrollment.role, enrollment.level);
   if (!catalog.length) return 0;
 
   const rows = db.prepare('SELECT task_key, assigned_at FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
@@ -1333,7 +1456,7 @@ function getState(userId) {
   const skillTest = getSkillTest(enrollment);
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
-  const projects = getProjects(enrollment.role, tasks, streaks, enrollment.id);
+  const projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
   closeCompletedRuns(enrollment, projects.projects);
   const rosterList = rosterWithAvatars();
   const aiUse = countTodaysAiUse(enrollment.id);
@@ -1342,6 +1465,7 @@ function getState(userId) {
     enrollment.role, tasks, projects, Date.now(),
     attendanceRows.map((r) => r.attended_on),
     Date.parse(enrollment.created_at),
+    enrollment.level,
   );
 
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
@@ -1369,7 +1493,7 @@ function getState(userId) {
     taskBoard,
     inbox: getInbox(messages, Date.now()),
     calendar: getCalendar(enrollment, tasks, messages, Date.now()),
-    team: getTeam(enrollment.role, rosterList, projects, messages, messagesRemaining),
+    team: getTeam(enrollment.role, rosterList, projects, messages, messagesRemaining, enrollment.level),
     messagesRemaining,
     performance: {
       tasksCompleted: gradedTasks.length,
@@ -1448,7 +1572,7 @@ function firstName(full) {
 
 // Sends whichever chase is now due, at most one per read. Returns how many were sent.
 function nudgeOverdueProjects(userId, enrollment) {
-  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const catalog = catalogFor(enrollment.role, enrollment.level);
   const runs = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id);
   if (!runs.length) return 0;
 
@@ -1518,14 +1642,14 @@ function closeCompletedRuns(enrollment, projects) {
 
 // The first project, handed over once the skills check is in. Kept separate from
 // startEnrollment so the order of the day-one experience is visible in one place:
-// welcome -> skills check -> project.
-const FIRST_PROJECT = 'compensation-review';
-
+// welcome -> skills check -> project. Which project that is comes from the learner's
+// LEVEL — junior and senior get different catalogues, so this takes the first project
+// on theirs rather than naming one.
 function beginFirstProject(enrollment) {
   const already = db.prepare('SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ?').get(enrollment.id).c;
   if (already > 0) return null;
 
-  const def = (PROJECT_CATALOG[enrollment.role] || []).find((p) => p.key === FIRST_PROJECT);
+  const def = catalogFor(enrollment.role, enrollment.level)[0];
   if (!def) return null;
 
   const run = startProjectRun(enrollment.id, def.key);
@@ -1537,9 +1661,11 @@ function beginFirstProject(enrollment) {
   const task = TASKS[def.taskKeys[0]];
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
     `Thanks for doing that. You're on ${def.title} — first task: ${task.title}. ${task.brief}`, firstId);
+  // The stakeholder's note names the actual project. It used to hardcode the junior
+  // compensation brief, which read as a mistake the moment a senior learner arrived.
   addMessage(enrollment.id, 'stakeholder', STAKEHOLDER_NAME,
-    "Hi — following up on the department pay numbers Asha mentioned. I need this for a leadership review, so ideally by end of day Thursday. Let me know if anything's unclear about what I'm after.",
-    firstId, 'Department salary numbers — need by Thursday');
+    `Hi — following up on ${def.title}, which Asha mentioned you're picking up. I need it for a leadership review, so ideally by end of day Thursday. Let me know if anything's unclear about what I'm after.`,
+    firstId, `${def.title} — need by Thursday`);
   return run;
 }
 
@@ -1630,7 +1756,7 @@ function getStandup(userId) {
   const closedSince = graded.filter((t) => t.graded_at && Date.parse(t.graded_at) >= since);
 
   const runs = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id);
-  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const catalog = catalogFor(enrollment.role, enrollment.level);
   const late = runs.filter((r) => Date.now() > Date.parse(r.due_at))
     .map((r) => (catalog.find((p) => p.key === r.project_key) || {}).title)
     .filter(Boolean);
@@ -1721,13 +1847,13 @@ function submitStandup(userId, answers, spoken) {
 function startProject(userId, projectKey) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled yet.');
-  const def = (PROJECT_CATALOG[enrollment.role] || []).find((p) => p.key === projectKey);
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === projectKey);
   if (!def) throw new Error('Unknown project.');
 
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
   const attendanceRows = db.prepare('SELECT attended_on FROM sim_attendance WHERE enrollment_id = ?').all(enrollment.id);
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
-  const current = getProjects(enrollment.role, tasks, streaks).projects.find((p) => p.key === projectKey);
+  const current = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level).projects.find((p) => p.key === projectKey);
 
   if (current.status === 'locked') throw new Error(`${current.requirement} before starting this one.`);
   if (current.status !== 'available') throw new Error('That project is already underway.');
@@ -1923,7 +2049,7 @@ function getProjectBrief(userId, projectKey) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled');
 
-  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const catalog = catalogFor(enrollment.role, enrollment.level);
   const entry = catalog.find((p) => p.key === projectKey);
   if (!entry) throw new Error('Unknown project.');
 

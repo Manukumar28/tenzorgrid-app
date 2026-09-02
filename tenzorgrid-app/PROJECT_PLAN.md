@@ -450,11 +450,17 @@ task teaches nothing and cannot be graded.
   words go into the thread verbatim. **Typing is the real path and voice is the upgrade**
   — recognition is Chrome/Edge only, so voice-first would have broken it for roughly a
   third of learners. Excluded from the daily AI cap, since it costs nothing.
-- **Phase 3b — next. Junior and senior get different projects.** The user was explicit
-  that the levels differ by *project*, not by a vaguer version of the same brief. This is
-  content authoring against the validation gate above (reference run, non-trivial result,
-  naive wrong answer differs), not engineering — `PROJECT_CATALOG` needs a `level` field
-  and a senior track authored on the existing `saas_ops` / `hr_core` datasets.
+- **Phase 3b — ✅ SHIPPED. Junior and senior get different projects.** Not the same brief
+  written vaguer — different questions. The senior track (`Platform Reliability Review`,
+  `Account Economics Review`) sits on the ops dataset, asks for **rates and distributions
+  rather than totals** (time-to-resolve per service, tickets per 100k of MRR, median and
+  worst-case hours by severity), and leaves the learner to decide what to exclude, which
+  is most of what seniority actually is. `catalogFor(role, level)` is the single place the
+  split is decided. Every senior task was put through the validation gate, and **one
+  failed it**: the sa-002 trap was decorative until it was rebuilt around the churned
+  account. Authoring it also surfaced a real data bug — the generator was resolving
+  incidents *before* they started, which made any duration analysis nonsense; fixed
+  without changing the random draw sequence, so every other generated value is unchanged.
 - **Phase 5.** The 12-week arc: roughly 30 tasks per role authored against that same gate,
   the weekly retro/1:1, the performance record, and the interview defence.
 
