@@ -488,6 +488,21 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // The learner's answer to Asha's review question. This is what actually completes a
+  // task — grading alone no longer does.
+  const reviewMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-zA-Z0-9_-]+)\/review$/);
+  if (reviewMatch && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    if (!body.answer || typeof body.answer !== 'string') return sendJson(res, 400, { error: 'Write your answer first.' });
+    try {
+      return sendJson(res, 200, await workspace.answerReview(user.id, reviewMatch[1], body.answer));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   // The project dataset as JSON, for the Python notebook to load into pandas.
   const taskDataMatch = pathname.match(/^\/api\/workspace\/tasks\/([a-zA-Z0-9_-]+)\/data$/);
   if (taskDataMatch && req.method === 'GET') {

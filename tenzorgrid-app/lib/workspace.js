@@ -656,8 +656,12 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       title: t.title,
       brief: t.brief,
       status: t.status,
-      score: t.score,
-      feedback: t.feedback,
+      // The score stays hidden until Asha signs the task off — see submitTask.
+      score: t.review_state === 'pending' ? null : t.score,
+      feedback: t.review_state === 'pending' ? null : t.feedback,
+      reviewState: t.review_state || null,
+      reviewQuestion: t.review_state === 'pending' ? t.review_question : null,
+      reviewRoundsLeft: t.review_state === 'pending' ? Math.max(0, 2 - (t.review_rounds || 0)) : null,
       estHours: t.est_hours,
       gradedAt: t.graded_at || null,
       priority,
@@ -1528,6 +1532,176 @@ function rowsMatch(a, b) {
   return JSON.stringify(normaliseRows(a)) === JSON.stringify(normaliseRows(b));
 }
 
+// ---------------------------------------------------------------------------
+// The verification gate.
+//
+// A correct answer is not a finished task. Before anything counts, Asha asks the
+// learner ONE question about a choice they actually made — why they filtered the way
+// they did, why that join, why they left the leavers in — and only her acceptance
+// completes it. That conversation IS the product: writing a GROUP BY is learnable from
+// any tutorial, but being asked "walk me through why" by someone who will not accept a
+// vague answer is the thing an interview does and nothing else practises.
+//
+// The question must be about THEIR submission. A generic "can you explain your
+// approach?" gets clicked through like a cookie banner and the whole mechanic dies, so
+// the prompt below is built around their code and their result, and the offline
+// fallback inspects their code for specific, checkable choices.
+// ---------------------------------------------------------------------------
+
+const MAX_REVIEW_ROUNDS = 2; // after this the task is parked, so a stuck day can continue
+
+const REVIEW_ASK_SYSTEM = `You are Asha Rao, Line Manager in a Data & Analytics team, reviewing a junior analyst's submitted work before you sign it off.
+
+Ask exactly ONE question about a specific choice they made in the code in front of you. Quote or name the actual thing — the filter they used or omitted, the join, the column they grouped by, the ordering. A question that would fit any submission is a failed question.
+
+If their result is wrong, do not tell them the answer and do not say it is wrong. Ask the question that leads them to notice it themselves.
+
+Short and direct: one or two sentences, the way a busy manager types in chat. No greeting, no praise, no preamble. Output only the question.`;
+
+const REVIEW_JUDGE_SYSTEM = `You are Asha Rao, Line Manager, deciding whether a junior analyst's answer to your review question is good enough to sign off their work.
+
+Accept when they show they understood the choice they made and can justify it — even if the wording is casual or imperfect. You are testing understanding, not eloquence, and not whether they used the right jargon.
+
+Push back when the answer is vague, restates the question, describes WHAT the code does without saying WHY, or is plainly guessing.
+
+Respond with ONLY a JSON object:
+{"accept": true|false, "reply": "<what you say to them, 1-2 sentences, in character>"}
+
+When accepting, your reply signs it off and moves on. When pushing back, your reply names what is missing and asks again — never give them the answer.`;
+
+// Deterministic review question, used when no AI key is configured. It inspects the
+// submission for choices that are actually checkable, so even the offline path asks
+// about something real rather than reaching for a generic prompt.
+function fallbackReviewQuestion(taskDef, code, matched) {
+  const sql = String(code || '').toLowerCase();
+  const tool = taskDef.tool || 'sql';
+
+  if (tool === 'sql') {
+    if (/from\s+employees/.test(sql) && !/exit_year/.test(sql)) {
+      return "Your query counts everyone who has ever worked here, including people who have left. Was that deliberate?";
+    }
+    if (/department_id/.test(sql) && !/join/.test(sql)) {
+      return "You've grouped by department_id, so the output is numbers rather than department names. How would a reader of this know which is which?";
+    }
+    if (/avg\(/.test(sql) && !/order\s+by/.test(sql)) {
+      return "There's no ORDER BY, so the rows come back in whatever order SQLite feels like. What order did you intend?";
+    }
+    if (!matched) {
+      return "This doesn't match what I get when I run it. Talk me through your filtering — where do you think we differ?";
+    }
+    return "Talk me through your WHERE clause — what are you deliberately leaving out, and why?";
+  }
+
+  if (!matched) {
+    return "Your numbers don't line up with mine. Walk me through how you grouped the rows before you took the median.";
+  }
+  return "Why the median here rather than the average? Give me the one-line version I could repeat to Vikram.";
+}
+
+// Asks the opening review question. Called once, immediately after grading.
+async function askReviewQuestion(taskDef, code, submittedResult, referenceResult, matched) {
+  if (ai.isAvailable()) {
+    const prompt = `Task they were given: ${taskDef.brief}
+
+Their ${taskDef.tool === 'python' ? 'Python' : 'SQL'}:
+${code}
+
+What their code returned:
+${JSON.stringify(submittedResult).slice(0, 900)}
+
+What the correct answer is:
+${JSON.stringify(referenceResult).slice(0, 900)}
+
+Their result ${matched ? 'MATCHES' : 'DOES NOT MATCH'} the correct answer.`;
+    const q = await ai.callClaude({ system: REVIEW_ASK_SYSTEM, prompt, maxTokens: 150 });
+    if (q && q.trim()) return q.trim();
+  }
+  return fallbackReviewQuestion(taskDef, code, matched);
+}
+
+// Judges the learner's answer. Returns { accept, reply }.
+async function judgeReviewAnswer(taskDef, code, question, answer, round) {
+  if (ai.isAvailable()) {
+    const prompt = `The task: ${taskDef.brief}
+
+Their code:
+${code}
+
+You asked them:
+${question}
+
+They answered:
+${answer}
+
+${round >= MAX_REVIEW_ROUNDS ? 'This is their final attempt — if it is still not good enough, say so plainly and tell them to park it and come back to it.' : ''}`;
+    const text = await ai.callClaude({ system: REVIEW_JUDGE_SYSTEM, prompt, maxTokens: 250 });
+    const parsed = ai.extractJson(text);
+    if (parsed && typeof parsed.accept === 'boolean' && typeof parsed.reply === 'string') {
+      return { accept: parsed.accept, reply: parsed.reply.trim() };
+    }
+  }
+
+  // Offline: a substantive answer that explains rather than restates is accepted. This
+  // is a weak judge on purpose — with no model available it is better to let a real
+  // attempt through than to block a learner behind a rule that cannot read.
+  const a = String(answer || '').trim();
+  const words = a.split(/\s+/).filter(Boolean).length;
+  const explains = /\bbecause\b|\bsince\b|\bso that\b|\bto avoid\b|\bwould\b|\botherwise\b/i.test(a);
+  if (words >= 12 && explains) {
+    return { accept: true, reply: "That's the reasoning I wanted to hear. Signed off — next one's yours." };
+  }
+  return {
+    accept: false,
+    reply: "That tells me what the code does, not why you chose it. Give me the reason — what would go wrong if you'd done it the other way?",
+  };
+}
+
+// The learner's answer to Asha's review question. Accepting completes the task and
+// unlocks whatever comes next; a second failed round parks it so the day can continue.
+async function answerReview(userId, taskId, answer) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  if (!task) throw new Error('Task not found');
+  if (task.review_state !== 'pending') throw new Error('This task is not waiting on a review answer.');
+
+  const clean = String(answer || '').trim();
+  if (!clean) throw new Error('Write your answer before sending it.');
+
+  const taskDef = TASKS[task.task_key] || {};
+  const round = (task.review_rounds || 0) + 1;
+
+  addMessage(enrollment.id, 'learner', 'You', clean, taskId, null, 'line_manager');
+  const { accept, reply } = await judgeReviewAnswer(taskDef, task.submission, task.review_question, clean, round);
+
+  if (accept) {
+    // Signed off. NOW the score is revealed and the task counts — 'graded' stays the
+    // terminal state, so everything downstream (projects, analytics, unlocks) is
+    // unchanged by the gate existing.
+    db.prepare("UPDATE sim_tasks SET status = 'graded', review_state = 'accepted', review_rounds = ?, graded_at = ? WHERE id = ?")
+      .run(round, now(), taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, task.feedback, taskId);
+    return { accepted: true, reply, score: task.score, feedback: task.feedback, state: getState(userId) };
+  }
+
+  if (round >= MAX_REVIEW_ROUNDS) {
+    // Parked, not failed. A real manager moves you on rather than letting you sit on
+    // one thing all day; the task stays visibly incomplete and counts against the
+    // project, which is the pressure without the dead end.
+    db.prepare("UPDATE sim_tasks SET status = 'parked', review_state = 'parked', review_rounds = ? WHERE id = ?")
+      .run(round, taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `Let's park ${task.title} for now and come back to it — take the next one so the day isn't lost.`, taskId);
+    return { accepted: false, parked: true, reply, state: getState(userId) };
+  }
+
+  db.prepare('UPDATE sim_tasks SET review_rounds = ? WHERE id = ?').run(round, taskId);
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
+  return { accepted: false, parked: false, reply, roundsLeft: MAX_REVIEW_ROUNDS - round, state: getState(userId) };
+}
+
 async function submitTask(userId, taskId, code, computedResult) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled');
@@ -1572,15 +1746,24 @@ async function submitTask(userId, taskId, code, computedResult) {
 
   const { score, feedback, skills } = await gradeSubmission(taskDef, code, submittedResult, referenceResult, tool);
 
+  // The score is computed now but NOT surfaced yet, and the task is NOT done. It goes
+  // to Asha for review first — a manager questions your reasoning before signing off,
+  // and telling the learner their mark up front would make that conversation pointless.
+  // status stays out of 'graded' until she accepts, so nothing downstream counts it.
   db.prepare(`
-    UPDATE sim_tasks SET status = 'graded', submission = ?, score = ?, feedback = ?, skills_json = ?, submitted_at = ?, graded_at = ?
+    UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+      submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
     WHERE id = ?
-  `).run(code, score, feedback, JSON.stringify(skills), now(), now(), taskId);
+  `).run(code, score, feedback, JSON.stringify(skills), now(), taskId);
 
   addMessage(enrollment.id, 'learner', 'You', `Submitted:\n${code}`, taskId);
-  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, feedback, taskId);
 
-  return { score, feedback, result: submittedResult };
+  const matched = rowsMatch(submittedResult, referenceResult);
+  const question = await askReviewQuestion(taskDef, code, submittedResult, referenceResult, matched);
+  db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+
+  return { inReview: true, question, result: submittedResult };
 }
 
 // Canned, in-character responses for archetypes that don't warrant an AI call for
@@ -1634,6 +1817,7 @@ module.exports = {
   submitTask,
   runPracticeQuery,
   runScratchQuery,
+  answerReview,
   getWorkbench,
   getTaskData,
   getProjectBrief,

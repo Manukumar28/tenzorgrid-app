@@ -72,7 +72,7 @@ export default function App() {
 
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
-        {tab === 'tasks' && <Tasks state={state} onStateChange={setState} />}
+        {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}

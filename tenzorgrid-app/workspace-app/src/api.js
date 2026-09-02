@@ -27,6 +27,9 @@ export const api = {
   runQuery: (taskId, sql) => jsonFetch(`/api/workspace/tasks/${taskId}/run`, { method: 'POST', body: JSON.stringify({ sql }) }),
   // The dataset as JSON, for the Python notebook to load into the interpreter.
   taskData: (taskId) => jsonFetch(`/api/workspace/tasks/${taskId}/data`),
+  // Answering Asha's review question is what actually completes a task.
+  answerReview: (taskId, answer) =>
+    jsonFetch(`/api/workspace/tasks/${taskId}/review`, { method: 'POST', body: JSON.stringify({ answer }) }),
   // Python runs in the browser, so the result is computed client-side and sent
   // alongside the code — see the trust note in lib/workspace.js submitTask().
   submitPython: (taskId, code, result) =>
