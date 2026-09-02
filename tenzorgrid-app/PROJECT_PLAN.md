@@ -323,11 +323,144 @@ builds:
 - Mock Interviews — voice/avatar version; ships text-only first — also promised as
   "coming soon" on the Career Growth page
 
+## Virtual Workspace — the 12-week career simulation (ACTIVE BUILD)
+
+This is the current line of work and supersedes the older "P1 — next" bullet above. The
+user set the destination in their own words:
+
+> "User need to take hands on experience to crack the interview and negotiate for higher
+> salary with virtual experience."
+
+That reframes the product. It is not a course with tasks in it; it is a **simulated job** a
+learner can talk about in an interview and evidence with an employee ID. The whole build is
+judged against one question: *would a hiring manager believe the story this learner tells
+about their last twelve weeks?*
+
+### The learner's journey (the user's own 13-point sequence, in order)
+
+1. Sign up → HR configuration (role, level, schedule).
+2. **Skill test first** — before any project. The user overruled my proposed ordering here
+   and was right: the test is the *baseline* for the skill matrix, so the learner can watch
+   their own scores move as they complete work. Without the baseline the matrix has no
+   starting point and "you improved" is unprovable.
+3. Skill scores map onto the skill matrix → the learner sees where they actually stand.
+4. Joining day / welcome from People Ops + Line Manager.
+5. Project assigned, with a real project document (Executive Summary / Objectives &
+   Deliverables / Resource Stack).
+6. The week runs **day by day** — tasks arrive on their day, not as a Monday backlog.
+7. Work happens in-app (SQL workbench, Python notebook) against generated practice data.
+8. Submissions are **signed off by the manager**, not auto-graded silently.
+9. Deadlines are real; missing them is felt through the people waiting on you.
+10. Colleagues' work brackets the learner's — someone upstream hands over, someone
+    downstream is blocked.
+11. Weekly retro / 1:1 with the manager.
+12. Twelve weeks of this → performance record, skill-matrix delta, portfolio of work.
+13. Interview defence + certificate + employee ID.
+
+### The five decisions the user settled (do not relitigate)
+
+| Question | Their answer |
+| --- | --- |
+| Difficulty ramp | Yes — a day starts easier and ends harder; Friday is the hardest |
+| Where the skill test sits | **Before** the project is assigned; scores seed the skill matrix |
+| What junior vs senior changes | **Different projects** — not the same brief written vaguer |
+| Weekends | Start from the day they join; count **5 working days** per project. Join on a Thursday → Thursday is the full skill-test day, project lands Friday |
+| Where to start | "Go ahead" — build in the order below |
+
+Plus one addition: **"Can we have a 2 min voice meeting?"** — yes. Web Speech API
+(`speechSynthesis` + `SpeechRecognition`), zero cost, Chrome/Edge only, so it needs a text
+fallback for the ~30% of browsers without `SpeechRecognition`. Placed at the Monday project
+kickoff. Explicitly sequenced **after Phase 2** by the user.
+
+### Cost position
+
+Everything here holds at roughly **$4 per learner for the full 12 weeks**, because the
+expensive parts are authored or generated deterministically, not called at runtime:
+
+- Practice datasets are **seeded** (`lib/datasets.js`, mulberry32 PRNG), not AI-generated
+  per learner. This is the keystone decision: identical data for every learner is what
+  makes automatic grading possible at all.
+- Project documents are authored content (`lib/projectdocs.js`), not generated.
+- AI is used only for the manager's sign-off questions and chat replies, and is capped by
+  `DAILY_AI_LIMITS`. Every AI path has a deterministic fallback that produces a real,
+  specific result — never a degraded stub.
+
+**The validation gate for any generated content** (apply this to every new dataset/task):
+a reference query must run clean, return a non-trivial result, **and the naive wrong answer
+must differ from the correct one**. If the obvious mistake produces the same number, the
+task teaches nothing and cannot be graded.
+
+### Build phases
+
+- **Phase 0 — ✅ SHIPPED (#51, #52).** The tooling a simulated job actually needs.
+  `lib/datasets.js` (seeded `hr_core` and `saas_ops` datasets with *authored quirks*: six
+  leavers hiding behind a NULL `exit_year`, Support underpaid against the rest, raw-damage
+  and revenue-at-risk rankings that deliberately disagree — these are the traps that make a
+  submission worth reviewing); `lib/projectdocs.js` (the three-section project document and
+  a tool registry marking each tool `live` or `planned`, so nothing is promised that isn't
+  there); the **SQL workbench** (CodeMirror 6 — chosen over Monaco at ~1/10th the weight —
+  with a schema browser and a results grid); and the **Python notebook** (Pyodide 0.26.4,
+  self-hosted, real CPython 3.12 in WebAssembly, stdlib only).
+  Two findings worth keeping: the CSP had to gain `'wasm-unsafe-eval'` or Pyodide throws a
+  `CompileError` and then **never settles**, so the symptom is an infinite spinner with no
+  error surfaced; and `npx vite build` silently skips `postbuild.js`, so always use
+  `npm run build` or you ship a stale bundle against a fresh backend.
+- **Phase 1 — ✅ SHIPPED (#54). The verification gate.** A correct answer no longer
+  completes a task. Submitting moves it to `in_review`, the score is **withheld**, and Asha
+  asks one question about a choice the learner actually made in their own code. Two rounds;
+  a reasoned answer signs it off and reveals the score, two vague ones park the task so the
+  day can continue. The score is hidden on purpose — telling someone they scored 90 and
+  then asking them to justify their work turns the conversation into a formality, which is
+  the one thing it must not be. Backed by `sim_tasks.review_state/review_rounds/
+  review_question` and `ReviewPanel.jsx`.
+- **Phase 2 — IN PROGRESS (branch `claude/week-structure`). The week and the deadline.**
+  A project is now a **five-working-day week** with a real deadline, not an open-ended
+  bag of tasks. New `sim_project_runs` table (start, due, escalation level, completion) and
+  `sim_tasks.day_index/opens_at/difficulty`. What it produces: tasks release on their day
+  and Asha announces each one exactly once; the deadline is computed in working days from
+  the learner's actual join day (weekend starts roll to Monday); missing it brings **two
+  escalations and then silence** — Asha at +1 day naming the learner and the outstanding
+  work, Vikram at +3 explaining who downstream is stuck (a third identical chase is noise,
+  and noise gets ignored); and every project shows its **contributors** — who handed work
+  over, and who is *blocked on the learner by name*, which flips to "Picked it up from your
+  analysis" the moment they deliver. A finished project is never chased. Existing accounts
+  get a week backfilled from their real `assigned_at`, so nobody's clock starts today.
+  Backend is complete and green against a 40-check suite; frontend is next.
+- **Phase 3 — next. The skill test and the two levels.** The pre-project assessment that
+  seeds the skill matrix, and genuinely different project catalogues for junior and senior.
+- **Phase 4.** The 2-minute voice standup (Web Speech API + text fallback).
+- **Phase 5.** The 12-week arc: authoring roughly 30 tasks per role against the validation
+  gate above, the weekly retro/1:1, the performance record, and the interview defence.
+
+**The real gate on all of this is content, not code.** The machinery for a week can be
+built and tested against the five tasks that exist today; authoring the ~30-task arc is a
+separate job and is what actually stands between here and a shippable twelve weeks.
+
+### Open items on this build
+
+- **The database still has no backup anywhere.** `lib/backup.js` is written and tested
+  (`VACUUM INTO` snapshot → gzip, ~27x → Supabase `db_backups` bucket, keep 6) but sits
+  unmerged on branch `claude/tenzorgrid-project-transfer-0cm81z` along with `/api/health`,
+  photos-to-disk, template character replies and the AI-escalation budget. Railway's HOBBY
+  plan reports `maxBackupsCount: 0`, so there is no platform fallback. **Merge this.**
+- Character memory (`eae3fdb`) is held on cost grounds — the user wants an alternative
+  costed first.
+- Deferred by the user, don't start unprompted: Settings tab, storage migration to
+  Postgres, pandas in the notebook, 3D KPI icons, calendar meetings.
+
 ## Phase 2 — Business Growth pillar — NOT STARTED
 ## Phase 3 — Smart Trading pillar — NOT STARTED (paper-trading only until compliance review)
 ## Phase 4 — Custom AI Solutions pillar — NOT STARTED (mostly a B2B sales motion, lighter build)
 
 ## Next immediate step
+
+**Now: finish Phase 2 of the Virtual Workspace 12-week build (see that section above), then
+Phase 3, 4 and 5 in order.** The user is not asking for further unprompted UI refinement —
+the refinement notes below are history, kept because they record decisions worth not
+relitigating. Also outstanding and independent of all of it: **merge the backup branch**, the
+database has no backup anywhere.
+
+### Earlier state (history)
 
 Virtual Workspace P0, P0.5, and the P0.6 React redesign are shipped and live — Data Analyst
 is a real, working role at `/workspace.html`, presented as a premium Bento-box React app

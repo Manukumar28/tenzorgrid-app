@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle, CalendarClock } from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
 export const PRIORITY_PILL = {
@@ -30,25 +30,40 @@ const STAGE_COLOR = {
 
 export function TaskCard({ task, person, index, selected, onOpen }) {
   const graded = task.status === 'graded';
+  // A task belonging to a later day is real and dated, but not yet workable. It reads as
+  // scheduled rather than locked — the learner has not failed a gate, the day just hasn't
+  // arrived. Clicking it does nothing, so the card is not made to look clickable.
+  const soon = task.notYetOpen;
   return (
     <BentoCard
       index={index}
-      className={`flex flex-col cursor-pointer transition-colors ${selected ? 'ring-2 ring-indigo-300 border-indigo-200' : ''}`}
-      onClick={onOpen}
+      className={`flex flex-col transition-colors ${soon ? 'bg-slate-50/70' : 'cursor-pointer'} ${selected ? 'ring-2 ring-indigo-300 border-indigo-200' : ''}`}
+      hover={!soon}
+      onClick={soon ? undefined : onOpen}
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${graded ? 'bg-gradient-to-br from-emerald-500 to-teal-400' : 'bg-gradient-to-br from-indigo-500 to-indigo-400'}`}>
-          {graded ? <CheckCircle2 size={19} className="text-white" strokeWidth={2.2} /> : <Database size={18} className="text-white" strokeWidth={2.2} />}
+        <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${
+          soon ? 'bg-slate-200'
+          : graded ? 'bg-gradient-to-br from-emerald-500 to-teal-400'
+          : 'bg-gradient-to-br from-indigo-500 to-indigo-400'}`}>
+          {soon ? <CalendarClock size={18} className="text-slate-500" strokeWidth={2.2} />
+            : graded ? <CheckCircle2 size={19} className="text-white" strokeWidth={2.2} />
+            : <Database size={18} className="text-white" strokeWidth={2.2} />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Pill className={PRIORITY_PILL[task.priority]}>{task.priorityLabel}</Pill>
-            {task.overdue && (
+            {task.dayIndex && (
+              <Pill className={soon ? 'bg-slate-200 text-slate-600' : 'bg-slate-100 text-slate-600'}>Day {task.dayIndex}</Pill>
+            )}
+            {soon
+              ? <Pill className="bg-white border border-slate-200 text-slate-500">Opens {task.opensLabel}</Pill>
+              : <Pill className={PRIORITY_PILL[task.priority]}>{task.priorityLabel}</Pill>}
+            {task.overdue && !soon && (
               <Pill className="bg-red-50 text-red-600"><AlertTriangle size={11} /> Overdue</Pill>
             )}
             {graded && <Pill className="bg-emerald-50 text-emerald-600">{task.score}%</Pill>}
           </div>
-          <h3 className="text-sm font-bold leading-snug">{task.title}</h3>
+          <h3 className={`text-sm font-bold leading-snug ${soon ? 'text-slate-600' : ''}`}>{task.title}</h3>
         </div>
       </div>
 
@@ -81,15 +96,21 @@ export function TaskCard({ task, person, index, selected, onOpen }) {
             <span className="text-xs text-gray-500 truncate">{person.name}</span>
           </div>
         ) : <span />}
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={(e) => { e.stopPropagation(); onOpen(); }}
-          className={`inline-flex items-center gap-1.5 text-xs font-bold rounded-lg px-3.5 py-2 shrink-0 transition-colors ${
-            graded ? 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-          }`}
-        >
-          {graded ? 'View feedback' : 'Open task'} <ArrowRight size={13} />
-        </motion.button>
+        {soon ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold rounded-lg px-3.5 py-2 shrink-0 bg-white border border-slate-200 text-slate-500">
+            <CalendarClock size={13} /> Opens {task.opensLabel}
+          </span>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={(e) => { e.stopPropagation(); onOpen(); }}
+            className={`inline-flex items-center gap-1.5 text-xs font-bold rounded-lg px-3.5 py-2 shrink-0 transition-colors ${
+              graded ? 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+            }`}
+          >
+            {graded ? 'View feedback' : 'Open task'} <ArrowRight size={13} />
+          </motion.button>
+        )}
       </div>
     </BentoCard>
   );

@@ -73,6 +73,14 @@ const PROJECT_CATALOG = {
       taskKeys: ['da-001'],
       skillFocus: ['sql', 'businessLogic'],
       impactValue: 12400,
+      // The rest of the project, so the learner can see their part of a whole rather
+      // than a task list. These are named participants in the scenario, NOT members of
+      // the messageable roster — nobody can chat to them, and nothing claims they can.
+      contributors: [
+        { name: 'Rahul Verma', role: 'Data Engineer', does: 'Pulled and validated the HR source tables', day: 1 },
+        { name: null, role: 'Data Analyst', does: 'The compensation analysis', day: 1, throughDay: 5 },
+        { name: 'Meera Pillai', role: 'Comms', does: 'Writes the leadership summary', day: 5, needsYou: true },
+      ],
       unlockAfter: 0,
     },
     {
@@ -85,6 +93,11 @@ const PROJECT_CATALOG = {
       taskKeys: ['da-002'],
       skillFocus: ['sql', 'dataViz'],
       impactValue: 8000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Supplied the salary cost baseline', day: 1 },
+        { name: null, role: 'Data Analyst', does: 'The hiring trend analysis', day: 1, throughDay: 5 },
+        { name: 'Neha Kulkarni', role: 'People Partner', does: 'Builds next year\'s hiring plan on your numbers', day: 5, needsYou: true },
+      ],
       unlockAfter: 1,
     },
     {
@@ -97,6 +110,12 @@ const PROJECT_CATALOG = {
       taskKeys: ['da-004'],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 21000,
+      contributors: [
+        { name: 'Sneha Joshi', role: 'Support Lead', does: 'Logged and triaged every incident', day: 1 },
+        { name: 'Rahul Verma', role: 'Data Engineer', does: 'Reconstructed the corrupted rows', day: 1 },
+        { name: null, role: 'Data Analyst', does: 'The impact and revenue-at-risk analysis', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes compensation offers to the clients', day: 5, needsYou: true },
+      ],
       unlockAfter: 3,
     },
     {
@@ -109,6 +128,11 @@ const PROJECT_CATALOG = {
       taskKeys: ['da-003', 'da-005'],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 15000,
+      contributors: [
+        { name: 'Neha Kulkarni', role: 'People Partner', does: 'Framed the equity question and scope', day: 1 },
+        { name: null, role: 'Data Analyst', does: 'The role-by-role pay analysis', day: 1, throughDay: 5 },
+        { name: 'Aarav Bose', role: 'Finance Manager', does: 'Costs the remediation from your findings', day: 5, needsYou: true },
+      ],
       unlockAfter: 2,
     },
   ],
@@ -198,6 +222,9 @@ const TASKS = {
     estHours: 3,
     priority: 'high',
     dueInDays: 2,
+    // Opens on working day 1 of the project week.
+    day: 1,
+    difficulty: 'medium',
   },
   'da-002': {
     title: 'Hiring trend by year',
@@ -208,6 +235,9 @@ const TASKS = {
     estHours: 2,
     priority: 'medium',
     dueInDays: 3,
+    // Opens on working day 1 of the project week.
+    day: 1,
+    difficulty: 'easy',
   },
   'da-003': {
     title: 'Pay spread by role',
@@ -218,6 +248,9 @@ const TASKS = {
     estHours: 4,
     priority: 'high',
     dueInDays: 4,
+    // Opens on working day 1 of the project week.
+    day: 1,
+    difficulty: 'hard',
   },
   'da-004': {
     title: 'Outage impact by client',
@@ -228,6 +261,9 @@ const TASKS = {
     estHours: 5,
     priority: 'high',
     dueInDays: 5,
+    // Opens on working day 1 of the project week.
+    day: 1,
+    difficulty: 'hard',
   },
   'da-005': {
     title: 'Median pay by department',
@@ -258,6 +294,9 @@ const TASKS = {
     estHours: 3,
     priority: 'medium',
     dueInDays: 4,
+    // Opens on working day 3 of the project week.
+    day: 3,
+    difficulty: 'medium',
   },
 };
 
@@ -277,11 +316,17 @@ function addMessage(enrollmentId, senderArchetype, senderName, body, taskId, sub
   return id;
 }
 
-function assignTask(enrollmentId, taskKey) {
+// `weekStart` is the project's day 1. A task belonging to day 3 opens two working days
+// after that, so the week arrives in instalments the way real work does rather than as
+// a wall of thirty tasks on Monday morning.
+function assignTask(enrollmentId, taskKey, weekStart) {
   const def = TASKS[taskKey];
   if (!def) throw new Error('Unknown task: ' + taskKey);
   const id = cryptoRandomId();
   const assignedAt = now();
+  const opensAt = weekStart && def.day
+    ? addWorkingDays(weekStart, def.day).toISOString()
+    : null;
   // A real deadline, set when the work is handed over — that's what makes "due today",
   // "overdue" and the on-time rate computable rather than decorative. Rows written
   // before this column existed get the same deadline reconstructed at read time from
@@ -290,9 +335,10 @@ function assignTask(enrollmentId, taskKey) {
     ? new Date(Date.parse(assignedAt) + def.dueInDays * 24 * 60 * 60 * 1000).toISOString()
     : null;
   db.prepare(`
-    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours, priority, due_at)
-    VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?, ?, ?)
-  `).run(id, enrollmentId, taskKey, def.title, def.brief, assignedAt, def.estHours || null, def.priority || 'medium', dueAt);
+    INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours, priority, due_at, day_index, opens_at, difficulty)
+    VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, enrollmentId, taskKey, def.title, def.brief, assignedAt, def.estHours || null, def.priority || 'medium', dueAt,
+         def.day || null, opensAt, def.difficulty || null);
   return id;
 }
 
@@ -318,7 +364,10 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   addMessage(id, 'line_manager', LINE_MANAGER_NAME,
     `Hi, welcome to the team. Take a bit to settle in — I'll send your first task in a moment.`);
 
-  const taskId = assignTask(id, 'da-001');
+  // The first project starts the moment they enrol — the welcome IS day 1, so the
+  // week's clock has to start here rather than on the first getState.
+  const run = startProjectRun(id, 'compensation-review');
+  const taskId = assignTask(id, 'da-001', run.started_at);
   const task = TASKS['da-001'];
   addMessage(id, 'line_manager', LINE_MANAGER_NAME,
     `First task: ${task.title}. ${task.brief}`, taskId);
@@ -338,6 +387,47 @@ function shiftDay(dateStr, delta) {
 // Consecutive check-in days, from real attendance rows only. The current streak is
 // still alive if the learner checked in today OR yesterday — breaking it the moment
 // today starts would punish someone who simply hasn't logged in yet this morning.
+// A project week is five WORKING days. Weekends are skipped rather than counted, so a
+// learner who starts on a Thursday gets Thu, Fri, Mon, Tue, Wed — not Thu to Monday.
+// Their own start day counts as day 1: waiting until next Monday to begin would kill
+// the momentum of having just signed up.
+function isWeekend(d) {
+  const day = d.getUTCDay();
+  return day === 0 || day === 6;
+}
+
+// The date `n` working days after `fromIso`, counting the start date as day 1.
+function addWorkingDays(fromIso, n) {
+  const d = new Date(fromIso);
+  d.setUTCHours(0, 0, 0, 0);
+  // If they start on a weekend, the week begins on the next working day.
+  while (isWeekend(d)) d.setUTCDate(d.getUTCDate() + 1);
+  let counted = 1;
+  while (counted < n) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (!isWeekend(d)) counted += 1;
+  }
+  return d;
+}
+
+// How many working days have elapsed since the week began, inclusive of day 1.
+function workingDaysElapsed(fromIso, nowMs) {
+  const start = new Date(fromIso);
+  start.setUTCHours(0, 0, 0, 0);
+  const today = new Date(nowMs);
+  today.setUTCHours(0, 0, 0, 0);
+  if (today < start) return 0;
+  let count = 0;
+  const cursor = new Date(start);
+  while (cursor <= today) {
+    if (!isWeekend(cursor)) count += 1;
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return count;
+}
+
+const PROJECT_WEEK_DAYS = 5;
+
 function computeStreaks(days) {
   if (!days.length) return { current: 0, longest: 0 };
   const attended = new Set(days);
@@ -434,10 +524,99 @@ function round1(n) { return Math.round(n * 10) / 10; }
 // them is graded, `available` when its unlock gate is cleared, and `locked` until then.
 // Nothing here is assumed: a learner who has finished nothing gets zeroes and empty
 // states, not a populated-looking dashboard.
-function getProjects(role, tasks, streaks) {
+// `enrollmentId` is optional — when given, each project also carries its real deadline
+// and the state of everyone else working on it.
+// The learner's place in a project that other people are also working on.
+//
+// This is what turns a task list into a job. The data engineer finished on Monday
+// whether or not the learner showed up; the person downstream cannot start until the
+// learner delivers. Seeing your own segment sitting unfinished between two that are
+// done is a far stronger signal than any score.
+//
+// The named colleagues here are participants in the authored scenario, not members of
+// the messageable roster — nothing offers to chat to them, because nothing can.
+function projectWeek(run, def, taskRows, nowMs) {
+  if (!run) return null;
+
+  const dayNow = Math.min(PROJECT_WEEK_DAYS, Math.max(1, workingDaysElapsed(run.started_at, nowMs)));
+  const dueMs = Date.parse(run.due_at);
+  const overdueDays = nowMs > dueMs ? Math.floor((nowMs - dueMs) / DAY_MS) : 0;
+  // Counted in WORKING days, because that is the unit the week itself is in. Reporting
+  // "7 days left" beside "day 1 of 5" is the kind of small contradiction that makes a
+  // learner stop trusting every other number on the page.
+  const daysLeft = overdueDays ? 0 : Math.max(0, PROJECT_WEEK_DAYS - dayNow);
+
+  const total = def.taskKeys.length;
+  const done = taskRows.filter((t) => t.status === 'graded').length;
+  const learnerPct = total ? Math.round((done / total) * 100) : 0;
+  const learnerDone = total > 0 && done === total;
+
+  const contributors = (def.contributors || []).map((c) => {
+    const isLearner = c.name === null;
+    if (isLearner) {
+      return {
+        name: null, role: c.role, does: c.does,
+        state: learnerDone ? 'done' : 'in-progress',
+        pct: learnerPct,
+        note: learnerDone ? 'Delivered' : `${done} of ${total} signed off`,
+      };
+    }
+    // A colleague whose work comes BEFORE the learner's is done once their day has
+    // passed. One who depends on the learner is blocked until the learner delivers —
+    // and says so, by name.
+    // Someone who picks the work up on day 5 is not yet BLOCKED on day 1 — they are
+    // simply next. Calling them blocked from the first morning would cry wolf, and a
+    // warning that is always on is a warning nobody reads. They turn red only once their
+    // own day has arrived or the project is late.
+    if (c.needsYou) {
+      if (learnerDone) {
+        return { name: c.name, role: c.role, does: c.does, state: 'done', pct: 100,
+                 note: 'Picked it up from your analysis' };
+      }
+      const stuck = overdueDays > 0 || dayNow >= (c.day || PROJECT_WEEK_DAYS);
+      return {
+        name: c.name, role: c.role, does: c.does,
+        state: stuck ? 'blocked' : 'waiting',
+        pct: 0,
+        note: stuck ? 'Waiting on your numbers' : `Picks it up on day ${c.day || PROJECT_WEEK_DAYS}`,
+      };
+    }
+    const started = dayNow >= (c.day || 1);
+    return {
+      name: c.name, role: c.role, does: c.does,
+      state: started ? 'done' : 'scheduled',
+      pct: started ? 100 : 0,
+      note: started ? 'Done' : `Starts day ${c.day || 1}`,
+    };
+  });
+
+  return {
+    day: dayNow,
+    totalDays: PROJECT_WEEK_DAYS,
+    dueAt: run.due_at,
+    daysLeft,
+    overdueDays,
+    onTrack: !overdueDays,
+    // Named so the UI can say WHO is held up, not just that something is.
+    blocking: !learnerDone
+      ? contributors.filter((c) => c.state === 'blocked').map((c) => c.name).filter(Boolean)
+      : [],
+    contributors,
+  };
+}
+
+function getProjects(role, tasks, streaks, enrollmentId) {
   const catalog = PROJECT_CATALOG[role] || [];
   const byKey = {};
   for (const t of tasks) (byKey[t.task_key] = byKey[t.task_key] || []).push(t);
+
+  const nowMs = Date.now();
+  const runsByKey = {};
+  if (enrollmentId) {
+    for (const r of db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ?').all(enrollmentId)) {
+      runsByKey[r.project_key] = r;
+    }
+  }
 
   // Pass 1 — real progress per project, independent of any unlock rule.
   const base = catalog.map((def) => {
@@ -458,6 +637,7 @@ function getProjects(role, tasks, streaks) {
       started,
       completed,
       progressPct,
+      week: started ? projectWeek(runsByKey[def.key], def, taskRows, nowMs) : null,
       avgScore: avg,
       grade: avg === null ? null : gradeLetter(avg),
       // The phase is the task actually open right now, not an invented milestone name.
@@ -488,6 +668,7 @@ function getProjects(role, tasks, streaks) {
       estHours: p.estHours,
       status,
       progressPct: p.progressPct,
+      week: p.week,
       phase: p.phase,
       avgScore: p.avgScore,
       grade: p.grade,
@@ -632,7 +813,11 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
     const def = TASKS[t.task_key] || {};
     const proj = projectByTaskKey[t.task_key];
     const graded = t.status === 'graded';
-    const stage = graded ? 'Graded' : t.submission ? 'Submitted' : 'Assigned';
+    // A task belonging to a later day in the week is real, visible and dated — but not
+    // yet workable. Showing it greyed with its day is what makes the week legible;
+    // hiding it entirely would make the project look smaller than it is.
+    const notYetOpen = Boolean(t.opens_at) && Date.parse(t.opens_at) > nowMs;
+    const stage = graded ? 'Graded' : t.submission ? 'Submitted' : notYetOpen ? 'Opens later' : 'Assigned';
     const stagePct = graded ? 100 : t.submission ? 50 : 0;
     const priority = t.priority || def.priority || 'medium';
 
@@ -664,6 +849,15 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       reviewRoundsLeft: t.review_state === 'pending' ? Math.max(0, 2 - (t.review_rounds || 0)) : null,
       estHours: t.est_hours,
       gradedAt: t.graded_at || null,
+      dayIndex: t.day_index || null,
+      difficulty: t.difficulty || def.difficulty || null,
+      notYetOpen,
+      opensAt: t.opens_at || null,
+      // "Opens Thursday" beats a locked padlock with no date — the learner should be able
+      // to plan their week, not just be told to come back later.
+      opensLabel: notYetOpen
+        ? new Date(t.opens_at).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+        : null,
       priority,
       priorityLabel: PRIORITY_LABEL[priority],
       dueAt,
@@ -679,6 +873,9 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
 
   rows.sort((a, b) => {
     if ((a.status === 'graded') !== (b.status === 'graded')) return a.status === 'graded' ? 1 : -1;
+    // Work you can actually start comes before work that has not opened yet.
+    if (a.notYetOpen !== b.notYetOpen) return a.notYetOpen ? 1 : -1;
+    if (a.notYetOpen && b.notYetOpen) return (a.dayIndex || 0) - (b.dayIndex || 0);
     const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
     if (p) return p;
     return (a.dueAt || '').localeCompare(b.dueAt || '');
@@ -1042,11 +1239,26 @@ function reconcileProjectTasks(enrollment) {
   const catalog = PROJECT_CATALOG[enrollment.role] || [];
   if (!catalog.length) return 0;
 
-  const rows = db.prepare('SELECT task_key FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const rows = db.prepare('SELECT task_key, assigned_at FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
   const have = new Set(rows.map((r) => r.task_key));
   let added = 0;
 
   for (const def of catalog) {
+    // A project started before project runs existed has no week. Backfill one from when
+    // its first task was actually assigned, so the deadline is honest rather than
+    // restarting the clock today.
+    if (def.taskKeys.some((k) => have.has(k))) {
+      const existing = db.prepare('SELECT id FROM sim_project_runs WHERE enrollment_id = ? AND project_key = ?')
+        .get(enrollment.id, def.key);
+      if (!existing) {
+        const firstRow = rows.find((r) => def.taskKeys.includes(r.task_key));
+        const startedAt = (firstRow && firstRow.assigned_at) || now();
+        const dueAt = addWorkingDays(startedAt, PROJECT_WEEK_DAYS);
+        dueAt.setUTCHours(23, 59, 59, 0);
+        db.prepare(`INSERT INTO sim_project_runs (id, enrollment_id, project_key, started_at, due_at, nudge_level)
+          VALUES (?, ?, ?, ?, ?, 0)`).run(cryptoRandomId(), enrollment.id, def.key, startedAt, dueAt.toISOString());
+      }
+    }
     // Only projects the learner has actually started. An untouched project must stay
     // untouched — assigning its tasks here would silently start it for them.
     const started = def.taskKeys.some((k) => have.has(k));
@@ -1054,7 +1266,11 @@ function reconcileProjectTasks(enrollment) {
 
     for (const key of def.taskKeys) {
       if (have.has(key) || !TASKS[key]) continue;
-      const taskId = assignTask(enrollment.id, key);
+      // Use the project's real start so a catch-up task lands on its proper day rather
+      // than opening immediately and breaking the shape of the week.
+      const run = db.prepare('SELECT started_at FROM sim_project_runs WHERE enrollment_id = ? AND project_key = ?')
+        .get(enrollment.id, def.key);
+      const taskId = assignTask(enrollment.id, key, run ? run.started_at : null);
       const task = TASKS[key];
       addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
         `One more for ${def.title} — we've added ${task.title} to the scope. ${task.brief}`, taskId);
@@ -1072,6 +1288,9 @@ function getState(userId) {
   // Catch up any project whose task list grew after the learner started it, before
   // anything below reads the task rows.
   reconcileProjectTasks(enrollment);
+  // Then advance the week: open whatever today unlocks, and chase anything overdue.
+  releaseDueTasks(enrollment);
+  nudgeOverdueProjects(userId, enrollment);
 
   const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
@@ -1100,7 +1319,8 @@ function getState(userId) {
   const scoreDeltaToday = avgScore === null ? null : avgScore - (avgScoreBeforeToday === null ? 0 : avgScoreBeforeToday);
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
-  const projects = getProjects(enrollment.role, tasks, streaks);
+  const projects = getProjects(enrollment.role, tasks, streaks, enrollment.id);
+  closeCompletedRuns(enrollment, projects.projects);
   const rosterList = rosterWithAvatars();
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
@@ -1172,6 +1392,114 @@ function getState(userId) {
 
 // Starts an available project by assigning its tasks. The unlock gate is enforced here,
 // not just hidden in the UI — calling this directly for a locked project is refused.
+// The week as a durable object: when it started, when it is due, and how far the
+// pressure has escalated.
+function startProjectRun(enrollmentId, projectKey) {
+  const startedAt = now();
+  const dueAt = addWorkingDays(startedAt, PROJECT_WEEK_DAYS);
+  dueAt.setUTCHours(23, 59, 59, 0); // the deadline is end of day 5, not the start of it
+  db.prepare(`
+    INSERT INTO sim_project_runs (id, enrollment_id, project_key, started_at, due_at, nudge_level)
+    VALUES (?, ?, ?, ?, ?, 0)
+    ON CONFLICT(enrollment_id, project_key) DO NOTHING
+  `).run(cryptoRandomId(), enrollmentId, projectKey, startedAt, dueAt.toISOString());
+  return db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND project_key = ?').get(enrollmentId, projectKey);
+}
+
+// What a late project costs, in the only currency that lands: the people waiting on you
+// say so. Two escalations, then it stops — a third identical chase is noise, and noise
+// is ignored. Nudges are recorded so reloading the page never re-sends one.
+const OVERDUE_NUDGES = [
+  {
+    afterDays: 1,
+    from: 'line_manager',
+    subject: 'Where are we on {project}?',
+    body: "{name}, the deadline for {project} was yesterday and {open} still isn't signed off.\n\nI'm not chasing to nag — I need to tell Vikram something. Reply here with where you've got to and what's in the way, and I'll manage his expectations.",
+  },
+  {
+    afterDays: 3,
+    from: 'stakeholder',
+    subject: 'Re: {project} — I need a date',
+    body: "I've been waiting three days past the date we agreed for {project}.\n\nI have people downstream who can't start until this lands, and I've had to tell the leadership review it's delayed. I'm not looking for the analysis to be rushed — I'm looking for a date I can rely on. When will it be with me?",
+  },
+];
+
+// Chases address the learner the way a colleague would — by first name, or not at all.
+function firstName(full) {
+  const t = String(full || '').trim();
+  return t ? t.split(/\s+/)[0] : '';
+}
+
+// Sends whichever chase is now due, at most one per read. Returns how many were sent.
+function nudgeOverdueProjects(userId, enrollment) {
+  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const runs = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id);
+  if (!runs.length) return 0;
+
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId);
+  const learner = firstName(profile && profile.name) || 'there';
+  const nowMs = Date.now();
+  let sent = 0;
+
+  for (const run of runs) {
+    const def = catalog.find((p) => p.key === run.project_key);
+    if (!def) continue;
+
+    const overdueDays = Math.floor((nowMs - Date.parse(run.due_at)) / DAY_MS);
+    if (overdueDays < OVERDUE_NUDGES[0].afterDays) continue;
+
+    // Still open work on this project? A finished-but-unmarked project must not be chased.
+    const rows = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id)
+      .filter((t) => def.taskKeys.includes(t.task_key));
+    const open = rows.filter((t) => t.status !== 'graded');
+    if (!open.length) continue;
+
+    const level = run.nudge_level || 0;
+    const next = OVERDUE_NUDGES[level];
+    if (!next || overdueDays < next.afterDays) continue;
+
+    const person = ROSTER.find((r) => r.archetype === next.from);
+    const fill = (t) => t
+      .replace(/\{name\}/g, learner)
+      .replace(/\{project\}/g, def.title)
+      .replace(/\{open\}/g, open.length === 1 ? `"${open[0].title}"` : `${open.length} tasks`);
+
+    addMessage(enrollment.id, next.from, person.name, fill(next.body), null, fill(next.subject), next.from);
+    db.prepare('UPDATE sim_project_runs SET nudge_level = ? WHERE id = ?').run(level + 1, run.id);
+    sent += 1;
+  }
+  return sent;
+}
+
+// Announces tasks whose day has arrived. A task assigned on Monday but belonging to
+// Wednesday should ARRIVE on Wednesday — the drip is what makes the week feel like a
+// week rather than a backlog. The announcement message doubles as the record that it
+// has been released, so this never fires twice.
+function releaseDueTasks(enrollment) {
+  const nowIso = now();
+  const due = db.prepare(`
+    SELECT t.* FROM sim_tasks t
+    WHERE t.enrollment_id = ? AND t.opens_at IS NOT NULL AND t.opens_at <= ?
+      AND t.day_index > 1
+      AND NOT EXISTS (SELECT 1 FROM sim_messages m WHERE m.task_id = t.id AND m.sender_archetype = 'line_manager')
+  `).all(enrollment.id, nowIso);
+
+  for (const t of due) {
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `Next one's ready: ${t.title}. ${t.brief}`, t.id);
+  }
+  return due.length;
+}
+
+// Marks a run finished so it stops being chased.
+function closeCompletedRuns(enrollment, projects) {
+  for (const p of projects) {
+    if (p.status !== 'completed') continue;
+    db.prepare("UPDATE sim_project_runs SET completed_at = ? WHERE enrollment_id = ? AND project_key = ? AND completed_at IS NULL")
+      .run(now(), enrollment.id, p.key);
+  }
+}
+
 function startProject(userId, projectKey) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) throw new Error('Not enrolled yet.');
@@ -1186,11 +1514,17 @@ function startProject(userId, projectKey) {
   if (current.status === 'locked') throw new Error(`${current.requirement} before starting this one.`);
   if (current.status !== 'available') throw new Error('That project is already underway.');
 
+  const run = startProjectRun(enrollment.id, projectKey);
+
   for (const key of def.taskKeys) {
-    const taskId = assignTask(enrollment.id, key);
+    const taskId = assignTask(enrollment.id, key, run.started_at);
     const task = TASKS[key];
-    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
-      `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+    // Only day-1 work is announced. A task that opens on Wednesday should arrive on
+    // Wednesday, not sit in the inbox from Monday spoiling the shape of the week.
+    if ((TASKS[key].day || 1) === 1) {
+      addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+        `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+    }
   }
   return getState(userId);
 }
