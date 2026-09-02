@@ -134,7 +134,9 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   // Default to the most urgent open task so the workspace is never empty on arrival.
   useEffect(() => {
     if (selectedId && taskBoard.rows.some((r) => r.id === selectedId)) return;
-    const open = taskBoard.rows.find((r) => r.status !== 'graded');
+    // A task whose day has not arrived is not a candidate — landing on a workspace the
+    // learner cannot use yet would read as broken.
+    const open = taskBoard.rows.find((r) => r.status !== 'graded' && !r.notYetOpen);
     setSelectedId((open || taskBoard.rows[taskBoard.rows.length - 1] || {}).id || null);
   }, [taskBoard.rows, selectedId]);
 

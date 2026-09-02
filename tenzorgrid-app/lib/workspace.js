@@ -78,7 +78,7 @@ const PROJECT_CATALOG = {
       // the messageable roster — nobody can chat to them, and nothing claims they can.
       contributors: [
         { name: 'Rahul Verma', role: 'Data Engineer', does: 'Pulled and validated the HR source tables', day: 1 },
-        { name: null, role: 'You', does: 'The compensation analysis', day: 1, throughDay: 5 },
+        { name: null, role: 'Data Analyst', does: 'The compensation analysis', day: 1, throughDay: 5 },
         { name: 'Meera Pillai', role: 'Comms', does: 'Writes the leadership summary', day: 5, needsYou: true },
       ],
       unlockAfter: 0,
@@ -95,7 +95,7 @@ const PROJECT_CATALOG = {
       impactValue: 8000,
       contributors: [
         { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Supplied the salary cost baseline', day: 1 },
-        { name: null, role: 'You', does: 'The hiring trend analysis', day: 1, throughDay: 5 },
+        { name: null, role: 'Data Analyst', does: 'The hiring trend analysis', day: 1, throughDay: 5 },
         { name: 'Neha Kulkarni', role: 'People Partner', does: 'Builds next year\'s hiring plan on your numbers', day: 5, needsYou: true },
       ],
       unlockAfter: 1,
@@ -113,7 +113,7 @@ const PROJECT_CATALOG = {
       contributors: [
         { name: 'Sneha Joshi', role: 'Support Lead', does: 'Logged and triaged every incident', day: 1 },
         { name: 'Rahul Verma', role: 'Data Engineer', does: 'Reconstructed the corrupted rows', day: 1 },
-        { name: null, role: 'You', does: 'The impact and revenue-at-risk analysis', day: 1, throughDay: 5 },
+        { name: null, role: 'Data Analyst', does: 'The impact and revenue-at-risk analysis', day: 1, throughDay: 5 },
         { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes compensation offers to the clients', day: 5, needsYou: true },
       ],
       unlockAfter: 3,
@@ -130,7 +130,7 @@ const PROJECT_CATALOG = {
       impactValue: 15000,
       contributors: [
         { name: 'Neha Kulkarni', role: 'People Partner', does: 'Framed the equity question and scope', day: 1 },
-        { name: null, role: 'You', does: 'The role-by-role pay analysis', day: 1, throughDay: 5 },
+        { name: null, role: 'Data Analyst', does: 'The role-by-role pay analysis', day: 1, throughDay: 5 },
         { name: 'Aarav Bose', role: 'Finance Manager', does: 'Costs the remediation from your findings', day: 5, needsYou: true },
       ],
       unlockAfter: 2,
@@ -541,7 +541,10 @@ function projectWeek(run, def, taskRows, nowMs) {
   const dayNow = Math.min(PROJECT_WEEK_DAYS, Math.max(1, workingDaysElapsed(run.started_at, nowMs)));
   const dueMs = Date.parse(run.due_at);
   const overdueDays = nowMs > dueMs ? Math.floor((nowMs - dueMs) / DAY_MS) : 0;
-  const daysLeft = overdueDays ? 0 : Math.max(0, Math.ceil((dueMs - nowMs) / DAY_MS));
+  // Counted in WORKING days, because that is the unit the week itself is in. Reporting
+  // "7 days left" beside "day 1 of 5" is the kind of small contradiction that makes a
+  // learner stop trusting every other number on the page.
+  const daysLeft = overdueDays ? 0 : Math.max(0, PROJECT_WEEK_DAYS - dayNow);
 
   const total = def.taskKeys.length;
   const done = taskRows.filter((t) => t.status === 'graded').length;
@@ -561,12 +564,21 @@ function projectWeek(run, def, taskRows, nowMs) {
     // A colleague whose work comes BEFORE the learner's is done once their day has
     // passed. One who depends on the learner is blocked until the learner delivers —
     // and says so, by name.
+    // Someone who picks the work up on day 5 is not yet BLOCKED on day 1 — they are
+    // simply next. Calling them blocked from the first morning would cry wolf, and a
+    // warning that is always on is a warning nobody reads. They turn red only once their
+    // own day has arrived or the project is late.
     if (c.needsYou) {
+      if (learnerDone) {
+        return { name: c.name, role: c.role, does: c.does, state: 'done', pct: 100,
+                 note: 'Picked it up from your analysis' };
+      }
+      const stuck = overdueDays > 0 || dayNow >= (c.day || PROJECT_WEEK_DAYS);
       return {
         name: c.name, role: c.role, does: c.does,
-        state: learnerDone ? 'done' : 'blocked',
-        pct: learnerDone ? 100 : 0,
-        note: learnerDone ? 'Picked it up from your analysis' : 'Waiting on your numbers',
+        state: stuck ? 'blocked' : 'waiting',
+        pct: 0,
+        note: stuck ? 'Waiting on your numbers' : `Picks it up on day ${c.day || PROJECT_WEEK_DAYS}`,
       };
     }
     const started = dayNow >= (c.day || 1);
@@ -841,6 +853,11 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       difficulty: t.difficulty || def.difficulty || null,
       notYetOpen,
       opensAt: t.opens_at || null,
+      // "Opens Thursday" beats a locked padlock with no date — the learner should be able
+      // to plan their week, not just be told to come back later.
+      opensLabel: notYetOpen
+        ? new Date(t.opens_at).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+        : null,
       priority,
       priorityLabel: PRIORITY_LABEL[priority],
       dueAt,
@@ -856,6 +873,9 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
 
   rows.sort((a, b) => {
     if ((a.status === 'graded') !== (b.status === 'graded')) return a.status === 'graded' ? 1 : -1;
+    // Work you can actually start comes before work that has not opened yet.
+    if (a.notYetOpen !== b.notYetOpen) return a.notYetOpen ? 1 : -1;
+    if (a.notYetOpen && b.notYetOpen) return (a.dayIndex || 0) - (b.dayIndex || 0);
     const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
     if (p) return p;
     return (a.dueAt || '').localeCompare(b.dueAt || '');

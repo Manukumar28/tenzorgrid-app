@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight, FileText} from 'lucide-react';
+import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight, FileText, CalendarClock, AlertTriangle } from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
 export function money(n) {
@@ -93,6 +93,88 @@ export function BriefLink({ onClick }) {
   );
 }
 
+
+// The week, shown as a week.
+//
+// A project used to be an open-ended bag of tasks, which is exactly what a real job is
+// not. This strip is the pressure: which of the five days you are on, when it is due, and
+// — the part that actually lands — who is sitting idle waiting for your numbers. A red
+// badge nobody reads is not a deadline; a named colleague who cannot start is.
+
+const CONTRIB_STATE = {
+  done:          { dot: 'bg-emerald-500', text: 'text-emerald-700' },
+  blocked:       { dot: 'bg-rose-500',    text: 'text-rose-700' },
+  'in-progress': { dot: 'bg-indigo-500',  text: 'text-indigo-700' },
+  waiting:       { dot: 'bg-amber-400',   text: 'text-amber-700' },
+  scheduled:     { dot: 'bg-slate-300',   text: 'text-slate-500' },
+};
+
+function dueLabel(week) {
+  if (week.overdueDays > 0) return `${week.overdueDays} day${week.overdueDays === 1 ? '' : 's'} overdue`;
+  if (week.daysLeft === 0) return 'Due today';
+  if (week.daysLeft === 1) return 'Due tomorrow';
+  return `${week.daysLeft} days left`;
+}
+
+export function WeekStrip({ week }) {
+  if (!week) return null;
+  const late = week.overdueDays > 0;
+  const days = Array.from({ length: week.totalDays }, (_, i) => i + 1);
+
+  return (
+    <div className={`rounded-xl border px-3.5 py-3 mb-4 ${late ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-slate-50/70'}`}>
+      <div className="flex items-center gap-2 mb-2.5">
+        <CalendarClock size={13} className={late ? 'text-rose-600' : 'text-slate-500'} />
+        <span className="text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+          Day {Math.min(week.day, week.totalDays)} of {week.totalDays}
+        </span>
+        <span className={`ml-auto text-[11px] font-extrabold ${late ? 'text-rose-600' : 'text-slate-500'}`}>
+          {dueLabel(week)}
+        </span>
+      </div>
+
+      {/* Five pips, not a percentage bar — a week has days, and days are countable. */}
+      <div className="flex gap-1 mb-3" aria-label={`Day ${week.day} of ${week.totalDays}`}>
+        {days.map((d) => (
+          <span
+            key={d}
+            className={`h-1.5 flex-1 rounded-full ${
+              d < week.day ? (late ? 'bg-rose-300' : 'bg-indigo-300')
+              : d === week.day ? (late ? 'bg-rose-500' : 'bg-indigo-500')
+              : 'bg-slate-200'}`}
+          />
+        ))}
+      </div>
+
+      {week.blocking.length > 0 && (
+        <div className="flex items-start gap-1.5 text-[11px] font-bold text-rose-700 mb-2.5">
+          <AlertTriangle size={12} className="shrink-0 mt-px" />
+          <span>
+            {week.blocking.join(' and ')} {week.blocking.length === 1 ? 'is' : 'are'} waiting on you
+          </span>
+        </div>
+      )}
+
+      <ul className="space-y-1.5">
+        {week.contributors.map((c, i) => {
+          const st = CONTRIB_STATE[c.state] || CONTRIB_STATE.scheduled;
+          const you = !c.name;
+          return (
+            <li key={i} className="flex items-center gap-2 text-[11px] min-w-0">
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+              <span className={`font-bold shrink-0 ${you ? 'text-slate-900' : 'text-slate-700'}`}>
+                {you ? 'You' : c.name}
+              </span>
+              <span className="text-slate-400 shrink-0">· {c.role}</span>
+              <span className={`ml-auto font-semibold truncate ${st.text}`}>{c.note}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function ActiveProjectCard({ project, person, index, onOpenTasks, onOpenBrief }) {
   return (
     <BentoCard index={index} className="flex flex-col">
@@ -104,6 +186,8 @@ export function ActiveProjectCard({ project, person, index, onOpenTasks, onOpenB
           <div className="mt-1.5"><Stakeholder person={person} /></div>
         </div>
       </div>
+
+      <WeekStrip week={project.week} />
 
       <div className="mb-4">
         <div className="flex items-baseline justify-between gap-3 mb-2">
