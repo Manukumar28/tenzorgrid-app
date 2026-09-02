@@ -160,6 +160,21 @@ CREATE TABLE IF NOT EXISTS sim_messages (
   created_at TEXT NOT NULL
 );
 
+-- One row per project a learner has started: when their week began, when it is due,
+-- and how far the deadline pressure has escalated. Derived state would lose the
+-- escalation history, and "have we already emailed them about this?" has to be durable
+-- or the learner gets the same chase every time the page loads.
+CREATE TABLE IF NOT EXISTS sim_project_runs (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_key TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  due_at TEXT NOT NULL,
+  nudge_level INTEGER NOT NULL DEFAULT 0,
+  completed_at TEXT,
+  UNIQUE(enrollment_id, project_key)
+);
+
 CREATE TABLE IF NOT EXISTS sim_attendance (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
@@ -208,6 +223,12 @@ ensureColumn('sim_messages', 'read_at', 'TEXT');
 ensureColumn('sim_tasks', 'review_state', 'TEXT');
 ensureColumn('sim_tasks', 'review_rounds', 'INTEGER');
 ensureColumn('sim_tasks', 'review_question', 'TEXT');
+// A project runs as a five-working-day week, so a task belongs to a day and only opens
+// when that day arrives. Rows written before this have day_index NULL and open
+// immediately, which is exactly how they behaved before.
+ensureColumn('sim_tasks', 'day_index', 'INTEGER');
+ensureColumn('sim_tasks', 'opens_at', 'TEXT');
+ensureColumn('sim_tasks', 'difficulty', 'TEXT');
 ensureColumn('sim_messages', 'starred', 'INTEGER');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
