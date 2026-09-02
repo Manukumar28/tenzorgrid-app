@@ -448,6 +448,17 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/standup' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.submitStandup(user.id, body.answers, body.spoken));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/checkin' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

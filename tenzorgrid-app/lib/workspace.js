@@ -465,8 +465,11 @@ function countTodaysAiUse(enrollmentId) {
   const submissions = db.prepare(
     "SELECT COUNT(*) AS c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded' AND substr(graded_at, 1, 10) = ?"
   ).get(enrollmentId, todayStr).c;
+  // The stand-up is excluded: this cap exists to bound AI SPEND, and the stand-up is
+  // scripted and answered without an AI call. Charging it against the chat allowance
+  // would mean doing the daily ritual costs you a question you might need later.
   const messages = db.prepare(
-    "SELECT COUNT(*) AS c FROM sim_messages WHERE enrollment_id = ? AND sender_archetype = 'learner' AND task_id IS NULL AND substr(created_at, 1, 10) = ?"
+    "SELECT COUNT(*) AS c FROM sim_messages WHERE enrollment_id = ? AND sender_archetype = 'learner' AND task_id IS NULL AND substr(created_at, 1, 10) = ? AND (subject IS NULL OR subject NOT LIKE 'Stand-up —%')"
   ).get(enrollmentId, todayStr).c;
   return { submissions, messages };
 }
@@ -1393,6 +1396,7 @@ function getState(userId) {
       streak: streaks,
     },
     skillTest,
+    standup: getStandup(userId),
     skillMatrix: getSkillMatrix(gradedTasks, baseline),
     scoreHistory,
     shoutouts: getShoutouts(gradedTasks),
@@ -1587,6 +1591,131 @@ function submitSkillTest(userId, answers) {
 
   beginFirstProject(getEnrollment(userId));
   return { result, state: getState(userId) };
+}
+
+// ---- The two-minute stand-up -------------------------------------------------------
+//
+// A daily stand-up is the one workplace ritual that costs nothing to simulate and does
+// the most to make this feel like a job rather than a course: three questions, out loud,
+// with someone who already knows what you were meant to be doing.
+//
+// It is spoken in the browser via the Web Speech API — Asha through speechSynthesis, the
+// learner through SpeechRecognition — so it costs nothing per learner. Recognition is
+// Chrome/Edge only, so every question also takes typing. The text path is the real path
+// and voice is the upgrade, not the other way round: a learner on Firefox must get the
+// whole ritual, not a degraded stub.
+//
+// Asha's questions are built from the learner's OWN state, which is the entire point.
+// "How did the department salary breakdown go?" lands; "what did you do yesterday?" is
+// a form. Nothing here calls the AI.
+function getStandup(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) return null;
+
+  const day = today();
+  const doneRow = db.prepare('SELECT * FROM sim_standups WHERE enrollment_id = ? AND stood_up_on = ?')
+    .get(enrollment.id, day);
+
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId);
+  const learner = firstName(profile && profile.name) || 'there';
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const graded = tasks.filter((t) => t.status === 'graded');
+  const open = tasks.filter((t) => t.status !== 'graded' && !(t.opens_at && Date.parse(t.opens_at) > Date.now()));
+
+  // "Since we last spoke" is the honest framing — this is self-paced, so yesterday may
+  // have been a week ago, and pretending otherwise would be the first false note.
+  const lastStandup = db.prepare('SELECT stood_up_on FROM sim_standups WHERE enrollment_id = ? ORDER BY stood_up_on DESC LIMIT 1')
+    .get(enrollment.id);
+  const since = lastStandup ? Date.parse(lastStandup.stood_up_on + 'T00:00:00Z') : Date.parse(enrollment.created_at);
+  const closedSince = graded.filter((t) => t.graded_at && Date.parse(t.graded_at) >= since);
+
+  const runs = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id);
+  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  const late = runs.filter((r) => Date.now() > Date.parse(r.due_at))
+    .map((r) => (catalog.find((p) => p.key === r.project_key) || {}).title)
+    .filter(Boolean);
+
+  const questions = [
+    {
+      id: 'done',
+      // Naming the actual task is what makes this a conversation rather than a form.
+      text: closedSince.length
+        ? `Since we last spoke you got ${closedSince.length === 1 ? `"${closedSince[0].title}"` : `${closedSince.length} tasks`} signed off. How did that go?`
+        : `Morning ${learner}. Where did you get to since we last spoke?`,
+      hint: 'One or two sentences is plenty.',
+    },
+    {
+      id: 'today',
+      text: open.length
+        ? `What are you taking on today? I've got "${open[0].title}" open against your name.`
+        : "What are you picking up today?",
+      hint: open.length ? `Open right now: ${open.map((t) => t.title).join(', ')}` : null,
+    },
+    {
+      id: 'blockers',
+      text: late.length
+        ? `Anything in your way? ${late.join(' and ')} ${late.length === 1 ? 'is' : 'are'} past its date, so be straight with me — I'd rather know now.`
+        : "Anything blocking you? If there is, say so now rather than on Friday.",
+      hint: 'Say "nothing" if there is nothing. That is a real answer.',
+    },
+  ];
+
+  return {
+    date: day,
+    done: Boolean(doneRow),
+    doneAt: doneRow ? doneRow.created_at : null,
+    manager: LINE_MANAGER_NAME,
+    learner,
+    greeting: `Morning ${learner} — two minutes, three questions.`,
+    questions,
+    // Said out loud at the end, so the learner hears that it landed somewhere.
+    minutes: 2,
+  };
+}
+
+// Records the stand-up and posts it into the message thread, because a stand-up nobody
+// can refer back to is theatre. Asha's closing line is derived from what was actually
+// said — specifically, whether a blocker was raised.
+function submitStandup(userId, answers, spoken) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+
+  const day = today();
+  if (db.prepare('SELECT 1 FROM sim_standups WHERE enrollment_id = ? AND stood_up_on = ?').get(enrollment.id, day)) {
+    throw new Error("You've already done today's stand-up.");
+  }
+
+  const given = answers && typeof answers === 'object' ? answers : {};
+  const clean = {};
+  for (const k of ['done', 'today', 'blockers']) {
+    clean[k] = String(given[k] || '').trim().slice(0, 2000);
+  }
+  if (!clean.done && !clean.today && !clean.blockers) {
+    throw new Error('Say something before you finish the stand-up.');
+  }
+
+  db.prepare(`INSERT INTO sim_standups (id, enrollment_id, stood_up_on, answers_json, spoken, created_at)
+              VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(cryptoRandomId(), enrollment.id, day, JSON.stringify(clean), spoken ? 1 : 0, now());
+
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId);
+  const learner = firstName(profile && profile.name) || 'there';
+
+  // The learner's own words go in as their message, so the thread reads as a record of
+  // what they said — not a summary written on their behalf.
+  addMessage(enrollment.id, 'learner', profile && profile.name ? profile.name : 'You',
+    `Stand-up — ${day}\n\nSince we last spoke: ${clean.done || '—'}\nToday: ${clean.today || '—'}\nBlockers: ${clean.blockers || '—'}`,
+    null, `Stand-up — ${day}`, 'line_manager');
+
+  // A raised blocker gets acknowledged as a blocker. Saying "great, thanks" to someone
+  // who just told you they are stuck is how a manager loses people.
+  const raised = clean.blockers && !/^(no|none|nothing|nope|n\/a|all good|nothing really)\b/i.test(clean.blockers);
+  const reply = raised
+    ? `Thanks ${learner} — noted on the blocker, and thanks for saying it now rather than Friday. Put what you have into the workbench and message me the specific bit that's stuck; I'd rather unpick it with you than have you sit on it.`
+    : `Thanks ${learner}. That's what I needed — go and make a start, and shout if the picture changes during the day.`;
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, null, `Re: Stand-up — ${day}`, 'line_manager');
+
+  return { reply, raisedBlocker: Boolean(raised), state: getState(userId) };
 }
 
 function startProject(userId, projectKey) {
@@ -2248,5 +2377,7 @@ module.exports = {
   toggleChecklistItem,
   startProject,
   submitSkillTest,
+  getStandup,
+  submitStandup,
   markMessages,
 };

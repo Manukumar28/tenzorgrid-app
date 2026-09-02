@@ -10,6 +10,8 @@ import Team from './components/Team.jsx';
 import SettingsTab from './components/SettingsTab.jsx';
 import EnrollForm from './components/EnrollForm.jsx';
 import SkillTest from './components/SkillTest.jsx';
+import Standup from './components/Standup.jsx';
+import { Mic } from 'lucide-react';
 import { api } from './api.js';
 
 const ROLE_LABEL = { data_analyst: 'Data Analyst' };
@@ -20,6 +22,11 @@ export default function App() {
   const [learnerPhotoUrl, setLearnerPhotoUrl] = useState(null);
   const [state, setState] = useState(null);
   const [tab, setTab] = useState('overview');
+  // A stand-up you can ignore is not a stand-up — it opens by itself, once a day, the
+  // way a real one starts whether or not you feel like it. Closing it is one click, and
+  // the banner is there all day if you want it back.
+  const [standupOpen, setStandupOpen] = useState(false);
+  const [standupSeen, setStandupSeen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -30,6 +37,9 @@ export default function App() {
       setLearnerPhotoUrl((me.profile && me.profile.photoUrl) || null);
       const data = await api.getState();
       setState(data.state);
+      if (data.state && data.state.standup && !data.state.standup.done && !data.state.skillTest.required) {
+        setStandupOpen(true);
+      }
       setLoading(false);
     })();
   }, []);
@@ -74,6 +84,16 @@ export default function App() {
         onLogout={logout}
         unreadCount={state.inbox ? state.inbox.counts.unread : 0}
       />
+      {standupOpen && state.standup && !state.standup.done && (
+        <Standup
+          standup={state.standup}
+          manager={(state.roster || []).find((r) => r.archetype === 'line_manager')}
+          learnerName={learnerName}
+          learnerPhotoUrl={learnerPhotoUrl}
+          onClose={() => { setStandupOpen(false); setStandupSeen(true); }}
+          onDone={(next) => { setStandupOpen(false); setStandupSeen(true); if (next) setState(next); }}
+        />
+      )}
       <main className="flex-1 min-w-0 px-6 md:px-8 py-6">
         <Header
           name={learnerName}
@@ -84,6 +104,20 @@ export default function App() {
           onLogout={logout}
           pendingCount={pendingCount}
         />
+
+        {state.standup && !state.standup.done && standupSeen && (
+          <button
+            onClick={() => setStandupOpen(true)}
+            aria-label="Open your daily stand-up"
+            className="w-full flex items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 mb-5 text-left hover:bg-indigo-100 transition-colors"
+          >
+            <Mic size={16} className="text-indigo-600 shrink-0" />
+            <span className="text-sm font-bold text-slate-900">
+              Your stand-up with {state.standup.manager.split(' ')[0]} is still open
+            </span>
+            <span className="ml-auto text-xs font-bold text-indigo-600 shrink-0">{state.standup.minutes} min</span>
+          </button>
+        )}
 
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
