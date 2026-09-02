@@ -1021,9 +1021,54 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining) {
   });
 }
 
+// Brings a learner's assigned tasks back in line with the catalog.
+//
+// startProject() assigns a project's tasks ONCE, at the moment it is started. So when a
+// task is later added to a project that people have already started, those learners
+// never receive it — and because a project is only "completed" when every task in its
+// definition is graded, their project can never finish, nothing further unlocks, and no
+// next task appears. That is exactly what happened when the Python task was added to
+// Pay Equity Audit.
+//
+// Rather than migrate once and hope, this reconciles on every read: any project a
+// learner has started that is missing tasks gets them assigned now, with a message
+// explaining where the new work came from. It is a no-op for everyone already in sync,
+// and it makes every future catalog change safe by construction.
+function reconcileProjectTasks(enrollment) {
+  const catalog = PROJECT_CATALOG[enrollment.role] || [];
+  if (!catalog.length) return 0;
+
+  const rows = db.prepare('SELECT task_key FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const have = new Set(rows.map((r) => r.task_key));
+  let added = 0;
+
+  for (const def of catalog) {
+    // Only projects the learner has actually started. An untouched project must stay
+    // untouched — assigning its tasks here would silently start it for them.
+    const started = def.taskKeys.some((k) => have.has(k));
+    if (!started) continue;
+
+    for (const key of def.taskKeys) {
+      if (have.has(key) || !TASKS[key]) continue;
+      const taskId = assignTask(enrollment.id, key);
+      const task = TASKS[key];
+      addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+        `One more for ${def.title} — we've added ${task.title} to the scope. ${task.brief}`, taskId);
+      have.add(key);
+      added += 1;
+    }
+  }
+  return added;
+}
+
 function getState(userId) {
   const enrollment = getEnrollment(userId);
   if (!enrollment) return null;
+
+  // Catch up any project whose task list grew after the learner started it, before
+  // anything below reads the task rows.
+  reconcileProjectTasks(enrollment);
+
   const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
   const attendanceRows = db.prepare('SELECT attended_on FROM sim_attendance WHERE enrollment_id = ? ORDER BY attended_on ASC').all(enrollment.id);

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ClipboardCheck, Users, Gauge } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
@@ -87,6 +87,20 @@ export default function Tasks({ state, onStateChange }) {
   const [projectFilter, setProjectFilter] = useState('');
   const [sortBy, setSortBy] = useState('due');
   const [selectedId, setSelectedId] = useState(null);
+  // Opening a task should take the learner to the editor, not leave them hunting for
+  // it further down the page. The board and the workbench are far apart on a tall
+  // screen, and "Open task" that visibly does nothing reads as broken.
+  const workspaceRef = useRef(null);
+
+  function openTask(id) {
+    setSelectedId(id);
+    // Wait for the workbench to render for the newly selected task before scrolling.
+    requestAnimationFrame(() => {
+      if (workspaceRef.current) {
+        workspaceRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
 
   const personByArchetype = useMemo(
     () => Object.fromEntries(roster.map((p) => [p.archetype, p])),
@@ -172,7 +186,7 @@ export default function Tasks({ state, onStateChange }) {
                 person={stakeholderByProject[t.projectKey]}
                 index={i}
                 selected={t.id === selectedId}
-                onOpen={() => setSelectedId(t.id)}
+                onOpen={() => openTask(t.id)}
               />
             ))}
             {lockedVisible.map((t, i) => (
@@ -202,6 +216,7 @@ export default function Tasks({ state, onStateChange }) {
       {selected && (
         <section>
           <SectionTitle>{selected.status === 'graded' ? 'Feedback' : 'Workspace'}</SectionTitle>
+          <span ref={workspaceRef} className="block scroll-mt-4" aria-hidden="true" />
           <TaskWorkspace task={selected} onStateChange={onStateChange} />
         </section>
       )}
