@@ -175,6 +175,16 @@ CREATE TABLE IF NOT EXISTS sim_project_runs (
   UNIQUE(enrollment_id, project_key)
 );
 
+CREATE TABLE IF NOT EXISTS sim_standups (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  stood_up_on TEXT NOT NULL,
+  answers_json TEXT NOT NULL,
+  spoken INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, stood_up_on)
+);
+
 CREATE TABLE IF NOT EXISTS sim_attendance (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
