@@ -413,7 +413,7 @@ task teaches nothing and cannot be graded.
   then asking them to justify their work turns the conversation into a formality, which is
   the one thing it must not be. Backed by `sim_tasks.review_state/review_rounds/
   review_question` and `ReviewPanel.jsx`.
-- **Phase 2 — IN PROGRESS (branch `claude/week-structure`). The week and the deadline.**
+- **Phase 2 — ✅ SHIPPED (#55). The week and the deadline.**
   A project is now a **five-working-day week** with a real deadline, not an open-ended
   bag of tasks. New `sim_project_runs` table (start, due, escalation level, completion) and
   `sim_tasks.day_index/opens_at/difficulty`. What it produces: tasks release on their day
@@ -425,12 +425,38 @@ task teaches nothing and cannot be graded.
   over, and who is *blocked on the learner by name*, which flips to "Picked it up from your
   analysis" the moment they deliver. A finished project is never chased. Existing accounts
   get a week backfilled from their real `assigned_at`, so nobody's clock starts today.
-  Backend is complete and green against a 40-check suite; frontend is next.
-- **Phase 3 — next. The skill test and the two levels.** The pre-project assessment that
-  seeds the skill matrix, and genuinely different project catalogues for junior and senior.
-- **Phase 4.** The 2-minute voice standup (Web Speech API + text fallback).
-- **Phase 5.** The 12-week arc: authoring roughly 30 tasks per role against the validation
-  gate above, the weekly retro/1:1, the performance record, and the interview defence.
+  Green against a 40-check backend suite plus a browser pass.
+- **Phase 2 — ✅ SHIPPED (#55).** Frontend included: the active project card carries a
+  five-pip week strip with the deadline counted in **working** days (reporting "7 days
+  left" beside "day 1 of 5" is the kind of contradiction that makes a learner stop
+  trusting every other number), and the contributor list shows who handed over and who is
+  next. A colleague who picks the work up on day 5 reads as *queued* on day 1 and only
+  turns red once their day arrives or the project is late — a warning that is always on
+  is a warning nobody reads. Task cards carry their day and say "Opens Thursday" rather
+  than showing a padlock.
+- **Phase 3a — ✅ SHIPPED (#56). The skills check.** Twelve authored questions across all
+  five axes, scored deterministically with no AI call, taken **before** the first project.
+  The matrix now carries `baseline` and `delta` per axis, so "my SQL went from 52 to 84"
+  is a sentence backed by two real numbers. An unanswered axis is NULL, never zero. Asha
+  hands over the first project herself, naming the strongest and weakest area from the
+  actual result. Accounts enrolled earlier are offered the test but never blocked by it.
+  One finding worth keeping: the browser test scored 12/12 by clicking the top option
+  twelve times, because the answers were all authored first. Answer position now rotates
+  evenly, and a test fails if that regresses — **check this on any new question bank.**
+- **Phase 4 — ✅ SHIPPED (#57). The two-minute stand-up.** Three questions, spoken by Asha
+  through `speechSynthesis` and answered by voice through `SpeechRecognition` or by
+  typing. Local, free, no audio leaves the machine. Her questions are built from the
+  learner's real state; a raised blocker is answered as a blocker; the learner's own
+  words go into the thread verbatim. **Typing is the real path and voice is the upgrade**
+  — recognition is Chrome/Edge only, so voice-first would have broken it for roughly a
+  third of learners. Excluded from the daily AI cap, since it costs nothing.
+- **Phase 3b — next. Junior and senior get different projects.** The user was explicit
+  that the levels differ by *project*, not by a vaguer version of the same brief. This is
+  content authoring against the validation gate above (reference run, non-trivial result,
+  naive wrong answer differs), not engineering — `PROJECT_CATALOG` needs a `level` field
+  and a senior track authored on the existing `saas_ops` / `hr_core` datasets.
+- **Phase 5.** The 12-week arc: roughly 30 tasks per role authored against that same gate,
+  the weekly retro/1:1, the performance record, and the interview defence.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
 built and tested against the five tasks that exist today; authoring the ~30-task arc is a
