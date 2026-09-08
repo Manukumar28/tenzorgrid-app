@@ -194,7 +194,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       <section>
         <SectionTitle count={visible.length + lockedVisible.length}>Your tasks</SectionTitle>
         {visible.length || lockedVisible.length ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {visible.map((t, i) => (
               <TaskCard
                 key={t.id}
@@ -248,7 +248,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       {/* Section 2 — analytics */}
       <section>
         <SectionTitle>Delivery analytics</SectionTitle>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           <BentoCard index={0}>
             <h3 className="text-base font-bold mb-0.5">Turnaround</h3>
             <p className="text-xs text-gray-400 mb-2">Avg time from assigned to graded</p>

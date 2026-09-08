@@ -1,16 +1,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { Avatar } from './ui.jsx';
 
-export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleCheckIn, onLogout, pendingCount }) {
+export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu }) {
   return (
-    <div className="flex items-start justify-between gap-6 mb-6 flex-wrap">
-      <div className="flex items-center gap-3.5">
-        <Avatar name={name} photoUrl={photoUrl} size={52} className="ring-2 ring-white shadow-sm" />
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Welcome back, {name} — {roleLabel}</h1>
-          <p className="text-sm text-gray-400 mt-1">Here's how your Virtual Workspace is going.</p>
+    <div className="flex items-start justify-between gap-3 sm:gap-6 mb-6 flex-wrap">
+      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+        {/* The only way back to the nav once the rail becomes a drawer. */}
+        <button
+          onClick={onOpenMenu}
+          aria-label="Open the menu"
+          className="lg:hidden p-2 -ml-1 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0"
+        >
+          <Menu size={22} />
+        </button>
+        <Avatar name={name} photoUrl={photoUrl} size={52} className="ring-2 ring-white shadow-sm hidden sm:block" />
+        <div className="min-w-0">
+          {/* A 2xl heading on a 390px screen wrapped to one word per line. */}
+          <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            Welcome back, {name} <span className="hidden sm:inline">— {roleLabel}</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1 sm:hidden">{roleLabel}</p>
+          <p className="text-sm text-gray-400 mt-1 hidden sm:block">Here's how your Virtual Workspace is going.</p>
         </div>
       </div>
 
@@ -34,7 +46,9 @@ export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleC
           <span className={`text-xs font-bold ${checkedIn ? 'text-teal-600' : 'text-gray-500'}`}>{checkedIn ? 'Checked In' : 'Check in'}</span>
         </button>
 
-        <div className="relative">
+        {/* The badge overhangs by 6px, and this sits at the right edge of the page — that
+            overhang was enough to make the whole document scroll sideways on a phone. */}
+        <div className="relative mr-1.5">
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm"

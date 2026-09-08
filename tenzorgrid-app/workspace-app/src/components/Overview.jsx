@@ -63,11 +63,11 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
   const delta = performance.scoreDeltaToday;
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-12 xl:col-span-9 space-y-6">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
+      <div className="min-w-0 xl:col-span-9 space-y-4 sm:space-y-6">
 
         {/* KPI row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           <KpiCard
             index={0} icon={CheckCircle2} iconClass="bg-gradient-to-br from-indigo-500 to-indigo-400"
             label="Tasks completed" value={`${performance.tasksCompleted}/${performance.tasksTotal}`}
@@ -102,7 +102,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         </div>
 
         {/* Middle row — the skill radar needs the widest slot, its axis labels clip below ~300px */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           <BentoCard index={4} className="lg:col-span-3">
             <h3 className="text-base font-bold mb-3.5">Task progress</h3>
             <div className="space-y-3">
@@ -161,7 +161,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         </div>
 
         {/* Bottom row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <BentoCard index={7} className="lg:col-span-2">
             <h3 className="text-base font-bold mb-3.5">Recent activity</h3>
             <div className="space-y-4">
@@ -204,7 +204,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
       </div>
 
       {/* Far right column */}
-      <div className="col-span-12 xl:col-span-3 space-y-6">
+      <div className="min-w-0 xl:col-span-3 space-y-4 sm:space-y-6">
         <BentoCard index={2}>
           <div className="flex items-center gap-2.5 mb-3.5">
             <ClipboardList size={22} className="text-indigo-500" />

@@ -27,6 +27,7 @@ export default function App() {
   // the banner is there all day if you want it back.
   const [standupOpen, setStandupOpen] = useState(false);
   const [standupSeen, setStandupSeen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -77,6 +78,8 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
         tab={tab}
         onTab={setTab}
         roleLabel={(ROLE_LABEL[state.enrollment.role] || 'Data Analyst').toUpperCase()}
@@ -94,7 +97,7 @@ export default function App() {
           onDone={(next) => { setStandupOpen(false); setStandupSeen(true); if (next) setState(next); }}
         />
       )}
-      <main className="flex-1 min-w-0 px-6 md:px-8 py-6">
+      <main className="flex-1 min-w-0 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6">
         <Header
           name={learnerName}
           photoUrl={learnerPhotoUrl}
@@ -103,6 +106,7 @@ export default function App() {
           onToggleCheckIn={toggleCheckIn}
           onLogout={logout}
           pendingCount={pendingCount}
+          onOpenMenu={() => setMenuOpen(true)}
         />
 
         {state.standup && !state.standup.done && standupSeen && (
