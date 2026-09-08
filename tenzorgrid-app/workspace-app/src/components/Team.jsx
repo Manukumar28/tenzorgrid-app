@@ -333,7 +333,7 @@ export default function Team({ state, onStateChange, onTab }) {
 
           {/* Analytics */}
           <BentoCard hover={false}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <h3 className="text-base font-bold mb-0.5">Your skill levels</h3>
                 <p className="text-xs text-slate-400 mb-4">Measured from your graded work, not a team average</p>

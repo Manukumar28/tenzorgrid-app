@@ -14,7 +14,11 @@ export function BentoCard({ children, className = '', index = 0, hover = true, .
       animate="show"
       custom={index}
       whileHover={hover ? { y: -3, boxShadow: '0 12px 24px -8px rgba(15,23,42,.12)' } : undefined}
-      className={`bg-white border border-gray-100 rounded-xl shadow-sm p-6 ${className}`}
+      // `min-w-0` is load-bearing: a CSS grid track defaults to min-width:auto, so a card
+      // whose content has a wide min-content pushes its whole column past the viewport and
+      // the page scrolls sideways. Without this, no amount of responsive column counts
+      // helps — the workspace overflowed a 390px phone by 230px because of it.
+      className={`bg-white border border-gray-100 rounded-xl shadow-sm p-4 sm:p-6 min-w-0 ${className}`}
       {...rest}
     >
       {children}

@@ -1136,7 +1136,8 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
       // The phase is the task actually open right now, not an invented milestone name.
       phase: openTask ? openTask.title : completed ? 'Delivered' : null,
       skillPoints: skillPointsFor(graded),
-      estHours: def.taskKeys.reduce((s, k) => s + ((TASKS[k] && TASKS[k].estHours) || 0), 0),
+      // Same float-summing trap as the workload card — round where it is computed.
+      estHours: Math.round(def.taskKeys.reduce((s, k) => s + ((TASKS[k] && TASKS[k].estHours) || 0), 0) * 10) / 10,
       tasks: taskRows.map((t) => ({
         id: t.id, title: t.title, status: t.status, score: t.score,
         feedback: t.feedback, submittedAt: t.submitted_at,
@@ -1798,9 +1799,13 @@ function getState(userId) {
   const avgScore = gradedTasks.length
     ? Math.round(gradedTasks.reduce((sum, t) => sum + (t.score || 0), 0) / gradedTasks.length)
     : null;
-  const hoursAssigned = tasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
-  const hoursCompleted = gradedTasks.reduce((sum, t) => sum + (t.est_hours || 0), 0);
-  const hoursOpen = Math.max(0, hoursAssigned - hoursCompleted);
+  // Estimates are fractions of an hour now, so these sums are floating point and printed
+  // straight onto the dashboard — "1.7000000000000002h" is what a learner actually saw.
+  // Rounded to one decimal at the source, so every consumer gets the same clean number.
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const hoursAssigned = round1(tasks.reduce((sum, t) => sum + (t.est_hours || 0), 0));
+  const hoursCompleted = round1(gradedTasks.reduce((sum, t) => sum + (t.est_hours || 0), 0));
+  const hoursOpen = round1(Math.max(0, hoursAssigned - hoursCompleted));
 
   // Real day-over-day movement only: compare the running average including today's
   // grades against what it was before any grade landed today. If every graded task so

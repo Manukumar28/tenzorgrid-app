@@ -158,7 +158,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       {active.length > 0 && (
         <section>
           <SectionTitle count={active.length}>In progress</SectionTitle>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {active.map((p, i) => (
               <ActiveProjectCard
                 key={p.key}
@@ -177,7 +177,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       {others.length > 0 && (
         <section>
           <SectionTitle count={others.length}>Discover &amp; archive</SectionTitle>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
             {others.map((p, i) => {
               const person = personByArchetype[p.stakeholderArchetype];
               if (p.status === 'completed') return <CompletedProjectCard key={p.key} project={p} person={person} index={i} onOpenBrief={() => setBriefKey(p.key)} />;
@@ -221,7 +221,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       {/* Section 3 — analytics and achievements */}
       <section>
         <SectionTitle>Progress &amp; achievements</SectionTitle>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <BentoCard index={0}>
             <h3 className="text-base font-bold mb-0.5">Skill points earned</h3>
             <p className="text-xs text-gray-400 mb-2">From graded project tasks</p>
