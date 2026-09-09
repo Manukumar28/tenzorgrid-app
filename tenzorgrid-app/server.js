@@ -448,6 +448,19 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/time-travel' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      // The whole body: the control sends { workingDays } or { to: 'past-deadline' },
+      // not just a day count. Passing body.days alone made every button a no-op.
+      return sendJson(res, 200, { state: workspace.timeTravel(user.id, body) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/standup' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

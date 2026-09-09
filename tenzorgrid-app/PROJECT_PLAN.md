@@ -613,6 +613,25 @@ after month one.** Three consequences, all of which change what gets built next:
     conversation area 256→416px tall, the people picker 288→384px, both capped against the
     viewport so the mobile audit still reports nothing overflowing.
 
+- **Testing the week without waiting a week — ✅ SHIPPED.** Day 2 arrived tomorrow, which
+  made a five-day project impossible to walk through in one sitting. Settings now has a
+  **Testing — move the clock** panel: *Next day*, *Miss the deadline*, *Back a day*. It
+  shifts the learner's whole clock — enrollment, project run, deadline, every task's
+  assigned/opens/due, messages, attendance — together, so the state it lands on is one the
+  product could genuinely reach on its own; shifting only some of them would produce
+  states that can't occur, and then a bug found while testing might not be a real bug.
+  **Gated on `TIME_TRAVEL=1`** and off by default — a button that skips a day would walk
+  past every deadline in the programme, and the deadline is most of what makes this a job.
+  Two things the tests caught, both of which made the first version silently useless:
+  a flat 24-hour shift lands on Saturday, where the working-day counter does not move, so
+  the day stuck at 3 and the button appeared dead — it now steps by **working** days, found
+  by asking `workingDaysElapsed` directly rather than by arithmetic that was wrong twice.
+  And the deadline is end-of-day, so landing eight hours past midnight on the due date
+  counts as zero days overdue and no chase fires; *Miss the deadline* now clears a full day.
+  A third was found only in the browser: the server route passed `body.days` while the
+  control sends `{ workingDays }` or `{ to: 'past-deadline' }`, so every button was a no-op
+  over HTTP while passing every backend test.
+
 - **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
   interview defence. Plus the outstanding authoring: junior days 3–5, senior days 2–5, and
   the other four projects.
