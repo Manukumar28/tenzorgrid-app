@@ -142,7 +142,7 @@ export default function App() {
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
-        {tab === 'settings' && <SettingsTab prefs={prefs} onPrefs={savePrefs} />}
+        {tab === 'settings' && <SettingsTab prefs={prefs} onPrefs={savePrefs} timeTravel={state.timeTravel} onStateChange={setState} />}
       </main>
 
       {/* Always reachable, deliberately outside the tab system: you ask a colleague a

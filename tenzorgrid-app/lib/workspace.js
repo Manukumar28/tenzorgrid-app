@@ -2340,6 +2340,7 @@ function getState(userId) {
     },
     skillTest,
     promotion,
+    timeTravel: timeTravelState(enrollment, projects.projects),
     standup: getStandup(userId),
     skillMatrix: getSkillMatrix(gradedTasks, baseline),
     scoreHistory,
@@ -2672,6 +2673,124 @@ function submitStandup(userId, answers, spoken) {
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, null, `Re: Stand-up — ${day}`, 'line_manager');
 
   return { reply, raisedBlocker: Boolean(raised), state: getState(userId) };
+}
+
+// ---- Testing the week without waiting a week -----------------------------------------
+//
+// Day 2 arrives tomorrow, which makes the week impossible to test in one sitting. This
+// moves a learner's whole clock backwards by a day, so "now" lands on the next day of
+// their project. Everything dated moves together — the project run, its deadline, and
+// every task's assigned/opens/due timestamps — because shifting only some of them would
+// produce a state the product can never reach on its own, and then a bug found while
+// testing might not be a real bug.
+//
+// Gated on TIME_TRAVEL=1. This has to be off for real learners: a control that skips a
+// day would let anyone walk past every deadline in the programme, and the deadline is
+// most of what makes this a job rather than a course.
+const TIME_TRAVEL_ENABLED = process.env.TIME_TRAVEL === '1';
+
+function shiftIso(iso, ms) {
+  return iso ? new Date(Date.parse(iso) - ms).toISOString() : iso;
+}
+
+// How many CALENDAR days to shift so the learner advances `n` WORKING days.
+//
+// A flat 24 hours is the obvious implementation and the wrong one: shift a Monday start
+// twice and you land on Saturday, where the working-day counter does not move and pressing
+// the button again appears to do nothing. That is exactly what happened — the day stuck
+// at 3 and would not go further.
+//
+// Rather than compute it, search for it. The day counter is `workingDaysElapsed`, so ask
+// that function directly how far back the start has to move. Slower and obviously right,
+// against arithmetic that was neither.
+function calendarDaysForWorkingDays(startIso, n) {
+  const nowMs = Date.now();
+  const want = workingDaysElapsed(startIso, nowMs) + Number(n);
+  const dir = n > 0 ? 1 : -1;
+  for (let shift = dir; Math.abs(shift) <= 60; shift += dir) {
+    const moved = new Date(Date.parse(startIso) - shift * DAY_MS).toISOString();
+    if (workingDaysElapsed(moved, nowMs) === want) return shift;
+  }
+  throw new Error('Could not reach that day.');
+}
+
+function timeTravel(userId, spec) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+
+  const opts = (spec && typeof spec === 'object') ? spec : { days: spec };
+  const run = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL ORDER BY started_at DESC LIMIT 1')
+    .get(enrollment.id);
+
+  let n;
+  if (opts.to === 'past-deadline') {
+    // Landing exactly on the deadline is not past it — the chase needs a full day to have
+    // elapsed. Computing that by hand is the friction this panel exists to remove.
+    if (!run) throw new Error('No project is running, so there is no deadline to miss.');
+    // The deadline is end-of-day, and a chase needs a FULL day to have elapsed past it.
+    // Landing eight hours past midnight on the due date counts as zero days overdue, so
+    // the first attempt at this quietly did nothing.
+    n = Math.ceil((Date.parse(run.due_at) - Date.now()) / DAY_MS) + 1;
+    if (n <= 0) throw new Error('That deadline has already passed.');
+  } else if (opts.workingDays) {
+    if (!run) throw new Error('No project is running yet.');
+    n = calendarDaysForWorkingDays(run.started_at, Number(opts.workingDays));
+  } else {
+    n = Number(opts.days);
+  }
+
+  if (!Number.isFinite(n) || n === 0 || Math.abs(n) > 60) {
+    throw new Error('Move by between -60 and 60 days.');
+  }
+  const ms = n * DAY_MS;
+
+  // The enrollment itself, so "days since joining" and the calendar's joining-day lock
+  // move with everything else.
+  db.prepare('UPDATE sim_enrollments SET created_at = ? WHERE id = ?')
+    .run(shiftIso(enrollment.created_at, ms), enrollment.id);
+
+  for (const r of db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ?').all(enrollment.id)) {
+    db.prepare('UPDATE sim_project_runs SET started_at = ?, due_at = ?, completed_at = ? WHERE id = ?')
+      .run(shiftIso(r.started_at, ms), shiftIso(r.due_at, ms), shiftIso(r.completed_at, ms), r.id);
+  }
+
+  for (const t of db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id)) {
+    db.prepare('UPDATE sim_tasks SET assigned_at = ?, opens_at = ?, due_at = ?, submitted_at = ?, graded_at = ? WHERE id = ?')
+      .run(shiftIso(t.assigned_at, ms), shiftIso(t.opens_at, ms), shiftIso(t.due_at, ms),
+           shiftIso(t.submitted_at, ms), shiftIso(t.graded_at, ms), t.id);
+  }
+
+  // Messages too, or the inbox shows tomorrow's mail arriving before today's.
+  for (const m of db.prepare('SELECT id, created_at FROM sim_messages WHERE enrollment_id = ?').all(enrollment.id)) {
+    db.prepare('UPDATE sim_messages SET created_at = ? WHERE id = ?').run(shiftIso(m.created_at, ms), m.id);
+  }
+
+  // Attendance is stored as a plain date, so it shifts by whole days only.
+  const whole = Math.trunc(n);
+  if (whole !== 0) {
+    for (const a of db.prepare('SELECT id, attended_on FROM sim_attendance WHERE enrollment_id = ?').all(enrollment.id)) {
+      db.prepare('UPDATE sim_attendance SET attended_on = ? WHERE id = ?')
+        .run(shiftDay(a.attended_on, -whole), a.id);
+    }
+  }
+
+  // The stand-up is recorded per day, so yesterday's would otherwise block today's.
+  db.prepare('DELETE FROM sim_standups WHERE enrollment_id = ?').run(enrollment.id);
+
+  return getState(userId);
+}
+
+// Where the learner currently is, so the control can say what pressing it will do.
+function timeTravelState(enrollment, projects) {
+  if (!TIME_TRAVEL_ENABLED) return { enabled: false };
+  const active = projects.find((p) => p.status === 'active' && p.week);
+  return {
+    enabled: true,
+    day: active ? active.week.day : null,
+    totalDays: active ? active.week.totalDays : null,
+    project: active ? active.title : null,
+  };
 }
 
 function startProject(userId, projectKey) {
@@ -3560,6 +3679,7 @@ module.exports = {
   toggleChecklistItem,
   startProject,
   submitSkillTest,
+  timeTravel,
   getStandup,
   submitStandup,
   markMessages,
