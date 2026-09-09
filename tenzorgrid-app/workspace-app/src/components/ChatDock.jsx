@@ -40,7 +40,7 @@ function EmojiPicker({ onPick, onClose }) {
   );
 }
 
-function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend, minimised, index }) {
+function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend, minimised, index, review }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [emoji, setEmoji] = useState(false);
@@ -81,8 +81,8 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      style={{ right: 16 + index * 336 }}
-      className="fixed bottom-0 z-40 w-80 rounded-t-xl border border-slate-200 border-b-0 bg-white shadow-2xl overflow-hidden"
+      style={{ right: 16 + index * 420 }}
+      className="fixed bottom-0 z-40 w-[404px] max-w-[calc(100vw-2rem)] rounded-t-xl border border-slate-200 border-b-0 bg-white shadow-2xl overflow-hidden"
     >
       <div
         onClick={onMinimise}
@@ -93,7 +93,9 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
         <Avatar name={person.name} avatarUrl={person.avatarUrl} size={24} />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold leading-tight truncate">{person.name}</p>
-          <p className="text-[10px] text-slate-300 truncate">{person.title}</p>
+          <p className="text-[10px] text-slate-300 truncate">
+            {review ? `Signing off "${review.title}"` : person.title}
+          </p>
         </div>
         {person.friend && (
           <span title="You know each other" className="shrink-0"><Handshake size={13} className="text-teal-300" /></span>
@@ -116,7 +118,17 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
 
       {!minimised && (
         <>
-          <div ref={scroller} className="h-64 overflow-y-auto px-3 py-3 space-y-2 bg-slate-50">
+          {review && (
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 border-b border-amber-200">
+              <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wide truncate">
+                Sign-off · {review.title}
+              </span>
+              <span className="ml-auto text-[11px] font-bold text-amber-700 shrink-0">
+                {review.roundsLeft} {review.roundsLeft === 1 ? 'attempt' : 'attempts'} left
+              </span>
+            </div>
+          )}
+          <div ref={scroller} className="h-[26rem] max-h-[60vh] overflow-y-auto px-3.5 py-3.5 space-y-2.5 bg-slate-50">
             {messages.length === 0 && (
               <div className="text-center pt-6">
                 <p className="text-xs text-slate-500 leading-relaxed px-3">
@@ -138,7 +150,7 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
               const mine = m.from === 'learner';
               return (
                 <div key={i} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed whitespace-pre-line ${
+                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-line ${
                     mine ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}`}>
                     {m.body}
                   </div>
@@ -158,16 +170,23 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
 
           <div className="relative border-t border-slate-200 p-2">
             {emoji && <EmojiPicker onPick={(e) => setText((t) => t + e)} onClose={() => setEmoji(false)} />}
+            {review && (
+              <p className="text-[11px] text-slate-500 mb-1.5 px-0.5">
+                Say <em>why</em>, not what the code does. She's checking you understood the choice.
+              </p>
+            )}
             <div className="flex items-end gap-1.5">
               <textarea
                 ref={box}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={onKeyDown}
-                rows={1}
+                rows={2}
                 aria-label={`Message ${person.name}`}
-                placeholder={enterToSend ? 'Message… (Enter to send)' : 'Message… (Shift+Enter to send)'}
-                className="flex-1 resize-none max-h-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder={review
+                  ? 'Answer her — say why you made that choice…'
+                  : (enterToSend ? 'Message… (Enter to send)' : 'Message… (Shift+Enter to send)')}
+                className="flex-1 resize-none max-h-32 rounded-lg border border-slate-200 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <button
                 onClick={() => setEmoji((v) => !v)}
@@ -192,7 +211,7 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
   );
 }
 
-export default function ChatDock({ state, onStateChange, enterToSend }) {
+export default function ChatDock({ state, onStateChange, enterToSend, openWith }) {
   const [open, setOpen] = useState([]);        // archetypes with a window
   const [minimised, setMinimised] = useState([]);
   const [picking, setPicking] = useState(false);
@@ -200,6 +219,30 @@ export default function ChatDock({ state, onStateChange, enterToSend }) {
 
   const roster = state.team || [];
   const messages = state.messages || [];
+
+  // A task waiting on the manager's sign-off. The conversation belongs here rather than
+  // in a panel inside the workbench: a manager questioning your work is a conversation,
+  // and it should happen where every other conversation with her already does.
+  const review = useMemo(() => {
+    const rows = (state.taskBoard && state.taskBoard.rows) || [];
+    const t = rows.find((r) => r.reviewState === 'pending');
+    return t ? { taskId: t.id, title: t.title, roundsLeft: t.reviewRoundsLeft ?? 2 } : null;
+  }, [state.taskBoard]);
+
+  // Open her window by itself when she asks something — being questioned should not be
+  // something you have to go looking for.
+  useEffect(() => {
+    if (!review) return;
+    setOpen((o) => (o.includes('line_manager') ? o : [...o, 'line_manager'].slice(-3)));
+    setMinimised((m) => m.filter((a) => a !== 'line_manager'));
+  }, [review && review.taskId]);
+
+  // Another tab asking for a conversation — the sign-off pointer on the Tasks board.
+  useEffect(() => {
+    if (!openWith) return;
+    setOpen((o) => (o.includes(openWith.archetype) ? o : [...o, openWith.archetype].slice(-3)));
+    setMinimised((m) => m.filter((a) => a !== openWith.archetype));
+  }, [openWith && openWith.at]);
 
   // One conversation per person, in the order it happened.
   const threads = useMemo(() => {
@@ -233,6 +276,13 @@ export default function ChatDock({ state, onStateChange, enterToSend }) {
   }
 
   async function send(archetype, body) {
+    // While a sign-off is open, what you type to your manager IS your answer to it —
+    // there is no separate box to find.
+    if (archetype === 'line_manager' && review) {
+      const d = await api.answerReview(review.taskId, body);
+      if (d.state) onStateChange(d.state);
+      return;
+    }
     const d = await api.sendMessage(archetype, body);
     if (d.state) onStateChange(d.state);
   }
@@ -250,6 +300,7 @@ export default function ChatDock({ state, onStateChange, enterToSend }) {
             messages={threads[archetype] || []}
             minimised={minimised.includes(archetype)}
             enterToSend={enterToSend}
+            review={archetype === 'line_manager' ? review : null}
             onClose={() => setOpen((o) => o.filter((a) => a !== archetype))}
             onMinimise={() => setMinimised((m) => m.includes(archetype) ? m.filter((a) => a !== archetype) : [...m, archetype])}
             onSend={(body) => send(archetype, body)}
@@ -258,14 +309,14 @@ export default function ChatDock({ state, onStateChange, enterToSend }) {
       })}
 
       {/* The dock itself — always reachable, never in the way of the workbench. */}
-      <div className="fixed bottom-0 right-4 z-30" style={{ right: 16 + open.length * 336 }}>
+      <div className="fixed bottom-0 right-4 z-30" style={{ right: 16 + open.length * 420 }}>
         <AnimatePresence>
           {picking && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
-              className="absolute bottom-full right-0 mb-2 w-72 rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+              className="absolute bottom-full right-0 mb-2 w-96 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
             >
               <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200">
                 <Search size={14} className="text-slate-400 shrink-0" />
@@ -278,7 +329,7 @@ export default function ChatDock({ state, onStateChange, enterToSend }) {
                   className="flex-1 text-xs focus:outline-none"
                 />
               </div>
-              <div className="max-h-72 overflow-y-auto">
+              <div className="max-h-[26rem] overflow-y-auto">
                 {found.length === 0 && (
                   <p className="px-3 py-4 text-xs text-slate-400 text-center">Nobody here matches that.</p>
                 )}

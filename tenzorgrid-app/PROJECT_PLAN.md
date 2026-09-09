@@ -602,6 +602,16 @@ after month one.** Three consequences, all of which change what gets built next:
     straight to her question, which read as a machine responding. She now acknowledges
     receipt by name, then comes back having read it — the gap is what makes "in review" a
     state rather than a formality.
+  - **The sign-off happens in the chat window with her, not in the workbench.** The first
+    version put the review in a panel bolted into the task workspace, which the user
+    rightly rejected: a manager questioning your work is a conversation, and it belongs
+    where every other conversation with her already is. Her window opens by itself when
+    she asks something — being questioned should not be a thing you go looking for — the
+    header and a banner name the task and the attempts left, and what you type to her IS
+    your answer; there is no separate box. The task board keeps a pointer to the chat
+    rather than hosting a form. Chat windows were enlarged to suit: 320→404px wide, the
+    conversation area 256→416px tall, the people picker 288→384px, both capped against the
+    viewport so the mobile audit still reports nothing overflowing.
 
 - **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
   interview defence. Plus the outstanding authoring: junior days 3–5, senior days 2–5, and
