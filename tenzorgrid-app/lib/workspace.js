@@ -34,17 +34,65 @@ const ROLE_CATALOG = {
 // avatar illustration out of the pool (see lib/avatars.js) — new characters added
 // later (more roles, the manager track) just need a name/title/gender here and get a
 // real avatar automatically, no manual picking required.
+// The cast.
+//
+// It used to be three people, while tasks and project briefs named seven more — you were
+// asked to review Rahul's query and brief Arjun without either of them existing anywhere
+// you could reach. Anyone whose name appears on a task or a project is now a real
+// colleague you can message.
+//
+// `core` marks the three who drive the simulation: only the Line Manager grades, and the
+// other two carry the HR and stakeholder pressure. The rest are colleagues — they answer
+// about their own patch, and they are who you go to when you are stuck.
+//
+// `helpsWith` is what that person can actually be useful about. It is authored rather
+// than inferred, because a colleague who confidently answers a question outside their job
+// is worse than one who says "not my area, ask Rahul".
 const ROSTER = [
-  { archetype: 'line_manager', name: LINE_MANAGER_NAME, title: 'Line Manager', gender: 'female' },
-  { archetype: 'people_partner', name: PEOPLE_PARTNER_NAME, title: 'People Partner (HR)', gender: 'female' },
-  { archetype: 'stakeholder', name: STAKEHOLDER_NAME, title: 'Business Stakeholder', gender: 'male' },
+  { archetype: 'line_manager', name: LINE_MANAGER_NAME, title: 'Line Manager', gender: 'female', core: true,
+    helpsWith: ['scope', 'priorities', 'feedback'], about: 'Your manager. She assigns your work and she is the only person who signs it off.' },
+  { archetype: 'people_partner', name: PEOPLE_PARTNER_NAME, title: 'People Partner (HR)', gender: 'female', core: true,
+    helpsWith: ['policy', 'bands', 'headcount'], about: 'People Ops. Owns the salary bands and the headcount data, and framed the equity question.' },
+  { archetype: 'stakeholder', name: STAKEHOLDER_NAME, title: 'Business Stakeholder', gender: 'male', core: true,
+    helpsWith: ['what the business needs', 'deadlines'], about: 'The person your analysis is for. He will tell you what he needs, rarely how to get it.' },
+
+  { archetype: 'data_engineer', name: 'Rahul Verma', title: 'Data Engineer', gender: 'male',
+    helpsWith: ['sql', 'joins', 'the source tables', 'nulls'], about: 'Pulled and validated the HR source tables. Knows where the data is odd and why.' },
+  { archetype: 'support_lead', name: 'Sneha Joshi', title: 'Support Lead', gender: 'female',
+    helpsWith: ['incidents', 'tickets', 'severity'], about: 'Logs and triages every incident. If you are unsure what a SEV1 actually means here, ask her.' },
+  { archetype: 'engineering_manager', name: 'Arjun Rao', title: 'Engineering Manager', gender: 'male',
+    helpsWith: ['reliability', 'what engineering will act on'], about: 'Plans engineering effort from your findings. Will argue with your numbers, which is useful.' },
+  { archetype: 'finance_analyst', name: 'Diya Chandra', title: 'Finance Analyst', gender: 'female',
+    helpsWith: ['revenue', 'cost', 'the salary baseline'], about: 'Supplies the cost and revenue baselines. Good on what a number means to Finance.' },
+  { archetype: 'comms', name: 'Meera Pillai', title: 'Comms', gender: 'female',
+    helpsWith: ['writing', 'how to say it', 'the leadership summary'], about: 'Turns your analysis into something leadership reads. Blunt about unclear writing.' },
+  { archetype: 'finance_manager', name: 'Aarav Bose', title: 'Finance Manager', gender: 'male',
+    helpsWith: ['remediation cost', 'budget'], about: 'Costs the remediation from your findings. Thinks in what it would take to fix.' },
 ];
+
+// Everyone who is not one of the three core characters. These are the people a learner
+// can befriend and ask for help.
+const COLLEAGUES = ROSTER.filter((r) => !r.core);
 
 // Assigns each roster member a stable avatar from their gender's pool, guaranteeing no
 // two characters shown together end up with the same picture.
-function rosterWithAvatars() {
+function rosterWithAvatars(enrollmentId) {
   const used = new Set();
-  return ROSTER.map((p) => ({ ...p, avatarUrl: pickAvatar(p.archetype, p.gender, used) }));
+  const contacts = enrollmentId
+    ? Object.fromEntries(db.prepare('SELECT * FROM sim_contacts WHERE enrollment_id = ?').all(enrollmentId)
+        .map((c) => [c.archetype, c]))
+    : {};
+  return ROSTER.map((p) => {
+    const c = contacts[p.archetype];
+    return {
+      ...p,
+      avatarUrl: pickAvatar(p.archetype, p.gender, used),
+      friend: Boolean(c && c.friends_at),
+      // How many more messages before this person counts as someone you know. Shown so
+      // the learner can see that talking to people is going somewhere.
+      messagesToFriend: p.core ? 0 : Math.max(0, FRIENDSHIP_AT - ((c && c.messages_sent) || 0)),
+    };
+  });
 }
 
 // Archetypes whose messages surface in the Emails tab (external-facing, formal)
@@ -434,6 +482,8 @@ const MILESTONE = {
 const TASKS = {
   'da-001': {
     title: 'Department salary breakdown',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "The employees table still has people who've left in it. exit_year is NULL for anyone current — that filter is the whole difference between a right and a wrong number here.",
     brief: "Vikram (Business Stakeholder) wants to know which department is paying the most, on average, and by how much it leads the next one. Write ONE SQL SELECT query returning each department's NAME and its average salary, highest first. Two things to get right: department names live in `departments`, not `employees`, and the employees table still holds people who have left (exit_year is set) — leadership is asking about current staff.",
     referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_salary DESC',
     datasetKey: 'hr_core',
@@ -447,6 +497,8 @@ const TASKS = {
   },
   'da-002': {
     title: 'Hiring trend by year',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Careful — this one is about intake, not headcount. Someone hired in 2019 who has since left was still a 2019 hire.",
     brief: "Asha wants to see how hiring has moved year on year for next year's plan. Write ONE SQL SELECT query returning, for each hire_year, how many people were hired and their average salary, oldest year first. Someone hired in 2019 who has since left was still a 2019 hire — this question is about intake, not current headcount.",
     referenceSql: 'SELECT hire_year, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
     datasetKey: 'hr_core',
@@ -460,6 +512,8 @@ const TASKS = {
   },
   'da-003': {
     title: 'Pay spread by role',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Spread is just MAX minus MIN. The bit people miss is filtering to current staff before they group.",
     brief: "Vikram is checking whether people doing the same job are paid consistently. Write ONE SQL SELECT query returning, for each role, the lowest, highest and average salary plus the gap between highest and lowest, widest gap first. Current employees only — a leaver's old salary is not evidence about today's pay.",
     referenceSql: 'SELECT role, MIN(salary) AS min_salary, MAX(salary) AS max_salary, AVG(salary) AS avg_salary, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY spread DESC',
     datasetKey: 'hr_core',
@@ -473,6 +527,8 @@ const TASKS = {
   },
   'da-004': {
     title: 'Outage impact by client',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Rank by what the damage costs, not by how big it looks. And one of those accounts has already churned.",
     brief: "Customer Success has to decide who gets compensated after the billing-sync outage, and they need the damage quantified first. Write ONE SQL SELECT query listing each AFFECTED, STILL-ACTIVE client with their tier, monthly recurring revenue, how many incidents hit them and the total rows corrupted — ordered so the accounts putting the most recurring revenue at risk come first. One account has already churned; recommending a retention package for them would be an error.",
     referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
     datasetKey: 'saas_ops',
@@ -493,6 +549,8 @@ const TASKS = {
   // stakeholder. Six tasks, about 85 minutes, and only two of them are queries.
   'da-100': {
     title: 'Scope the request',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Read what he asked for twice. There are two deliverables in that email, not one — the second is easy to read straight past.",
     brief: "Before you write any SQL: read Vikram's email again and work out what he is actually asking for. Tick everything that is genuinely part of this request. Getting this wrong costs a day, because you find out at the end.",
     tool: 'choice',
     datasetKey: 'hr_core',
@@ -524,6 +582,8 @@ const TASKS = {
 
   'da-101': {
     title: 'Get your bearings in the data',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Two subqueries in one SELECT is the tidy way to get two unrelated counts in a single row.",
     brief: "Before the real query, check what you are working with. Write ONE SQL SELECT that returns how many CURRENT employees there are and how many departments — two numbers, one row. This takes two minutes and it is the difference between spotting a problem now and spotting it in front of leadership.",
     referenceSql: 'SELECT (SELECT COUNT(*) FROM employees WHERE exit_year IS NULL) AS current_employees, (SELECT COUNT(*) FROM departments) AS departments',
     datasetKey: 'hr_core',
@@ -537,6 +597,8 @@ const TASKS = {
 
   'da-102': {
     title: "Review Rahul's query",
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Look hard at the WHERE clause. There's a comparison in there that matches nothing at all rather than erroring.",
     brief: "Rahul on the data engineering side sent over a query he wrote for the same question, to save you time. Read it properly before you use it. Flag what is actually wrong — and only what is actually wrong. Flagging everything is not review, it is noise, and it is scored as such here.",
     tool: 'choice',
     datasetKey: 'hr_core',
@@ -567,6 +629,8 @@ const TASKS = {
 
   'da-103': {
     title: 'What can you actually claim?',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Ask yourself what each statement would need as evidence. Most of them need a comparison the analysis never made.",
     brief: "You have your numbers. Before they go anywhere: which of these statements does your result genuinely support? This is the difference between an analyst leadership trusts and one they stop inviting.",
     tool: 'choice',
     datasetKey: 'hr_core',
@@ -592,6 +656,8 @@ const TASKS = {
 
   'da-104': {
     title: 'Write to Vikram',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Lead with the answer, not the method. He decides whether to keep reading in your first line.",
     brief: "Send Vikram the answer. He is a business stakeholder preparing for a leadership review, not an analyst — he wants the number and what it means, not your method. Keep it under 120 words. Lead with the answer: he decides whether to keep reading in the first line.",
     tool: 'writeup',
     datasetKey: 'hr_core',
@@ -630,6 +696,8 @@ const TASKS = {
   // band. A learner who reasons from day one's chart gets it wrong.
   'da-110': {
     title: "Vikram changes the question",
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Split what he asked into things the data can answer and things it can't. 'Underpaid' compared to what, exactly?",
     brief: "Vikram has read your numbers and come back with a follow-up. Read it carefully: some of what he is now asking is a different question from the one you answered yesterday, and some of it he cannot have. Tick what is genuinely answerable from the data you have.",
     tool: 'choice',
     datasetKey: 'hr_core',
@@ -661,6 +729,8 @@ const TASKS = {
 
   'da-111': {
     title: 'Pay against the band',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "The band columns live on departments, not employees, so you'll need them in the GROUP BY too. And use 100.0, not 100, or the division goes to integers.",
     brief: "Every department has a salary band — a floor and a ceiling that HR set for it. Write ONE SQL SELECT returning, for each department, its average salary for current staff, its band floor and ceiling, and where that average sits inside the band as a percentage. Lowest position first. This is the number that answers Vikram's question, and it is not the same ranking as yesterday's.",
     referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary, d.band_low, d.band_high, (AVG(e.salary) - d.band_low) * 100.0 / (d.band_high - d.band_low) AS band_position FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, d.band_low, d.band_high ORDER BY band_position ASC',
     datasetKey: 'hr_core',
@@ -674,6 +744,8 @@ const TASKS = {
 
   'da-112': {
     title: 'The answer changed',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Two measures disagreeing isn't an error to resolve. Ask which question each one answers.",
     brief: "Look at what you just produced next to yesterday's ranking. Support has the lowest average salary in the company — but it is not the department sitting lowest in its own band. Marketing is. Which of these does that support?",
     tool: 'choice',
     datasetKey: 'hr_core',
@@ -699,6 +771,8 @@ const TASKS = {
 
   'da-113': {
     title: 'Who has been leaving',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "SUM with a CASE inside it gets you both counts in one pass — no need for two queries.",
     brief: "Vikram also asked about attrition risk. Write ONE SQL SELECT returning, for each department, how many people have LEFT and how many are still there. Most leavers first. Be honest with yourself about what this can and cannot tell him — you will be asked.",
     referenceSql: "SELECT d.name AS department, SUM(CASE WHEN e.exit_year IS NOT NULL THEN 1 ELSE 0 END) AS leavers, SUM(CASE WHEN e.exit_year IS NULL THEN 1 ELSE 0 END) AS current_staff FROM employees e JOIN departments d ON d.id = e.department_id GROUP BY d.name ORDER BY leavers DESC",
     datasetKey: 'hr_core',
@@ -712,6 +786,8 @@ const TASKS = {
 
   'da-114': {
     title: 'Tell Vikram the answer is not the obvious one',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Say the thing he didn't ask about. The interesting finding isn't in the department he named.",
     brief: "Write back to Vikram. The hard part is not the number — it is that his premise was reasonable and the data does not support it. Say what you found, name the department that actually has the strongest case, and be straight that market rate is not something you can give him. Under 140 words.",
     tool: 'writeup',
     datasetKey: 'hr_core',
@@ -748,6 +824,8 @@ const TASKS = {
   // engineering manager who will argue back.
   'sa-010': {
     title: 'Scope the reliability question',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "'Worst' is doing a lot of work in that sentence. How many different questions could it mean?",
     brief: "Arjun wants to know 'which service is worst'. That phrase hides at least three different questions, and they do not have the same answer. Decide which ones are worth putting in front of him — and which are the same question wearing different words.",
     tool: 'choice',
     datasetKey: 'saas_ops',
@@ -779,6 +857,8 @@ const TASKS = {
 
   'sa-011': {
     title: 'How often each service breaks',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "SUM with a CASE gets you the SEV1 count alongside the total without a second query.",
     brief: "Start with the simple half of the argument. Write ONE SQL SELECT returning, for each service, how many incidents it has had in total and how many of those were SEV1, most incidents first. This is the frequency picture — half the room's position, quantified.",
     referenceSql: "SELECT service, COUNT(*) AS incidents, SUM(CASE WHEN severity = 'SEV1' THEN 1 ELSE 0 END) AS sev1 FROM incidents GROUP BY service ORDER BY incidents DESC",
     datasetKey: 'saas_ops',
@@ -792,6 +872,8 @@ const TASKS = {
 
   'sa-012': {
     title: "Review Sneha's query",
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Look at what the COUNT covers versus what the AVG covers. They are not the same set of rows.",
     brief: "Sneha on the support side wrote this to answer the same question and wants a second pair of eyes before it goes anywhere. Flag what is genuinely wrong. Flagging things that are fine is not caution here — it costs you the same as missing something.",
     tool: 'choice',
     datasetKey: 'saas_ops',
@@ -822,6 +904,8 @@ const TASKS = {
 
   'sa-013': {
     title: 'Settle the argument, honestly',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Both halves of the room are right about different things. That's the answer, not a problem with the data.",
     brief: "You have frequency and you have time-to-resolve. api-gateway breaks most often; billing-sync takes by far the longest to fix. Which statements can you defend in the room?",
     tool: 'choice',
     datasetKey: 'saas_ops',
@@ -847,6 +931,8 @@ const TASKS = {
 
   'sa-014': {
     title: 'Brief Arjun',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Undercut your own biggest number before someone else does — check how many incidents it rests on.",
     brief: "Arjun asked you to settle an argument. You are going to tell him the argument was miscast — both sides were measuring different things — and then give him the number he actually needs. He will push back, so make it defensible in a paragraph. Under 150 words.",
     tool: 'writeup',
     datasetKey: 'saas_ops',
@@ -881,6 +967,8 @@ const TASKS = {
   // nothing and can run as often as the week needs.
   'da-006': {
     title: 'Chart the department pay gap',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Eight categories, one number each. And think about where the axis should start before you decide it looks better truncated.",
     brief: "Vikram is putting your department salary numbers in front of the leadership team on Thursday and wants one chart, not a table. Choose how to present it: the chart type, what goes on each axis, how it is ordered, and where the value axis starts. He is comparing one number across eight departments — that constraint should decide most of your choices for you.",
     tool: 'chart',
     datasetKey: 'hr_core',
@@ -907,6 +995,8 @@ const TASKS = {
   },
   'da-007': {
     title: 'Chart the hiring trend',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "This one isn't the same shape as the last chart. Ask whether these categories have an order.",
     brief: "People Ops wants your hiring-by-year numbers on one slide for the planning session. Same decisions as before — chart type, axes, ordering, baseline — but this is a different shape of question from the last one, and the answer that was right there is not automatically right here. Think about what these categories are before you pick.",
     tool: 'chart',
     datasetKey: 'hr_core',
@@ -940,6 +1030,8 @@ const TASKS = {
   // end with a recommendation the data does not hand them.
   'sa-001': {
     title: 'Time to resolve, by service',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "An incident with no resolved_at can't contribute to an average of resolution times. Decide what that means for your COUNT as well.",
     brief: "Engineering leadership wants to know which service is costing us the most time when it breaks — not how often it breaks. Write ONE SQL SELECT query returning, per service, how many incidents you counted and the average hours from start to resolution, slowest first. The judgement call is yours: some incidents are still open, and an incident with no resolution time cannot contribute to an average of resolution times. Decide what to do with them and make sure your count reflects that decision — a count of all incidents beside an average of only the closed ones is the kind of table that gets quietly believed and is wrong.",
     referenceSql: "SELECT service, COUNT(*) AS incidents, AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY avg_hours DESC",
     datasetKey: 'saas_ops',
@@ -952,6 +1044,8 @@ const TASKS = {
   },
   'sa-002': {
     title: 'Support load against revenue',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "LEFT JOIN, so an account with no tickets still shows. And check the status filter — one client isn't with us any more.",
     brief: "Finance wants to know which accounts cost more to support than they are worth. Write ONE SQL SELECT query returning, for every ACTIVE client, their company, tier, monthly recurring revenue, how many tickets they have raised, and tickets per 100,000 of MRR — heaviest support load per revenue first. One account has already churned — it is still in the table and it has raised tickets, so leaving the status filter out puts a customer we no longer have into a pricing decision. Use a LEFT JOIN so an account with no tickets would still appear with a zero, and watch the division: without a decimal, some engines will hand you integers.",
     referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(t.id) AS tickets, (COUNT(t.id) * 100000.0) / c.mrr AS tickets_per_100k FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier, c.mrr ORDER BY tickets_per_100k DESC",
     datasetKey: 'saas_ops',
@@ -964,6 +1058,8 @@ const TASKS = {
   },
   'sa-003': {
     title: 'Unresolved backlog by client',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "'Not resolved' covers open AND pending. Counting only 'open' understates every account.",
     brief: "Before the quarterly business reviews, Customer Success needs to know who is walking in angry. Write ONE SQL SELECT query returning, for each ACTIVE client, their company, tier, how many tickets are still open or pending, and how many SEV1 incidents they have taken — worst backlog first. 'Not resolved' covers both open and pending; treating pending as handled is how a QBR goes badly.",
     referenceSql: "SELECT c.company, c.tier, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS unresolved_tickets, (SELECT COUNT(*) FROM incidents i WHERE i.client_id = c.id AND i.severity = 'SEV1') AS sev1_incidents FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier ORDER BY unresolved_tickets DESC",
     datasetKey: 'saas_ops',
@@ -976,6 +1072,8 @@ const TASKS = {
   },
   'sa-004': {
     title: 'Where the engineering time went',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "Median and worst case, not average. The tail is the thing the platform team is arguing about.",
     brief: "The platform team is arguing about where to spend next quarter. Averages hide the outliers, so they want the shape of it: for each severity, the number of RESOLVED incidents, the median hours to resolve, and the single worst case. The dataset is loaded for you as `tables` — a dict of table name to a list of plain dict rows; timestamps are ISO 8601 strings. SQLite has no median, which is why this one is Python. Return a list of dicts with keys `severity`, `resolved`, `median_hours` and `worst_hours`, sorted by median hours highest first. Standard library only, no pandas. Assign your answer to `result`.",
     referenceCompute: (tables) => {
       const bySev = new Map();
@@ -1009,6 +1107,8 @@ const TASKS = {
   },
   'da-005': {
     title: 'Median pay by department',
+    // What a colleague who knows you would point at — the trap, never the answer.
+    hint: "SQLite has no median, which is the whole reason this one is Python. statistics.median is right there.",
     brief: "Averages are being skewed by a handful of very senior people, so Asha wants the MEDIAN salary per department instead — the midpoint, which a couple of large salaries cannot drag around. SQLite has no MEDIAN function, which is exactly why this one is a Python task. The dataset is already loaded for you as `tables` — a dict of table name to a list of plain dict rows. Produce a list of dicts, one per department, each containing the department NAME, its median salary, and its current headcount, sorted by median salary highest first. The standard library is available (`statistics.median` is the obvious tool); there is no pandas. Current employees only. Assign your answer to a variable called `result`.",
     // No referenceSql: this is the point of the task. The expected answer is computed
     // here, in JavaScript, from the same rows the notebook receives — so it stays an
@@ -1817,6 +1917,12 @@ function getInbox(messages, nowMs) {
   for (const m of messages) {
     const archetype = m.thread_archetype || m.sender_archetype;
     if (archetype === 'learner') continue; // a learner's own note is never its own thread
+    // Email and chat are now genuinely different things: a message with a SUBJECT is
+    // correspondence and belongs in the inbox; one without is a chat-dock exchange and
+    // belongs there. Without this rule, opening the dock and saying "hi" to six
+    // colleagues would fill the inbox with one-line threads and make it useless as an
+    // inbox — which is exactly what an inbox that is really a chat log looks like.
+    if (!normalizedSubject(m)) continue;
     const subject = normalizedSubject(m);
     const key = `${archetype}::${subject || 'direct'}`;
     if (!threads.has(key)) {
@@ -2004,6 +2110,13 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining, level)
       unread: incoming.filter((m) => !m.read_at).length,
       lastContactAt: last ? last.created_at : null,
       available: messagesRemaining > 0,
+      // The colleague half of the cast: who they are, what they can actually help with,
+      // and whether the learner has talked to them enough to be owed a real answer.
+      core: Boolean(person.core),
+      about: person.about || null,
+      helpsWith: person.helpsWith || [],
+      friend: Boolean(person.friend),
+      messagesToFriend: person.messagesToFriend,
     };
   });
 }
@@ -2132,7 +2245,7 @@ function getState(userId) {
     projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
   }
   closeCompletedRuns(enrollment, projects.projects);
-  const rosterList = rosterWithAvatars();
+  const rosterList = rosterWithAvatars(enrollment.id);
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
   const taskBoard = getTasksView(
@@ -3090,6 +3203,22 @@ function safeJson(text) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+// Asha picking the work up.
+//
+// A submission used to jump straight to her question, which read as a machine responding
+// rather than a manager reviewing. A real one acknowledges receipt first, then comes back
+// with the actual question — and that gap is the whole reason "in review" is a state
+// rather than a formality. Two messages, in order, so the thread reads like a person
+// working through your submission.
+function openReview(enrollment, task, question, taskId) {
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    `Got your submission on "${task.title}" — picking it up now. Give me a minute to read it properly.`,
+    taskId);
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    `Right, read it. ${question}`,
+    taskId);
+}
+
 // Asha's question for a judgement or a piece of writing. Always about something they
 // actually did — the specific thing they missed, or the specific claim they made.
 function judgementReviewQuestion(taskDef, tool, answer, marked) {
@@ -3175,7 +3304,7 @@ async function submitTask(userId, taskId, code, computedResult) {
 
     const question = judgementReviewQuestion(taskDef, tool, answer, marked);
     db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
-    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+    openReview(enrollment, task, question, taskId);
     return { inReview: true, question, result: marked.detail };
   }
 
@@ -3199,7 +3328,7 @@ async function submitTask(userId, taskId, code, computedResult) {
 
     const question = chartReviewQuestion(taskDef, answer, marked);
     db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
-    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+    openReview(enrollment, task, question, taskId);
     return { inReview: true, question, result: marked.notes };
   }
 
@@ -3245,7 +3374,7 @@ async function submitTask(userId, taskId, code, computedResult) {
   const matched = rowsMatch(submittedResult, referenceResult);
   const question = await askReviewQuestion(taskDef, code, submittedResult, referenceResult, matched);
   db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
-  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, question, taskId);
+  openReview(enrollment, task, question, taskId);
 
   return { inReview: true, question, result: submittedResult };
 }
@@ -3256,16 +3385,91 @@ async function submitTask(userId, taskId, code, computedResult) {
 const CANNED_REPLIES = {
   people_partner: "Thanks for flagging — noted. Ping me any time about policy or onboarding.",
   stakeholder: "Thanks for the update, appreciate it — let me know if anything changes on timing.",
+  data_engineer: "Sure — I pulled those tables, so if something looks wrong in them it probably is. Tell me which column and I'll tell you what I know.",
+  support_lead: "Happy to help. I log every incident that comes in, so ask me anything about how they're classified.",
+  engineering_manager: "Go ahead. Fair warning, I'll push back on the numbers — that's not me being difficult, it's how I check them.",
+  finance_analyst: "Of course. I own the cost baselines, so if you need to know what a figure means to Finance, that's my patch.",
+  comms: "Happy to read anything before it goes out. I'm blunt about unclear writing, which people usually want after the fact.",
+  finance_manager: "Sure. I cost the fixes, so I think in what it'd take to put right rather than what went wrong.",
 };
+
+// How many exchanges before a colleague counts as someone you know. Three is enough to
+// have said something real and short enough to reach in a day.
+const FRIENDSHIP_AT = 3;
+
+function getContact(enrollmentId, archetype) {
+  return db.prepare('SELECT * FROM sim_contacts WHERE enrollment_id = ? AND archetype = ?')
+    .get(enrollmentId, archetype);
+}
+
+// Records that the learner spoke to someone, and returns whether that made them a friend.
+function noteContact(enrollmentId, archetype) {
+  const row = getContact(enrollmentId, archetype);
+  const at = now();
+  if (!row) {
+    db.prepare('INSERT INTO sim_contacts (id, enrollment_id, archetype, messages_sent, last_at) VALUES (?, ?, ?, 1, ?)')
+      .run(cryptoRandomId(), enrollmentId, archetype, at);
+    return { count: 1, justBecameFriends: false, friends: false };
+  }
+  const count = row.messages_sent + 1;
+  const becameFriends = !row.friends_at && count >= FRIENDSHIP_AT;
+  db.prepare('UPDATE sim_contacts SET messages_sent = ?, last_at = ?, friends_at = COALESCE(friends_at, ?) WHERE id = ?')
+    .run(count, at, becameFriends ? at : null, row.id);
+  return { count, justBecameFriends: becameFriends, friends: Boolean(row.friends_at) || becameFriends };
+}
+
+// What a colleague says back.
+//
+// The useful part is that they answer about THEIR patch and redirect outside it, by name.
+// A colleague who confidently answers anything is worse than one who says "not mine, ask
+// Rahul" — the redirect teaches the learner who the org is, which is half of what being
+// new at a job actually is.
+//
+// A friend will also give a real hint on the task the learner has open. Someone they have
+// never spoken to will not. That is the whole incentive to talk to people.
+function colleagueReply(person, learnerBody, { friends, openTask }) {
+  const text = String(learnerBody || '').toLowerCase();
+  const mine = (person.helpsWith || []).some((topic) => text.includes(topic.toLowerCase()));
+
+  // Who should they be asking instead? Match the message against everyone else's patch.
+  const better = ROSTER.find((r) => r.archetype !== person.archetype
+    && (r.helpsWith || []).some((topic) => text.includes(topic.toLowerCase())));
+
+  const asking = /\?|help|stuck|how do|how can|what should|any idea|not sure/.test(text);
+
+  if (asking && better && !mine) {
+    return `That's more ${firstName(better.name)}'s area than mine — ${better.title.toLowerCase()}. ${firstName(better.name)} will know straight away; I'd only be guessing.`;
+  }
+
+  if (asking && friends && openTask && openTask.hint) {
+    return `${openTask.hint}\n\nThat's what I'd look at first. Shout if it doesn't land.`;
+  }
+
+  if (asking && friends) {
+    // `about` is written in the third person for the Team card, so it cannot be spoken.
+    const patch = (person.helpsWith || []).slice(0, 2).join(' and ');
+    return `Happy to look. Send me what you've got and I'll tell you what I'd check${patch ? ` — ${patch} is my patch` : ''}.`;
+  }
+
+  if (asking) {
+    return `${CANNED_REPLIES[person.archetype] || 'Got it, thanks — noted.'}`;
+  }
+
+  return CANNED_REPLIES[person.archetype] || 'Got it, thanks — noted.';
+}
 
 const LINE_MANAGER_CHAT_SYSTEM = `You are Asha Rao, the Line Manager archetype in TenzorGrid's Virtual Workspace — a behavioural work simulator. Your comms style is short, direct, warm but never soft, 1-3 sentences. Reply in character to the learner's chat message. You are not grading anything here — that only happens on task submission. Never rewrite or solve their task for them.
 
 Respond with ONLY the reply text, no preamble, no JSON.`;
 
-async function replyAsArchetype(archetype, learnerBody) {
+async function replyAsArchetype(archetype, learnerBody, context) {
   if (archetype === 'line_manager' && ai.isAvailable()) {
     const reply = await ai.callClaude({ system: LINE_MANAGER_CHAT_SYSTEM, prompt: learnerBody, maxTokens: 200 });
     if (reply) return reply.trim();
+  }
+  const person = ROSTER.find((r) => r.archetype === archetype);
+  if (person && !person.core) {
+    return colleagueReply(person, learnerBody, context || {});
   }
   return CANNED_REPLIES[archetype] || "Got it, thanks — noted.";
 }
@@ -3285,9 +3489,24 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
   }
 
   addMessage(enrollment.id, 'learner', 'You', clean, null, subject || null, archetype);
-  const reply = await replyAsArchetype(archetype, clean);
+
+  const contact = noteContact(enrollment.id, archetype);
+  // The task they are actually working on, so a friend's help can be about that rather
+  // than generic encouragement.
+  const openRow = db.prepare(
+    "SELECT task_key FROM sim_tasks WHERE enrollment_id = ? AND status NOT IN ('graded','parked') ORDER BY assigned_at ASC LIMIT 1"
+  ).get(enrollment.id);
+  const openTask = openRow ? TASKS[openRow.task_key] : null;
+
+  const reply = await replyAsArchetype(archetype, clean, { friends: contact.friends, openTask });
   const replySubject = subject ? 'Re: ' + subject.replace(/^Re:\s*/i, '') : null;
   addMessage(enrollment.id, archetype, person.name, reply, null, replySubject, archetype);
+
+  if (contact.justBecameFriends) {
+    addMessage(enrollment.id, archetype, person.name,
+      `By the way — good to actually know you. Ping me directly if you get stuck on something in my area, I'd rather that than watch you lose a morning to it.`,
+      null, replySubject, archetype);
+  }
 
   return getState(userId);
 }

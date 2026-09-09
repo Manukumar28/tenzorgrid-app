@@ -11,6 +11,7 @@ import SettingsTab from './components/SettingsTab.jsx';
 import EnrollForm from './components/EnrollForm.jsx';
 import SkillTest from './components/SkillTest.jsx';
 import Standup from './components/Standup.jsx';
+import ChatDock from './components/ChatDock.jsx';
 import { Mic } from 'lucide-react';
 import { api } from './api.js';
 
@@ -28,6 +29,15 @@ export default function App() {
   const [standupOpen, setStandupOpen] = useState(false);
   const [standupSeen, setStandupSeen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Typing habits, not account data — they belong to the machine you type on.
+  const [prefs, setPrefs] = useState(() => {
+    try { return { enterToSend: true, ...JSON.parse(localStorage.getItem('tg.prefs') || '{}') }; }
+    catch { return { enterToSend: true }; }
+  });
+  function savePrefs(next) {
+    setPrefs(next);
+    try { localStorage.setItem('tg.prefs', JSON.stringify(next)); } catch { /* private window */ }
+  }
 
   useEffect(() => {
     (async () => {
@@ -129,8 +139,12 @@ export default function App() {
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
-        {tab === 'settings' && <SettingsTab />}
+        {tab === 'settings' && <SettingsTab prefs={prefs} onPrefs={savePrefs} />}
       </main>
+
+      {/* Always reachable, deliberately outside the tab system: you ask a colleague a
+          question WHILE you are stuck in the workbench, not by navigating away from it. */}
+      <ChatDock state={state} onStateChange={setState} enterToSend={prefs.enterToSend} />
     </div>
   );
 }

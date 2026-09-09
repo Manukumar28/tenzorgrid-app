@@ -573,8 +573,39 @@ after month one.** Three consequences, all of which change what gets built next:
   projects.** Roughly 12 of 30 tasks exist on the two lead projects; days 4 and 5 remain
   empty everywhere, so no learner has yet seen a Friday.
 
-- **Phase 5d — after that.** The weekly retro/1:1, the performance record, and the
-  interview defence.
+- **Phase 6 — ✅ SHIPPED. The team is real, and chat is separate from email.** Five
+  changes the user asked for, and the roster change unblocked three of them:
+  - **The cast went from 3 to 9.** Tasks named Rahul, Sneha, Arjun and Meera while none of
+    them existed anywhere reachable — you were asked to review Rahul's query and brief
+    Arjun without being able to speak to either. **Anyone named on a task or a project is
+    now a colleague you can message.** `core` still marks the three who drive the
+    simulation (only the Line Manager grades); the rest are colleagues with an authored
+    `helpsWith`.
+  - **Colleagues answer about their own patch and redirect outside it, by name.** Ask
+    Rahul about writing and he sends you to Meera. A colleague who confidently answers
+    anything is worse than one who says "not mine, ask Rahul" — the redirect teaches the
+    learner who the org is, which is most of what being new at a job is.
+  - **Friendship is earned by talking, not clicked.** Three exchanges and a colleague knows
+    you well enough to give a real hint on the task you have open. Every one of the 26
+    tasks now carries an authored `hint` that points at the trap and never at the answer.
+  - **A Gmail-style chat dock**: a persistent bar, search by name *or by what someone helps
+    with*, windows you can minimise and leave running while you work — the point being you
+    ask a colleague a question WHILE stuck in the workbench, not by navigating away. Emoji
+    picker, and Enter-to-send as a real preference in **Settings** (both habits are real;
+    whichever is off stays reachable with Shift).
+  - **Email is an inbox again.** A message with a SUBJECT is correspondence; one without is
+    chat. Without that rule, saying "hi" to six colleagues would fill the inbox with
+    one-line threads — which is what an inbox that is really a chat log looks like. The
+    reading pane is a stack of full-width messages with real From/To headers, not offset
+    tinted bubbles.
+  - **Asha picks a submission up before she questions it.** Submitting used to jump
+    straight to her question, which read as a machine responding. She now acknowledges
+    receipt by name, then comes back having read it — the gap is what makes "in review" a
+    state rather than a formality.
+
+- **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
+  interview defence. Plus the outstanding authoring: junior days 3–5, senior days 2–5, and
+  the other four projects.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
 built and tested against the five tasks that exist today; authoring the ~30-task arc is a

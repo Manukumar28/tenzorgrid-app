@@ -175,6 +175,20 @@ CREATE TABLE IF NOT EXISTS sim_project_runs (
   UNIQUE(enrollment_id, project_key)
 );
 
+-- Who the learner has actually talked to, and who has become a friend. Friendship is
+-- earned by talking rather than clicked: a colleague you have exchanged a few messages
+-- with will give you a real hint on the task you are stuck on, one you have never spoken
+-- to gives you a polite brush-off. That is how it works in an office.
+CREATE TABLE IF NOT EXISTS sim_contacts (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  archetype TEXT NOT NULL,
+  messages_sent INTEGER NOT NULL DEFAULT 0,
+  friends_at TEXT,
+  last_at TEXT,
+  UNIQUE(enrollment_id, archetype)
+);
+
 CREATE TABLE IF NOT EXISTS sim_standups (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
