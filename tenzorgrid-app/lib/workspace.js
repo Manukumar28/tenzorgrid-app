@@ -1436,6 +1436,33 @@ function projectWeek(run, def, taskRows, nowMs) {
   const learnerPct = total ? Math.round((done / total) * 100) : 0;
   const learnerDone = total > 0 && done === total;
 
+  // "6 of 7 signed off" was true and unhelpful: the seventh was a later-day task showing
+  // as "Opens later" on the board, so the learner counted six and thought the total was
+  // wrong. The number has to explain itself — say how much is outstanding AND when it
+  // becomes workable, or a correct figure reads as a bug.
+  const outstanding = taskRows.filter((t) => t.status !== 'graded');
+  const notYetOpen = outstanding.filter((t) => t.opens_at && Date.parse(t.opens_at) > nowMs);
+  const workable = outstanding.length - notYetOpen.length;
+  const nextOpensAt = notYetOpen.length
+    ? notYetOpen.map((t) => Date.parse(t.opens_at)).sort((a, b) => a - b)[0]
+    : null;
+  const opensLabel = nextOpensAt
+    ? new Date(nextOpensAt).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+    : null;
+
+  let learnerNote;
+  if (learnerDone) {
+    learnerNote = 'Delivered';
+  } else if (!workable && notYetOpen.length) {
+    // Everything available is done and the rest is waiting on its day. Saying so is the
+    // difference between "you are behind" and "you are up to date".
+    learnerNote = `${done} of ${total} — ${notYetOpen.length === 1 ? 'the last one opens' : `${notYetOpen.length} more open`} ${opensLabel}`;
+  } else if (notYetOpen.length) {
+    learnerNote = `${done} of ${total} signed off · ${notYetOpen.length} not open yet`;
+  } else {
+    learnerNote = `${done} of ${total} signed off`;
+  }
+
   const contributors = (def.contributors || []).map((c) => {
     const isLearner = c.name === null;
     if (isLearner) {
@@ -1443,7 +1470,7 @@ function projectWeek(run, def, taskRows, nowMs) {
         name: null, role: c.role, does: c.does,
         state: learnerDone ? 'done' : 'in-progress',
         pct: learnerPct,
-        note: learnerDone ? 'Delivered' : `${done} of ${total} signed off`,
+        note: learnerNote,
       };
     }
     // A colleague whose work comes BEFORE the learner's is done once their day has
@@ -1482,6 +1509,11 @@ function projectWeek(run, def, taskRows, nowMs) {
     daysLeft,
     overdueDays,
     onTrack: !overdueDays,
+    // Everything available is finished and the rest is waiting on its day — the learner
+    // is up to date, not behind, and the card should say which.
+    allCaughtUp: !learnerDone && workable === 0 && notYetOpen.length > 0,
+    waitingOn: notYetOpen.length,
+    waitingUntil: opensLabel,
     // Named so the UI can say WHO is held up, not just that something is.
     blocking: !learnerDone
       ? contributors.filter((c) => c.state === 'blocked').map((c) => c.name).filter(Boolean)
