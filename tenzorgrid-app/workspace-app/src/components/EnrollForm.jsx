@@ -35,9 +35,15 @@ export default function EnrollForm({ onEnrolled }) {
         </p>
 
         <label className="block text-xs font-bold text-gray-500 mb-1.5">Level</label>
+        <p className="text-[11px] text-gray-400 mb-1.5">
+          The two levels get different projects, not the same work described differently.
+        </p>
         <select value={level} onChange={(e) => setLevel(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm mb-4">
-          <option value="junior">Junior — more hand-holding, slower ramp</option>
-          <option value="senior">Senior — less hand-holding, higher quality bar</option>
+          {/* The levels differ by PROJECT, not by how much hand-holding the same brief
+              gets — describing it the old way set the wrong expectation before anyone
+              had seen a task. */}
+          <option value="junior">Junior — HR and compensation projects</option>
+          <option value="senior">Senior — platform reliability and account economics</option>
         </select>
 
         <label className="block text-xs font-bold text-gray-500 mb-1.5">Training schedule</label>

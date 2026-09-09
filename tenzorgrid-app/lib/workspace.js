@@ -73,7 +73,14 @@ const PROJECT_CATALOG = {
       kind: 'analysis',
       stakeholder: 'stakeholder',
       difficulty: 'Medium',
-      taskKeys: ['da-100', 'da-101', 'da-001', 'da-102', 'da-103', 'da-104', 'da-006'],
+      taskKeys: [
+        // Day 1 — scope it, look at the data, do the analysis, check a colleague, decide
+        // what you can claim, write to the stakeholder.
+        'da-100', 'da-101', 'da-001', 'da-102', 'da-103', 'da-104',
+        // Day 2 — the stakeholder changes the question, and the honest answer is not the
+        // obvious one.
+        'da-110', 'da-006', 'da-111', 'da-112', 'da-113', 'da-114',
+      ],
       skillFocus: ['sql', 'dataViz', 'businessLogic', 'communication'],
       impactValue: 12400,
       // The rest of the project, so the learner can see their part of a whole rather
@@ -152,7 +159,11 @@ const PROJECT_CATALOG = {
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
       level: 'senior',
-      taskKeys: ['sa-001', 'sa-003'],
+      taskKeys: [
+        // Day 1 — same six-slot shape as the junior week, senior questions.
+        'sa-010', 'sa-011', 'sa-001', 'sa-012', 'sa-013', 'sa-014',
+        'sa-003',
+      ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 28000,
       contributors: [
@@ -609,6 +620,261 @@ const TASKS = {
     difficulty: 'medium',
   },
 
+  // ---- Day 2: the requirement changes --------------------------------------------------
+  //
+  // A stakeholder changing the question mid-week is a non-negotiable design point of the
+  // character architecture, and it is the whole shape of this day. Vikram comes back
+  // asking "is Support underpaid?" — a question the averages from day one cannot answer,
+  // but the salary bands can. The payoff is that the honest answer contradicts the
+  // obvious one: Support has the lowest average, but MARKETING sits lowest in its own
+  // band. A learner who reasons from day one's chart gets it wrong.
+  'da-110': {
+    title: "Vikram changes the question",
+    brief: "Vikram has read your numbers and come back with a follow-up. Read it carefully: some of what he is now asking is a different question from the one you answered yesterday, and some of it he cannot have. Tick what is genuinely answerable from the data you have.",
+    tool: 'choice',
+    datasetKey: 'hr_core',
+    choice: {
+      prompt: 'What can you actually answer from this request?',
+      exhibit: {
+        kind: 'email',
+        from: 'Vikram Nair, Business Stakeholder',
+        subject: 'Re: Department salary numbers',
+        body: "Thanks — this is useful. Leadership's follow-up: Support is miles below everyone else. Are they underpaid? And if so are we at risk of losing them? I'd like something on this for the same review.",
+      },
+      options: [
+        { key: 'band', correct: true, label: 'Where each department sits within its own salary band', why: 'Every department has a band_low and band_high. Position within the band is the closest thing in this data to a defensible reading of "underpaid".' },
+        { key: 'compare', correct: true, label: 'Whether Support is lower in its band than other departments are in theirs', why: 'This is the comparison that actually answers his question, and it is the one that changes the answer.' },
+        { key: 'leavers', correct: true, label: 'How many people have left each department', why: 'exit_year gives you this. It is weak evidence for attrition risk, but it is real evidence and it is the only thing here that speaks to his second question.' },
+        { key: 'market', correct: false, label: 'Whether Support is paid below the market rate', why: 'There is no market data anywhere in this dataset. This is the reading of "underpaid" he probably means, and you cannot give it to him — saying so is part of the job.' },
+        { key: 'risk', correct: false, label: 'Whether Support staff are about to resign', why: 'Nothing here measures intent. Past leavers are not a forecast, and presenting them as one would be the kind of overclaim that gets an analysis thrown out.' },
+        { key: 'satisfaction', correct: false, label: 'Whether Support staff are unhappy with their pay', why: 'No survey data exists. Inferring feelings from salary figures is not analysis.' },
+      ],
+      skills: { businessLogic: 100, communication: 85 },
+      whyRight: 'You separated the parts of his question the data can answer from the parts it cannot — and noticed that "underpaid" needs a comparison he did not specify.',
+    },
+    estHours: 0.15,
+    priority: 'high',
+    dueInDays: 2,
+    day: 2,
+    difficulty: 'medium',
+  },
+
+  'da-111': {
+    title: 'Pay against the band',
+    brief: "Every department has a salary band — a floor and a ceiling that HR set for it. Write ONE SQL SELECT returning, for each department, its average salary for current staff, its band floor and ceiling, and where that average sits inside the band as a percentage. Lowest position first. This is the number that answers Vikram's question, and it is not the same ranking as yesterday's.",
+    referenceSql: 'SELECT d.name AS department, AVG(e.salary) AS avg_salary, d.band_low, d.band_high, (AVG(e.salary) - d.band_low) * 100.0 / (d.band_high - d.band_low) AS band_position FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, d.band_low, d.band_high ORDER BY band_position ASC',
+    datasetKey: 'hr_core',
+    tool: 'sql',
+    estHours: 0.4,
+    priority: 'high',
+    dueInDays: 2,
+    day: 2,
+    difficulty: 'hard',
+  },
+
+  'da-112': {
+    title: 'The answer changed',
+    brief: "Look at what you just produced next to yesterday's ranking. Support has the lowest average salary in the company — but it is not the department sitting lowest in its own band. Marketing is. Which of these does that support?",
+    tool: 'choice',
+    datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Support has the lowest average pay. Marketing sits lowest in its own band. What follows?',
+      options: [
+        { key: 'diff', correct: true, label: 'The two measures answer different questions and disagree here', why: 'Absolute pay and position-in-band are not the same thing. When two defensible measures disagree, that disagreement is the finding.' },
+        { key: 'marketing', correct: true, label: 'On the band measure, Marketing has the stronger case for being underpaid', why: 'Marketing sits at 37% of its band against Support at 47% — relative to what the company itself decided the role is worth, Marketing is further down.' },
+        { key: 'bandlow', correct: true, label: "Support's low average is partly explained by Support having a lower band", why: 'The band floor and ceiling are set per department. A low average inside a low band is a different situation from a low average inside a high band.' },
+        { key: 'fine', correct: false, label: 'Support is therefore paid fairly', why: 'Sitting mid-band says the department is paid consistently with its own band. Whether the BAND is right is a question this data cannot touch.' },
+        { key: 'wrong', correct: false, label: "Yesterday's analysis was wrong", why: 'It was not wrong. It answered the question that was asked — which department pays most on average. A different question has a different answer.' },
+        { key: 'raise', correct: false, label: 'Marketing should get a pay rise', why: 'A recommendation, not a finding. It might be the right call, but the data establishes a position in a band, not what to do about it.' },
+      ],
+      skills: { businessLogic: 100, dataViz: 70 },
+      whyRight: 'You held both numbers at once without deciding one of them must be a mistake. Two measures disagreeing is information, not an error to resolve.',
+    },
+    estHours: 0.2,
+    priority: 'high',
+    dueInDays: 2,
+    day: 2,
+    difficulty: 'hard',
+  },
+
+  'da-113': {
+    title: 'Who has been leaving',
+    brief: "Vikram also asked about attrition risk. Write ONE SQL SELECT returning, for each department, how many people have LEFT and how many are still there. Most leavers first. Be honest with yourself about what this can and cannot tell him — you will be asked.",
+    referenceSql: "SELECT d.name AS department, SUM(CASE WHEN e.exit_year IS NOT NULL THEN 1 ELSE 0 END) AS leavers, SUM(CASE WHEN e.exit_year IS NULL THEN 1 ELSE 0 END) AS current_staff FROM employees e JOIN departments d ON d.id = e.department_id GROUP BY d.name ORDER BY leavers DESC",
+    datasetKey: 'hr_core',
+    tool: 'sql',
+    estHours: 0.3,
+    priority: 'medium',
+    dueInDays: 3,
+    day: 2,
+    difficulty: 'medium',
+  },
+
+  'da-114': {
+    title: 'Tell Vikram the answer is not the obvious one',
+    brief: "Write back to Vikram. The hard part is not the number — it is that his premise was reasonable and the data does not support it. Say what you found, name the department that actually has the strongest case, and be straight that market rate is not something you can give him. Under 140 words.",
+    tool: 'writeup',
+    datasetKey: 'hr_core',
+    writeup: {
+      to: 'Vikram Nair, Business Stakeholder',
+      subject: 'Re: Department salary numbers — on Support',
+      prompt: 'Write the reply. Under 140 words.',
+      maxWords: 140,
+      exhibit: {
+        kind: 'table',
+        from: 'Position within own salary band',
+        body: 'Marketing     36.6%\nSupport       46.9%\nPeople Ops    61.3%\nFinance       63.1%\nSales         63.7%\nEngineering   66.1%',
+      },
+      rubric: [
+        { key: 'answer', label: 'The direct answer to what he asked about Support', markers: ['support'], why: 'He asked about Support by name. Answer that first, even though the interesting finding is elsewhere.' },
+        { key: 'marketing', label: 'That Marketing has the stronger case', markers: ['marketing'], why: 'This is the actual finding. Burying it because it was not what he asked about would be the safe choice and the wrong one.' },
+        { key: 'method', label: 'What "position in band" means, in one line', markers: ['band|floor|ceiling|range|bracket'], why: 'He is not an analyst. A number he cannot interpret is a number he will not use.' },
+        { key: 'limit', label: 'That market rate is not available', markers: ['market|benchmark|external|outside data|do not have|don\'t have|no data'], why: 'He probably means market rate by "underpaid". Saying plainly what you cannot answer is what stops him assuming you did.' },
+      ],
+      whyRight: 'You answered his question, told him the more useful thing he did not ask about, explained the measure in a line, and were straight about the limit.',
+    },
+    estHours: 0.4,
+    priority: 'high',
+    dueInDays: 3,
+    day: 2,
+    difficulty: 'hard',
+  },
+
+  // ---- Senior day 1 --------------------------------------------------------------------
+  //
+  // Same six-slot shape as the junior day — scope, warm up, analyse, review, judge,
+  // communicate — but the questions are senior ones: the scoping task has a genuine
+  // ambiguity to resolve rather than a mis-read to catch, and the write-up goes to an
+  // engineering manager who will argue back.
+  'sa-010': {
+    title: 'Scope the reliability question',
+    brief: "Arjun wants to know 'which service is worst'. That phrase hides at least three different questions, and they do not have the same answer. Decide which ones are worth putting in front of him — and which are the same question wearing different words.",
+    tool: 'choice',
+    datasetKey: 'saas_ops',
+    choice: {
+      prompt: "Which of these are distinct, answerable readings of 'which service is worst'?",
+      exhibit: {
+        kind: 'email',
+        from: 'Arjun Rao, Engineering Manager',
+        subject: 'Next quarter planning',
+        body: "We keep going round in circles on where to put the reliability effort next quarter. Half the room says api-gateway because it's always breaking, half says billing-sync because when it goes it really goes. Can you settle it? Which service is worst.",
+      },
+      options: [
+        { key: 'freq', correct: true, label: 'Which service fails most often', why: 'Frequency. It is what "always breaking" means, and it is a real measure.' },
+        { key: 'mttr', correct: true, label: 'Which service takes longest to fix when it does fail', why: 'Cost per failure. This is the other half of the room, and it is a genuinely different ranking.' },
+        { key: 'total', correct: true, label: 'Which service costs the most engineering hours in total', why: 'Frequency times duration. It is the one that actually answers "where should the effort go", and neither half of the room asked for it.' },
+        { key: 'blame', correct: false, label: 'Which team owns the worst service', why: 'There is no team ownership in this data, and turning a reliability question into a question about who is at fault is how you stop being invited.' },
+        { key: 'sev', correct: false, label: 'Which service has the most SEV1s', why: 'Not a distinct question — it is the frequency measure with a filter on it. Presenting it as a fourth angle pads the analysis without adding one.' },
+        { key: 'future', correct: false, label: 'Which service will fail next quarter', why: 'A forecast. Thirty-five incidents over three months is not enough history to predict from, and saying so is more useful than a number nobody should trust.' },
+      ],
+      skills: { businessLogic: 100, communication: 85 },
+      whyRight: 'You found the third question neither side asked — total cost — and you spotted that the SEV1 angle is the frequency measure in disguise.',
+    },
+    estHours: 0.2,
+    priority: 'high',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'medium',
+  },
+
+  'sa-011': {
+    title: 'How often each service breaks',
+    brief: "Start with the simple half of the argument. Write ONE SQL SELECT returning, for each service, how many incidents it has had in total and how many of those were SEV1, most incidents first. This is the frequency picture — half the room's position, quantified.",
+    referenceSql: "SELECT service, COUNT(*) AS incidents, SUM(CASE WHEN severity = 'SEV1' THEN 1 ELSE 0 END) AS sev1 FROM incidents GROUP BY service ORDER BY incidents DESC",
+    datasetKey: 'saas_ops',
+    tool: 'sql',
+    estHours: 0.25,
+    priority: 'medium',
+    dueInDays: 1,
+    day: 1,
+    difficulty: 'easy',
+  },
+
+  'sa-012': {
+    title: "Review Sneha's query",
+    brief: "Sneha on the support side wrote this to answer the same question and wants a second pair of eyes before it goes anywhere. Flag what is genuinely wrong. Flagging things that are fine is not caution here — it costs you the same as missing something.",
+    tool: 'choice',
+    datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'What is wrong with this query? Only the real problems.',
+      exhibit: {
+        kind: 'sql',
+        from: 'Sneha Joshi, Support Lead',
+        body: "SELECT service,\n       COUNT(*) AS incidents,\n       AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours\nFROM incidents\nGROUP BY service\nORDER BY avg_hours DESC",
+      },
+      options: [
+        { key: 'mixed', correct: true, label: 'The count includes unresolved incidents but the average cannot', why: 'AVG skips NULLs silently, so the average covers only closed incidents while the count covers all of them. Two different denominators in one row, and nothing on screen says so.' },
+        { key: 'nofilter', correct: true, label: 'There is no filter on resolved_at', why: 'Seven incidents are still open. Whether they belong in the count is a judgement call — but it has to be made deliberately, not left to AVG to decide quietly.' },
+        { key: 'avgshape', correct: true, label: 'An average alone hides the outliers this question is about', why: 'The argument is about services that "really go" when they go. A mean flattens exactly the tail that matters; a median plus a worst case would show it.' },
+        { key: 'julian', correct: false, label: 'julianday is the wrong function for this', why: 'It is the right tool in SQLite — the difference of two julian days times 24 is hours. Nothing wrong here.' },
+        { key: 'order', correct: false, label: 'Ordering by avg_hours is wrong', why: 'It is one defensible ordering for "slowest to fix". Not an error.' },
+        { key: 'groupby', correct: false, label: 'GROUP BY service is too coarse', why: 'Service is exactly the grain the question is asked at. Splitting further would answer a question nobody asked.' },
+      ],
+      skills: { sql: 100, businessLogic: 95 },
+      whyRight: 'You caught the mismatched denominators — a row where the count and the average describe different sets of incidents, with nothing to warn the reader.',
+    },
+    estHours: 0.3,
+    priority: 'high',
+    dueInDays: 2,
+    day: 1,
+    difficulty: 'hard',
+  },
+
+  'sa-013': {
+    title: 'Settle the argument, honestly',
+    brief: "You have frequency and you have time-to-resolve. api-gateway breaks most often; billing-sync takes by far the longest to fix. Which statements can you defend in the room?",
+    tool: 'choice',
+    datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'What do your two measures actually establish?',
+      options: [
+        { key: 'both', correct: true, label: 'Both halves of the room are right, about different things', why: 'api-gateway leads on frequency, billing-sync on time-to-resolve. The argument was never about the data; it was about which measure counts.' },
+        { key: 'third', correct: true, label: 'The question they should be asking is total time lost, not either measure alone', why: 'Frequency times duration is the thing that maps to engineering effort, and it is the number that actually informs where next quarter goes.' },
+        { key: 'thin', correct: true, label: "billing-sync's average rests on very few resolved incidents", why: 'One resolved incident behind that number. It is the highest figure on the table and the least reliable, and not saying so would be a real failure.' },
+        { key: 'winner', correct: false, label: 'You can name one service as definitively worst', why: 'Only by picking a measure and not telling anyone you picked it. That is how an analyst wins an argument and loses trust.' },
+        { key: 'nothing', correct: false, label: 'The data is too thin to say anything useful', why: 'Overcorrection. It is thin in one specific place, and saying which place is far more useful than refusing to answer.' },
+        { key: 'ignore', correct: false, label: 'Unresolved incidents can be ignored as noise', why: 'Three of the seven open incidents are SEV1s. The ones still open may well be the worst ones, which is the opposite of noise.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+      whyRight: 'You resolved the argument by naming the measure rather than picking a side, and you flagged that your own biggest number is your least reliable one.',
+    },
+    estHours: 0.25,
+    priority: 'high',
+    dueInDays: 2,
+    day: 1,
+    difficulty: 'hard',
+  },
+
+  'sa-014': {
+    title: 'Brief Arjun',
+    brief: "Arjun asked you to settle an argument. You are going to tell him the argument was miscast — both sides were measuring different things — and then give him the number he actually needs. He will push back, so make it defensible in a paragraph. Under 150 words.",
+    tool: 'writeup',
+    datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao, Engineering Manager',
+      subject: 'Re: Next quarter planning',
+      prompt: 'Write the brief. Under 150 words.',
+      maxWords: 150,
+      exhibit: {
+        kind: 'table',
+        from: 'Your two measures',
+        body: 'By frequency        api-gateway   9 incidents\n                    report-builder 10 incidents\n\nBy time to resolve  billing-sync  62.0h  (1 resolved)\n                    api-gateway   40.8h  (8 resolved)\n                    data-export   39.0h  (6 resolved)',
+      },
+      rubric: [
+        { key: 'reframe', label: 'That the two sides are measuring different things', markers: ['different|two measure|frequency|how often|both'], why: 'This is the actual answer. Giving him a winner without this just moves the argument rather than settling it.' },
+        { key: 'numbers', label: 'Both measures, with the services named', markers: ['api-gateway|billing-sync|report-builder'], why: 'He needs to see the evidence, not just the conclusion — he is going to repeat this to the people who disagreed.' },
+        { key: 'caveat', label: "That billing-sync's figure rests on one resolved incident", markers: ['one|1 resolved|single|thin|small|few'], why: 'It is your headline number and your weakest. If he finds this out in the meeting rather than from you, nothing else you said survives.' },
+        { key: 'reco', label: 'A recommendation on what to measure or do next', markers: ['recommend|suggest|would|propose|next|total|hours lost|effort'], why: 'A senior brief ends with a view. Handing over two tables and letting the room resume the argument is not a settled question.' },
+      ],
+      whyRight: 'You reframed the argument, showed both measures, undercut your own biggest number before anyone else could, and finished with a view.',
+    },
+    estHours: 0.45,
+    priority: 'high',
+    dueInDays: 2,
+    day: 1,
+    difficulty: 'hard',
+  },
+
   // ---- Presentation ------------------------------------------------------------------
   // A chart task is graded on judgement, not syntax: which chart, what on each axis, how
   // ordered, and whether the value axis starts at zero. Deterministic, so it costs
@@ -824,7 +1090,33 @@ function assignTask(enrollmentId, taskKey, weekStart) {
 // can be wired in later without a schema change.
 function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   const existing = getEnrollment(userId);
-  if (existing && existing.status !== 'ended') return existing;
+  if (existing && existing.status !== 'ended') {
+    // Re-enrolling used to return the old row and silently discard the level you just
+    // picked — so choosing Senior on an account that started Junior looked like the two
+    // levels shared a catalogue. They do not; the choice was being thrown away.
+    //
+    // Before any work is graded, changing your mind is legitimate and the switch is
+    // honoured. Once work is graded it is not a setup choice any more, it is a transfer,
+    // and it happens through promotion rather than by re-running the form.
+    if (level && level !== existing.level) {
+      const graded = db.prepare("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'")
+        .get(existing.id).c;
+      if (graded > 0) {
+        throw new Error(`You're already enrolled as a ${existing.level === 'senior' ? 'Senior' : 'Junior'} Data Analyst and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
+      }
+      // No graded work: wipe the unstarted assignment and re-issue at the new level.
+      db.prepare('DELETE FROM sim_tasks WHERE enrollment_id = ?').run(existing.id);
+      db.prepare('DELETE FROM sim_project_runs WHERE enrollment_id = ?').run(existing.id);
+      db.prepare('UPDATE sim_enrollments SET level = ? WHERE id = ?').run(level, existing.id);
+      const fresh = getEnrollment(userId);
+      addMessage(fresh.id, 'people_partner', PEOPLE_PARTNER_NAME,
+        `Your level has been changed to ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
+        null, 'Level updated');
+      if (fresh.baseline_at) beginNextProject(fresh);
+      return getEnrollment(userId);
+    }
+    return existing;
+  }
 
   const role = 'data_analyst'; // only role built in P0
   const track = 'ic'; // manager track needs team assembly — P2
