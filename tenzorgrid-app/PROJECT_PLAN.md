@@ -543,11 +543,37 @@ after month one.** Three consequences, all of which change what gets built next:
   each knew how to answer `da-001` and nothing else. `scratchpad/answers.js` is now the
   one place a correct answer for any task lives.
 
-- **Phase 5c — next. The rest of the week, then the arc.** Day 1 of one project is
-  authored; **days 2–5 are still nearly empty** (day 2 has one chart task, days 4 and 5
-  have nothing at all, so no learner has ever seen a Friday). The pattern is proven and
-  the shape is right — what remains is authoring, at roughly 30 tasks per project, against
-  the validation gate. Then the weekly retro/1:1, the performance record, and the
+- **Phase 5c — IN PROGRESS. Authoring the days.** The user tested and reported both
+  symptoms exactly: *"per day only one task creating and same task for senior and
+  junior"*. Measured, they were one real gap and one real bug, and they were different
+  problems:
+  - **One task a day** was true on 5 of 6 projects. Only the junior's first project had a
+    six-task day. **Junior day 2 and senior day 1 are now authored** — both levels get a
+    genuine six-task day from a fresh enrolment.
+  - **"Same for both levels"** was NOT true of a fresh account — those already differ. The
+    bug was that **re-enrolling an existing account at a different level silently kept the
+    old one**, discarding the choice with no message. Before any work is graded the switch
+    is now honoured (people do change their mind on the setup screen); after graded work it
+    is refused with a plain reason, because moving up is what the promotion round is for.
+  - The enrolment form still described the levels as *"more hand-holding / less
+    hand-holding"* — the framing from before the decision that they get different projects.
+    Fixed, since it set the wrong expectation before anyone saw a task.
+
+  **The six-slot day shape** is what makes this authorable at volume, and every new day
+  should follow it: *scope it · warm up on the data · the core analysis · review someone
+  else's work · decide what you can claim · communicate it.* Only two of the six are
+  queries, which is both realistic and much faster to author.
+  Junior day 2 is the **stakeholder changing the question mid-week** (a non-negotiable
+  design point of the character architecture) and carries the best authored trap so far:
+  Vikram asks whether Support is underpaid, and the honest answer contradicts the obvious
+  one — Support has the lowest average pay, but **Marketing sits lowest in its own salary
+  band**. A learner reasoning from day one's chart gets it wrong.
+
+  **Still to author: junior days 3–5, senior days 2–5, and all of the other four
+  projects.** Roughly 12 of 30 tasks exist on the two lead projects; days 4 and 5 remain
+  empty everywhere, so no learner has yet seen a Friday.
+
+- **Phase 5d — after that.** The weekly retro/1:1, the performance record, and the
   interview defence.
 
 **The real gate on all of this is content, not code.** The machinery for a week can be
