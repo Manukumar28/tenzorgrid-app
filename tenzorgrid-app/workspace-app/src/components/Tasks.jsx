@@ -1,12 +1,11 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ClipboardCheck, Users, Gauge } from 'lucide-react';
+import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
 import { api } from '../api.js';
 const Workbench = lazy(() => import('./Workbench.jsx'));
-import ReviewPanel from './ReviewPanel.jsx';
 
 const PRIORITY_OPTIONS = [
   { value: 'high', label: 'High' },
@@ -54,7 +53,7 @@ function SectionTitle({ children, count }) {
 // bare textarea. Graded tasks keep the compact feedback panel, since there is nothing
 // left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
 // don't pay to download a code editor.
-function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange }) {
+function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
   return (
     <BentoCard hover={false}>
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
@@ -70,13 +69,26 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
       {task.reviewState === 'pending' ? (
         <>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">{task.brief}</p>
-          <ReviewPanel
-            task={task}
-            manager={manager}
-            learnerName={learnerName}
-            learnerPhotoUrl={learnerPhotoUrl}
-            onStateChange={onStateChange}
-          />
+          {/* The sign-off conversation happens in the chat window with the manager, not
+              here. A review panel bolted into the workbench read as a form to fill in;
+              a manager questioning your work is a conversation, and it belongs where
+              every other conversation with her already is. */}
+          <button
+            onClick={() => onOpenChat && onOpenChat('line_manager')}
+            aria-label="Open the sign-off chat with your manager"
+            className="w-full flex items-center gap-3 rounded-xl border-2 border-amber-200 bg-amber-50 px-4 py-3.5 text-left hover:bg-amber-100 transition-colors"
+          >
+            <Avatar name={manager ? manager.name : 'Asha Rao'} avatarUrl={manager && manager.avatarUrl} size={34} className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-extrabold text-amber-900">
+                {manager ? manager.name.split(' ')[0] : 'Asha'} is reviewing this — she's asked you something
+              </p>
+              <p className="text-xs text-amber-800/80 truncate mt-0.5">{task.reviewQuestion}</p>
+            </div>
+            <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-amber-900">
+              <MessageSquare size={14} /> Reply in chat
+            </span>
+          </button>
         </>
       ) : task.status === 'graded' ? (
         <>
@@ -95,7 +107,7 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
   );
 }
 
-export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange }) {
+export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
   const { taskBoard, roster, projects } = state;
   const [priorityFilter, setPriorityFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
@@ -237,6 +249,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
           <span ref={workspaceRef} className="block scroll-mt-4" aria-hidden="true" />
           <TaskWorkspace
             task={selected}
+            onOpenChat={onOpenChat}
             manager={personByArchetype.line_manager}
             learnerName={learnerName}
             learnerPhotoUrl={learnerPhotoUrl}

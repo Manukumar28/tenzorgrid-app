@@ -29,6 +29,9 @@ export default function App() {
   const [standupOpen, setStandupOpen] = useState(false);
   const [standupSeen, setStandupSeen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Lifted so the Tasks tab can open a conversation — the sign-off pointer there needs
+  // to be able to bring the manager's window up.
+  const [chatWith, setChatWith] = useState(null);
   // Typing habits, not account data — they belong to the machine you type on.
   const [prefs, setPrefs] = useState(() => {
     try { return { enterToSend: true, ...JSON.parse(localStorage.getItem('tg.prefs') || '{}') }; }
@@ -135,7 +138,7 @@ export default function App() {
 
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
-        {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
+        {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
@@ -144,7 +147,7 @@ export default function App() {
 
       {/* Always reachable, deliberately outside the tab system: you ask a colleague a
           question WHILE you are stuck in the workbench, not by navigating away from it. */}
-      <ChatDock state={state} onStateChange={setState} enterToSend={prefs.enterToSend} />
+      <ChatDock state={state} onStateChange={setState} enterToSend={prefs.enterToSend} openWith={chatWith} />
     </div>
   );
 }
