@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight, FileText, CalendarClock, AlertTriangle } from 'lucide-react';
+import { LineChart, LayoutDashboard, Scale, Code2, Lock, Clock, ArrowRight, ChevronRight, FileText, CalendarClock, AlertTriangle, Check } from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
 export function money(n) {
@@ -151,6 +151,17 @@ export function WeekStrip({ week }) {
           <AlertTriangle size={12} className="shrink-0 mt-px" />
           <span>
             {week.blocking.join(' and ')} {week.blocking.length === 1 ? 'is' : 'are'} waiting on you
+          </span>
+        </div>
+      )}
+
+      {/* Everything available is done and the rest is waiting on its day. Without saying
+          so, a card reading "6 of 7" next to an empty board looks like something broke. */}
+      {week.allCaughtUp && (
+        <div className="flex items-start gap-1.5 text-[11px] font-bold text-emerald-700 mb-2.5">
+          <Check size={12} className="shrink-0 mt-px" />
+          <span>
+            You're up to date — {week.waitingOn === 1 ? 'the last task opens' : `${week.waitingOn} more open`} {week.waitingUntil}
           </span>
         </div>
       )}
