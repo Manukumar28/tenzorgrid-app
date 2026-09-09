@@ -410,19 +410,36 @@ export default function Emails({ state, onStateChange }) {
                 </button>
               </div>
 
-              <div className="space-y-3.5 max-h-[420px] overflow-y-auto pr-1 mb-4">
-                {selected.messages.map((m) => {
+              {/* A thread, not a chat log. Offset tinted bubbles made correspondence read
+                  as instant messaging; an email thread is a stack of full-width messages,
+                  each with a real From/To header and a quiet rule between them. Quick
+                  back-and-forth lives in the chat dock instead. */}
+              <div className="max-h-[420px] overflow-y-auto pr-1 mb-4 divide-y divide-slate-100">
+                {selected.messages.map((m, i) => {
                   const mine = m.senderArchetype === 'learner';
+                  const who = mine ? 'You' : m.senderName;
+                  const to = mine ? selected.senderName : 'you';
                   return (
-                    <div key={m.id} className={`rounded-lg px-3.5 py-3 ${mine ? 'bg-indigo-50/70 ml-6' : 'bg-slate-50 mr-6'}`}>
-                      <div className="flex items-baseline justify-between gap-3 mb-1">
-                        <span className="text-xs font-bold text-slate-700">{mine ? 'You' : m.senderName}</span>
-                        <span className="text-[10px] text-slate-400 shrink-0">
-                          {new Date(m.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                    <article key={m.id} className={i === 0 ? 'pb-4' : 'py-4'}>
+                      <div className="flex items-start gap-2.5 mb-2">
+                        <Avatar
+                          name={who}
+                          avatarUrl={mine ? undefined : personByArchetype[m.senderArchetype]?.avatarUrl}
+                          size={28}
+                          className="shrink-0 mt-0.5"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="text-xs font-bold text-slate-800 truncate">{who}</span>
+                            <span className="text-[10px] text-slate-400 shrink-0">
+                              {new Date(m.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400">to {to}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">{m.body}</p>
-                    </div>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed pl-[38px]">{m.body}</p>
+                    </article>
                   );
                 })}
               </div>
