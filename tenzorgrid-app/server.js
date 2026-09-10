@@ -457,7 +457,11 @@ async function handleApi(req, res, url) {
       // not just a day count. Passing body.days alone made every button a no-op.
       let state;
       if (body && body.skipSkillTest) state = workspace.timeTravelSkipSkillTest(user.id);
-      else if (body && body.reset) state = workspace.timeTravelReset(user.id, body);
+      else if (body && body.completeTaskId) state = workspace.timeTravelCompleteTask(user.id, body.completeTaskId);
+      else if (body && body.completeDay) {
+        const done = workspace.timeTravelCompleteDay(user.id);
+        return sendJson(res, 200, { state: done.state, completed: done.completed });
+      } else if (body && body.reset) state = workspace.timeTravelReset(user.id, body);
       else state = workspace.timeTravel(user.id, body);
       return sendJson(res, 200, { state });
     } catch (e) {

@@ -109,6 +109,18 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
 
 export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
   const { taskBoard, roster, projects } = state;
+
+  // Testing only, and only when the server allows it. Reaching the seventh task by
+  // answering the six in front of it is data entry, not testing.
+  async function testComplete(taskId) {
+    try {
+      const d = await api.timeTravel({ completeTaskId: taskId });
+      if (d.state) onStateChange(d.state);
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      alert(e.message);
+    }
+  }
   const [priorityFilter, setPriorityFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [sortBy, setSortBy] = useState('due');
@@ -215,6 +227,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
                 index={i}
                 selected={t.id === selectedId}
                 onOpen={() => openTask(t.id)}
+                onTestComplete={state.timeTravel && state.timeTravel.enabled ? testComplete : null}
               />
             ))}
             {lockedVisible.map((t, i) => (

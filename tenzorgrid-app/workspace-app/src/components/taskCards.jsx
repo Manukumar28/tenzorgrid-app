@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle, CalendarClock, FlaskConical } from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
 export const PRIORITY_PILL = {
@@ -28,7 +28,7 @@ const STAGE_COLOR = {
   Graded: 'from-emerald-500 to-teal-400',
 };
 
-export function TaskCard({ task, person, index, selected, onOpen }) {
+export function TaskCard({ task, person, index, selected, onOpen, onTestComplete }) {
   const graded = task.status === 'graded';
   // A task belonging to a later day is real and dated, but not yet workable. It reads as
   // scheduled rather than locked — the learner has not failed a gate, the day just hasn't
@@ -41,6 +41,16 @@ export function TaskCard({ task, person, index, selected, onOpen }) {
       hover={!soon}
       onClick={soon ? undefined : onOpen}
     >
+      {onTestComplete && !graded && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onTestComplete(task.id); }}
+          aria-label={`Mark "${task.title}" done for testing`}
+          title="Testing only — marks this done without grading it"
+          className="self-start mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-[10px] font-extrabold uppercase tracking-wide hover:bg-amber-100"
+        >
+          <FlaskConical size={11} /> Mark done
+        </button>
+      )}
       <div className="flex items-start gap-3 mb-3">
         <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${
           soon ? 'bg-slate-200'
