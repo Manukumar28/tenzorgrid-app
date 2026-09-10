@@ -2781,6 +2781,32 @@ function timeTravel(userId, spec) {
   return getState(userId);
 }
 
+// Start the whole simulation over: back to day one, nothing on record.
+//
+// The clock buttons move a learner forward, and there is no arithmetic that reliably
+// undoes several of them — "back a day" four times does not return you to where you
+// started once messages have fired and a project has been graded. So reset does not try
+// to rewind. It deletes the enrollment and re-creates it, which is the only version of
+// "start over" that is actually true.
+//
+// Every simulation table is ON DELETE CASCADE from sim_enrollments and foreign keys are
+// enforced, so removing that one row takes the tasks, project runs, messages, contacts,
+// stand-ups and attendance with it. The learner lands back where a new joiner lands: the
+// welcome mail and the skills check, with the same level and schedule they picked.
+function timeTravelReset(userId) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet, so there is nothing to reset.');
+
+  const { level, schedule_type: scheduleType, schedule_days_json: scheduleDaysJson } = enrollment;
+  let scheduleDays = null;
+  try { scheduleDays = JSON.parse(scheduleDaysJson); } catch { scheduleDays = null; }
+
+  db.prepare('DELETE FROM sim_enrollments WHERE id = ?').run(enrollment.id);
+  startEnrollment(userId, { level, scheduleType, scheduleDays });
+  return getState(userId);
+}
+
 // Where the learner currently is, so the control can say what pressing it will do.
 function timeTravelState(enrollment, projects) {
   if (!TIME_TRAVEL_ENABLED) return { enabled: false };
@@ -3680,6 +3706,7 @@ module.exports = {
   startProject,
   submitSkillTest,
   timeTravel,
+  timeTravelReset,
   getStandup,
   submitStandup,
   markMessages,
