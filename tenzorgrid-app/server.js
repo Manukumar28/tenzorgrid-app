@@ -455,7 +455,11 @@ async function handleApi(req, res, url) {
     try {
       // The whole body: the control sends { workingDays } or { to: 'past-deadline' },
       // not just a day count. Passing body.days alone made every button a no-op.
-      return sendJson(res, 200, { state: workspace.timeTravel(user.id, body) });
+      let state;
+      if (body && body.skipSkillTest) state = workspace.timeTravelSkipSkillTest(user.id);
+      else if (body && body.reset) state = workspace.timeTravelReset(user.id, body);
+      else state = workspace.timeTravel(user.id, body);
+      return sendJson(res, 200, { state });
     } catch (e) {
       return sendJson(res, 400, { error: e.message });
     }

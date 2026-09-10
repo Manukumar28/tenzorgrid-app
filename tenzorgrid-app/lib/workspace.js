@@ -24,6 +24,13 @@ const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
 const PEOPLE_PARTNER_NAME = 'Neha Kulkarni';
 
+// The levels a learner can be enrolled at. The switcher offers these and timeTravelReset
+// validates against them, so the two can never drift apart.
+const LEVELS = [
+  { key: 'junior', label: 'Junior Data Analyst' },
+  { key: 'senior', label: 'Senior Data Analyst' },
+];
+
 const ROLE_CATALOG = {
   data_analyst: { label: 'Data Analyst', skin: 'Data & Analytics' },
 };
@@ -2781,6 +2788,69 @@ function timeTravel(userId, spec) {
   return getState(userId);
 }
 
+// Start the whole simulation over: back to day one, nothing on record.
+//
+// The clock buttons move a learner forward, and there is no arithmetic that reliably
+// undoes several of them — "back a day" four times does not return you to where you
+// started once messages have fired and a project has been graded. So reset does not try
+// to rewind. It deletes the enrollment and re-creates it, which is the only version of
+// "start over" that is actually true.
+//
+// Every simulation table is ON DELETE CASCADE from sim_enrollments and foreign keys are
+// enforced, so removing that one row takes the tasks, project runs, messages, contacts,
+// stand-ups and attendance with it. The learner lands back where a new joiner lands: the
+// welcome mail and the skills check, with the same level and schedule they picked.
+function timeTravelReset(userId, opts) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet, so there is nothing to reset.');
+
+  const { schedule_type: scheduleType, schedule_days_json: scheduleDaysJson } = enrollment;
+  let scheduleDays = null;
+  try { scheduleDays = JSON.parse(scheduleDaysJson); } catch { scheduleDays = null; }
+
+  // Landing somewhere the tester did not ask for is worse than refusing, because they would
+  // spend the next ten minutes testing the wrong level without noticing.
+  const level = (opts && opts.level) || enrollment.level;
+  if (!LEVELS.some((l) => l.key === level)) throw new Error(`Unknown level: ${level}`);
+  const role = (opts && opts.role) || enrollment.role;
+  if (!ROLE_CATALOG[role]) throw new Error(`Unknown role: ${role}`);
+
+  db.prepare('DELETE FROM sim_enrollments WHERE id = ?').run(enrollment.id);
+  startEnrollment(userId, { level, scheduleType, scheduleDays });
+  // startEnrollment only builds Data Analyst today; when a second role exists it will take
+  // the role too. Setting it here means the switcher is already honest about what it did.
+  if (role !== 'data_analyst') {
+    db.prepare('UPDATE sim_enrollments SET role = ? WHERE user_id = ?').run(role, userId);
+  }
+  return getState(userId);
+}
+
+// Fill the skills check in without answering it.
+//
+// The check gates the whole dashboard — deliberately, because on a real day one there is
+// genuinely nothing else yet. But that makes it a wall for whoever is testing: every reset
+// would mean twelve questions before you can reach the thing you actually changed.
+//
+// The answers are fixed rather than random, and deliberately imperfect: seven of twelve
+// right. A baseline of 100 would make every later improvement look like a flat line, which
+// is the opposite of what the skill matrix is for.
+function timeTravelSkipSkillTest(userId) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (enrollment.baseline_at) return getState(userId);
+
+  const questions = skilltest.QUESTIONS;
+  const answers = {};
+  questions.forEach((q, i) => {
+    const wrong = (q.options.find((o) => o.key !== q.answer) || q.options[0]).key;
+    answers[q.id] = i < 7 ? q.answer : wrong;
+  });
+  submitSkillTest(userId, answers);
+  return getState(userId);
+}
+
 // Where the learner currently is, so the control can say what pressing it will do.
 function timeTravelState(enrollment, projects) {
   if (!TIME_TRAVEL_ENABLED) return { enabled: false };
@@ -2790,6 +2860,12 @@ function timeTravelState(enrollment, projects) {
     day: active ? active.week.day : null,
     totalDays: active ? active.week.totalDays : null,
     project: active ? active.title : null,
+    // Built from the catalogue rather than hardcoded in the UI, so the picker grows on its
+    // own the day a second role is added and nobody has to remember to update a dropdown.
+    roles: Object.entries(ROLE_CATALOG).map(([key, r]) => ({ key, label: r.label })),
+    levels: LEVELS,
+    role: enrollment.role,
+    level: enrollment.level,
   };
 }
 
@@ -3680,6 +3756,8 @@ module.exports = {
   startProject,
   submitSkillTest,
   timeTravel,
+  timeTravelReset,
+  timeTravelSkipSkillTest,
   getStandup,
   submitStandup,
   markMessages,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle } from 'lucide-react';
+import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../api.js';
 import { BentoCard } from './ui.jsx';
@@ -40,12 +40,21 @@ function Toggle({ on, onChange, label, note, ariaLabel }) {
 function TimeTravel({ tt, onStateChange }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Reset throws away work, so it asks once. A second click on the same button rather
+  // than a browser confirm(): the dialog cannot be styled, cannot be tested, and reads
+  // as a bug on a page that otherwise never interrupts you.
+  const [confirming, setConfirming] = useState(false);
+  // Default the pickers to where the learner already is, so pressing the button without
+  // touching them is a plain restart rather than a surprise switch.
+  const [role, setRole] = useState(tt.role || 'data_analyst');
+  const [level, setLevel] = useState(tt.level || 'junior');
 
   async function move(spec) {
     setBusy(true); setError('');
     try {
       const d = await api.timeTravel(spec);
       if (d.state) onStateChange(d.state);
+      setConfirming(false);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -99,6 +108,80 @@ function TimeTravel({ tt, onStateChange }) {
         >
           <Rewind size={13} /> Back a day
         </button>
+      </div>
+
+      {/* Separated from the clock buttons, because it is a different kind of action:
+          those move you, this deletes you. */}
+      <div className="mt-3 pt-3 border-t border-amber-200/70">
+        <div className="flex flex-wrap items-end gap-2 mb-2.5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Role</span>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={busy}
+              aria-label="Role to start over as"
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold disabled:opacity-40"
+            >
+              {(tt.roles || []).map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Level</span>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              disabled={busy}
+              aria-label="Level to start over at"
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold disabled:opacity-40"
+            >
+              {(tt.levels || []).map((l) => <option key={l.key} value={l.key}>{l.label}</option>)}
+            </select>
+          </label>
+          {(role !== tt.role || level !== tt.level) && (
+            <span className="text-[11px] text-amber-800 font-semibold pb-2">
+              Switching from {tt.level === 'senior' ? 'Senior' : 'Junior'}
+            </span>
+          )}
+        </div>
+
+        {confirming ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-700 font-semibold">
+              This deletes every task, score, email and stand-up. Sure?
+            </span>
+            <button
+              onClick={() => move({ reset: true, role, level })}
+              disabled={busy}
+              aria-label="Confirm start over"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-40"
+            >
+              <RotateCcw size={13} /> {busy ? 'Resetting…' : 'Yes, start over'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+              aria-label="Cancel start over"
+              className="px-3 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white disabled:opacity-40"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setError(''); setConfirming(true); }}
+            disabled={busy}
+            aria-label="Start over from day one"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 disabled:opacity-40"
+          >
+            <RotateCcw size={13} /> {role !== tt.role || level !== tt.level ? 'Switch and start over' : 'Start over from day 1'}
+          </button>
+        )}
+        <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+          Back to a brand-new joiner at the role and level above: the welcome mail and the
+          skills check, on a clean board. Nothing is rewound — the run is deleted and started
+          again, which is the only version of "start over" that is actually true.
+        </p>
       </div>
 
       {error && <p className="text-xs text-rose-700 font-semibold mt-3">{error}</p>}

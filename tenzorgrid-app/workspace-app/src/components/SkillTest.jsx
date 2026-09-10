@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardCheck, ArrowRight, ArrowLeft, Check, X, Sparkles } from 'lucide-react';
+import { ClipboardCheck, ArrowRight, ArrowLeft, Check, X, Sparkles, FlaskConical } from 'lucide-react';
 import { api } from '../api.js';
 
 // The skills check.
@@ -124,7 +124,7 @@ function Result({ result, onDone }) {
   );
 }
 
-export default function SkillTest({ skillTest, onDone }) {
+export default function SkillTest({ skillTest, timeTravel, onDone }) {
   const [started, setStarted] = useState(false);
   const [i, setI] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -153,9 +153,45 @@ export default function SkillTest({ skillTest, onDone }) {
     }
   }
 
+  // The check gates the whole dashboard, which is right for a real day one and a wall for
+  // whoever is testing — every reset would mean twelve questions before reaching the thing
+  // that actually changed. Only ever shown when the server allows time travel.
+  async function skip() {
+    setBusy(true); setError('');
+    try {
+      const d = await api.timeTravel({ skipSkillTest: true });
+      onDone(d.state || null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (result) return <Result result={result} onDone={() => onDone(nextState)} />;
   if (!started) {
-    return <Intro count={qs.length} minutes={skillTest.minutes} optional={skillTest.optional} onStart={() => setStarted(true)} />;
+    return (
+      <div>
+        <Intro count={qs.length} minutes={skillTest.minutes} optional={skillTest.optional} onStart={() => setStarted(true)} />
+        {timeTravel && timeTravel.enabled && (
+          <div className="max-w-2xl mx-auto mt-3 flex flex-wrap items-center gap-3">
+            <button
+              onClick={skip}
+              disabled={busy}
+              aria-label="Skip the skills check for testing"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 text-xs font-bold hover:bg-amber-50 disabled:opacity-40"
+            >
+              <FlaskConical size={13} /> {busy ? 'Skipping…' : 'Skip — testing only'}
+            </button>
+            <span className="text-[11px] text-slate-500">
+              Fills a deliberately imperfect baseline (7 of 12) so the skill matrix still has
+              somewhere to move. Only appears with TIME_TRAVEL=1.
+            </span>
+          </div>
+        )}
+        {error && <p className="max-w-2xl mx-auto text-xs text-rose-700 font-semibold mt-2">{error}</p>}
+      </div>
+    );
   }
 
   const last = i === qs.length - 1;
