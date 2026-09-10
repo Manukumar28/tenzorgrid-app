@@ -206,6 +206,89 @@ CREATE TABLE IF NOT EXISTS sim_attendance (
   created_at TEXT NOT NULL,
   UNIQUE(enrollment_id, attended_on)
 );
+
+-- ---- The rest of a working day (content model v1) ----
+-- These four tables hold a learner's RECORD of activities, quiz questions, situations and
+-- the people they have met. The content itself — which activities exist, what the questions
+-- are, what mail a project sends — lives in code, exactly as tasks do: sim_tasks is a
+-- learner's copy of a task, not the task library. Same split here, for the same reason.
+-- Authored content has to be deterministic and reviewable in a diff; only what a specific
+-- learner did belongs in the database.
+
+-- One row per activity offered to a learner on a given day. Two anchors are offered every
+-- working day; one rotating activity is drawn from the level's pool. Keyed by DATE rather
+-- than by project day, because the anchors span projects and the rotation is what stops a
+-- week repeating itself.
+CREATE TABLE IF NOT EXISTS sim_activities (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  activity_key TEXT NOT NULL,
+  project_run_id TEXT,
+  day_index INTEGER,
+  assigned_on TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  -- Null for the many activities that are simply done or not done. Only the ones worth
+  -- judging (mentoring, a written handover) carry a number, and it feeds the conduct
+  -- score, never the project score.
+  score INTEGER,
+  payload_json TEXT,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, activity_key, assigned_on)
+);
+
+-- A learner sees each question once and never again, which is what UNIQUE on
+-- (enrollment_id, question_key) enforces. A bank that repeats itself teaches recall of the
+-- bank rather than of the subject.
+CREATE TABLE IF NOT EXISTS sim_quiz (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  question_key TEXT NOT NULL,
+  project_key TEXT,
+  answered_on TEXT NOT NULL,
+  chosen TEXT,
+  correct INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, question_key)
+);
+
+-- Something that happened which the learner did not plan for: the stakeholder adding to the
+-- brief, Finance wanting a number by three, a meeting invite, or a timesheet reminder that
+-- deserves no reply at all. handled_as records what they did with it — including
+-- 'ignored', because silence has to be a recorded choice for it to cost anything.
+CREATE TABLE IF NOT EXISTS sim_situations (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  situation_key TEXT NOT NULL,
+  project_run_id TEXT,
+  message_id TEXT,
+  delivered_at TEXT,
+  handled_as TEXT,
+  handled_at TEXT,
+  score INTEGER,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, situation_key)
+);
+
+-- Who this learner has actually worked with. A project declares the cast it needs and those
+-- people are written here when the run starts, so the Team tab shows the people on THIS
+-- project rather than a fixed org chart — and so somebody met in week one is still
+-- recognised in week nine.
+CREATE TABLE IF NOT EXISTS sim_cast (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT,
+  archetype TEXT NOT NULL,
+  name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  met_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id, archetype)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_activities_day ON sim_activities(enrollment_id, assigned_on);
+CREATE INDEX IF NOT EXISTS idx_sim_situations_run ON sim_situations(enrollment_id, project_run_id);
+CREATE INDEX IF NOT EXISTS idx_sim_cast_run ON sim_cast(enrollment_id, project_run_id);
 `);
 
 // Safe migration helper for columns added after the DB was first created
@@ -267,6 +350,18 @@ ensureColumn('sim_tasks', 'day_index', 'INTEGER');
 ensureColumn('sim_tasks', 'opens_at', 'TEXT');
 ensureColumn('sim_tasks', 'difficulty', 'TEXT');
 ensureColumn('sim_messages', 'starred', 'INTEGER');
+
+// A project can now run past its five days rather than simply being late: unfinished work
+// carries into the next day and the deadline moves with it. `extended_days` is what the
+// score decay is calculated from, and `carried_from_day` records that a task was not
+// originally today's — both written by later work, declared here so the shape of the model
+// is in one place.
+ensureColumn('sim_project_runs', 'extended_days', 'INTEGER');
+ensureColumn('sim_tasks', 'carried_from_day', 'INTEGER');
+// Activities and situations are judged separately from the project. Mixing them would mean
+// a learner who did excellent analysis and ignored every email scored the same as one who
+// did both — and the second is the employable one.
+ensureColumn('sim_enrollments', 'conduct_score', 'INTEGER');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.
