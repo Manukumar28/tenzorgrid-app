@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw, CheckCheck } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../api.js';
 import { BentoCard } from './ui.jsx';
@@ -48,12 +48,19 @@ function TimeTravel({ tt, onStateChange }) {
   // touching them is a plain restart rather than a surprise switch.
   const [role, setRole] = useState(tt.role || 'data_analyst');
   const [level, setLevel] = useState(tt.level || 'junior');
+  const [note, setNote] = useState('');
 
   async function move(spec) {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setNote('');
     try {
       const d = await api.timeTravel(spec);
       if (d.state) onStateChange(d.state);
+      // The count is the whole feedback: "nothing happened" and "six tasks cleared" look
+      // identical on a board you have not scrolled to yet.
+      if (typeof d.completed === 'number') {
+        setNote(d.completed ? `Marked ${d.completed} task${d.completed === 1 ? '' : 's'} done.`
+                            : 'Nothing open to mark done.');
+      }
       setConfirming(false);
     } catch (e) {
       setError(e.message);
@@ -108,7 +115,17 @@ function TimeTravel({ tt, onStateChange }) {
         >
           <Rewind size={13} /> Back a day
         </button>
+        <button
+          onClick={() => move({ completeDay: true })}
+          disabled={busy}
+          aria-label="Mark every open task done for testing"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-emerald-300 text-emerald-700 text-xs font-bold hover:bg-emerald-50 disabled:opacity-40"
+        >
+          <CheckCheck size={13} /> Finish today's tasks
+        </button>
       </div>
+
+      {note && <p className="text-xs text-emerald-800 font-semibold mt-2.5">{note}</p>}
 
       {/* Separated from the clock buttons, because it is a different kind of action:
           those move you, this deletes you. */}

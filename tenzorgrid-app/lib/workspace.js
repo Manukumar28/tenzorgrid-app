@@ -2851,6 +2851,63 @@ function timeTravelSkipSkillTest(userId) {
   return getState(userId);
 }
 
+// Mark a task done without doing it.
+//
+// Testing anything past a single task means getting through the ones in front of it, and
+// answering six SQL questions to reach the seventh is not testing, it is data entry.
+//
+// This deliberately bypasses grading rather than submitting a correct answer. Every task
+// type would otherwise need its own "what is the right answer" path here, and that code
+// would rot the moment a new type is added — silently, because a tester skipping a task
+// does not read the score. Writing the outcome directly is honest about what it is, and
+// the feedback line says so on the learner's own board.
+//
+// The score is a fixed 82: good work, not perfect. A wall of 100s would make the skill
+// matrix, the promotion threshold and the shoutout rule all behave in ways no real learner
+// would ever produce, which is the opposite of useful for testing.
+const TEST_COMPLETE_SCORE = 82;
+
+function completeOneTask(enrollment, row) {
+  db.prepare(`UPDATE sim_tasks
+                 SET status = 'graded', score = ?, feedback = ?, submission = ?,
+                     review_state = NULL, review_question = NULL,
+                     opens_at = NULL, submitted_at = ?, graded_at = ?
+               WHERE id = ?`)
+    .run(TEST_COMPLETE_SCORE,
+         'Completed from the testing panel — this was not graded, and the score is a fixed stand-in.',
+         '(auto-completed for testing)', now(), now(), row.id);
+}
+
+function timeTravelCompleteTask(userId, taskId) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const row = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?')
+    .get(taskId, enrollment.id);
+  if (!row) throw new Error('No such task.');
+  if (row.status === 'graded') throw new Error('That task is already signed off.');
+
+  completeOneTask(enrollment, row);
+  return getState(userId);
+}
+
+// Everything the learner can currently see and work on. A task belonging to a later day is
+// left alone: the drip is itself a thing worth testing, and clearing it here would hide
+// whether it works.
+function timeTravelCompleteDay(userId) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+
+  const nowMs = Date.now();
+  const rows = db.prepare("SELECT * FROM sim_tasks WHERE enrollment_id = ? AND status != 'graded'")
+    .all(enrollment.id)
+    .filter((t) => !t.opens_at || Date.parse(t.opens_at) <= nowMs);
+
+  for (const row of rows) completeOneTask(enrollment, row);
+  return { completed: rows.length, state: getState(userId) };
+}
+
 // Where the learner currently is, so the control can say what pressing it will do.
 function timeTravelState(enrollment, projects) {
   if (!TIME_TRAVEL_ENABLED) return { enabled: false };
@@ -3758,6 +3815,8 @@ module.exports = {
   timeTravel,
   timeTravelReset,
   timeTravelSkipSkillTest,
+  timeTravelCompleteTask,
+  timeTravelCompleteDay,
   getStandup,
   submitStandup,
   markMessages,
