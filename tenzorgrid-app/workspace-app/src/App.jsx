@@ -5,6 +5,7 @@ import Overview from './components/Overview.jsx';
 import Projects from './components/Projects.jsx';
 import Tasks from './components/Tasks.jsx';
 import CalendarTab from './components/CalendarTab.jsx';
+import Today from './components/Today.jsx';
 import Emails from './components/Emails.jsx';
 import Team from './components/Team.jsx';
 import SettingsTab from './components/SettingsTab.jsx';
@@ -138,6 +139,7 @@ export default function App() {
         )}
 
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
+        {tab === 'today' && <Today state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}
         {tab === 'calendar' && <CalendarTab state={state} />}

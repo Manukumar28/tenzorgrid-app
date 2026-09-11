@@ -1,0 +1,469 @@
+import React, { useMemo, useState } from 'react';
+import {
+  CheckCircle2, Circle, Mail, MessageSquare, Clock, Send, Archive,
+  ArrowUpRight, Timer, GraduationCap, PartyPopper, AlertTriangle,
+} from 'lucide-react';
+import { BentoCard } from './ui.jsx';
+import { api } from '../api.js';
+
+// Today: the day in all three currencies.
+//
+// The task board answers "what analysis is outstanding". This answers the question a person
+// actually has at 9am — what does today look like, and am I finished. Six tasks, two
+// activities, two situations, and on the last day a quiz. A day is not over until all of it
+// is, which is the thing that stops the product reading as a worksheet with a theme.
+
+function Counter({ label, done, total, tone }) {
+  const complete = total > 0 && done >= total;
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+        complete ? 'bg-emerald-500' : tone}`}>
+        {complete
+          ? <CheckCircle2 size={18} className="text-white" strokeWidth={2.3} />
+          : <span className="text-white text-xs font-extrabold tabular-nums">{Math.max(0, total - done)}</span>}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500">{label}</p>
+        <p className="text-sm font-bold text-slate-900 tabular-nums">{done} of {total}</p>
+      </div>
+    </div>
+  );
+}
+
+function Via({ via }) {
+  const Icon = via === 'chat' ? MessageSquare : Mail;
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+      <Icon size={11} />{via === 'chat' ? 'Chat' : 'Email'}
+    </span>
+  );
+}
+
+// ---- Activities ----------------------------------------------------------------------
+
+function Activity({ item, onDone }) {
+  const [answer, setAnswer] = useState('');
+  const [picked, setPicked] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const done = item.status === 'done';
+
+  async function send() {
+    setBusy(true); setError('');
+    try {
+      await onDone(item.key, item.check.kind === 'choice' ? picked : answer);
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  const ready = item.check.kind === 'acknowledge'
+    || (item.check.kind === 'choice' ? Boolean(picked) : answer.trim().split(/\s+/).length >= 5);
+
+  return (
+    <div className={`rounded-xl border p-4 ${done ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'}`}>
+      <div className="flex items-start gap-2.5 mb-2">
+        {done
+          ? <CheckCircle2 size={17} className="text-emerald-600 shrink-0 mt-0.5" />
+          : <Circle size={17} className="text-slate-300 shrink-0 mt-0.5" />}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <Via via={item.via} />
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{item.type}</span>
+            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400"><Timer size={10} />{item.minutes} min</span>
+            {done && typeof item.score === 'number' && (
+              <span className="text-[10px] font-extrabold text-emerald-700">{item.score}%</span>
+            )}
+          </div>
+          <p className="font-bold text-sm text-slate-900 leading-snug">{item.title}</p>
+        </div>
+      </div>
+
+      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed mb-3 pl-[27px]">{item.body}</p>
+
+      {!done && (
+        <div className="pl-[27px] space-y-2">
+          {item.check.kind === 'choice' && (
+            <>
+              <p className="text-xs font-bold text-slate-800">{item.check.prompt}</p>
+              <div className="space-y-1.5">
+                {item.check.options.map((o) => (
+                  <button
+                    key={o.key}
+                    onClick={() => setPicked(o.key)}
+                    aria-label={o.label}
+                    aria-pressed={picked === o.key}
+                    className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[13px] transition-colors ${
+                      picked === o.key ? 'border-indigo-500 bg-indigo-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}
+                  >{o.label}</button>
+                ))}
+              </div>
+            </>
+          )}
+          {item.check.kind === 'answer' && (
+            <>
+              <p className="text-xs font-bold text-slate-800">{item.check.prompt}</p>
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                rows={3}
+                aria-label={item.check.prompt}
+                placeholder="A few lines is enough…"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+              {item.check.maxWords && (
+                <p className="text-[11px] text-slate-400">
+                  {answer.trim().split(/\s+/).filter(Boolean).length} / {item.check.maxWords} words
+                </p>
+              )}
+            </>
+          )}
+          <button
+            onClick={send}
+            disabled={busy || !ready}
+            aria-label={`Complete: ${item.title}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-40"
+          >
+            <Send size={12} />{busy ? 'Sending…' : item.check.kind === 'acknowledge' ? (item.check.label || 'Done') : 'Send'}
+          </button>
+          {error && <p className="text-xs text-rose-700 font-semibold">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Situations ------------------------------------------------------------------------
+
+const ACTIONS = [
+  { key: 'reply', label: 'Reply', Icon: Send },
+  { key: 'defer', label: 'Later', Icon: Clock },
+  { key: 'archive', label: 'Archive', Icon: Archive },
+  { key: 'escalate', label: 'Escalate', Icon: ArrowUpRight },
+];
+
+function Situation({ item, onHandle }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const done = Boolean(item.handledAs);
+
+  async function act(action) {
+    if (action === 'reply' && !open) { setOpen(true); return; }
+    setBusy(true); setError('');
+    try {
+      await onHandle(item.key, action, text);
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className={`rounded-xl border p-4 ${done ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/30'}`}>
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <Via via={item.via} />
+        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{item.type}</span>
+        {done && (
+          <span className="text-[10px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+            {item.handledAs}
+          </span>
+        )}
+        {done && typeof item.score === 'number' && (
+          <span className={`text-[10px] font-extrabold ${item.score >= 70 ? 'text-emerald-700' : item.score >= 40 ? 'text-amber-700' : 'text-rose-700'}`}>
+            {item.score}%
+          </span>
+        )}
+      </div>
+      {item.senderName && (
+        <p className="text-[11px] font-bold text-slate-400 mb-0.5">{item.senderName}</p>
+      )}
+      {item.subject && <p className="font-bold text-sm text-slate-900 leading-snug mb-1">{item.subject}</p>}
+      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
+
+      {/* What it was looking for is shown only AFTER it is handled. Telling the learner
+          which mail matters is the answer to the only question triage asks. */}
+      {done && item.expect && item.expect.length > 0 && (
+        <div className="mt-3 rounded-lg bg-white border border-slate-200 px-3 py-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">It needed</p>
+          <ul className="space-y-0.5">
+            {item.expect.map((e, i) => (
+              <li key={i} className="text-[12px] text-slate-600 flex gap-1.5"><span className="text-slate-300">·</span>{e}</li>
+            ))}
+          </ul>
+          {item.note && <p className="text-[12px] text-slate-500 mt-2 leading-relaxed">{item.note}</p>}
+        </div>
+      )}
+
+      {!done && (
+        <div className="mt-3 space-y-2">
+          {open && (
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={3}
+              aria-label="Your reply"
+              placeholder="Your reply…"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            />
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            {ACTIONS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                onClick={() => act(key)}
+                disabled={busy || (key === 'reply' && open && text.trim().length < 10)}
+                aria-label={`${label} — ${item.subject || item.type}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border disabled:opacity-40 ${
+                  key === 'reply' ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'
+                                  : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+              >
+                <Icon size={12} />{key === 'reply' && open ? 'Send' : label}
+              </button>
+            ))}
+          </div>
+          {error && <p className="text-xs text-rose-700 font-semibold">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- The Friday quiz ---------------------------------------------------------------------
+
+function Quiz({ quiz, onSubmit }) {
+  const [answers, setAnswers] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+
+  if (quiz.taken && !result) {
+    return (
+      <BentoCard hover={false}>
+        <div className="flex items-center gap-2 mb-1">
+          <GraduationCap size={18} className="text-indigo-500" />
+          <h3 className="text-base font-bold">{quiz.title}</h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          Done — <b className="text-slate-900">{quiz.right} of {quiz.total}</b> ({quiz.score}%).
+        </p>
+      </BentoCard>
+    );
+  }
+
+  if (result) {
+    return (
+      <BentoCard hover={false}>
+        <div className="flex items-center gap-2 mb-2">
+          <GraduationCap size={18} className="text-indigo-500" />
+          <h3 className="text-base font-bold">{result.right} of {result.total}</h3>
+        </div>
+        <div className="space-y-2.5">
+          {result.results.map((r) => (
+            <div key={r.id} className={`rounded-lg border px-3 py-2 ${r.correct ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'}`}>
+              <p className="text-[13px] font-semibold text-slate-800 mb-1">{r.q}</p>
+              {/* The reason is the point. A score with no explanation teaches nothing. */}
+              <p className="text-[12px] text-slate-600 leading-relaxed">{r.why}</p>
+            </div>
+          ))}
+        </div>
+      </BentoCard>
+    );
+  }
+
+  if (!quiz.open) {
+    return (
+      <BentoCard hover={false} className="border-slate-200">
+        <div className="flex items-center gap-2 mb-1">
+          <GraduationCap size={18} className="text-slate-300" />
+          <h3 className="text-base font-bold text-slate-500">{quiz.title}</h3>
+        </div>
+        <p className="text-sm text-slate-500">Opens on the last day, once the week's work is delivered.</p>
+      </BentoCard>
+    );
+  }
+
+  const answered = Object.keys(answers).length;
+
+  return (
+    <BentoCard hover={false}>
+      <div className="flex items-center gap-2 mb-1">
+        <GraduationCap size={18} className="text-indigo-500" />
+        <h3 className="text-base font-bold">{quiz.title}</h3>
+      </div>
+      <p className="text-sm text-slate-500 mb-4">{quiz.intro}</p>
+      <div className="space-y-4">
+        {quiz.questions.map((q, i) => (
+          <div key={q.id}>
+            <p className="text-sm font-semibold text-slate-900 mb-2">
+              <span className="text-slate-400 mr-1.5 tabular-nums">{i + 1}.</span>{q.q}
+            </p>
+            <div className="space-y-1.5 pl-5">
+              {q.options.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.key }))}
+                  aria-label={o.label}
+                  aria-pressed={answers[q.id] === o.key}
+                  className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[13px] transition-colors ${
+                    answers[q.id] === o.key ? 'border-indigo-500 bg-indigo-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}
+                >{o.label}</button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-3 mt-5">
+        <button
+          onClick={async () => {
+            setBusy(true); setError('');
+            try { setResult(await onSubmit(answers)); }
+            catch (e) { setError(e.message); } finally { setBusy(false); }
+          }}
+          disabled={busy || answered < quiz.questions.length}
+          aria-label="Submit the quiz"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 disabled:opacity-40"
+        >
+          <Send size={13} />{busy ? 'Marking…' : 'Submit'}
+        </button>
+        <span className="text-xs text-slate-500 tabular-nums">{answered} of {quiz.questions.length} answered</span>
+      </div>
+      {error && <p className="text-xs text-rose-700 font-semibold mt-2">{error}</p>}
+    </BentoCard>
+  );
+}
+
+// ---- The tab ------------------------------------------------------------------------------
+
+export default function Today({ state, onStateChange, onTab }) {
+  const { day, activities, situations, quiz, projectCompletion } = state;
+  const [filter, setFilter] = useState('today');
+
+  const shownDay = day ? day.unlocked : null;
+  const acts = useMemo(
+    () => (activities || []).filter((a) => (filter === 'today' ? a.day === shownDay : true)),
+    [activities, filter, shownDay],
+  );
+  // The project's situations and the company's mail share a table and a set of controls,
+  // but they are not the same thing to the learner: two of these finish the day, and the
+  // rest are just the job. Splitting them is the only honest way to show that.
+  const all = useMemo(
+    () => (situations || []).filter((x) => (filter === 'today' ? x.day === shownDay : true)),
+    [situations, filter, shownDay],
+  );
+  const sits = useMemo(() => all.filter((x) => !x.deskMail), [all]);
+  const desk = useMemo(() => all.filter((x) => x.deskMail), [all]);
+  const deskOpen = desk.filter((x) => !x.handledAs).length;
+
+  async function doActivity(key, answer) {
+    const d = await api.completeActivity(key, answer);
+    if (d.state) onStateChange(d.state);
+  }
+  async function doSituation(key, action, text) {
+    const d = await api.handleSituation(key, action, text);
+    if (d.state) onStateChange(d.state);
+  }
+  async function doQuiz(answers) {
+    const d = await api.submitQuiz(answers);
+    if (d.state) onStateChange(d.state);
+    return d;
+  }
+
+  const finished = projectCompletion && projectCompletion.complete;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-baseline gap-2.5 flex-wrap">
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Today</h1>
+        <span className="text-sm font-semibold text-slate-400">
+          {day ? `Day ${day.unlocked} of ${day.totalDays}` : 'Nothing running'}
+        </span>
+      </div>
+
+      {finished && (
+        <BentoCard hover={false} className="border-emerald-300 bg-emerald-50/50">
+          <div className="flex items-start gap-3">
+            <PartyPopper size={22} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-slate-900 mb-1">Project complete</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {projectCompletion.tasks.total} tasks, {projectCompletion.activities.total} activities,{' '}
+                {projectCompletion.situations.total} situations{projectCompletion.quiz.taken ? ' and the quiz' : ''} — all done
+                {projectCompletion.avgScore ? `, averaging ${projectCompletion.avgScore} on the graded work` : ''}.
+                Asha's sign-off is in your inbox.
+              </p>
+              <button
+                onClick={() => onTab && onTab('projects')}
+                className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
+              >
+                Pick up the next project
+              </button>
+            </div>
+          </div>
+        </BentoCard>
+      )}
+
+      {day && (
+        <BentoCard hover={false}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Counter label="Tasks" done={day.tasks.done} total={day.tasks.total} tone="bg-indigo-500" />
+            <Counter label="Activities" done={day.activities.done} total={day.activities.total} tone="bg-sky-500" />
+            <Counter label="Situations" done={day.situations.done} total={day.situations.total} tone="bg-amber-500" />
+          </div>
+          <p className="text-xs text-slate-500 mt-4 leading-relaxed">
+            {day.complete
+              ? 'Everything for today is done. The next day is open whenever you are.'
+              : 'The day finishes when all three are clear — not when the tasks are. Tomorrow opens the moment it does.'}
+          </p>
+        </BentoCard>
+      )}
+
+      <div className="flex gap-1.5">
+        {[['today', 'Today'], ['all', 'The whole week']].map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setFilter(k)}
+            aria-pressed={filter === k}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold border ${
+              filter === k ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+          >{label}</button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        <div className="space-y-3 min-w-0">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Activities</h2>
+          {acts.length === 0 && <p className="text-sm text-slate-400">Nothing yet.</p>}
+          {acts.map((a) => <Activity key={a.key} item={a} onDone={doActivity} />)}
+        </div>
+        <div className="space-y-3 min-w-0">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
+            What landed on you
+          </h2>
+          {sits.length === 0 && <p className="text-sm text-slate-400">Quiet so far.</p>}
+          {sits.map((x) => <Situation key={x.key} item={x} onHandle={doSituation} />)}
+        </div>
+      </div>
+
+      {/* Mail addressed to you by name. It does not finish the day and it is not supposed
+          to — the point is that a real inbox asks for things on top of the work, and the
+          people asking are the ones who decide what your week looked like. */}
+      {desk.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-baseline gap-2.5 flex-wrap">
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
+              Addressed to you
+            </h2>
+            <span className="text-xs font-semibold text-slate-400">
+              {deskOpen > 0
+                ? `${deskOpen} waiting on a reply — they don't finish the day, but people are waiting`
+                : 'All answered'}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+            {desk.map((x) => <Situation key={x.key} item={x} onHandle={doSituation} />)}
+          </div>
+        </div>
+      )}
+
+      {quiz && <Quiz quiz={quiz} onSubmit={doQuiz} />}
+    </div>
+  );
+}
