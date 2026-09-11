@@ -99,14 +99,61 @@ function gradeWriteup(spec, text) {
   };
 }
 
-// What the learner is shown. Correct answers and rubric markers never leave the server.
-function presentChoice(spec) {
+// ---- Option order ---------------------------------------------------------------------
+//
+// Authored option lists put the correct answers first, because that is how a person writes
+// them. Shipped that way, every judgement task in the product could be beaten by ticking
+// the top boxes without reading a word — which is the exact habit these tasks exist to
+// break. Found by the learner, not by a test, which is its own lesson.
+//
+// The shuffle is SEEDED rather than random. Random would reorder the options every time the
+// page reloaded, which lets someone refresh their way to a second look and quietly makes
+// "the third one" mean nothing between the learner and their manager. Seeded on the
+// learner's own task row, the order is stable for them and different from anyone else's.
+
+function seedFrom(str) {
+  // FNV-1a. Small, no dependencies, and spreads similar keys (da-100, da-101) far apart —
+  // which matters here, because neighbouring tasks are exactly what we do not want
+  // shuffled the same way.
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+function rngFrom(seed) {
+  let a = seed >>> 0;
+  return function rng() {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleSeeded(items, seed) {
+  const out = items.slice();
+  const rng = rngFrom(seed);
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// What the learner is shown. Correct answers and rubric markers never leave the server —
+// and now neither does the authored ORDER, which was leaking the answer just as surely.
+function presentChoice(spec, seed) {
+  const options = spec.options.map((o) => ({ key: o.key, label: o.label }));
   return {
     prompt: spec.prompt,
     // Read-only context — a colleague's query, a stakeholder's message, a result table.
     exhibit: spec.exhibit || null,
     multi: spec.multi !== false,
-    options: spec.options.map((o) => ({ key: o.key, label: o.label })),
+    options: seed ? shuffleSeeded(options, seedFrom(String(seed))) : options,
   };
 }
 
@@ -123,4 +170,4 @@ function presentWriteup(spec) {
   };
 }
 
-module.exports = { gradeChoice, gradeWriteup, presentChoice, presentWriteup };
+module.exports = { gradeChoice, gradeWriteup, presentChoice, presentWriteup, shuffleSeeded, seedFrom };
