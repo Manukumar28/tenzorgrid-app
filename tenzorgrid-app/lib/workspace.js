@@ -2762,9 +2762,25 @@ function timeTravel(userId, spec) {
       .run(shiftIso(r.started_at, ms), shiftIso(r.due_at, ms), shiftIso(r.completed_at, ms), r.id);
   }
 
+  // opens_at is REBUILT from the moved start rather than slid along with everything else.
+  //
+  // Sliding it looks right and is wrong across a weekend. A project starting on a Friday has
+  // its day-2 work opening on the Monday — three calendar days later, but only one WORKING
+  // day. Move the clock on by one working day and the shift is one calendar day, so the day
+  // counter correctly reads 2 while opens_at lands on the Sunday and the work stays shut.
+  // The learner sees "day 2 of 5" above an empty board.
+  //
+  // A bigger shift cannot fix it either: enough to drag Monday into the past would carry the
+  // counter to day 4. The two quantities are measured in different units, so the only sound
+  // answer is to derive one from the other — which is what created them in the first place.
+  const movedRun = db.prepare('SELECT started_at FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL ORDER BY started_at DESC LIMIT 1')
+    .get(enrollment.id);
   for (const t of db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id)) {
+    const opensAt = (t.day_index && movedRun)
+      ? addWorkingDays(movedRun.started_at, t.day_index).toISOString()
+      : shiftIso(t.opens_at, ms);
     db.prepare('UPDATE sim_tasks SET assigned_at = ?, opens_at = ?, due_at = ?, submitted_at = ?, graded_at = ? WHERE id = ?')
-      .run(shiftIso(t.assigned_at, ms), shiftIso(t.opens_at, ms), shiftIso(t.due_at, ms),
+      .run(shiftIso(t.assigned_at, ms), opensAt, shiftIso(t.due_at, ms),
            shiftIso(t.submitted_at, ms), shiftIso(t.graded_at, ms), t.id);
   }
 
@@ -3196,7 +3212,9 @@ function getWorkbench(userId, taskId) {
     chart: tool === 'chart' && def.chart
       ? { ...charttasks.present(def.chart), rows: runPracticeQuery(def.chart.sourceSql, datasetKey, 200).rows }
       : null,
-    choice: tool === 'choice' && def.choice ? tasktypes.presentChoice(def.choice) : null,
+    // Seeded on this learner's own task row, so the order is stable across reloads for
+    // them and different from anyone else's.
+    choice: tool === 'choice' && def.choice ? tasktypes.presentChoice(def.choice, task.id) : null,
     writeup: tool === 'writeup' && def.writeup ? tasktypes.presentWriteup(def.writeup) : null,
     tools: tool === 'python'
       ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
