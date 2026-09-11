@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X } from 'lucide-react';
+import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun } from 'lucide-react';
 
 const NAV = [
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
+  { key: 'today', label: 'Today', icon: Sun },
   { key: 'projects', label: 'Projects', icon: FolderOpen },
   { key: 'tasks', label: 'Tasks', icon: ClipboardCheck },
   { key: 'calendar', label: 'Calendar', icon: Calendar },

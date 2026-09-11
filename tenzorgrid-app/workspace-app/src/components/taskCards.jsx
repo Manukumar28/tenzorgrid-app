@@ -68,6 +68,13 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
             {soon
               ? <Pill className="bg-white border border-slate-200 text-slate-500">Opens {task.opensLabel}</Pill>
               : <Pill className={PRIORITY_PILL[task.priority]}>{task.priorityLabel}</Pill>}
+            {task.sentBack && (
+              <Pill className={task.sentBack === 'rework'
+                ? 'bg-violet-100 text-violet-700'
+                : 'bg-amber-100 text-amber-800'}>
+                {task.sentBack === 'rework' ? 'Do it differently' : 'Sent back'}
+              </Pill>
+            )}
             {task.overdue && !soon && (
               <Pill className="bg-red-50 text-red-600"><AlertTriangle size={11} /> Overdue</Pill>
             )}

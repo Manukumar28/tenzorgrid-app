@@ -448,6 +448,43 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // ---- The rest of the working day ----
+  if (pathname === '/api/workspace/activity' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.completeActivity(user.id, body.key, body.answer));
+    } catch (e) { return sendJson(res, 400, { error: e.message }); }
+  }
+
+  if (pathname === '/api/workspace/situation' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.handleSituation(user.id, body.key, body.action, body.text));
+    } catch (e) { return sendJson(res, 400, { error: e.message }); }
+  }
+
+  if (pathname === '/api/workspace/quiz' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.submitQuiz(user.id, body.answers));
+    } catch (e) { return sendJson(res, 400, { error: e.message }); }
+  }
+
+  if (pathname === '/api/workspace/redo' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.redoSubmission(user.id, body.taskId));
+    } catch (e) { return sendJson(res, 400, { error: e.message }); }
+  }
+
   if (pathname === '/api/workspace/time-travel' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

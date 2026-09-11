@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare } from 'lucide-react';
+import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
@@ -54,6 +54,7 @@ function SectionTitle({ children, count }) {
 // left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
 // don't pay to download a code editor.
 function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
+  const managerFirst = (manager ? manager.name : 'Asha Rao').split(' ')[0];
   return (
     <BentoCard hover={false}>
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
@@ -89,6 +90,23 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
               <MessageSquare size={14} /> Reply in chat
             </span>
           </button>
+          {/* Take it back before you have to defend it. Halfway through composing an answer
+              is exactly when people realise their query was wrong, and defending work you
+              already know is wrong is not a skill worth practising. */}
+          {task.reviewRoundsLeft === 2 && (
+            <button
+              onClick={async () => {
+                try {
+                  const d = await api.redoSubmission(task.id);
+                  if (d.state) onStateChange(d.state);
+                } catch (e) { /* eslint-disable-next-line no-alert */ alert(e.message); }
+              }}
+              aria-label="Take the submission back and redo it"
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50"
+            >
+              <RotateCcw size={12} /> Actually, let me redo this
+            </button>
+          )}
         </>
       ) : task.status === 'graded' ? (
         <>
@@ -99,9 +117,31 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
           </div>
         </>
       ) : (
-        <Suspense fallback={<p className="text-sm text-gray-400 font-medium py-6">Loading the editor…</p>}>
-          <Workbench taskId={task.id} onGraded={onStateChange} />
-        </Suspense>
+        <>
+          {/* Sent back. The banner sits above the editor rather than replacing it — a
+              reopened task is one you have to do again, so the reason and the tools to
+              act on it need to be on the same screen. */}
+          {task.sentBack && (
+            <div className={`mb-4 rounded-lg border px-4 py-3.5 ${task.sentBack === 'rework' ? 'bg-violet-50 border-violet-200' : 'bg-amber-50 border-amber-200'}`}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <RotateCcw size={14} className={task.sentBack === 'rework' ? 'text-violet-700' : 'text-amber-700'} />
+                <span className={`text-sm font-bold ${task.sentBack === 'rework' ? 'text-violet-800' : 'text-amber-800'}`}>
+                  {task.sentBack === 'rework'
+                    ? `${managerFirst} wants this done a different way`
+                    : `${managerFirst} sent this back`}
+                </span>
+              </div>
+              {task.sentBackNote && (
+                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${task.sentBack === 'rework' ? 'text-violet-900' : 'text-amber-900'}`}>
+                  {task.sentBackNote}
+                </p>
+              )}
+            </div>
+          )}
+          <Suspense fallback={<p className="text-sm text-gray-400 font-medium py-6">Loading the editor…</p>}>
+            <Workbench taskId={task.id} onGraded={onStateChange} />
+          </Suspense>
+        </>
       )}
     </BentoCard>
   );

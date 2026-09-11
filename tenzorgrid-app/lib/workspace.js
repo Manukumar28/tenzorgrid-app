@@ -19,6 +19,8 @@ const { getProjectDoc, TOOLS } = require('./projectdocs');
 const skilltest = require('./skilltest');
 const charttasks = require('./charttasks');
 const tasktypes = require('./tasktypes');
+const dayitems = require('./dayitems');
+const ambientmail = require('./ambientmail');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -135,6 +137,14 @@ const PROJECT_CATALOG = {
         // Day 2 — the stakeholder changes the question, and the honest answer is not the
         // obvious one.
         'da-110', 'da-006', 'da-111', 'da-112', 'da-113', 'da-114',
+        // Day 3 — the wobble. Vikram asks for a regional split; the data supports it and
+        // the answer is still no, which is much harder to say than "we do not have that".
+        'da-120', 'da-121', 'da-122', 'da-123', 'da-124', 'da-125',
+        // Day 4 — consolidate, and check what other people are about to say in your name.
+        'da-130', 'da-131', 'da-132', 'da-133', 'da-134', 'da-135',
+        // Day 5 — deliver, with someone waiting. Hardest, and not because the SQL is
+        // harder: because you have to stand behind it while a stakeholder pushes.
+        'da-140', 'da-141', 'da-142', 'da-143', 'da-144', 'da-145',
       ],
       skillFocus: ['sql', 'dataViz', 'businessLogic', 'communication'],
       impactValue: 12400,
@@ -432,7 +442,12 @@ const HOURS_PER_DAY_TARGET = 2;
 // one parked task resubmitted and the learner was locked out until tomorrow. Eight gives
 // two retries a day, which is enough to recover from a bad morning and still far below
 // anything that could run up a bill.
-const DAILY_AI_LIMITS = { submissions: 8, messages: 20 };
+// Eight was right when a day was one or two graded pieces of work. A day is now six tasks,
+// and Asha can send any of them back to be done again — so a learner having a bad Wednesday
+// could hit the ceiling doing exactly what the product asked of them, which is the worst
+// possible moment to be told to come back tomorrow. Twelve leaves room for six tasks and
+// half a day of rework, and is still far below anything that could run up a bill.
+const DAILY_AI_LIMITS = { submissions: 12, messages: 20 };
 
 // A grade at or above this is treated as genuinely good work — the threshold for
 // Asha's feedback being surfaced as a shoutout rather than just routine feedback.
@@ -789,6 +804,296 @@ const TASKS = {
     dueInDays: 3,
     day: 2,
     difficulty: 'medium',
+  },
+
+
+  // ---- Day 3: the wobble ---------------------------------------------------------------
+  // Vikram has asked for a regional split. The data supports it and the answer is still no,
+  // which is a harder thing to say than "we do not have that column".
+
+  'da-120': {
+    title: 'Can we even do the regional split?',
+    hint: "Do not answer from memory. Run it, look at how many people land in each cell, then decide.",
+    brief: "Vikram wants the pay analysis split by office location. Before you answer him, find out what that would actually look like. Write ONE SQL SELECT returning, for each department and location, the number of CURRENT employees and their average salary. Smallest groups first.",
+    referenceSql: "SELECT d.name AS department, e.location, COUNT(*) AS headcount, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, e.location ORDER BY headcount ASC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'da-121': {
+    title: 'What that result means for Vikram',
+    hint: "Look at the headcounts you just produced, then reread Monday's note about groups under five.",
+    brief: "You have the department-by-location grid in front of you. Neha's data-handling note on Monday said a group under five people is identifying. Which of these does your result support?",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'possible', correct: true, label: 'The split is technically possible — the location data is there', why: 'It is. That is what makes this hard: the easy answer of "we cannot" is not available to you.' },
+        { key: 'tiny', correct: true, label: 'Almost every department-by-location group has fewer than five people in it', why: 'Twenty-five of the twenty-six. Several have one person in them.' },
+        { key: 'identify', correct: true, label: 'Publishing it at that grain would effectively publish individual salaries', why: 'An average over two people, next to a department and a city, is two salaries. That is the thing Monday\'s note told you not to do.' },
+        { key: 'nodata', correct: false, label: 'We do not hold location data, so the request cannot be met', why: 'We do hold it. Telling a stakeholder something does not exist when it does is a lie with a very short shelf life — it lasts until someone opens the table.' },
+        { key: 'grey', correct: false, label: 'It would be fine if the small groups were greyed out', why: 'Shading a number does not un-publish it. The value is still on the page.' },
+        { key: 'refuse', correct: false, label: 'Location is never a legitimate cut of pay data', why: 'It often is — at a grain where the groups are big enough. The problem here is the size, not the dimension.' },
+      ],
+      skills: { businessLogic: 100, communication: 60 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'da-122': {
+    title: 'A cut that is actually safe',
+    hint: "One dimension instead of two. Check the counts come out big enough to stand behind.",
+    brief: "Give Vikram something usable instead. Write ONE SQL SELECT returning, for each LOCATION on its own, the current headcount and average salary, largest headcount first. Ignore department entirely — that is the point.",
+    referenceSql: "SELECT location, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees WHERE exit_year IS NULL GROUP BY location ORDER BY headcount DESC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'normal', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'da-123': {
+    title: "Check Diya's reconciliation",
+    hint: "Read the WHERE clause, then read what she says the query is for. They are not the same thing.",
+    brief: "Diya from Finance sent the query behind her Engineering figure, the one that disagreed with yours. She says it shows 'what we currently pay Engineering'. Tick every problem with it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'sql', from: 'Diya Chandra', subject: 'my engineering number',
+        body: "SELECT AVG(salary) AS avg_salary\nFROM employees e\nJOIN departments d ON d.id = e.department_id\nWHERE d.name = 'Engineering'",
+      },
+      prompt: 'What is wrong with this, given what she says it shows?',
+      options: [
+        { key: 'leavers', correct: true, label: 'It includes people who have left, so it is not what we CURRENTLY pay', why: 'No exit_year filter. Two Engineering leavers are in that average. Her query is defensible for cost; her description of it is not.' },
+        { key: 'nocount', correct: true, label: 'There is no headcount alongside it, so nobody can judge the average', why: 'Rahul\'s point on Tuesday. An average without its n is a number you cannot argue with or against.' },
+        { key: 'join', correct: false, label: 'The join is wrong', why: 'It is correct — d.id to e.department_id is exactly right.' },
+        { key: 'groupby', correct: false, label: 'It is missing a GROUP BY', why: 'It does not need one. She filters to a single department and aggregates the whole thing, which is valid.' },
+        { key: 'avg', correct: false, label: 'AVG is the wrong function', why: 'For "what do we pay on average", AVG is the right tool. Whether an average is the right STATISTIC is a fair question, but it is not an error in the query.' },
+      ],
+      skills: { sql: 100, businessLogic: 80 },
+    },
+    estHours: 0.3, priority: 'normal', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'da-124': {
+    title: 'Both numbers, side by side',
+    hint: "Two aggregates over the same table, split by whether exit_year is NULL. A CASE inside the AVG does it in one pass.",
+    brief: "Settle it with data rather than argument. Write ONE SQL SELECT returning, for each department, the average salary of CURRENT staff and the average salary of EVERYONE ever employed there, plus both headcounts. Order by department name.",
+    referenceSql: "SELECT d.name AS department, AVG(CASE WHEN e.exit_year IS NULL THEN e.salary END) AS current_avg, SUM(CASE WHEN e.exit_year IS NULL THEN 1 ELSE 0 END) AS current_headcount, AVG(e.salary) AS all_time_avg, COUNT(*) AS all_time_headcount FROM employees e JOIN departments d ON d.id = e.department_id GROUP BY d.name ORDER BY d.name",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'da-125': {
+    title: 'Write back to Vikram about the split',
+    hint: "Lead with whether he is getting it. The reason comes second, and it is about people, not about columns.",
+    brief: "Reply to Vikram's request for a regional breakdown. He is a stakeholder, not an analyst — he does not care about GROUP BY, he cares whether he can put a number on a slide.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Re: One more thing on the comp review', maxWords: 140,
+      prompt: 'Tell him where the regional split stands.',
+      rubric: [
+        { key: 'answer', label: 'Whether he is getting it, in the first line', markers: ['not|cannot|can\'t|unable|afraid|won\'t be'], why: 'He needs to know inside one sentence whether to plan around it.' },
+        { key: 'why', label: 'The real reason — group sizes, not missing data', markers: ['small|few|five|handful|one or two|individual|identif'], why: 'Saying "we do not have it" would be untrue and he would find out. The honest reason is that the groups are too small to publish without exposing individuals.' },
+        { key: 'instead', label: 'What he CAN have', markers: ['location|city|overall|company|department|instead|can give|happy to'], why: 'A no with nothing attached is not an answer a stakeholder can use. Location on its own is safe.' },
+        { key: 'next', label: 'A handle for what happens now', markers: ['let me know|if you|happy to|shout|before|friday|come back|would that'], why: 'End with something he can respond to.' },
+      ],
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  // ---- Day 4: consolidate, and check other people's work -------------------------------
+
+  'da-130': {
+    title: 'Who is furthest from their ceiling',
+    hint: "Distance to the top of the band, not position within it. Different question, different ORDER BY.",
+    brief: "Vikram asked a follow-up: which departments have the most headroom left in their band. Write ONE SQL SELECT returning, per department, current average salary, the band ceiling, and the gap between them in rupees. Biggest gap first.",
+    referenceSql: "SELECT d.name AS department, AVG(e.salary) AS avg_salary, d.band_high, d.band_high - AVG(e.salary) AS headroom FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, d.band_high ORDER BY headroom DESC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'normal', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'da-131': {
+    title: 'Seniority, or pay?',
+    hint: "You need role and department together. Watch which departments end up with one person per role.",
+    brief: "Asha wants to know whether the Marketing gap is a pay story or a seniority story. Write ONE SQL SELECT returning, for each department and role, the current headcount and average salary. Department then role.",
+    referenceSql: "SELECT d.name AS department, e.role, COUNT(*) AS headcount, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, e.role ORDER BY d.name, e.role",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'da-132': {
+    title: 'What the role breakdown does and does not tell you',
+    hint: "You measured pay by role. You did not measure whether the role MIX differs, which is the actual question.",
+    brief: "Look at what you just produced. Asha asked whether Marketing's low band position is about pay levels or about who works there. Which claims does your result support?",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick every claim your result actually supports.',
+      options: [
+        { key: 'mix', correct: true, label: 'You can now see how many people sit in each role in each department', why: 'That is exactly what the headcount column gives you, and it is the raw material for the seniority question.' },
+        { key: 'within', correct: true, label: 'You can compare pay for the same role across departments', why: 'A Marketing Manager and a Support Manager are now side by side, which is a fair comparison in a way that department averages are not.' },
+        { key: 'smallcells', correct: true, label: 'Several department-and-role groups are too small to draw conclusions from', why: 'Same trap as Wednesday, one dimension down. Some roles have a single person in them.' },
+        { key: 'proven', correct: false, label: 'It proves the gap is caused by seniority mix', why: 'It is consistent with that. Proving it needs you to hold role constant and compare, which is the next step, not this one.' },
+        { key: 'underpaid', correct: false, label: 'It shows Marketing staff are paid below their peers elsewhere', why: 'Only if you actually compared like roles and they came out lower. The table alone does not say this.' },
+        { key: 'promote', correct: false, label: 'It shows Marketing needs more senior roles', why: 'That is a recommendation about what the org should look like. Nothing here measures what the work requires.' },
+      ],
+      skills: { businessLogic: 100 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'da-133': {
+    title: 'A chart the board will read',
+    hint: "Ranked comparison across categories, and the axis has to start at zero or the gaps lie.",
+    brief: "Build the visual for the leadership pack: band position by department, so the comparison is obvious at a glance. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      sourceSql: "SELECT d.name AS department, (AVG(e.salary) - d.band_low) * 100.0 / (d.band_high - d.band_low) AS band_position FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, d.band_low, d.band_high ORDER BY band_position ASC",
+      prompt: 'Band position by department, for a board pack.',
+      answer: { type: 'bar', x: 'department', y: 'band_position', sort: 'asc', baselineZero: true },
+      why: 'A ranked comparison across a handful of named categories is a bar chart. Sorted ascending it puts the department the board is asking about first, and a zero baseline is non-negotiable — truncating the axis on a percentage exaggerates every gap on the page.',
+    },
+    estHours: 0.3, priority: 'normal', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'da-134': {
+    title: "Review Meera's summary line",
+    hint: "The numbers are right. Read what the words claim on top of them.",
+    brief: "Meera has drafted the opening line of the leadership summary. Tick every problem with it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Draft opening — comp review',
+        body: "Marketing is our most underpaid function, sitting at just 37% of its salary band against a company average of 56%. We recommend an immediate correction in the April cycle to prevent attrition.",
+      },
+      prompt: 'What needs to change before this goes out?',
+      options: [
+        { key: 'underpaid', correct: true, label: '"Underpaid" claims a comparison we have not made', why: 'Position in band measures against bands WE set. Underpaid means against the market, and there is no market data anywhere in this analysis.' },
+        { key: 'attrition', correct: true, label: '"Prevent attrition" asserts a cause and a consequence we have not measured', why: 'Nothing in this week\'s work measures why anyone leaves, or whether they are going to.' },
+        { key: 'nocount', correct: true, label: 'It gives no sense that Marketing is nine people', why: 'Nine. A reader who assumes it is ninety will weight the finding very differently, and someone in the room will know.' },
+        { key: 'figure', correct: false, label: 'The 37% figure is wrong', why: 'It is right. The number is not the problem — everything built on top of it is.' },
+        { key: 'recommend', correct: false, label: 'Analysts should never make recommendations', why: 'They should. A recommendation the evidence supports is the most useful thing you produce. This one is not supported, which is different.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'da-135': {
+    title: 'Rewrite the opening line',
+    hint: "Say what you measured, name the size, and let the recommendation follow from the evidence rather than lead it.",
+    brief: "Rewrite Meera's opening so it says what the analysis actually supports. It still has to be something a board will read and act on — a paragraph of hedging is not an improvement.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Meera Pillai', subject: 'Re: Draft opening — comp review', maxWords: 120,
+      prompt: 'Your version of the opening.',
+      rubric: [
+        { key: 'measured', label: 'What was actually measured — position in our own bands', markers: ['band|position|floor|ceiling|range we set|our (own )?band'], why: 'Naming the measure stops a reader inventing a different one.' },
+        { key: 'figure', label: 'The figure, and which department', markers: ['37|marketing'], why: 'The finding still has to be in there. Precision is not hedging.' },
+        { key: 'size', label: 'How many people it rests on', markers: ['nine|9|small|headcount|people'], why: 'Nine people. A board weighting a finding needs to know that.' },
+        { key: 'honest', label: 'No claim about market rate or attrition', markers: ['^(?!.*(underpaid|below market|attrition|will leave|resign)).*$'], why: 'Neither is supported. Leaving them out is the whole point of the rewrite.' },
+      ],
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  // ---- Day 5: deliver, with someone waiting --------------------------------------------
+  // Friday is the hardest day, deliberately. The work is not harder SQL; it is being asked
+  // to stand behind what you produced while someone pushes back on it.
+
+  'da-140': {
+    title: 'The number Finance will check',
+    hint: "They will reconcile against total spend, so give them the total as well as the average.",
+    brief: "Finance will reconcile your pack against their own figures. Write ONE SQL SELECT returning, per department, current headcount, average salary and TOTAL current salary cost, ordered by total cost descending.",
+    referenceSql: "SELECT d.name AS department, COUNT(*) AS headcount, AVG(e.salary) AS avg_salary, SUM(e.salary) AS total_cost FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY total_cost DESC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'da-141': {
+    title: 'The one you will be asked about',
+    hint: "Everything in one query: the position, the size, and the gap to the department above. This is the row the board will stop on.",
+    brief: "Build the single table that answers the whole brief. Write ONE SQL SELECT returning, per department: current headcount, average salary, band floor and ceiling, and position in band as a percentage. Lowest position first. This is what goes in the pack.",
+    referenceSql: "SELECT d.name AS department, COUNT(*) AS headcount, AVG(e.salary) AS avg_salary, d.band_low, d.band_high, (AVG(e.salary) - d.band_low) * 100.0 / (d.band_high - d.band_low) AS band_position FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name, d.band_low, d.band_high ORDER BY band_position ASC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    rework: true,
+  },
+
+  'da-142': {
+    title: 'Median or mean?',
+    hint: "Think about which departments have one very senior person in a small group.",
+    brief: "Asha asks, on the way into the room: should the pack use the mean or the median? Tick everything that is true.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Which of these are true of choosing between mean and median here?',
+      options: [
+        { key: 'outlier', correct: true, label: 'In a small department, one senior salary pulls the mean noticeably', why: 'Finance is seven people. One Finance Manager moves that average in a way it would not move a department of sixty.' },
+        { key: 'band', correct: true, label: 'Band position is built on whichever you choose, so the choice changes the headline', why: 'It is not a presentational detail. Swap the statistic and the ranking can change.' },
+        { key: 'say', correct: true, label: 'Whichever you pick, the pack has to say which it is', why: 'A reader comparing to their own figure needs to know what they are comparing to.' },
+        { key: 'always', correct: false, label: 'Median is always the right choice for salary', why: 'Usually better for "what does a typical person earn", but if the question is cost, the mean times headcount is what reconciles to the budget.' },
+        { key: 'both', correct: false, label: 'Showing both is the safe answer', why: 'Two numbers for the same thing with no guidance pushes your decision onto the reader. Sometimes right; not a default.' },
+        { key: 'nodiff', correct: false, label: 'With this few people it makes no difference', why: 'Exactly backwards. Small groups are where it makes the MOST difference.' },
+      ],
+      skills: { businessLogic: 100, dataViz: 40 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'da-143': {
+    title: 'Median by department, in Python',
+    hint: "SQLite has no median. Group the salaries yourself and take the middle — and remember the even-length case.",
+    brief: "Produce the median version so Asha can see both before she decides. In the notebook, compute for each department: the MEDIAN salary of current staff and the headcount. Sort by median descending. Assign a list of dicts with keys department, median_salary, headcount to `result`.",
+    tool: 'python', datasetKey: 'hr_core',
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const dn = new Map(tables.departments.map((d) => [d.id, d.name]));
+      const by = new Map();
+      for (const e of tables.employees) {
+        if (e.exit_year != null) continue;
+        const n = dn.get(e.department_id);
+        if (!by.has(n)) by.set(n, []);
+        by.get(n).push(e.salary);
+      }
+      const median = (xs) => { const a = [...xs].sort((p, q) => p - q), m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+      return [...by.entries()]
+        .map(([department, v]) => ({ department, median_salary: median(v), headcount: v.length }))
+        .sort((a, b) => b.median_salary - a.median_salary);
+    },
+  },
+
+  'da-144': {
+    title: 'Vikram pushes back',
+    hint: "He is not asking you to change the number. He is asking you to say something you have not measured.",
+    brief: "Ten minutes before the meeting, Vikram asks you directly. Tick every response that is defensible.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Quick one before we go in',
+        body: "I just need a yes or no from you and then I will stop asking. Are we underpaying Marketing? The board will ask me directly and I would rather not say 'it depends'.",
+      },
+      prompt: 'Which responses can you actually stand behind?',
+      options: [
+        { key: 'lowest', correct: true, label: '"They sit lowest in their band of any department — 37%, on nine people"', why: 'Measured, precise, and it carries the size. This is the true thing you can say fastest.' },
+        { key: 'cannot', correct: true, label: '"I cannot answer underpaid without market data — I can tell you where they sit against our own bands"', why: 'Naming the boundary and immediately offering what you DO have is the difference between being cautious and being useless.' },
+        { key: 'offer', correct: true, label: '"If the board needs a market comparison, we would need to buy benchmark data — I can scope that"', why: 'It turns a no into a next step, which is what a stakeholder can use in the room.' },
+        { key: 'yes', correct: false, label: '"Yes."', why: 'You have not measured it. Saying yes because it is the answer he wants is how an analyst stops being trusted — and the first time it is wrong, publicly, is the last time.' },
+        { key: 'no', correct: false, label: '"No."', why: 'Equally unsupported. Confidently wrong in the other direction is not more honest.' },
+        { key: 'depends', correct: false, label: '"It depends."', why: 'True and useless. He told you he does not want it and he is right — it gives him nothing to say.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'da-145': {
+    title: 'The finding, to leadership',
+    hint: "Answer in the first line. Size and scope right after. The recommendation last, and only what the evidence carries.",
+    brief: "Write the summary that goes with the pack. This is the piece of work the whole week has been building to, and the only part most of the board will read.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Vikram Nair and the leadership team', subject: 'Q1 Compensation Review — findings', maxWords: 200,
+      prompt: 'The summary. Everything you can stand behind, nothing you cannot.',
+      rubric: [
+        { key: 'answer', label: 'The finding, in the first line', markers: ['marketing|37'], why: 'Most of the board reads one line. Make it the one that matters.' },
+        { key: 'measure', label: 'What "lowest" is measured against', markers: ['band|floor|ceiling|range we set|our own'], why: 'Against our bands, not the market. Say so before someone assumes the other.' },
+        { key: 'size', label: 'The headcount behind it', markers: ['nine|9|small|headcount|people'], why: 'Nine people. A finding that hides its own sample size gets taken apart in the room.' },
+        { key: 'scope', label: 'Who is included — current staff', markers: ['current|still (here|with us|employed)|excl|leaver|left'], why: 'Finance has a different number because they include leavers. Naming your population is what stops that becoming an argument.' },
+        { key: 'limit', label: 'One thing this does NOT tell them', markers: ['market|benchmark|cannot|can\'t|does not|doesn\'t|no data|outside'], why: 'Volunteering the limit before you are asked is what makes the rest of it credible.' },
+        { key: 'next', label: 'What you want them to do', markers: ['recommend|suggest|propose|next|would|scope|benchmark|review'], why: 'End with the decision you want, or the analysis just sits there.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
   'da-114': {
@@ -1726,7 +2031,7 @@ function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartM
 // Everything the Tasks tab shows. A task in this product is completed by submitting work
 // and being graded — there is no "mark done" flag — so `stage` reports where the task
 // genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
-function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level) {
+function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex) {
   const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const projectByTaskKey = {};
   for (const p of catalog) {
@@ -1741,7 +2046,13 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
     // A task belonging to a later day in the week is real, visible and dated — but not
     // yet workable. Showing it greyed with its day is what makes the week legible;
     // hiding it entirely would make the project look smaller than it is.
-    const notYetOpen = Boolean(t.opens_at) && Date.parse(t.opens_at) > nowMs;
+    // Two ways in, and either is enough. The clock opens a day when it arrives; finishing
+    // the day before opens the next one immediately. Somebody who clears Monday by eleven
+    // starts Tuesday at eleven rather than waiting for a product they are paying for — and
+    // the deadline, which is what makes this a job, is still governed by the clock.
+    const dayArrived = !t.opens_at || Date.parse(t.opens_at) <= nowMs;
+    const dayEarned = unlockedDayIndex && t.day_index && t.day_index <= unlockedDayIndex;
+    const notYetOpen = !dayArrived && !dayEarned;
     const stage = graded ? 'Graded' : t.submission ? 'Submitted' : notYetOpen ? 'Opens later' : 'Assigned';
     const stagePct = graded ? 100 : t.submission ? 50 : 0;
     const priority = t.priority || def.priority || 'medium';
@@ -1770,6 +2081,10 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       score: t.review_state === 'pending' ? null : t.score,
       feedback: t.review_state === 'pending' ? null : t.feedback,
       reviewState: t.review_state || null,
+      // Sent back by Asha. 'redo' means the work was weak; 'rework' means it was right and
+      // she wants it done differently, which is a different message to put on a card.
+      sentBack: t.review_state === 'redo' || t.review_state === 'rework' ? t.review_state : null,
+      sentBackNote: t.review_state === 'redo' || t.review_state === 'rework' ? t.review_question : null,
       reviewQuestion: t.review_state === 'pending' ? t.review_question : null,
       reviewRoundsLeft: t.review_state === 'pending' ? Math.max(0, 2 - (t.review_rounds || 0)) : null,
       estHours: t.est_hours,
@@ -1938,9 +2253,18 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
 // that is permanently empty. Archetypes added later (customer, client, direct reports on
 // the manager track) get a tab automatically the first time they send something.
 const MAIL_CATEGORY = {
+  // Every colleague who can send mail gets a readable tab. Without this a thread from Diya
+  // filed itself under "finance_analyst", which is the internal name for her job and not
+  // something any learner should ever see.
+  ...Object.fromEntries(ROSTER.map((r) => [r.archetype, { key: r.archetype, label: r.title, tone: 'gray' }])),
   stakeholder: { key: 'stakeholder', label: 'Stakeholder', tone: 'amber' },
   line_manager: { key: 'line_manager', label: 'Line Manager', tone: 'emerald' },
   people_partner: { key: 'people_partner', label: 'HR', tone: 'purple' },
+  // The ambient senders — the Programme Office, IT, the company newsletter. They are not
+  // colleagues you can chat to, they only ever appear as mail, which is why they are
+  // named here rather than in the roster.
+  ...Object.fromEntries(Object.entries(ambientmail.AMBIENT_SENDERS)
+    .map(([key, v]) => [key, { key, label: v.label, tone: v.tone }])),
 };
 
 function normalizedSubject(m) {
@@ -2271,6 +2595,10 @@ function getState(userId) {
   // The promotion round runs here, before anything is rendered: a learner who has just
   // cleared the bar should see the senior board on this load, not the next one.
   let promotion = getPromotion(enrollment, projects.projects, gradedTasks, tasks);
+  // Signs the project off the moment the last of the fifty-one items lands, and says so.
+  // Read time rather than a scheduler, same as the promotion review below it.
+  finishProjectIfComplete(enrollment);
+
   if (promotion && runPromotionReview(enrollment, promotion, tasks)) {
     enrollment = getEnrollment(userId);
     projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
@@ -2287,11 +2615,28 @@ function getState(userId) {
   const rosterList = rosterWithAvatars(enrollment.id);
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
+  // The day the learner has EARNED, which may be ahead of the day the calendar has
+  // reached. Computed before the board so tasks can open on either.
+  const runNow = activeRun(enrollment);
+  // The most recent run whether or not it is still open. A learner who has just finished a
+  // project should still see what they finished and how the quiz went — blanking the page
+  // the moment they succeed is the opposite of the intended moment.
+  const runShown = runNow || db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? ORDER BY COALESCE(completed_at, started_at) DESC LIMIT 1')
+    .get(enrollment.id);
+  const dayUnlocked = unlockedDay(enrollment, runNow);
+  // Issuing is idempotent — guarded on the row already existing — so running it on every
+  // read is how the day's mail arrives without a scheduler.
+  if (runNow) for (let d = 1; d <= dayUnlocked; d++) {
+    issueDayItems(enrollment, runNow, d);
+    issueDayMail(enrollment, runNow, d);
+  }
+
   const taskBoard = getTasksView(
     enrollment.role, tasks, projects, Date.now(),
     attendanceRows.map((r) => r.attended_on),
     Date.parse(enrollment.created_at),
     enrollment.level,
+    dayUnlocked,
   );
 
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
@@ -2345,6 +2690,57 @@ function getState(userId) {
       days: attendanceRows.map((r) => r.attended_on),
       streak: streaks,
     },
+    // The day in all three currencies, not just tasks. A day that is "6 of 6" on tasks and
+    // silent about the two activities and two situations still owed is the old model
+    // wearing new numbers.
+    day: runNow ? {
+      ...dayProgress(enrollment, runNow, dayUnlocked),
+      unlocked: dayUnlocked,
+      totalDays: PROJECT_WEEK_DAYS,
+      shape: DAY_SHAPE,
+    } : null,
+    activities: runNow ? db.prepare('SELECT * FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ? ORDER BY day_index, created_at')
+      .all(enrollment.id, runNow.id).map((r) => {
+        const def = dayitems.activitiesFor(runNow.project_key).find((a) => a.key === r.activity_key) || {};
+        return {
+          key: r.activity_key, day: r.day_index, status: r.status, score: r.score,
+          type: def.type, via: def.via, from: def.from, minutes: def.minutes,
+          title: def.title, subject: def.subject || null, body: def.body,
+          // The correct option and the rubric markers stay on the server, exactly as they
+          // do for tasks.
+          check: def.check ? (def.check.kind === 'choice'
+            ? { kind: 'choice', prompt: def.check.prompt,
+                options: tasktypes.shuffleSeeded(def.check.options.map((o) => ({ key: o.key, label: o.label })),
+                  tasktypes.seedFrom(`${enrollment.id}-${r.activity_key}`)) }
+            : def.check.kind === 'answer'
+              ? { kind: 'answer', prompt: def.check.prompt, maxWords: def.check.maxWords }
+              : { kind: 'acknowledge', label: def.check.label || 'Done' }) : null,
+        };
+      }) : [],
+    situations: runNow ? db.prepare('SELECT * FROM sim_situations WHERE enrollment_id = ? AND project_run_id = ? ORDER BY created_at')
+      .all(enrollment.id, runNow.id).map((r) => {
+        const def = situationDef(runNow.project_key, r.situation_key) || {};
+        const delivered = r.message_id
+          ? db.prepare('SELECT subject, body, sender_name FROM sim_messages WHERE id = ?').get(r.message_id)
+          : null;
+        return {
+          key: r.situation_key, day: def.day, type: def.type, via: def.via, from: def.from,
+          // Ambient desk mail is part of the job, not part of the day gate — the flag is
+          // what lets the Today tab say so rather than quietly inflating the counter.
+          deskMail: Boolean(def.deskMail),
+          senderName: def.senderName || (delivered && delivered.sender_name) || null,
+          // The stored copy, so {name} and {project} read as they were actually sent.
+          subject: (delivered && delivered.subject) || def.subject || null,
+          body: (delivered && delivered.body) || def.body,
+          handledAs: r.handled_as, score: r.score,
+          // Deliberately NOT sent: whether it needs a reply. Being told which mail matters
+          // is the answer to the only question triage asks.
+          expect: r.handled_as ? (def.expect || []) : null,
+          note: r.handled_as ? (def.note || null) : null,
+        };
+      }) : [],
+    quiz: runShown ? getQuiz(enrollment, runShown) : null,
+    projectCompletion: runShown ? projectCompletion(enrollment, runShown) : null,
     skillTest,
     promotion,
     timeTravel: timeTravelState(enrollment, projects.projects),
@@ -2468,11 +2864,20 @@ function releaseDueTasks(enrollment) {
 }
 
 // Marks a run finished so it stops being chased.
+//
+// "Finished" used to mean the tasks were graded, which was the whole definition when tasks
+// were the whole product. It is not any more: a project is done on 30 tasks, 10 activities,
+// 10 situations and the quiz. Closing on tasks alone would have shut the run — and with it
+// the quiz the learner had not sat yet — the moment the last query was signed off.
 function closeCompletedRuns(enrollment, projects) {
   for (const p of projects) {
     if (p.status !== 'completed') continue;
-    db.prepare("UPDATE sim_project_runs SET completed_at = ? WHERE enrollment_id = ? AND project_key = ? AND completed_at IS NULL")
-      .run(now(), enrollment.id, p.key);
+    const run = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND project_key = ? AND completed_at IS NULL')
+      .get(enrollment.id, p.key);
+    if (!run) continue;
+    const c = projectCompletion(enrollment, run);
+    if (c && !c.complete) continue;
+    db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
   }
 }
 
@@ -2680,6 +3085,477 @@ function submitStandup(userId, answers, spoken) {
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, null, `Re: Stand-up — ${day}`, 'line_manager');
 
   return { reply, raisedBlocker: Boolean(raised), state: getState(userId) };
+}
+
+// ---- The rest of the working day ------------------------------------------------------
+//
+// Six tasks, two activities and two situations, five days, and a quiz on the Friday.
+//
+// The rule that shapes all of this: activities and situations ARRIVE. They are not a list
+// the learner works down at their leisure — Asha sends you a module, Vikram adds to the
+// brief on Wednesday afternoon, Finance wants a number by three. Both land in the inbox or
+// the chat dock while you are mid-task, and that interruption is the thing being practised.
+// So issuing an item and delivering the message are the same act, and neither happens until
+// the day it belongs to has actually opened.
+
+const DAY_SHAPE = { tasks: 6, activities: 2, situations: 2 };
+
+function itemRow(table, enrollmentId, key) {
+  return db.prepare(`SELECT * FROM ${table} WHERE enrollment_id = ? AND ${table === 'sim_activities' ? 'activity_key' : 'situation_key'} = ?`)
+    .get(enrollmentId, key);
+}
+
+// Put the day's activities and situations in front of the learner, once.
+//
+// Guarded by the row already existing rather than by a flag, because getState runs on every
+// page load and a learner who refreshes twice must not get Vikram's email twice.
+function issueDayItems(enrollment, run, dayIndex) {
+  if (!run || !dayIndex) return 0;
+  let issued = 0;
+
+  for (const a of dayitems.activitiesFor(run.project_key)) {
+    if (a.day !== dayIndex) continue;
+    if (itemRow('sim_activities', enrollment.id, a.key)) continue;
+    const person = ROSTER.find((r) => r.archetype === a.from) || ROSTER[0];
+    const messageId = addMessage(enrollment.id, a.from, person.name, a.body, null,
+      a.via === 'email' ? a.subject : null, a.from);
+    db.prepare(`INSERT INTO sim_activities (id, enrollment_id, activity_key, project_run_id, day_index, assigned_on, status, payload_json, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?)`)
+      .run(cryptoRandomId(), enrollment.id, a.key, run.id, dayIndex, today(),
+           JSON.stringify({ messageId }), now());
+    issued += 1;
+  }
+
+  for (const sit of dayitems.situationsFor(run.project_key)) {
+    if (sit.day !== dayIndex) continue;
+    if (itemRow('sim_situations', enrollment.id, sit.key)) continue;
+    const person = ROSTER.find((r) => r.archetype === sit.from) || ROSTER[0];
+    const messageId = addMessage(enrollment.id, sit.from, person.name, sit.body, null,
+      sit.via === 'email' ? sit.subject : null, sit.from);
+    db.prepare(`INSERT INTO sim_situations (id, enrollment_id, situation_key, project_run_id, message_id, delivered_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(cryptoRandomId(), enrollment.id, sit.key, run.id, messageId, now(), now());
+    issued += 1;
+  }
+  return issued;
+}
+
+// ---- Ten emails a day, two of them wanting an answer ----------------------------------
+//
+// The project supplies four messages on a good day and none on a quiet one, and an inbox
+// with four messages in it does not teach anyone to triage. So on top of whatever the
+// project sends, every day gets topped up to ten emails: two addressed to the learner by
+// name and needing a reply, and company noise for the rest.
+//
+// The two that need a reply are handled through exactly the same reply / defer / archive /
+// escalate machinery as a project situation and scored the same way — but they do NOT
+// count toward the day gate. The day is finished by six tasks, two activities and two
+// situations; somebody asking for a status line is part of the job, not a fifth kind of
+// homework, and making it one would mean a learner could be blocked from tomorrow by an
+// email the Programme Office sent for its own convenience.
+
+function fillMail(text, learnerName, projectTitle) {
+  return String(text || '')
+    .replace(/\{name\}/g, learnerName)
+    .replace(/\{project\}/g, projectTitle);
+}
+
+// How many emails have already landed for this project run on this day. Counts only mail
+// with a subject, because that is what getInbox counts as an email — a subject-less
+// message is a chat-dock line and does not fill an inbox.
+function emailsIssuedForDay(enrollment, run, dayIndex) {
+  const actEmails = dayitems.activitiesFor(run.project_key)
+    .filter((a) => a.day === dayIndex && a.via === 'email').length;
+  const sitEmails = dayitems.situationsFor(run.project_key)
+    .filter((x) => x.day === dayIndex && x.via === 'email').length;
+  return actEmails + sitEmails;
+}
+
+function issueDayMail(enrollment, run, dayIndex) {
+  if (!run || !dayIndex) return 0;
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const projectTitle = def ? def.title : 'this project';
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(enrollment.user_id);
+  const learnerName = firstName(profile && profile.name) || 'there';
+  let issued = 0;
+
+  // The two that are addressed to you. Stored as situations so the learner handles them
+  // with the controls they already know, keyed 'dm-' so the day gate can tell them apart.
+  for (const mail of ambientmail.deskFor(dayIndex)) {
+    if (itemRow('sim_situations', enrollment.id, mail.key)) continue;
+    const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
+      fillMail(mail.body, learnerName, projectTitle), null,
+      fillMail(mail.subject, learnerName, projectTitle), mail.from);
+    db.prepare(`INSERT INTO sim_situations (id, enrollment_id, situation_key, project_run_id, message_id, delivered_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(cryptoRandomId(), enrollment.id, mail.key, run.id, messageId, now(), now());
+    issued += 1;
+  }
+
+  // Then enough noise to reach the floor. Taken in authored order rather than at random,
+  // so what arrives on a learner's Wednesday is reviewable in a diff like everything else.
+  const already = emailsIssuedForDay(enrollment, run, dayIndex) + ambientmail.deskFor(dayIndex).length;
+  const wanted = Math.max(0, ambientmail.MIN_EMAILS_PER_DAY - already);
+  for (const mail of ambientmail.noiseFor(dayIndex).slice(0, wanted)) {
+    const seen = db.prepare('SELECT id FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ? AND mail_key = ?')
+      .get(enrollment.id, run.id, mail.key);
+    if (seen) continue;
+    const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
+      fillMail(mail.body, learnerName, projectTitle), null,
+      fillMail(mail.subject, learnerName, projectTitle), mail.from);
+    db.prepare(`INSERT INTO sim_ambient_mail (id, enrollment_id, project_run_id, mail_key, day_index, message_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(cryptoRandomId(), enrollment.id, run.id, mail.key, dayIndex, messageId, now());
+    issued += 1;
+  }
+  return issued;
+}
+
+// One place that knows what a situation row means, whether it came from the project or
+// from the ambient stream. Everything downstream — handling, scoring, the state payload —
+// goes through here rather than assuming the key belongs to the project.
+function situationDef(projectKey, key) {
+  const own = dayitems.situationsFor(projectKey || '').find((x) => x.key === key);
+  if (own) return own;
+  const desk = ambientmail.deskByKey(key);
+  return desk ? { ...desk, deskMail: true, type: desk.type || 'desk mail' } : null;
+}
+
+// What the learner still owes today, in all three currencies.
+//
+// A day is not finished when the tasks are. That was the old model and it is why the
+// product read as a worksheet: the analysis was the only thing that counted, so everything
+// else felt optional and therefore was.
+function dayProgress(enrollment, run, dayIndex) {
+  if (!run || !dayIndex) return null;
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const keys = def ? def.taskKeys : [];
+
+  // This project's tasks only. An earlier version had a `|| true` in the filter that made
+  // the guard do nothing, so a learner's second project would have counted the first one's
+  // rows as today's work.
+  const tasks = db.prepare('SELECT task_key, status, day_index FROM sim_tasks WHERE enrollment_id = ?')
+    .all(enrollment.id)
+    .filter((t) => keys.includes(t.task_key) && t.day_index === dayIndex);
+  const tasksDone = tasks.filter((t) => t.status === 'graded' || t.status === 'parked').length;
+
+  const acts = db.prepare('SELECT status FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ? AND day_index = ?')
+    .all(enrollment.id, run.id, dayIndex);
+  const actsDone = acts.filter((a) => a.status === 'done').length;
+
+  const sitKeys = dayitems.situationsFor(run.project_key).filter((x) => x.day === dayIndex).map((x) => x.key);
+  const sits = sitKeys.length
+    ? db.prepare(`SELECT handled_as FROM sim_situations WHERE enrollment_id = ? AND situation_key IN (${sitKeys.map(() => '?').join(',')})`)
+        .all(enrollment.id, ...sitKeys)
+    : [];
+  const sitsDone = sits.filter((x) => x.handled_as).length;
+
+  // What this day actually HAS, not what the shape says it should have. A day with four
+  // authored tasks is complete at four; the alternative is a learner stuck forever on a
+  // sixth task nobody wrote. The shape is the authoring target, checked by its own test,
+  // not a runtime assertion aimed at the person using the product.
+  const need = { tasks: tasks.length, activities: acts.length, situations: sitKeys.length };
+
+  return {
+    day: dayIndex,
+    tasks: { done: tasksDone, total: need.tasks },
+    activities: { done: actsDone, total: need.activities },
+    situations: { done: sitsDone, total: need.situations },
+    complete: tasksDone >= need.tasks && actsDone >= need.activities && sitsDone >= need.situations,
+  };
+}
+
+// The next day opens when today is finished, not when the clock says so.
+//
+// The learner's rule, and the right one: somebody who clears Monday by eleven should start
+// Tuesday at eleven, not wait until tomorrow for a product they are paying for. The clock
+// still governs the DEADLINE — that pressure is most of what makes this a job rather than a
+// course — so this is additive: a task opens if its day has arrived OR the day before it is
+// done.
+function unlockedDay(enrollment, run) {
+  if (!run) return 1;
+  const total = PROJECT_WEEK_DAYS;
+  let day = 1;
+  while (day < total) {
+    const p = dayProgress(enrollment, run, day);
+    if (!p || !p.complete) break;
+    day += 1;
+  }
+  return day;
+}
+
+// ---- Activities ----------------------------------------------------------------------
+
+function gradeActivityAnswer(check, text) {
+  const body = String(text || '').trim();
+  const words = body.split(/\s+/).filter(Boolean).length;
+  if (words < 5) return { score: 0, feedback: 'There is not enough here to be an answer.' };
+  const hit = (check.markers || []).filter((m) => new RegExp(m, 'i').test(body)).length;
+  const total = (check.markers || []).length || 1;
+  const over = check.maxWords && words > check.maxWords;
+  let score = Math.round((hit / total) * 100);
+  if (over) score = Math.max(0, score - 10);
+  return {
+    score,
+    feedback: hit === total
+      ? (check.why || 'That covers it.')
+      : `${check.why || ''}`.trim() || 'Some of what this was looking for is missing.',
+  };
+}
+
+function completeActivity(userId, activityKey, answer) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const row = itemRow('sim_activities', enrollment.id, activityKey);
+  if (!row) throw new Error('That activity has not arrived yet.');
+  if (row.status === 'done') throw new Error('You have already done that one.');
+
+  const run = db.prepare('SELECT * FROM sim_project_runs WHERE id = ?').get(row.project_run_id);
+  const def = dayitems.activitiesFor(run ? run.project_key : '').find((a) => a.key === activityKey);
+  if (!def) throw new Error('Unknown activity.');
+
+  let score = null;
+  let feedback = null;
+  const check = def.check || { kind: 'acknowledge' };
+
+  if (check.kind === 'choice') {
+    const picked = String(answer || '');
+    const right = (check.options.find((o) => o.correct) || {}).key;
+    score = picked === right ? 100 : 0;
+    feedback = check.why || (score ? 'Correct.' : 'Not quite.');
+  } else if (check.kind === 'answer') {
+    const marked = gradeActivityAnswer(check, answer);
+    score = marked.score;
+    feedback = marked.feedback;
+  }
+
+  db.prepare("UPDATE sim_activities SET status = 'done', score = ?, payload_json = ?, completed_at = ? WHERE id = ?")
+    .run(score, JSON.stringify({ ...(safeJson(row.payload_json) || {}), answer: String(answer || '') }), now(), row.id);
+
+  // The person who sent it replies, because an activity that vanishes when you finish it
+  // does not feel like something a colleague asked you for.
+  const person = ROSTER.find((r) => r.archetype === def.from) || ROSTER[0];
+  if (feedback) {
+    addMessage(enrollment.id, def.from, person.name, feedback, null,
+      def.via === 'email' ? `Re: ${def.subject}` : null, def.from);
+  }
+  return { score, feedback, state: getState(userId) };
+}
+
+// ---- Situations ------------------------------------------------------------------------
+
+const SITUATION_ACTIONS = ['reply', 'defer', 'archive', 'escalate'];
+
+function handleSituation(userId, situationKey, action, text) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (!SITUATION_ACTIONS.includes(action)) throw new Error('Unknown action.');
+  const row = itemRow('sim_situations', enrollment.id, situationKey);
+  if (!row) throw new Error('That has not arrived yet.');
+  if (row.handled_as) throw new Error('You have already dealt with that one.');
+
+  const run = db.prepare('SELECT * FROM sim_project_runs WHERE id = ?').get(row.project_run_id);
+  const def = situationDef(run ? run.project_key : '', situationKey);
+  if (!def) throw new Error('Unknown situation.');
+
+  let score = 0;
+  let feedback = '';
+
+  if (def.needsReply) {
+    if (action === 'reply') {
+      const marked = gradeActivityAnswer({ markers: def.markers, maxWords: 160, why: '' }, text);
+      score = marked.score;
+      feedback = score >= 50
+        ? 'Thanks — that is what I needed.'
+        : 'Noted, though that leaves the bit I actually asked about open.';
+    } else if (action === 'escalate') {
+      // Escalating something you could have answered is not free. It is not wrong either —
+      // sometimes it is exactly right — so it scores in the middle rather than at zero.
+      score = 40;
+      feedback = 'Passed up the line. Fair enough, though this one was probably yours to answer.';
+    } else {
+      score = 0;
+      feedback = def.ifIgnored || 'Left unanswered.';
+    }
+  } else {
+    // The noise. Archiving or deferring it is the CORRECT handling, and replying to it is
+    // the mistake — twenty minutes spent on a timesheet reminder is twenty minutes gone.
+    // Without this, triage is not a decision and the learner simply answers everything.
+    score = (action === 'archive' || action === 'defer') ? 100 : 30;
+    feedback = score === 100
+      ? 'Right call — that one needed nothing from you.'
+      : 'You answered a message that did not need one. Not a disaster, but that is time you had.';
+  }
+
+  db.prepare("UPDATE sim_situations SET handled_as = ?, handled_at = ?, score = ? WHERE id = ?")
+    .run(action, now(), score, row.id);
+
+  if (action === 'reply' && String(text || '').trim()) {
+    // The Programme Office is not on the roster — it only ever exists as mail — so an
+    // ambient sender carries its own display name rather than being looked up.
+    const person = ROSTER.find((r) => r.archetype === def.from);
+    const senderName = def.senderName || (person ? person.name : ROSTER[0].name);
+    const subject = row.message_id
+      ? (db.prepare('SELECT subject FROM sim_messages WHERE id = ?').get(row.message_id) || {}).subject
+      : def.subject;
+    addMessage(enrollment.id, 'learner', 'You', String(text).trim(), null,
+      def.via === 'email' ? `Re: ${subject || def.subject}` : null, def.from);
+    addMessage(enrollment.id, def.from, senderName, feedback, null,
+      def.via === 'email' ? `Re: ${subject || def.subject}` : null, def.from);
+  }
+  return { score, feedback, state: getState(userId) };
+}
+
+// ---- The Friday quiz -------------------------------------------------------------------
+
+function getQuiz(enrollment, run) {
+  if (!run) return null;
+  const quiz = dayitems.quizFor(run.project_key);
+  if (!quiz) return null;
+  const taken = db.prepare('SELECT COUNT(*) c FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?')
+    .get(enrollment.id, run.project_key).c;
+  const day = unlockedDay(enrollment, run);
+  const lastDayDone = (dayProgress(enrollment, run, PROJECT_WEEK_DAYS) || {}).tasks;
+  const open = day >= PROJECT_WEEK_DAYS && lastDayDone && lastDayDone.done >= lastDayDone.total;
+
+  if (taken) {
+    const rows = db.prepare('SELECT correct FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?')
+      .all(enrollment.id, run.project_key);
+    const right = rows.filter((r) => r.correct).length;
+    return { key: quiz.key, title: quiz.title, taken: true, open: false,
+             score: Math.round((right / rows.length) * 100), right, total: rows.length, questions: [] };
+  }
+  return {
+    key: quiz.key, title: quiz.title, intro: quiz.intro, taken: false, open,
+    // Not sat yet, so the answers stay on the server. Options are shuffled per learner for
+    // the same reason the judgement tasks are.
+    questions: open ? quiz.questions.map((q, i) => ({
+      id: q.id, topic: q.topic, q: q.q,
+      options: tasktypes.shuffleSeeded(q.options.map((o) => ({ key: o.key, label: o.label })),
+        tasktypes.seedFrom(`${enrollment.id}-${q.id}`)),
+    })) : [],
+    total: quiz.questions.length,
+  };
+}
+
+function submitQuiz(userId, answers) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  // The most recent run, open or not. Sitting the quiz is what CLOSES the project, so by
+  // the time someone submits it a second time there is no active run — and "no project is
+  // running" is a confusing thing to be told when the truthful answer is that you already
+  // did this one.
+  const run = activeRun(enrollment)
+    || db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? ORDER BY COALESCE(completed_at, started_at) DESC LIMIT 1').get(enrollment.id);
+  if (!run) throw new Error('No project is running.');
+  const quiz = dayitems.quizFor(run.project_key);
+  if (!quiz) throw new Error('No quiz for this project.');
+  const already = db.prepare('SELECT COUNT(*) c FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?')
+    .get(enrollment.id, run.project_key).c;
+  if (already) throw new Error('You have already sat this one.');
+
+  const given = (answers && typeof answers === 'object') ? answers : {};
+  const marked = [];
+  for (const q of quiz.questions) {
+    const chosen = given[q.id] || null;
+    const right = (q.options.find((o) => o.correct) || {}).key;
+    const correct = chosen === right ? 1 : 0;
+    db.prepare(`INSERT INTO sim_quiz (id, enrollment_id, question_key, project_key, answered_on, chosen, correct, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(cryptoRandomId(), enrollment.id, q.id, run.project_key, today(), chosen, correct, now());
+    marked.push({ id: q.id, q: q.q, chosen, right, correct: Boolean(correct), why: q.why });
+  }
+  const right = marked.filter((m) => m.correct).length;
+  return { score: Math.round((right / marked.length) * 100), right, total: marked.length,
+           results: marked, state: getState(userId) };
+}
+
+function activeRun(enrollment) {
+  return db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL ORDER BY started_at DESC LIMIT 1')
+    .get(enrollment.id);
+}
+
+// ---- Finishing the project --------------------------------------------------------------
+//
+// Everything has to be done, not just the analysis: 30 tasks, 10 activities, 10 situations
+// and the quiz. Then Asha says so properly — naming what they actually did rather than
+// congratulating them in general, because a generic well done from a manager is worth less
+// than nothing and every learner knows it.
+
+function projectCompletion(enrollment, run) {
+  if (!run) return null;
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  if (!def) return null;
+
+  const rows = db.prepare('SELECT task_key, status, score FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id)
+    .filter((t) => def.taskKeys.includes(t.task_key));
+  const tasksDone = rows.filter((t) => t.status === 'graded' || t.status === 'parked').length;
+
+  const acts = db.prepare('SELECT status, score FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id);
+  // Project situations only. The ambient desk mail shares this table, and counting it here
+  // would let a learner finish the project by answering the Programme Office ten times.
+  const ownSitKeys = new Set(dayitems.situationsFor(run.project_key).map((x) => x.key));
+  const sits = db.prepare('SELECT situation_key, handled_as, score FROM sim_situations WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id)
+    .filter((x) => ownSitKeys.has(x.situation_key));
+  const quizRows = db.prepare('SELECT correct FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?')
+    .all(enrollment.id, run.project_key);
+
+  const totalActs = dayitems.activitiesFor(run.project_key).length;
+  const totalSits = dayitems.situationsFor(run.project_key).length;
+  const hasQuiz = Boolean(dayitems.quizFor(run.project_key));
+
+  const complete = tasksDone >= def.taskKeys.length
+    && acts.filter((a) => a.status === 'done').length >= totalActs
+    && sits.filter((x) => x.handled_as).length >= totalSits
+    && (!hasQuiz || quizRows.length > 0);
+
+  const graded = rows.filter((t) => t.status === 'graded' && typeof t.score === 'number');
+  return {
+    complete,
+    tasks: { done: tasksDone, total: def.taskKeys.length },
+    activities: { done: acts.filter((a) => a.status === 'done').length, total: totalActs },
+    situations: { done: sits.filter((x) => x.handled_as).length, total: totalSits },
+    quiz: { taken: quizRows.length > 0, required: hasQuiz,
+            score: quizRows.length ? Math.round((quizRows.filter((q) => q.correct).length / quizRows.length) * 100) : null },
+    avgScore: graded.length ? Math.round(graded.reduce((a, t) => a + t.score, 0) / graded.length) : null,
+    best: graded.length ? graded.slice().sort((a, b) => b.score - a.score)[0] : null,
+  };
+}
+
+// Sign the project off and say so. Fires at read time, once, the moment everything is done.
+function finishProjectIfComplete(enrollment) {
+  const run = activeRun(enrollment);
+  if (!run) return false;
+  const c = projectCompletion(enrollment, run);
+  if (!c || !c.complete) return false;
+
+  db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
+
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(enrollment.user_id);
+  const learner = firstName(profile && profile.name) || 'there';
+  const bestTitle = c.best ? c.best.title || '' : '';
+
+  // Specific, because specific is the only kind that lands. "Well done on the project" is
+  // what a manager says when they have not read it.
+  const lines = [
+    `${learner} — that is Q1 Compensation Review closed out. Properly done.`,
+    '',
+    `You delivered ${c.tasks.total} pieces of work across the week, handled ${c.situations.total} things that landed on you unannounced, and got through the training alongside it${c.avgScore ? `, averaging ${c.avgScore} on the graded work` : ''}.`,
+  ];
+  if (c.quiz.taken && c.quiz.score !== null) {
+    lines.push('', `The Friday check came out at ${c.quiz.score}%. ${c.quiz.score >= 70 ? 'That is a good read on the week.' : 'Worth going back over the ones you missed — the reasons are on each of them.'}`);
+  }
+  lines.push('',
+    'What I would actually tell someone about you: you took a question that could not be answered as asked, said so early, and gave Vikram something he could use instead. That is the part people find hard.',
+    '',
+    'Next one is waiting when you are. Take a break first — you have earned the afternoon.');
+
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, lines.join('\n'), null,
+    `${def ? def.title : 'Project'} — signed off`, 'line_manager');
+  return true;
 }
 
 // ---- Testing the week without waiting a week -----------------------------------------
@@ -3474,6 +4350,14 @@ async function answerReview(userId, taskId, answer) {
   const { accept, reply } = await judgeReviewAnswer(taskDef, task.submission, task.review_question, clean, round);
 
   if (accept) {
+    // Good work, and she wants it differently anyway. Deterministic rather than random —
+    // which task gets reworked has to be the same for every learner, or one person meets
+    // the hardest thing in the product and another never does.
+    if (taskDef.rework && task.review_state !== 'rework') {
+      const note = REWORK_NOTES[tasktypes.seedFrom(task.task_key) % REWORK_NOTES.length];
+      reopenTask(enrollment, task, `${reply}\n\n${note}`, true);
+      return { accepted: false, rework: true, reply, note, state: getState(userId) };
+    }
     // Signed off. NOW the score is revealed and the task counts — 'graded' stays the
     // terminal state, so everything downstream (projects, analytics, unlocks) is
     // unchanged by the gate existing.
@@ -3482,6 +4366,16 @@ async function answerReview(userId, taskId, answer) {
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, task.feedback, taskId);
     return { accepted: true, reply, score: task.score, feedback: task.feedback, state: getState(userId) };
+  }
+
+  // Weak work is not a conversation to be won — it is work to be redone. Below the
+  // threshold she stops asking questions and sends it back, which is what a manager
+  // actually does and what the learner's own rule asks for.
+  if (!accept && typeof task.score === 'number' && task.score < REOPEN_BELOW) {
+    reopenTask(enrollment, task,
+      `${reply}\n\nLet's not go round on this — take it back and have another go. ${task.feedback || ''}`.trim(),
+      false);
+    return { accepted: false, reopened: true, reply, state: getState(userId) };
   }
 
   if (round >= MAX_REVIEW_ROUNDS) {
@@ -3499,6 +4393,65 @@ async function answerReview(userId, taskId, answer) {
   db.prepare('UPDATE sim_tasks SET review_rounds = ? WHERE id = ?').run(round, taskId);
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
   return { accepted: false, parked: false, reply, roundsLeft: MAX_REVIEW_ROUNDS - round, state: getState(userId) };
+}
+
+// Take it back before you have to defend it.
+//
+// A submission goes straight to Asha, who asks a question about it. Halfway through
+// composing an answer is exactly when people realise their query was wrong — and defending
+// work you already know is wrong is not a skill worth practising. Allowed only in the first
+// round: once you have argued a position, changing the work underneath it is a different
+// thing, and Asha would notice.
+function redoSubmission(userId, taskId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled');
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  if (!task) throw new Error('Task not found');
+  if (task.status === 'graded') throw new Error('That one is already signed off.');
+  if (task.status !== 'in_review') throw new Error('There is nothing submitted to take back.');
+  if ((task.review_rounds || 0) > 0) {
+    throw new Error('You have already answered Asha on this one — see it through rather than starting again.');
+  }
+
+  db.prepare(`UPDATE sim_tasks
+                 SET status = 'assigned', score = NULL, feedback = NULL, skills_json = NULL,
+                     submitted_at = NULL, review_state = NULL, review_question = NULL, review_rounds = 0
+               WHERE id = ?`).run(taskId);
+  // The submission text itself is kept, so they edit rather than retype.
+  addMessage(enrollment.id, 'learner', 'You',
+    `Actually — let me take that one back and redo it before you spend time on it.`, taskId, null, 'line_manager');
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    `No problem, I had not opened it yet. Send it again when you are happy with it.`, taskId, null, 'line_manager');
+  return { state: getState(userId) };
+}
+
+// Asha sending the work back.
+//
+// Two different things live here, and conflating them would lose the more valuable one.
+//
+// A REDO is "this is wrong, do it again" — the score was weak and the work needs fixing.
+//
+// A REWORK is "this is right, and I want it done differently". Being told your correct
+// answer is not the right approach is the single most common experience of a real analyst's
+// first year, and almost nothing simulates it. She names the constraint — use a median, do
+// it without a subquery, break it out by year — and the learner has to satisfy it.
+const REOPEN_BELOW = 60;
+
+const REWORK_NOTES = [
+  'It works, but I would like it done with a median rather than a mean — one big salary is carrying that number and I do not want to defend it in the room.',
+  'Right answer, wrong shape. Can you do it without the subquery? Whoever picks this up in April needs to be able to read it.',
+  'This is fine as far as it goes. Break it out by hire year as well — I think the gap is a seniority story and I want to know before Vikram asks.',
+];
+
+function reopenTask(enrollment, task, reason, isRework) {
+  // The reason is kept on the row as well as sent as a chat message. A learner who comes
+  // back to the Tasks tab tomorrow should not have to go hunting through the thread to
+  // find out why the card is open again — it belongs above the editor they have to use.
+  db.prepare(`UPDATE sim_tasks
+                 SET status = 'assigned', review_state = ?, review_question = ?,
+                     submitted_at = NULL, graded_at = NULL
+               WHERE id = ?`).run(isRework ? 'rework' : 'redo', reason, task.id);
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reason, task.id, null, 'line_manager');
 }
 
 function safeJson(text) {
@@ -3831,6 +4784,10 @@ module.exports = {
   startProject,
   submitSkillTest,
   timeTravel,
+  redoSubmission,
+  completeActivity,
+  handleSituation,
+  submitQuiz,
   timeTravelReset,
   timeTravelSkipSkillTest,
   timeTravelCompleteTask,

@@ -286,6 +286,23 @@ CREATE TABLE IF NOT EXISTS sim_cast (
   UNIQUE(enrollment_id, project_run_id, archetype)
 );
 
+-- Ambient company mail. The all-hands invite, the VPN maintenance window, the newsletter.
+-- None of it needs anything from the learner; it exists so the inbox has something to
+-- ignore, because triage cannot be practised on an inbox where every message matters.
+-- Only the fact of delivery is stored -- the body lives in code like every other piece of
+-- content -- so that a page refresh does not send Thursday's all-hands invite twice.
+CREATE TABLE IF NOT EXISTS sim_ambient_mail (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT,
+  mail_key TEXT NOT NULL,
+  day_index INTEGER,
+  message_id TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id, mail_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_ambient_run ON sim_ambient_mail(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_activities_day ON sim_activities(enrollment_id, assigned_on);
 CREATE INDEX IF NOT EXISTS idx_sim_situations_run ON sim_situations(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_cast_run ON sim_cast(enrollment_id, project_run_id);
