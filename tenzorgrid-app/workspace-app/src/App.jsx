@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
 import Overview from './components/Overview.jsx';
@@ -15,6 +15,7 @@ import Standup from './components/Standup.jsx';
 import ChatDock from './components/ChatDock.jsx';
 import { Mic } from 'lucide-react';
 import { api } from './api.js';
+import { announceArrivals, countMessages, armSound } from './sound.js';
 
 const ROLE_LABEL = { data_analyst: 'Data Analyst' };
 
@@ -22,7 +23,20 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [learnerName, setLearnerName] = useState('');
   const [learnerPhotoUrl, setLearnerPhotoUrl] = useState(null);
-  const [state, setState] = useState(null);
+  const [state, setRawState] = useState(null);
+  // Every path that changes state goes through here, so anything that arrives makes a
+  // noise without each caller having to remember to ring a bell. Counting messages rather
+  // than being told what happened means a manager's review, a newsletter and a chat line
+  // are all covered by the same four lines.
+  const heard = useRef(null);
+  const setState = useCallback((next) => {
+    if (next) {
+      const counts = countMessages(next);
+      if (heard.current) announceArrivals(heard.current, counts);
+      heard.current = counts;
+    }
+    setRawState(next);
+  }, []);
   const [tab, setTab] = useState('overview');
   // A stand-up you can ignore is not a stand-up — it opens by itself, once a day, the
   // way a real one starts whether or not you feel like it. Closing it is one click, and
@@ -42,6 +56,19 @@ export default function App() {
     setPrefs(next);
     try { localStorage.setItem('tg.prefs', JSON.stringify(next)); } catch { /* private window */ }
   }
+
+  // Browsers will not make a sound until the page has been interacted with, which is
+  // correct and not worth fighting. The audio context is created on the first click or
+  // key press and never again.
+  useEffect(() => {
+    const arm = () => armSound();
+    window.addEventListener('pointerdown', arm, { once: true });
+    window.addEventListener('keydown', arm, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', arm);
+      window.removeEventListener('keydown', arm);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {

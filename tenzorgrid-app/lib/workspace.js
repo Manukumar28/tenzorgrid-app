@@ -165,7 +165,20 @@ const PROJECT_CATALOG = {
       kind: 'dashboard',
       stakeholder: 'line_manager',
       difficulty: 'Medium',
-      taskKeys: ['da-002', 'da-007'],
+      taskKeys: [
+        // Day 1 — what hiring has actually done, and the two years too thin to read.
+        'hc-101', 'hc-102', 'da-002', 'hc-103', 'hc-104', 'hc-105',
+        // Day 2 — what each intake cost, and why the cheapest year is not a finding.
+        'hc-110', 'hc-111', 'da-007', 'hc-112', 'hc-113', 'hc-114',
+        // Day 3 — attrition. Six leavers in total, two each in three departments: the
+        // request is reasonable, the data exists, and the answer is still no.
+        'hc-120', 'hc-121', 'hc-122', 'hc-123', 'hc-124', 'hc-125',
+        // Day 4 — where the hiring actually went, and what Comms is about to say in
+        // your name.
+        'hc-130', 'hc-131', 'hc-132', 'hc-133', 'hc-134', 'hc-135',
+        // Day 5 — the plan, with Neha pushing for a single number.
+        'hc-140', 'hc-141', 'hc-142', 'hc-143', 'hc-144', 'hc-145',
+      ],
       skillFocus: ['sql', 'dataViz'],
       impactValue: 8000,
       contributors: [
@@ -309,12 +322,22 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
       .filter((p) => (p.level || 'junior') === PROMOTION.from)
       .map((p) => p.key),
   );
+  // Only projects that are finished being WRITTEN can be finished by a learner, so the
+  // bar is the number of them that exist. Without this, shipping the ladder before the
+  // content makes promotion permanently unreachable — the learner clears everything in
+  // front of them and is told they are two projects short of something that is not there.
+  const readyJuniorKeys = new Set(
+    (PROJECT_CATALOG[enrollment.role] || [])
+      .filter((p) => juniorKeys.has(p.key) && projectReadiness(p).ready)
+      .map((p) => p.key),
+  );
+  const required = Math.min(PROMOTION.projectsRequired, Math.max(1, readyJuniorKeys.size));
   const completed = projects.filter((p) => juniorKeys.has(p.key) && p.status === 'completed').length;
   const average = gradedTasks.length
     ? Math.round(gradedTasks.reduce((s, t) => s + (t.score || 0), 0) / gradedTasks.length)
     : null;
 
-  const trainingDone = completed >= PROMOTION.projectsRequired;
+  const trainingDone = completed >= required;
   const performanceMet = average !== null && average >= PROMOTION.minAverage;
 
   // A parked task keeps its project out of `completed`, so a learner who reached the end
@@ -329,7 +352,7 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
   const mine = (tasks || []).filter((t) => juniorTaskKeys.has(t.task_key));
   const startedProjects = projects.filter((p) => juniorKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
   const parked = mine.filter((t) => t.status === 'parked');
-  const atTheEnd = startedProjects >= PROMOTION.projectsRequired
+  const atTheEnd = startedProjects >= required
     && mine.length > 0
     && mine.every((t) => t.status === 'graded' || t.status === 'parked');
 
@@ -341,11 +364,11 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
     criteria: [
       {
         key: 'training',
-        label: `Complete all ${PROMOTION.projectsRequired} junior projects`,
+        label: `Complete all ${required} junior project${required === 1 ? '' : 's'}`,
         met: trainingDone,
         value: completed,
-        target: PROMOTION.projectsRequired,
-        detail: `${completed} of ${PROMOTION.projectsRequired} delivered`,
+        target: required,
+        detail: `${completed} of ${required} delivered`,
       },
       {
         key: 'performance',
@@ -1335,6 +1358,447 @@ const TASKS = {
     difficulty: 'medium',
   },
 
+
+  // ---- Project 2: Headcount & Hiring Trends -----------------------------------------
+  //
+  // People Ops needs next year's hiring plan, and the honest version of this week is that
+  // the data will not carry the story they are hoping for. The week's spine:
+  //
+  //   Monday    what hiring has actually done — and two years too thin to read
+  //   Tuesday   what each intake cost, and why the cheapest year means nothing
+  //   Wednesday attrition, which is six people in total and cannot be split by department
+  //   Thursday  where the hiring actually went — People Ops hired seven of its own nine
+  //   Friday    the plan, with Neha pushing for a single number you cannot defend
+  //
+  // Every figure in these briefs and rubrics was measured against the generated dataset
+  // rather than assumed. The trap running through the whole week is the opposite of
+  // project 1's: this project is about INTAKE, so filtering to current staff is usually
+  // the wrong move — except in the four places where it is the only right one.
+
+  'hc-101': {
+    title: 'What is actually being asked for',
+    hint: "Read what Neha needs to DO with it. A plan needs a direction and a size, not a table.",
+    brief: "Neha in People Ops has asked for 'the hiring trends'. Before you write a line of SQL, work out what she is actually going to do with it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'Hiring trends for next year\'s plan',
+        body: "Morning — I am building next year's hiring plan and I need to understand what we have actually been doing. How many people we take on, what that has cost, and whether anything has changed. Asha said you would have it by Friday.\n\nI have to take a number to the budget round, so the more you can tell me about what is normal for us, the better.",
+      },
+      prompt: 'Tick everything that follows from what she has asked for.',
+      options: [
+        { key: 'intake', correct: true, label: 'This is about hiring INTAKE, not current headcount', why: 'Somebody hired in 2019 who has since left was still a 2019 hire. Filtering them out would understate every year in the series.' },
+        { key: 'direction', correct: true, label: 'She needs a direction of travel, not just this year\'s figure', why: '"Whether anything has changed" is a trend question. One number cannot answer it.' },
+        { key: 'cost', correct: true, label: 'Cost per intake matters as much as the count', why: 'She said budget round. A plan for ten hires means nothing without what ten hires cost.' },
+        { key: 'names', correct: false, label: 'She needs the list of people hired each year', why: 'She is planning, not auditing. Named individuals are both useless to her and a data-handling problem you would have created for yourself.' },
+        { key: 'current', correct: false, label: 'Filter to current staff throughout — leavers are not relevant to a plan', why: 'This is the single mistake this project is built around. Leavers still consumed a hiring slot and a budget in the year they were hired.' },
+        { key: 'wait', correct: false, label: 'Ask her to specify the exact tables and columns first', why: 'She does not know them and it is not her job to. Going back with "what do you want" when the ask is legible is how an analyst becomes a ticket queue.' },
+      ],
+      skills: { businessLogic: 100, communication: 60 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'hc-102': {
+    title: 'How many people are we talking about',
+    hint: "One row, three numbers. A CASE inside a SUM counts a condition without throwing the other rows away.",
+    brief: "Before anything else, get the size of the thing. Write ONE SQL SELECT returning three figures in a single row: how many people the company has EVER hired, how many are still here, and how many have left. Do not filter any of them out — use a CASE so all three come from the same pass.",
+    referenceSql: 'SELECT COUNT(*) AS ever_hired, SUM(CASE WHEN exit_year IS NULL THEN 1 ELSE 0 END) AS still_here, SUM(CASE WHEN exit_year IS NOT NULL THEN 1 ELSE 0 END) AS leavers FROM employees',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'hc-103': {
+    title: 'What the trend does and does not say',
+    hint: "Look at the counts, not the shape. Two of those years have almost nobody in them.",
+    brief: "You have the hiring series in front of you. Before you show it to anyone, decide what it actually supports.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'dip', correct: true, label: 'Hiring collapsed in 2021 and 2022, then recovered', why: 'Ten in 2020, then four and two, then six, nine and seven. That is the clearest thing in the series.' },
+        { key: 'thin', correct: true, label: 'The 2022 figure rests on two people', why: 'Two. Any average built on it is a statement about two individuals wearing the clothes of a trend.' },
+        { key: 'recovered', correct: true, label: 'The last three years are back around the long-run level', why: 'Six, nine and seven against a ten-year average of about seven. That is the useful sentence for a plan.' },
+        { key: 'cause', correct: false, label: 'The dip shows the company had a hiring freeze', why: 'It shows hiring fell. Why it fell is not in this table, and a freeze is only one of several explanations.' },
+        { key: 'growth', correct: false, label: 'Headcount grew every year', why: 'Intake is not net growth — you have not looked at leavers yet. Two different questions.' },
+        { key: 'best', correct: false, label: '2022 was our most cost-effective hiring year', why: 'That is tomorrow\'s trap, arriving early. A low average over two people is not a cost-effectiveness finding.' },
+      ],
+      skills: { businessLogic: 100, dataViz: 40 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'hc-104': {
+    title: 'Which years are too thin to read',
+    hint: "HAVING filters groups after they are formed. WHERE cannot see a COUNT.",
+    brief: "Neha will quote whatever you give her, so find the years that cannot carry a claim. Write ONE SQL SELECT returning each hire_year with FEWER THAN FIVE hires and how many there were, smallest first.",
+    referenceSql: 'SELECT hire_year, COUNT(*) AS hired FROM employees GROUP BY hire_year HAVING COUNT(*) < 5 ORDER BY hired ASC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'medium', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'hc-105': {
+    title: 'First note back to Neha',
+    hint: "Tell her what you have got and what is coming. The caveat about the thin years belongs here, not on Friday.",
+    brief: "Write back to Neha at the end of day one. She has not asked for anything yet — this is you telling her where it is going, which is what stops her guessing. Under 130 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Hiring trends — where I have got to', maxWords: 130,
+      prompt: 'The end-of-day note. What you have, what it says, what is next.',
+      rubric: [
+        { key: 'have', label: 'What you have actually produced', markers: ['hiring|hire|intake|year|series|trend'], why: 'Start with the thing that exists. She can act on that today.' },
+        { key: 'shape', label: 'The shape of it — the dip and the recovery', markers: ['2021|2022|dip|fell|drop|recover|back'], why: 'The one finding worth her knowing tonight rather than Friday.' },
+        { key: 'thin', label: 'That two of the years are too small to read', markers: ['two|2 |four|small|thin|few|caveat|careful'], why: 'Flagging it now stops her quoting 2022 at somebody on Wednesday.' },
+        { key: 'scope', label: 'That this counts everyone hired, leavers included', markers: ['ever|all|includ|leaver|left|intake|not current'], why: 'She will assume current staff unless you say otherwise, and then her numbers will not match yours.' },
+        { key: 'next', label: 'What is coming next', markers: ['next|tomorrow|cost|then|will|working on'], why: 'A status note without a next step makes her ask for one.' },
+      ],
+    },
+    estHours: 0.4, priority: 'medium', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+
+  'hc-110': {
+    title: 'What each intake cost',
+    hint: "Two aggregates over the same group. SUM answers what it cost, AVG answers what a hire cost.",
+    brief: "Neha has a budget round, so the count is only half the question. Write ONE SQL SELECT returning, for each hire_year, how many people were hired, the total salary of that intake and the average, oldest year first. Everyone hired that year, including people who have since left — they were still paid.",
+    referenceSql: 'SELECT hire_year, COUNT(*) AS hired, SUM(salary) AS total_cost, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'hc-111': {
+    title: 'The cheapest year we ever had',
+    hint: "Look at the count in that row before you look at the average. Then decide whether it is a finding.",
+    brief: "Your cost table says 2022 had by far the lowest average salary per hire — about eleven lakh below the year before it. Neha would love that sentence. Decide what you can actually say about it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'two', correct: true, label: 'The 2022 average is two people, so it is not a hiring-cost finding', why: 'Two salaries. Move either of them and the "trend" moves with it. This is the whole point of the task.' },
+        { key: 'juniors', correct: true, label: 'A low average is as likely to mean we hired juniors as that we paid less', why: 'Average salary mixes seniority with rate. Without the roles you cannot tell those apart, and they mean opposite things to a plan.' },
+        { key: 'exclude', correct: true, label: 'Report it with the headcount beside it, or leave it out', why: 'Either is honest. Quoting the average alone is the only option that is not.' },
+        { key: 'efficient', correct: false, label: '2022 was our most cost-efficient hiring year', why: 'It is a sentence that will be repeated in a budget meeting and cannot survive one question. Do not put it in her hands.' },
+        { key: 'repeat', correct: false, label: 'Recommend repeating the 2022 approach', why: 'There was no approach — there were two hires in the middle of a collapse in hiring. You would be recommending an accident.' },
+        { key: 'drop', correct: false, label: 'Quietly drop 2022 from the table without saying so', why: 'Silently removing an inconvenient row is worse than reporting it badly. If it is excluded, the reader has to know it was.' },
+      ],
+      skills: { businessLogic: 100, communication: 60 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'hc-112': {
+    title: 'Chart what a hire costs',
+    hint: "Same sequence as the last chart, different measure. Ask yourself whether zero belongs on this axis.",
+    brief: "Put average salary per intake year on a slide for the budget pack. It is the same horizontal sequence as the hiring chart, so the same reasoning about order applies — but this is a money value, not a count, and that changes one of the decisions.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Average salary of each year\'s intake.',
+      sourceSql: 'SELECT hire_year, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year ORDER BY hire_year',
+      columns: ['hire_year', 'avg_salary'],
+      correct: { type: 'line', x: 'hire_year', y: 'avg_salary', sort: 'none' },
+      whyRight: 'Years are an ordered sequence, so a line carries the direction of travel — and the order is the finding.',
+      why: {
+        type: 'Still a time series, so still a line. Bars would invite the reader to compare 2016 against 2023 as unrelated categories rather than as points on a path.',
+        x: 'The year is the sequence.',
+        y: 'Average salary is the measured value.',
+        sort: 'Never sort a time series by value. Reordering the years destroys the only thing the chart exists to show.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'hc-113': {
+    title: 'Only the years big enough to trust',
+    hint: "Same HAVING as yesterday, pointing the other way.",
+    brief: "Rebuild the cost table with the thin years taken out, so there is a version Neha can quote without a footnote. Write ONE SQL SELECT returning hire_year, the number hired and the average salary, for years with AT LEAST FIVE hires, oldest first.",
+    referenceSql: 'SELECT hire_year, COUNT(*) AS hired, AVG(salary) AS avg_salary FROM employees GROUP BY hire_year HAVING COUNT(*) >= 5 ORDER BY hire_year',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'hc-114': {
+    title: 'What a hire costs, to Neha',
+    hint: "Give her the number she can budget with, and tell her which years you left out and why.",
+    brief: "Neha needs a cost-per-hire figure for the budget round. Write it up. The difficulty is that the honest answer has an exclusion in it, and an exclusion you do not explain looks like a mistake. Under 150 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'What a hire has cost us', maxWords: 150,
+      prompt: 'The cost-per-hire note, with the exclusion explained rather than hidden.',
+      rubric: [
+        { key: 'figure', label: 'A usable cost-per-hire figure', markers: ['\\d{2}|lakh|average|avg|cost|salary|₹|rs'], why: 'She is going into a budget round. Give her the number.' },
+        { key: 'excluded', label: 'That 2021 and 2022 are excluded', markers: ['2021|2022|exclud|left out|omit|remov'], why: 'An unexplained exclusion reads as an error when someone checks it.' },
+        { key: 'why', label: 'Why they are excluded — too few people', markers: ['two|four|small|thin|few|sample|count'], why: 'The reason is the whole defence. Without it the exclusion looks like picking the years that suit you.' },
+        { key: 'mix', label: 'That average salary reflects seniority, not just rate', markers: ['senior|junior|mix|role|level|who we hire|composition'], why: 'A plan built on the average without this will underfund a year of senior hiring.' },
+        { key: 'scope', label: 'That this is everyone hired, leavers included', markers: ['leaver|left|includ|ever|all hires|intake'], why: 'Her instinct will be current staff. Say it before the numbers diverge.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+
+  'hc-120': {
+    title: 'How many people have actually left',
+    hint: "Count the leavers by the year they left, not the year they joined.",
+    brief: "Neha wants attrition in the plan. Find out what there is to work with first. Write ONE SQL SELECT returning, for each exit_year, how many people left, oldest year first. Only people who have actually left.",
+    referenceSql: 'SELECT exit_year, COUNT(*) AS leavers FROM employees WHERE exit_year IS NOT NULL GROUP BY exit_year ORDER BY exit_year',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 3, day: 3, difficulty: 'easy',
+  },
+
+  'hc-121': {
+    title: 'Attrition by department',
+    hint: "Run it before you form a view. The answer is more awkward than either 'yes' or 'no'.",
+    brief: "Neha has asked specifically for attrition split by department, so she knows where to focus retention. Write ONE SQL SELECT returning, for each department, how many people have left, most first. Then look hard at what comes back.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS leavers FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NOT NULL GROUP BY d.name ORDER BY leavers DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'hc-122': {
+    title: 'What that result lets you tell her',
+    hint: "Three departments, two leavers each, three departments with none. Ask what a difference of two people would do to that ranking.",
+    brief: "You have the departmental attrition table. Neha is going to build a retention plan on whatever you send her. Decide what it actually supports.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'six', correct: true, label: 'Six leavers in total is too few to rank departments by', why: 'Six people across six departments. One more leaver anywhere reorders the whole table, which means the order carries no information.' },
+        { key: 'flat', correct: true, label: 'The three departments with any attrition all have exactly two', why: 'Support, Finance and Engineering, two each. There is no worst department here — there is a tie and three zeroes.' },
+        { key: 'company', correct: true, label: 'Company-wide attrition is something you CAN report', why: 'Six of sixty-nine ever hired. That is a real figure at the level the data supports, and it is worth giving her.' },
+        { key: 'support', correct: false, label: 'Support has the worst retention problem', why: 'It is joint first on two people, and it is also the largest of the three. Reported as a finding it would send a retention budget somewhere the evidence does not point.' },
+        { key: 'zero', correct: false, label: 'Marketing, Sales and People Ops have no retention risk', why: 'They have no leavers in this dataset. Over six total departures, "none yet" and "no risk" are very different claims.' },
+        { key: 'percent', correct: false, label: 'Convert to a percentage per department so it looks more rigorous', why: 'Two out of ten as "20%" is the same two people with a decimal point in front of them. A percentage on a tiny denominator hides the sample size rather than fixing it.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'hc-123': {
+    title: 'Something you can say instead',
+    hint: "You cannot split six people by department. You can ask how long they stayed.",
+    brief: "Give Neha a retention finding the data does carry. Write ONE SQL SELECT returning, for people who have left, how many years they stayed and how many people that was, shortest tenure first.",
+    referenceSql: 'SELECT exit_year - hire_year AS years_stayed, COUNT(*) AS people FROM employees WHERE exit_year IS NOT NULL GROUP BY years_stayed ORDER BY years_stayed',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'hc-124': {
+    title: 'Who is here now, by department',
+    hint: "This one IS a current-staff question. The filter you have been leaving off all week belongs here.",
+    brief: "The plan needs a base to build on: what the company looks like today. Write ONE SQL SELECT returning, for each department, the CURRENT headcount and average salary, largest first. Leavers are not part of today's headcount — this is the one kind of question where filtering them out is correct.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS headcount, AVG(e.salary) AS avg_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY headcount DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'hc-125': {
+    title: 'Tell Neha attrition is not the story',
+    hint: "Do not lead with what you cannot do. Lead with what you found, then say where it stops.",
+    brief: "Neha asked for a departmental attrition split and you are not going to give her one. This is the hardest note of the week: the request was reasonable, the data exists, and the answer is still no. Say it in a way she can take into a planning meeting. Under 160 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Attrition — what I can and cannot give you', maxWords: 160,
+      prompt: 'The no, with something usable attached to it.',
+      rubric: [
+        { key: 'total', label: 'The company-wide figure, which you CAN give her', markers: ['six|6 |total|company|overall|across'], why: 'Lead with what exists. A note that opens with a refusal gets read as obstruction.' },
+        { key: 'why', label: 'Why the departmental split will not hold', markers: ['few|small|six|two|sample|rank|order|noise'], why: 'The reason has to be specific. "Not enough data" without a number is something she will push back on, and should.' },
+        { key: 'tenure', label: 'The tenure finding you can offer instead', markers: ['tenure|year|stayed|first year|early|long'], why: 'Four of six left inside a year. That is a real retention signal at a grain the data supports.' },
+        { key: 'not', label: 'That "no leavers" is not the same as "no risk"', markers: ['not|no risk|does not mean|cannot conclude|absence|yet'], why: 'Otherwise she plans retention budget away from three departments on the strength of nothing.' },
+        { key: 'offer', label: 'What would let you answer it properly', markers: ['exit|interview|survey|more|longer|track|future|collect'], why: 'Turning a no into a next step is what stops it being a dead end.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+
+  'hc-130': {
+    title: 'Where the hiring actually went',
+    hint: "Filter on hire_year, not exit_year. This is about who we took on, whoever is still here.",
+    brief: "Neha's plan allocates next year's hires between departments, so she needs to know how the last few were allocated. Write ONE SQL SELECT returning, for each department, how many people were hired from 2023 onwards, most first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS hired FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.hire_year >= 2023 GROUP BY d.name ORDER BY hired DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'hc-131': {
+    title: 'And where those people sit',
+    hint: "Current staff this time — you are describing the office as it is today, not who was ever hired.",
+    brief: "The plan has a desk-space line in it, so Neha needs the geography. Write ONE SQL SELECT returning, for each location, the CURRENT headcount and average salary, largest first.",
+    referenceSql: 'SELECT location, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM employees WHERE exit_year IS NULL GROUP BY location ORDER BY headcount DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.35, priority: 'medium', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'hc-132': {
+    title: 'Finance has a different number',
+    hint: "Both numbers are right. The question is which one answers which question.",
+    brief: "Diya in Finance has been building the same picture from her side and her headcount does not match yours. Work out what has happened before you reply.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Our headcount numbers do not agree',
+        body: "I have 63 and your deck says 69. That is a six-person gap and we are both presenting on Friday.\n\nI do not think either of us is wrong, but we cannot walk in with two numbers. Which is it?",
+      },
+      prompt: 'Tick everything that is true and worth saying to her.',
+      options: [
+        { key: 'both', correct: true, label: 'Both are right — they answer different questions', why: 'Sixty-nine is everyone ever hired. Sixty-three is who is here today. The gap is the six leavers, exactly.' },
+        { key: 'name', correct: true, label: 'The fix is to label each number with its population', why: '"Hires since 2016" and "current headcount" can sit on the same slide without contradicting each other. Two bare 60-somethings cannot.' },
+        { key: 'mine', correct: true, label: 'For a HIRING plan, the intake number is the relevant one', why: 'She is planning hires. A plan that ignores everyone who has left understates what hiring has had to replace.' },
+        { key: 'wrong', correct: false, label: 'Tell her Finance\'s number is wrong', why: 'It is not, and saying so to the person who owns the cost baseline is a fight you would lose in public on Friday.' },
+        { key: 'split', correct: false, label: 'Average the two and present 66', why: 'A number that describes nothing, defended by no one. This is how a reconciliation turns into a fabrication.' },
+        { key: 'drop', correct: false, label: 'Drop headcount from your deck to avoid the clash', why: 'The clash is the interesting part and it takes one sentence to resolve. Removing it leaves the same confusion, just later.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'hc-133': {
+    title: 'Chart the department mix',
+    hint: "These categories have no natural order, so you get to choose one. Choose the one that helps the reader.",
+    brief: "Put current headcount by department on a slide. This is a different shape of question from the two time series you have charted this week — these categories are not a sequence, and that changes both the chart type and what you do about ordering.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Current headcount in each department.',
+      sourceSql: 'SELECT d.name AS department, COUNT(*) AS headcount FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY headcount DESC',
+      columns: ['department', 'headcount'],
+      correct: { type: 'bar', x: 'department', y: 'headcount', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted biggest first so the ranking is readable at a glance.',
+      why: {
+        type: 'Departments are categories, not a sequence. A line between Engineering and Finance would imply a path that does not exist.',
+        x: 'The department is the category being compared.',
+        y: 'Headcount is the measured value.',
+        sort: 'Nothing orders these for you, so sorting by size does the reader\'s work for them. This is the opposite of the time-series rule, and knowing which case you are in is the skill.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'hc-134': {
+    title: 'How new is each team',
+    hint: "Two conditions in the same WHERE: still here, AND hired recently.",
+    brief: "One thing worth knowing before you plan next year: how much of each team is recent. Write ONE SQL SELECT returning, for each department, how many CURRENT staff joined in 2023 or later, most first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS joined_recently FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND e.hire_year >= 2023 GROUP BY d.name ORDER BY joined_recently DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'hc-135': {
+    title: 'What Meera is about to say in your name',
+    hint: "She has written three sentences from your tables. Two of them are not in your tables.",
+    brief: "Meera in Comms has drafted the intro for the planning pack using your numbers. It goes out under the Data & Analytics banner, which means it goes out as yours. Read it properly.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Draft intro for the planning pack — quick check',
+        body: "Here is the opening paragraph, built from your analysis:\n\n\"Hiring has recovered strongly since the 2021-22 slowdown, with 2024 our second-largest intake in a decade. Our most efficient hiring year was 2022, at under ten lakh per hire. Attrition is concentrated in Support, where retention work should focus. People Ops has grown fastest, with seven of its nine current staff joining since 2023.\"\n\nHappy to send unless you shout.",
+      },
+      prompt: 'Tick every sentence you would tell her to change or cut.',
+      options: [
+        { key: 'efficient', correct: true, label: 'The "most efficient hiring year was 2022" sentence', why: 'Two people. You spent Tuesday establishing this is not a finding, and here it is about to go out in your name.' },
+        { key: 'support', correct: true, label: 'The "attrition concentrated in Support" sentence', why: 'Two leavers, tied with two other departments. This is Wednesday\'s work being undone in a paragraph.' },
+        { key: 'recovered', correct: false, label: 'The "hiring has recovered" sentence', why: 'That one is supported — six, nine and seven against a collapse to four and two. Cutting a true sentence costs you credibility for the ones you do challenge.' },
+        { key: 'peopleops', correct: false, label: 'The People Ops growth sentence', why: 'Seven of nine, straight out of your own query. It is the strongest real finding in the pack.' },
+        { key: 'second', correct: false, label: 'The "second-largest intake in a decade" claim', why: 'Nine in 2024, behind only 2020\'s ten — though it ties with 2017 and 2018. Defensible as written, and worth knowing it is a three-way tie if anyone pushes.' },
+        { key: 'all', correct: false, label: 'Ask her to remove all the numbers and keep it qualitative', why: 'The numbers are the point of the pack. The problem is two specific claims, not the existence of figures.' },
+      ],
+      skills: { communication: 100, businessLogic: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+
+  'hc-140': {
+    title: 'Hires against leavers, year by year',
+    hint: "Two counts over different columns. A correlated subquery per year is the readable way to do it.",
+    brief: "A hiring plan is about net change, not intake alone. Write ONE SQL SELECT returning, for each year the company hired in: the year, how many were hired, how many left in that same year, and the net change. Oldest year first.",
+    referenceSql: 'SELECT y.yr AS year, (SELECT COUNT(*) FROM employees WHERE hire_year = y.yr) AS hired, (SELECT COUNT(*) FROM employees WHERE exit_year = y.yr) AS left_us, (SELECT COUNT(*) FROM employees WHERE hire_year = y.yr) - (SELECT COUNT(*) FROM employees WHERE exit_year = y.yr) AS net FROM (SELECT DISTINCT hire_year AS yr FROM employees) y ORDER BY y.yr',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'hc-141': {
+    title: 'Median tenure, in Python',
+    // Deliberately flagged for rework: Asha accepts the answer and then asks for it a
+    // different way. Being told your correct answer is not the right approach is the most
+    // common experience of a first year and almost nothing simulates it.
+    rework: true,
+    hint: "SQLite has no median. Build the list of tenures yourself and take the middle, and handle the even-length case.",
+    brief: "Neha wants to know how long people stay, and the average is dragged around by six data points. In the notebook, compute the MEDIAN number of years that leavers stayed, and how many leavers that is based on. Assign a dict with keys median_tenure and leavers to `result`.",
+    tool: 'python', datasetKey: 'hr_core',
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const tenures = tables.employees
+        .filter((e) => e.exit_year != null)
+        .map((e) => e.exit_year - e.hire_year)
+        .sort((a, b) => a - b);
+      const m = Math.floor(tenures.length / 2);
+      const median = tenures.length % 2 ? tenures[m] : (tenures[m - 1] + tenures[m]) / 2;
+      return { median_tenure: median, leavers: tenures.length };
+    },
+  },
+
+  'hc-142': {
+    title: 'What to actually plan for',
+    hint: "You have ten years of intake and a recent three that look different from the middle three. Decide which base is defensible.",
+    brief: "Neha needs a planning assumption. You have the whole series, the dip, the recovery and six leavers. Decide what you would put your name to.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick every basis you could defend in a budget meeting.',
+      options: [
+        { key: 'recent', correct: true, label: 'The last three years — six, nine and seven — as the working range', why: 'Post-recovery, three consecutive years, twenty-two people. It is the most recent period that looks like a normal state.' },
+        { key: 'longrun', correct: true, label: 'The ten-year average of about seven a year, as a sense check', why: 'Sixty-nine over ten years. Useful precisely because it agrees with the recent three — two methods landing in the same place is worth saying.' },
+        { key: 'replace', correct: true, label: 'Plus whatever attrition is expected to take out', why: 'A plan for seven hires with six historical leavers in the background is a plan for net growth of slightly under seven. Say which one you mean.' },
+        { key: 'peak', correct: false, label: 'The 2020 peak of ten, since we should aim high', why: 'Planning to the best year you ever had is not a forecast, it is an aspiration with a number on it. It will be wrong in the direction that costs money.' },
+        { key: 'dip', correct: false, label: 'The 2021-22 average, as the conservative option', why: 'Three a year across the worst two years in the series, six people in total. Conservative and unrepresentative are not the same thing.' },
+        { key: 'trend', correct: false, label: 'Extrapolate the 2023-25 line forward to get next year\'s figure', why: 'Six, nine, seven is not a line — it is noise around seven. Fitting a trend to three points and projecting it is how a plan acquires false precision.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'hc-143': {
+    title: 'How much of each team is new',
+    hint: "Current staff only, with a CASE inside the SUM so you get both numbers from one pass.",
+    brief: "The last piece before you write the plan. Write ONE SQL SELECT returning, for each department: the CURRENT headcount, and how many of those people joined in 2023 or later. Largest team first. One of these departments is going to surprise you.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS headcount, SUM(CASE WHEN e.hire_year >= 2023 THEN 1 ELSE 0 END) AS recent_joiners FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY headcount DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'hc-144': {
+    title: 'Neha wants one number',
+    hint: "She is not asking you to be more accurate. She is asking you to be more certain than you are.",
+    brief: "An hour before the budget round, Neha asks for the thing you have spent the week explaining you cannot give her cleanly. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'Just give me the number',
+        body: "I know all the caveats and I have read them. But Finance will not accept a range and I have twenty minutes in that room.\n\nHow many people should we plan to hire next year? One number.",
+      },
+      prompt: 'Which responses are both honest and useful to her?',
+      options: [
+        { key: 'seven', correct: true, label: '"Seven — that is both the ten-year average and the middle of the last three years"', why: 'A single number she can use, with the reasoning compressed into one clause. Giving a number is not dishonest when you can defend it.' },
+        { key: 'plusattr', correct: true, label: '"Seven to hold steady — more if you want the headcount to grow"', why: 'It answers the question and surfaces the assumption hidden inside it, which is the bit Finance will actually probe.' },
+        { key: 'whereitgoes', correct: true, label: '"I can give you seven, but the split between departments is the number worth arguing about"', why: 'Redirects her to the decision that actually matters — People Ops took seven of its nine in three years — without refusing the one she asked for.' },
+        { key: 'refuse', correct: false, label: '"I cannot give you a single number responsibly"', why: 'You can. Seven is defensible twice over. Refusing here is not rigour, it is leaving her to invent a number that has no analysis behind it at all.' },
+        { key: 'ten', correct: false, label: '"Ten — better to ask high and get cut back"', why: 'Playing the budget game with a number that came out of your analysis puts your credibility behind someone else\'s negotiating tactic.' },
+        { key: 'caveats', correct: false, label: 'Send the caveats again and let her decide', why: 'She has read them and said so. Repeating them is not care, it is refusing to do the last and hardest part of the job.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'hc-145': {
+    title: 'The hiring plan, to People Ops',
+    hint: "Number first. Then what it is built on, then the one thing you would not bet on.",
+    brief: "The deliverable the whole week has been for. Neha will paste this into the budget pack, so write it as something that survives being read by Finance without you in the room.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni and the budget round', subject: 'Hiring plan — the numbers behind it', maxWords: 200,
+      prompt: 'The plan. A number, its basis, its limits, and where the real decision is.',
+      rubric: [
+        { key: 'number', label: 'A planning number, in the first line', markers: ['seven|7|six|eight|around|about'], why: 'She has twenty minutes in that room. Lead with the thing she has to say.' },
+        { key: 'basis', label: 'What it is built on', markers: ['average|last three|2023|2024|2025|ten year|history|recent'], why: 'Two methods agreeing is the strongest sentence in the note. Say both.' },
+        { key: 'attrition', label: 'Whether it replaces leavers or grows headcount', markers: ['attrition|leaver|replace|net|grow|steady|hold'], why: 'The same seven means two different budgets. Finance will find this gap if you leave it.' },
+        { key: 'split', label: 'Where the hires have actually been going', markers: ['people ops|engineering|sales|department|split|mix|allocat'], why: 'Seven of People Ops\'s nine joined since 2023. That is the finding a plan can actually act on.' },
+        { key: 'limit', label: 'One thing this cannot tell her', markers: ['cannot|can\'t|does not|doesn\'t|attrition|six|small|thin|2021|2022|assume'], why: 'Volunteering the limit before Finance finds it is what makes the rest credible.' },
+        { key: 'scope', label: 'Which population the numbers describe', markers: ['ever hired|intake|current|leaver|includ|69|63'], why: 'Finance has 63 and you have 69. Label it or spend the meeting on it.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
   // ---- Senior track -----------------------------------------------------------------
   // The user was explicit that junior and senior differ by PROJECT, not by the same
   // brief written vaguer. So these are different questions, not harder wording: they
@@ -1582,22 +2046,6 @@ function addWorkingDays(fromIso, n) {
   return d;
 }
 
-// How many working days have elapsed since the week began, inclusive of day 1.
-function workingDaysElapsed(fromIso, nowMs) {
-  const start = new Date(fromIso);
-  start.setUTCHours(0, 0, 0, 0);
-  const today = new Date(nowMs);
-  today.setUTCHours(0, 0, 0, 0);
-  if (today < start) return 0;
-  let count = 0;
-  const cursor = new Date(start);
-  while (cursor <= today) {
-    if (!isWeekend(cursor)) count += 1;
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-  return count;
-}
-
 const PROJECT_WEEK_DAYS = 5;
 
 function computeStreaks(days) {
@@ -1735,7 +2183,7 @@ function round1(n) { return Math.round(n * 10) / 10; }
 function projectWeek(run, def, taskRows, nowMs) {
   if (!run) return null;
 
-  const dayNow = Math.min(PROJECT_WEEK_DAYS, Math.max(1, workingDaysElapsed(run.started_at, nowMs)));
+  const dayNow = projectDayOn(run.started_at, nowMs);
   const dueMs = Date.parse(run.due_at);
   const overdueDays = nowMs > dueMs ? Math.floor((nowMs - dueMs) / DAY_MS) : 0;
   // Counted in WORKING days, because that is the unit the week itself is in. Reporting
@@ -1753,7 +2201,13 @@ function projectWeek(run, def, taskRows, nowMs) {
   // wrong. The number has to explain itself — say how much is outstanding AND when it
   // becomes workable, or a correct figure reads as a bug.
   const outstanding = taskRows.filter((t) => t.status !== 'graded');
-  const notYetOpen = outstanding.filter((t) => t.opens_at && Date.parse(t.opens_at) > nowMs);
+  // Openness has to be decided by exactly the rule the task board uses, or this note
+  // contradicts the screen it sits next to. A task is workable once its day has ARRIVED
+  // on the calendar or been EARNED by finishing the day before — counting only the
+  // calendar made every task on a fresh Monday read as "not open yet", and the card then
+  // congratulated the learner for being up to date on a day they had not started.
+  const unlocked = unlockedDay({ id: run.enrollment_id }, run);
+  const notYetOpen = outstanding.filter((t) => !taskIsOpen(t, unlocked, nowMs));
   const workable = outstanding.length - notYetOpen.length;
   const nextOpensAt = notYetOpen.length
     ? notYetOpen.map((t) => Date.parse(t.opens_at)).sort((a, b) => a - b)[0]
@@ -1834,6 +2288,30 @@ function projectWeek(run, def, taskRows, nowMs) {
   };
 }
 
+// Is a project actually finished being WRITTEN?
+//
+// A project with two authored tasks and no activities presented itself as a five-day week,
+// and then behaved like one: a day with zero activities and zero situations completes the
+// moment its tasks do, so the learner was rolled through "day 2 of 5" above an empty board
+// with a blank Today tab. That was three separate bug reports with one cause.
+//
+// So the shape is now checked at the door. A project that is not fully authored is shown
+// as being written and cannot be started at all, which is both honest and impossible to
+// get wrong later: authoring the content is what makes a project startable, and there is
+// no second place to remember to update.
+function projectReadiness(def) {
+  const missing = [];
+  const tasks = (def.taskKeys || []).length;
+  const acts = dayitems.activitiesFor(def.key).length;
+  const sits = dayitems.situationsFor(def.key).length;
+  const quiz = dayitems.quizFor(def.key);
+  if (tasks < PROJECT_WEEK_DAYS * DAY_SHAPE.tasks) missing.push(`${tasks}/${PROJECT_WEEK_DAYS * DAY_SHAPE.tasks} tasks`);
+  if (acts < PROJECT_WEEK_DAYS * DAY_SHAPE.activities) missing.push(`${acts}/${PROJECT_WEEK_DAYS * DAY_SHAPE.activities} activities`);
+  if (sits < PROJECT_WEEK_DAYS * DAY_SHAPE.situations) missing.push(`${sits}/${PROJECT_WEEK_DAYS * DAY_SHAPE.situations} situations`);
+  if (!quiz) missing.push('no quiz');
+  return { ready: missing.length === 0, missing };
+}
+
 function getProjects(role, tasks, streaks, enrollmentId, level) {
   const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const byKey = {};
@@ -1885,7 +2363,13 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
 
   const projects = base.map((p) => {
     const unlocked = completedCount >= p.def.unlockAfter;
-    const status = p.completed ? 'completed' : p.started ? 'active' : unlocked ? 'available' : 'locked';
+    const ready = projectReadiness(p.def);
+    // 'writing' outranks 'available' but never overrides a project already under way —
+    // a learner mid-project must not have it pulled out from under them.
+    const status = p.completed ? 'completed'
+      : p.started ? 'active'
+      : !ready.ready ? 'writing'
+      : unlocked ? 'available' : 'locked';
     return {
       key: p.def.key,
       title: p.def.title,
@@ -1908,7 +2392,12 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
         .map((axis) => ({ axis, label: SKILL_AXIS_LABEL[axis], points: round1(p.skillPoints[axis]) })),
       tasks: p.tasks,
       // What is actually standing between the learner and this project.
-      requirement: unlocked ? null : `Complete ${p.def.unlockAfter} project${p.def.unlockAfter === 1 ? '' : 's'} first`,
+      requirement: !ready.ready ? 'Still being written — not ready to start yet'
+        : unlocked ? null
+        : `Complete ${p.def.unlockAfter} project${p.def.unlockAfter === 1 ? '' : 's'} first`,
+      // Only useful to us, but visible in the state so a test can say exactly what is
+      // missing rather than just that something is.
+      authoring: ready.ready ? null : ready.missing,
       unlockAfter: p.def.unlockAfter,
     };
   });
@@ -2050,9 +2539,7 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
     // the day before opens the next one immediately. Somebody who clears Monday by eleven
     // starts Tuesday at eleven rather than waiting for a product they are paying for — and
     // the deadline, which is what makes this a job, is still governed by the clock.
-    const dayArrived = !t.opens_at || Date.parse(t.opens_at) <= nowMs;
-    const dayEarned = unlockedDayIndex && t.day_index && t.day_index <= unlockedDayIndex;
-    const notYetOpen = !dayArrived && !dayEarned;
+    const notYetOpen = !taskIsOpen(t, unlockedDayIndex, nowMs);
     const stage = graded ? 'Graded' : t.submission ? 'Submitted' : notYetOpen ? 'Opens later' : 'Assigned';
     const stagePct = graded ? 100 : t.submission ? 50 : 0;
     const priority = t.priority || def.priority || 'medium';
@@ -2693,12 +3180,27 @@ function getState(userId) {
     // The day in all three currencies, not just tasks. A day that is "6 of 6" on tasks and
     // silent about the two activities and two situations still owed is the old model
     // wearing new numbers.
-    day: runNow ? {
-      ...dayProgress(enrollment, runNow, dayUnlocked),
-      unlocked: dayUnlocked,
-      totalDays: PROJECT_WEEK_DAYS,
-      shape: DAY_SHAPE,
-    } : null,
+    day: runNow ? (() => {
+      const progress = dayProgress(enrollment, runNow, dayUnlocked);
+      const closed = dayIsClosed(enrollment, runNow, dayUnlocked);
+      return {
+        ...progress,
+        unlocked: dayUnlocked,
+        totalDays: PROJECT_WEEK_DAYS,
+        shape: DAY_SHAPE,
+        dayName: DAY_NAMES[dayUnlocked] || `Day ${dayUnlocked}`,
+        // Everything done, nothing signed off yet: the moment the whole day is built
+        // around, and the only time the wrap-up button exists.
+        readyToClose: Boolean(progress && progress.complete) && !closed,
+        closed,
+        // What is actually left, in words, so the learner can go and do it rather than
+        // reverse-engineer it from three counters.
+        pending: dayPending(progress),
+        isLastDay: dayUnlocked >= PROJECT_WEEK_DAYS,
+        nextDayName: dayUnlocked < PROJECT_WEEK_DAYS ? (DAY_NAMES[dayUnlocked + 1] || `Day ${dayUnlocked + 1}`) : null,
+        closedAt: (dayRow(enrollment, runNow, dayUnlocked) || {}).closed_at || null,
+      };
+    })() : null,
     activities: runNow ? db.prepare('SELECT * FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ? ORDER BY day_index, created_at')
       .all(enrollment.id, runNow.id).map((r) => {
         const def = dayitems.activitiesFor(runNow.project_key).find((a) => a.key === r.activity_key) || {};
@@ -2737,6 +3239,32 @@ function getState(userId) {
           // is the answer to the only question triage asks.
           expect: r.handled_as ? (def.expect || []) : null,
           note: r.handled_as ? (def.note || null) : null,
+        };
+      }) : [],
+    // The company admin. Kept apart from the day's work on purpose: it is part of the job
+    // and none of it counts toward finishing the day.
+    chores: runNow ? db.prepare('SELECT * FROM sim_chores WHERE enrollment_id = ? AND project_run_id = ? ORDER BY created_at')
+      .all(enrollment.id, runNow.id).map((r) => {
+        const def = ambientmail.choreByKey(r.chore_key) || {};
+        const delivered = r.message_id
+          ? db.prepare('SELECT subject, body FROM sim_messages WHERE id = ?').get(r.message_id)
+          : null;
+        const projectDef = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === runNow.project_key);
+        const projectTitle = projectDef ? projectDef.title : 'this project';
+        return {
+          key: r.chore_key, day: r.day_index, from: def.from || null,
+          senderName: def.senderName || null,
+          subject: (delivered && delivered.subject) || def.subject || null,
+          body: (delivered && delivered.body) || def.body || null,
+          action: def.action ? {
+            submitLabel: def.action.submitLabel,
+            fields: def.action.fields.map((f) => ({
+              ...f,
+              options: f.options ? f.options.map((o) => fillMail(o, '', projectTitle)) : undefined,
+            })),
+          } : null,
+          done: Boolean(r.done_at),
+          values: r.values_json ? JSON.parse(r.values_json) : null,
         };
       }) : [],
     quiz: runShown ? getQuiz(enrollment, runShown) : null,
@@ -2848,13 +3376,14 @@ function nudgeOverdueProjects(userId, enrollment) {
 // week rather than a backlog. The announcement message doubles as the record that it
 // has been released, so this never fires twice.
 function releaseDueTasks(enrollment) {
-  const nowIso = now();
+  const nowMs = Date.now();
+  const run = activeRun(enrollment);
+  const unlocked = run ? unlockedDay(enrollment, run) : 1;
   const due = db.prepare(`
     SELECT t.* FROM sim_tasks t
-    WHERE t.enrollment_id = ? AND t.opens_at IS NOT NULL AND t.opens_at <= ?
-      AND t.day_index > 1
+    WHERE t.enrollment_id = ? AND t.day_index > 1
       AND NOT EXISTS (SELECT 1 FROM sim_messages m WHERE m.task_id = t.id AND m.sender_archetype = 'line_manager')
-  `).all(enrollment.id, nowIso);
+  `).all(enrollment.id).filter((t) => taskIsOpen(t, unlocked, nowMs));
 
   for (const t of due) {
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
@@ -2989,7 +3518,12 @@ function getStandup(userId) {
   const learner = firstName(profile && profile.name) || 'there';
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
   const graded = tasks.filter((t) => t.status === 'graded');
-  const open = tasks.filter((t) => t.status !== 'graded' && !(t.opens_at && Date.parse(t.opens_at) > Date.now()));
+  // The same rule the board uses. Asha asking "what are you picking up today?" without
+  // naming anything, above a board with six open tasks on it, is the stand-up equivalent
+  // of the Friday bug: a second copy of "is this open yet" that had drifted.
+  const standupRun = activeRun(enrollment);
+  const standupDay = standupRun ? unlockedDay(enrollment, standupRun) : 1;
+  const open = tasks.filter((t) => t.status !== 'graded' && taskIsOpen(t, standupDay, Date.now()));
 
   // "Since we last spoke" is the honest framing — this is self-paced, so yesterday may
   // have been a week ago, and pretending otherwise would be the first false note.
@@ -3109,12 +3643,34 @@ function itemRow(table, enrollmentId, key) {
 //
 // Guarded by the row already existing rather than by a flag, because getState runs on every
 // page load and a learner who refreshes twice must not get Vikram's email twice.
+// The second activity and the second situation are not waiting for you at nine. They turn
+// up while you are mid-task, which is the whole point of them: after a couple of tasks are
+// through, or after ten minutes at the desk if the task is a hard one. Tied to tasks rather
+// than to the clock alone so it can never stall a day — a day needs its six tasks anyway,
+// and by the second one everything has landed.
+const ITEM_TASKS_APART = 2;
+const ITEM_MINUTES_APART = 10;
+
+function itemHasLanded(enrollment, run, dayIndex, index) {
+  if (index <= 0) return true;
+  const openedAt = dayOpenedAt(enrollment, run, dayIndex);
+  const minutes = Math.max(0, (Date.now() - Date.parse(openedAt)) / 60000);
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const keys = def ? def.taskKeys : [];
+  const signedOff = db.prepare('SELECT task_key, status, day_index FROM sim_tasks WHERE enrollment_id = ?')
+    .all(enrollment.id)
+    .filter((t) => keys.includes(t.task_key) && t.day_index === dayIndex
+      && (t.status === 'graded' || t.status === 'parked')).length;
+  return signedOff >= index * ITEM_TASKS_APART || minutes >= index * ITEM_MINUTES_APART;
+}
+
 function issueDayItems(enrollment, run, dayIndex) {
   if (!run || !dayIndex) return 0;
   let issued = 0;
 
-  for (const a of dayitems.activitiesFor(run.project_key)) {
-    if (a.day !== dayIndex) continue;
+  const todaysActs = dayitems.activitiesFor(run.project_key).filter((a) => a.day === dayIndex);
+  for (const [index, a] of todaysActs.entries()) {
+    if (!itemHasLanded(enrollment, run, dayIndex, index)) continue;
     if (itemRow('sim_activities', enrollment.id, a.key)) continue;
     const person = ROSTER.find((r) => r.archetype === a.from) || ROSTER[0];
     const messageId = addMessage(enrollment.id, a.from, person.name, a.body, null,
@@ -3126,8 +3682,9 @@ function issueDayItems(enrollment, run, dayIndex) {
     issued += 1;
   }
 
-  for (const sit of dayitems.situationsFor(run.project_key)) {
-    if (sit.day !== dayIndex) continue;
+  const todaysSits = dayitems.situationsFor(run.project_key).filter((x) => x.day === dayIndex);
+  for (const [index, sit] of todaysSits.entries()) {
+    if (!itemHasLanded(enrollment, run, dayIndex, index)) continue;
     if (itemRow('sim_situations', enrollment.id, sit.key)) continue;
     const person = ROSTER.find((r) => r.archetype === sit.from) || ROSTER[0];
     const messageId = addMessage(enrollment.id, sit.from, person.name, sit.body, null,
@@ -3171,41 +3728,123 @@ function emailsIssuedForDay(enrollment, run, dayIndex) {
   return actEmails + sitEmails;
 }
 
+// How much of today's post has been delivered yet.
+//
+// Ten emails landing in one go the moment a day opens is not an inbox, it is a wall. Real
+// mail arrives while you are doing something else, which is the entire reason interruption
+// is worth practising. So the day's post is released against an allowance that grows two
+// ways: every task you sign off brings something in, and so does simply spending time at
+// your desk. Both, because a learner who works fast should not sit in silence, and one who
+// is stuck on a hard task should not have a dead inbox either.
+const MAIL_OPENING_BATCH = 2;      // what is waiting when you sit down
+const MAIL_MINUTES_EACH = 3;       // and one more every few minutes after that
+
+function dayOpenedAt(enrollment, run, dayIndex) {
+  const row = dayRow(enrollment, run, dayIndex);
+  if (row) return row.created_at;
+  const created = now();
+  db.prepare(`INSERT INTO sim_days (id, enrollment_id, project_run_id, day_index, created_at)
+              VALUES (?, ?, ?, ?, ?)
+              ON CONFLICT(enrollment_id, project_run_id, day_index) DO NOTHING`)
+    .run(cryptoRandomId(), enrollment.id, run.id, dayIndex, created);
+  const again = dayRow(enrollment, run, dayIndex);
+  return again ? again.created_at : created;
+}
+
+function mailAllowance(enrollment, run, dayIndex) {
+  const openedAt = dayOpenedAt(enrollment, run, dayIndex);
+  const minutes = Math.max(0, (Date.now() - Date.parse(openedAt)) / 60000);
+
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const keys = def ? def.taskKeys : [];
+  const signedOff = db.prepare('SELECT task_key, status, day_index FROM sim_tasks WHERE enrollment_id = ?')
+    .all(enrollment.id)
+    .filter((t) => keys.includes(t.task_key) && t.day_index === dayIndex
+      && (t.status === 'graded' || t.status === 'parked')).length;
+
+  return MAIL_OPENING_BATCH + signedOff + Math.floor(minutes / MAIL_MINUTES_EACH);
+}
+
+// The order today's post arrives in. Deterministic — what lands on a learner's Wednesday
+// is reviewable in a diff like everything else — and deliberately interleaved so the two
+// messages that want an answer are not all at the front or all at the back. One turns up
+// early, one lands in the middle of the afternoon.
+function mailSequence(enrollment, run, dayIndex) {
+  const desk = ambientmail.deskFor(dayIndex);
+  const chores = ambientmail.choresFor(dayIndex);
+  const already = emailsIssuedForDay(enrollment, run, dayIndex) + desk.length + chores.length;
+  const wanted = Math.max(0, ambientmail.MIN_EMAILS_PER_DAY - already);
+  const noise = ambientmail.noiseFor(dayIndex).slice(0, wanted);
+
+  const order = [];
+  // The two that want an answer land early enough to be acted on — second thing you open,
+  // and again a couple of tasks later. Pushing them to the back of the day would mean a
+  // learner who works fast never sees them before signing off.
+  const deskAt = new Set([1, 3]);
+  const choreAt = new Set([6]);    // the timesheet, late enough that you have hours to log
+  let d = 0;
+  let c = 0;
+  let n = 0;
+  const total = desk.length + chores.length + noise.length;
+  for (let i = 0; i < total; i += 1) {
+    if (deskAt.has(i) && d < desk.length) { order.push({ kind: 'desk', mail: desk[d] }); d += 1; continue; }
+    if (choreAt.has(i) && c < chores.length) { order.push({ kind: 'chore', mail: chores[c] }); c += 1; continue; }
+    if (n < noise.length) { order.push({ kind: 'noise', mail: noise[n] }); n += 1; continue; }
+    if (d < desk.length) { order.push({ kind: 'desk', mail: desk[d] }); d += 1; continue; }
+    if (c < chores.length) { order.push({ kind: 'chore', mail: chores[c] }); c += 1; continue; }
+  }
+  return order;
+}
+
 function issueDayMail(enrollment, run, dayIndex) {
   if (!run || !dayIndex) return 0;
   const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
   const projectTitle = def ? def.title : 'this project';
   const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(enrollment.user_id);
   const learnerName = firstName(profile && profile.name) || 'there';
+
+  const sequence = mailSequence(enrollment, run, dayIndex);
+  // A closed day releases whatever is left of its post. Otherwise a learner who cleared
+  // the day in forty minutes would carry two undelivered newsletters into tomorrow, and
+  // the daily count would quietly stop being ten.
+  const allowance = dayIsClosed(enrollment, run, dayIndex)
+    ? sequence.length
+    : mailAllowance(enrollment, run, dayIndex);
   let issued = 0;
 
-  // The two that are addressed to you. Stored as situations so the learner handles them
-  // with the controls they already know, keyed 'dm-' so the day gate can tell them apart.
-  for (const mail of ambientmail.deskFor(dayIndex)) {
-    if (itemRow('sim_situations', enrollment.id, mail.key)) continue;
-    const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
-      fillMail(mail.body, learnerName, projectTitle), null,
-      fillMail(mail.subject, learnerName, projectTitle), mail.from);
-    db.prepare(`INSERT INTO sim_situations (id, enrollment_id, situation_key, project_run_id, message_id, delivered_at, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`)
-      .run(cryptoRandomId(), enrollment.id, mail.key, run.id, messageId, now(), now());
-    issued += 1;
-  }
-
-  // Then enough noise to reach the floor. Taken in authored order rather than at random,
-  // so what arrives on a learner's Wednesday is reviewable in a diff like everything else.
-  const already = emailsIssuedForDay(enrollment, run, dayIndex) + ambientmail.deskFor(dayIndex).length;
-  const wanted = Math.max(0, ambientmail.MIN_EMAILS_PER_DAY - already);
-  for (const mail of ambientmail.noiseFor(dayIndex).slice(0, wanted)) {
-    const seen = db.prepare('SELECT id FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ? AND mail_key = ?')
-      .get(enrollment.id, run.id, mail.key);
-    if (seen) continue;
-    const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
-      fillMail(mail.body, learnerName, projectTitle), null,
-      fillMail(mail.subject, learnerName, projectTitle), mail.from);
-    db.prepare(`INSERT INTO sim_ambient_mail (id, enrollment_id, project_run_id, mail_key, day_index, message_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`)
-      .run(cryptoRandomId(), enrollment.id, run.id, mail.key, dayIndex, messageId, now());
+  for (const [i, item] of sequence.entries()) {
+    if (i >= allowance) break;
+    const mail = item.mail;
+    if (item.kind === 'desk') {
+      // The two that are addressed to you. Stored as situations so the learner handles
+      // them with the controls they already know, keyed 'dm-' so the day gate can tell
+      // them apart — they are part of the job, not a fifth kind of homework.
+      if (itemRow('sim_situations', enrollment.id, mail.key)) continue;
+      const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
+        fillMail(mail.body, learnerName, projectTitle), null,
+        fillMail(mail.subject, learnerName, projectTitle), mail.from);
+      db.prepare(`INSERT INTO sim_situations (id, enrollment_id, situation_key, project_run_id, message_id, delivered_at, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(cryptoRandomId(), enrollment.id, mail.key, run.id, messageId, now(), now());
+    } else if (item.kind === 'chore') {
+      if (db.prepare('SELECT id FROM sim_chores WHERE enrollment_id = ? AND chore_key = ?').get(enrollment.id, mail.key)) continue;
+      const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
+        fillMail(mail.body, learnerName, projectTitle), null,
+        fillMail(mail.subject, learnerName, projectTitle), mail.from);
+      db.prepare(`INSERT INTO sim_chores (id, enrollment_id, project_run_id, chore_key, day_index, message_id, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(cryptoRandomId(), enrollment.id, run.id, mail.key, dayIndex, messageId, now());
+    } else {
+      const seen = db.prepare('SELECT id FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ? AND mail_key = ?')
+        .get(enrollment.id, run.id, mail.key);
+      if (seen) continue;
+      const messageId = addMessage(enrollment.id, mail.from, mail.senderName,
+        fillMail(mail.body, learnerName, projectTitle), null,
+        fillMail(mail.subject, learnerName, projectTitle), mail.from);
+      db.prepare(`INSERT INTO sim_ambient_mail (id, enrollment_id, project_run_id, mail_key, day_index, message_id, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(cryptoRandomId(), enrollment.id, run.id, mail.key, dayIndex, messageId, now());
+    }
     issued += 1;
   }
   return issued;
@@ -3239,6 +3878,7 @@ function dayProgress(enrollment, run, dayIndex) {
     .filter((t) => keys.includes(t.task_key) && t.day_index === dayIndex);
   const tasksDone = tasks.filter((t) => t.status === 'graded' || t.status === 'parked').length;
 
+  const actKeys = dayitems.activitiesFor(run.project_key).filter((a) => a.day === dayIndex).map((a) => a.key);
   const acts = db.prepare('SELECT status FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ? AND day_index = ?')
     .all(enrollment.id, run.id, dayIndex);
   const actsDone = acts.filter((a) => a.status === 'done').length;
@@ -3254,34 +3894,195 @@ function dayProgress(enrollment, run, dayIndex) {
   // authored tasks is complete at four; the alternative is a learner stuck forever on a
   // sixth task nobody wrote. The shape is the authoring target, checked by its own test,
   // not a runtime assertion aimed at the person using the product.
-  const need = { tasks: tasks.length, activities: acts.length, situations: sitKeys.length };
+  // Counted from what the day HAS AUTHORED, not from what has been delivered so far. Mail
+  // now arrives through the day rather than all at nine, so counting delivered rows would
+  // make the target move under the learner: "1 of 1 activities" at ten o'clock and "1 of 2"
+  // after the second one lands.
+  const need = { tasks: tasks.length, activities: actKeys.length, situations: sitKeys.length };
+
+  // The quiz belongs to the last day, so the last day is not finished without it. Without
+  // this a learner could sign off Friday having skipped it, and the project would then be
+  // permanently one item short of complete with nothing left on the board to explain why.
+  const quizDef = dayitems.quizFor(run.project_key);
+  const quizRequired = Boolean(quizDef) && dayIndex >= PROJECT_WEEK_DAYS;
+  const quizTaken = quizRequired
+    ? db.prepare('SELECT COUNT(*) n FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?')
+        .get(enrollment.id, run.project_key).n > 0
+    : false;
 
   return {
     day: dayIndex,
     tasks: { done: tasksDone, total: need.tasks },
     activities: { done: actsDone, total: need.activities },
     situations: { done: sitsDone, total: need.situations },
-    complete: tasksDone >= need.tasks && actsDone >= need.activities && sitsDone >= need.situations,
+    quizRequired,
+    quizTaken,
+    complete: tasksDone >= need.tasks && actsDone >= need.activities && sitsDone >= need.situations
+      && (!quizRequired || quizTaken),
   };
 }
 
-// The next day opens when today is finished, not when the clock says so.
+// Closing the day.
+//
+// A day used to end by simply running out of things in it: the sixth task was signed off
+// and the learner was already on tomorrow, with nothing having said well done. That is the
+// opposite of how a working day feels, and it is the one moment in the week where the
+// product has something unambiguously good to say.
+//
+// So closing is now an act. The day becomes CLOSEABLE when everything in it is done, the
+// learner closes it, Asha writes to say what they got through, and only then does tomorrow
+// exist. Nothing advances on its own.
+
+function dayRow(enrollment, run, dayIndex) {
+  return db.prepare('SELECT * FROM sim_days WHERE enrollment_id = ? AND project_run_id = ? AND day_index = ?')
+    .get(enrollment.id, run.id, dayIndex);
+}
+
+function dayIsClosed(enrollment, run, dayIndex) {
+  const row = dayRow(enrollment, run, dayIndex);
+  return Boolean(row && row.closed_at);
+}
+
+// The next day opens when today has been CLOSED, not when the clock says so.
 //
 // The learner's rule, and the right one: somebody who clears Monday by eleven should start
 // Tuesday at eleven, not wait until tomorrow for a product they are paying for. The clock
 // still governs the DEADLINE — that pressure is most of what makes this a job rather than a
 // course — so this is additive: a task opens if its day has arrived OR the day before it is
-// done.
+// signed off.
+function dayIsStarted(enrollment, run, dayIndex) {
+  if (dayIndex <= 1) return true; // day one starts when the project does
+  const row = dayRow(enrollment, run, dayIndex);
+  return Boolean(row && row.started_at);
+}
+
+// Which day the CALENDAR has reached, read off the tasks themselves rather than
+// recomputed from the run's start.
+//
+// The two must never disagree: the board decides a task is open from its own opens_at, and
+// time travel rewrites those. Deriving this independently produced a counter that said
+// "day 1 of 5" above twelve open tasks — the same class of bug as the Friday one, from the
+// same cause of having two places that know when a day begins.
 function unlockedDay(enrollment, run) {
   if (!run) return 1;
   const total = PROJECT_WEEK_DAYS;
   let day = 1;
   while (day < total) {
-    const p = dayProgress(enrollment, run, day);
-    if (!p || !p.complete) break;
+    // Signed off yesterday AND clocked on today. Both are deliberate: finishing Monday's
+    // last task must not slide the learner straight into Tuesday, or the well done they
+    // just earned would be on screen for about a second before six more tasks replaced it.
+    //
+    // The calendar overrides both, because it does in life. If the day this work belongs
+    // to has actually arrived, it has arrived whether or not yesterday was finished —
+    // yesterday's leftovers become overdue, which is exactly what they are. This is also
+    // what keeps time travel usable as a testing tool.
+    if (!dayIsClosed(enrollment, run, day)) break;
+    if (!dayIsStarted(enrollment, run, day + 1)) break;
     day += 1;
   }
-  return day;
+  // The calendar overrides both, because it does in life. If the day this work belongs to
+  // has actually arrived, it has arrived whether or not yesterday was signed off —
+  // yesterday's leftovers become overdue, which is exactly what they are. It is also what
+  // keeps time travel usable as a testing tool.
+  return Math.max(day, projectDayOn(run.started_at, Date.now()));
+}
+
+// Clocking on tomorrow. The learner's own call, so the end of a day is a full stop rather
+// than a comma.
+function startNextDay(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running.');
+
+  const current = unlockedDay(enrollment, run);
+  if (!dayIsClosed(enrollment, run, current)) throw new Error('Finish today before starting tomorrow.');
+  const next = current + 1;
+  if (next > PROJECT_WEEK_DAYS) throw new Error('That was the last day of this project.');
+
+  db.prepare(`INSERT INTO sim_days (id, enrollment_id, project_run_id, day_index, started_at, created_at)
+              VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT(enrollment_id, project_run_id, day_index)
+              DO UPDATE SET started_at = COALESCE(sim_days.started_at, excluded.started_at),
+                            created_at = excluded.created_at`)
+    .run(cryptoRandomId(), enrollment.id, run.id, next, now(), now());
+
+  return { day: next, state: getState(userId) };
+}
+
+// What the day still wants from you. The counters say 4 of 6; this says what the missing
+// two actually are, which is what a person needs in order to go and do them.
+function dayPending(progress) {
+  if (!progress) return [];
+  const bits = [];
+  const left = (done, total, one, many) => {
+    const n = Math.max(0, total - done);
+    if (n > 0) bits.push(`${n} ${n === 1 ? one : many}`);
+  };
+  left(progress.tasks.done, progress.tasks.total, 'task', 'tasks');
+  left(progress.activities.done, progress.activities.total, 'activity', 'activities');
+  left(progress.situations.done, progress.situations.total, 'message to deal with', 'messages to deal with');
+  if (progress.quizRequired && !progress.quizTaken) bits.push('the quiz');
+  return bits;
+}
+
+const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+function closeDay(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running.');
+
+  const dayIndex = unlockedDay(enrollment, run);
+  if (dayIsClosed(enrollment, run, dayIndex)) throw new Error('You have already signed off today.');
+
+  const progress = dayProgress(enrollment, run, dayIndex);
+  if (!progress || !progress.complete) {
+    const pending = dayPending(progress);
+    throw new Error(pending.length
+      ? `Not yet — you still have ${pending.join(', ')} today.`
+      : 'Today is not finished yet.');
+  }
+
+  db.prepare(`INSERT INTO sim_days (id, enrollment_id, project_run_id, day_index, closed_at, created_at)
+              VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT(enrollment_id, project_run_id, day_index) DO UPDATE SET closed_at = excluded.closed_at`)
+    .run(cryptoRandomId(), enrollment.id, run.id, dayIndex, now(), now());
+
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+  const learner = firstName((db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId) || {}).name) || 'there';
+  const last = dayIndex >= PROJECT_WEEK_DAYS;
+  const dayName = DAY_NAMES[dayIndex] || `day ${dayIndex}`;
+
+  // Named, not generic. "Good work today" is what a bot says; a manager tells you what she
+  // saw you get through, because that is the part you can be proud of tomorrow.
+  const body = last
+    ? `${learner} — that's the week. ${progress.tasks.total} tasks signed off, ${progress.activities.total} activities, everything in your inbox dealt with, and the quiz sat.
+
+`
+      + `That is a full project delivered, which is not a small thing for a first one. Take the win. I'll have the next piece of work ready when you are.`
+    : `${learner} — that's ${dayName} done. ${progress.tasks.total} tasks through review, ${progress.activities.total} activities, and you cleared what landed on you.
+
+`
+      + `Nothing else from me today. Shut the laptop — we'll pick it up tomorrow.`;
+
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, body, null,
+    last ? `${def ? def.title : 'The project'} — that's the week` : `${dayName} — you're done`, 'line_manager');
+
+  return {
+    closed: true,
+    day: dayIndex,
+    last,
+    summary: {
+      tasks: progress.tasks.total,
+      activities: progress.activities.total,
+      situations: progress.situations.total,
+      quiz: Boolean(progress.quizTaken),
+    },
+    message: body,
+    state: getState(userId),
+  };
 }
 
 // ---- Activities ----------------------------------------------------------------------
@@ -3404,6 +4205,62 @@ function handleSituation(userId, situationKey, action, text) {
       def.via === 'email' ? `Re: ${subject || def.subject}` : null, def.from);
   }
   return { score, feedback, state: getState(userId) };
+}
+
+// Doing the timesheet.
+//
+// Validated properly rather than waved through, because a form that accepts anything is
+// not a form, it is a button with a text box next to it. Nothing here is graded and none
+// of it gates the day — the only reward is the small satisfaction of the thing being done,
+// which is exactly the reward the real ones carry.
+function completeChore(userId, choreKey, values) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const row = db.prepare('SELECT * FROM sim_chores WHERE enrollment_id = ? AND chore_key = ?')
+    .get(enrollment.id, choreKey);
+  if (!row) throw new Error('That has not arrived yet.');
+  if (row.done_at) throw new Error('You have already done that one.');
+
+  const def = ambientmail.choreByKey(choreKey);
+  if (!def) throw new Error('Unknown item.');
+
+  const run = db.prepare('SELECT * FROM sim_project_runs WHERE id = ?').get(row.project_run_id);
+  const projectDef = run ? catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key) : null;
+  const projectTitle = projectDef ? projectDef.title : 'this project';
+
+  const given = values && typeof values === 'object' ? values : {};
+  const clean = {};
+  for (const field of def.action.fields) {
+    const raw = given[field.key];
+    if (field.kind === 'ack') {
+      if (field.required && raw !== true) throw new Error(`Tick "${field.label}" first.`);
+      clean[field.key] = raw === true ? 'Confirmed' : 'Not confirmed';
+    } else if (field.kind === 'number') {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) throw new Error(`${field.label} needs a number.`);
+      if (n < field.min || n > field.max) throw new Error(`${field.label} should be between ${field.min} and ${field.max}.`);
+      clean[field.key] = String(n);
+    } else if (field.kind === 'choice') {
+      const options = field.options.map((o) => fillMail(o, '', projectTitle));
+      if (!options.includes(String(raw))) throw new Error(`Pick one of the options for ${field.label}.`);
+      clean[field.key] = String(raw);
+    }
+  }
+
+  db.prepare('UPDATE sim_chores SET values_json = ?, done_at = ? WHERE id = ?')
+    .run(JSON.stringify(clean), now(), row.id);
+
+  // The confirmation quotes back what was entered, because a receipt that does not tell
+  // you what it received is not a receipt.
+  let confirm = def.confirm;
+  for (const [k, v] of Object.entries(clean)) confirm = confirm.split(`{${k}}`).join(v);
+  const subject = row.message_id
+    ? (db.prepare('SELECT subject FROM sim_messages WHERE id = ?').get(row.message_id) || {}).subject
+    : def.subject;
+  addMessage(enrollment.id, def.from, def.senderName, confirm, null,
+    `Re: ${subject || def.subject}`, def.from);
+
+  return { done: true, confirm, values: clean, state: getState(userId) };
 }
 
 // ---- The Friday quiz -------------------------------------------------------------------
@@ -3583,16 +4440,52 @@ function shiftIso(iso, ms) {
 // the button again appears to do nothing. That is exactly what happened — the day stuck
 // at 3 and would not go further.
 //
-// Rather than compute it, search for it. The day counter is `workingDaysElapsed`, so ask
-// that function directly how far back the start has to move. Slower and obviously right,
-// against arithmetic that was neither.
+// Rather than compute it, search for it: ask the day counter itself how far back the
+// start has to move. Slower and obviously right, against arithmetic that was neither.
+// Is this task workable yet?
+//
+// One rule, in one place. It is the third time a second copy of this has drifted out of
+// step with the board — a Friday start, a Saturday "complete the day" that cleared nothing,
+// a project card congratulating a learner who had not started. A task is open once its day
+// has ARRIVED on the calendar or been EARNED by finishing the day before.
+function taskIsOpen(task, unlockedDayIndex, nowMs) {
+  const arrived = !task.opens_at || Date.parse(task.opens_at) <= nowMs;
+  const earned = unlockedDayIndex && task.day_index && task.day_index <= unlockedDayIndex;
+  return Boolean(arrived || earned);
+}
+
+// Which day of a project week the calendar has reached.
+//
+// There is exactly one definition of this, and everything uses it: the task board, the
+// project card, the day counter and time travel. Three of those used to compute it three
+// slightly different ways, which is how a Friday start produced "day 2 of 5" above an
+// empty board, and how "jump one working day" on a Saturday moved the learner BACKWARDS
+// into the previous week.
+//
+// The definition is the one the work itself already obeys: day N has arrived when
+// addWorkingDays(start, N) has passed, because that is exactly when day N's tasks open.
+function projectDayOn(startIso, nowMs) {
+  let day = 1;
+  for (let d = 1; d <= PROJECT_WEEK_DAYS; d += 1) {
+    if (addWorkingDays(startIso, d).getTime() <= nowMs) day = d;
+  }
+  return day;
+}
+
 function calendarDaysForWorkingDays(startIso, n) {
   const nowMs = Date.now();
-  const want = workingDaysElapsed(startIso, nowMs) + Number(n);
+  const want = projectDayOn(startIso, nowMs) + Number(n);
+  if (want < 1 || want > PROJECT_WEEK_DAYS) {
+    throw new Error(`A project week is ${PROJECT_WEEK_DAYS} days — day ${want} is outside it.`);
+  }
+  // Moving the START backwards moves the learner FORWARDS through the week. Search in
+  // whole calendar days for the smallest shift that lands on the day asked for; weekends
+  // make the relationship non-linear, which is the entire reason this is a search rather
+  // than arithmetic.
   const dir = n > 0 ? 1 : -1;
   for (let shift = dir; Math.abs(shift) <= 60; shift += dir) {
     const moved = new Date(Date.parse(startIso) - shift * DAY_MS).toISOString();
-    if (workingDaysElapsed(moved, nowMs) === want) return shift;
+    if (projectDayOn(moved, nowMs) === want) return shift;
   }
   throw new Error('Could not reach that day.');
 }
@@ -3792,9 +4685,13 @@ function timeTravelCompleteDay(userId) {
   if (!enrollment) throw new Error('Not enrolled yet.');
 
   const nowMs = Date.now();
+  // The same rule the board uses. Filtering on opens_at alone cleared nothing at all on a
+  // weekend, because a project starting on a Saturday has its day-1 work opening Monday.
+  const run = activeRun(enrollment);
+  const unlocked = run ? unlockedDay(enrollment, run) : 1;
   const rows = db.prepare("SELECT * FROM sim_tasks WHERE enrollment_id = ? AND status != 'graded'")
     .all(enrollment.id)
-    .filter((t) => !t.opens_at || Date.parse(t.opens_at) <= nowMs);
+    .filter((t) => taskIsOpen(t, unlocked, nowMs));
 
   for (const row of rows) completeOneTask(enrollment, row);
   return { completed: rows.length, state: getState(userId) };
@@ -3829,6 +4726,9 @@ function startProject(userId, projectKey) {
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
   const current = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level).projects.find((p) => p.key === projectKey);
 
+  if (current.status === 'writing') {
+    throw new Error('That project is still being written — it is not ready to start yet.');
+  }
   if (current.status === 'locked') throw new Error(`${current.requirement} before starting this one.`);
   if (current.status !== 'available') throw new Error('That project is already underway.');
 
@@ -4767,6 +5667,10 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
 }
 
 module.exports = {
+  closeDay,
+  startNextDay,
+  completeChore,
+
   ROLE_CATALOG,
   startEnrollment,
   getEnrollment,

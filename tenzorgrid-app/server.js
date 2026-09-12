@@ -467,6 +467,40 @@ async function handleApi(req, res, url) {
     } catch (e) { return sendJson(res, 400, { error: e.message }); }
   }
 
+  // Signing off for the day, and clocking on for the next one. Two routes rather than
+  // one, because they are two decisions: the learner finishes, is told well done, and
+  // then chooses when tomorrow starts.
+  if (pathname === '/api/workspace/day/close' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, workspace.closeDay(user.id));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/day/next' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, workspace.startNextDay(user.id));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/chore' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.completeChore(user.id, body.key, body.values));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/quiz' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

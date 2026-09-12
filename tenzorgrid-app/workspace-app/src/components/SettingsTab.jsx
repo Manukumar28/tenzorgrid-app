@@ -2,6 +2,7 @@ import React from 'react';
 import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw, CheckCheck } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../api.js';
+import { soundEnabled, setSoundEnabled, armSound } from '../sound.js';
 import { BentoCard } from './ui.jsx';
 
 // Settings that actually do something. The rest of this tab stayed an honest "coming
@@ -212,14 +213,18 @@ function TimeTravel({ tt, onStateChange }) {
 }
 
 export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange }) {
+  // Read once on mount rather than held in App state: the preference lives in this
+  // browser, nothing else in the app needs to know about it, and a page that has just
+  // loaded has not made a sound yet anyway.
+  const [sound, setSound] = useState(() => soundEnabled());
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-1">
           <Keyboard size={18} className="text-indigo-500" />
-          <h3 className="text-base font-bold">Chat</h3>
+          <h3 className="text-base font-bold">Chat &amp; sound</h3>
         </div>
-        <p className="text-xs text-slate-500 mb-2">How messages get sent in the chat dock.</p>
+        <p className="text-xs text-slate-500 mb-2">How messages get sent, and whether you hear them arrive.</p>
 
         <div className="divide-y divide-slate-100">
           <Toggle
@@ -230,6 +235,15 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
             note={prefs.enterToSend
               ? 'Enter sends your message. Shift+Enter starts a new line.'
               : 'Enter starts a new line. Shift+Enter sends.'}
+          />
+          <Toggle
+            on={sound}
+            onChange={(v) => { setSound(v); setSoundEnabled(v); if (v) armSound(); }}
+            label="Sound when something arrives"
+            ariaLabel="Sound when something arrives"
+            note={sound
+              ? 'A soft chime for email, a lighter note for chat.'
+              : 'Mail and chat arrive silently.'}
           />
         </div>
 

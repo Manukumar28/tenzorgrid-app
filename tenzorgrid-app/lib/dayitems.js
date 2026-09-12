@@ -24,6 +24,209 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'headcount-trends': [
+    {
+      key: 'ha-01', day: 1, type: 'learning', via: 'email', from: 'people_partner', minutes: 10,
+      subject: 'Intake vs headcount — the distinction this project turns on',
+      title: 'Read: why hiring questions are not headcount questions',
+      body: `Neha here. Before you start on the plan, five minutes on the one distinction that decides whether this analysis is right.
+
+HEADCOUNT is who is here today. INTAKE is who we took on in a given year. They are different populations and they answer different questions.
+
+Somebody hired in 2019 who left in 2022 was still a 2019 hire. They took a hiring slot, they cost a salary, and they are part of what 2019 looked like. If you filter them out of the hiring series because they are not here now, every year before last gets quietly understated — and the further back you go, the worse it gets.
+
+So for most of this week, do NOT filter on exit_year. The exceptions are the questions that genuinely are about today: who is in each team now, where they sit. Those are headcount questions and the filter belongs on them.
+
+Getting this backwards is the single most common way this analysis goes wrong.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which of these needs the current-staff filter?',
+        options: [
+          { key: 'now', correct: true, label: 'How many people are in Engineering today' },
+          { key: 'series', correct: false, label: 'How many people we hired in 2019' },
+          { key: 'cost', correct: false, label: 'What the 2020 intake cost us in salary' },
+          { key: 'trend', correct: false, label: 'Whether hiring has gone up or down since 2016' },
+        ],
+        why: 'Only the first is a question about today. The other three are about intake, and filtering out leavers would understate every historical year.',
+      },
+    },
+    {
+      key: 'ha-02', day: 1, type: 'policy', via: 'email', from: 'security', minutes: 6,
+      subject: 'Read and confirm: planning data and what may circulate',
+      title: 'Read and confirm: what goes in a planning pack',
+      body: `Standard note for anyone working on workforce planning, and it matters this month because the pack goes to the budget round.
+
+Two rules:
+
+One. Headcount and hiring numbers at department level are fine to circulate. Individual salaries, names, or any cut small enough to identify a person are not — and a department with two people in it is a cut small enough to identify a person.
+
+Two. Nothing leaves company systems. Not to a personal drive, not to personal email, not to an external sharing link. If somebody outside needs a figure, it goes through your manager.
+
+Confirm you have read this.`,
+      check: { kind: 'acknowledge', label: 'I have read and understood' },
+    },
+    {
+      key: 'ha-03', day: 2, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul on HAVING, and why WHERE will not do it',
+      body: `Saw you are on the hiring counts — one thing that catches people, since you will want it today.
+
+WHERE filters rows BEFORE they are grouped. HAVING filters the groups AFTER. So if you want "only years with at least five hires", WHERE cannot help you: at the point WHERE runs, there is no COUNT yet, just individual employee rows.
+
+  GROUP BY hire_year HAVING COUNT(*) >= 5
+
+That is it. The error message if you try it in WHERE is unhelpful — "misuse of aggregate" — so it is worth knowing the rule rather than decoding the message.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You want departments whose average salary is above 15 lakh. Where does that condition go?',
+        options: [
+          { key: 'having', correct: true, label: 'HAVING AVG(salary) > 1500000' },
+          { key: 'where', correct: false, label: 'WHERE AVG(salary) > 1500000' },
+          { key: 'both', correct: false, label: 'WHERE salary > 1500000, then GROUP BY' },
+          { key: 'order', correct: false, label: 'ORDER BY AVG(salary) > 1500000' },
+        ],
+        why: 'It is a condition on an aggregate, so it can only be evaluated once the groups exist. WHERE salary > 1500000 is a different question entirely — it throws away individual people before averaging, which inflates every department.',
+      },
+    },
+    {
+      key: 'ha-04', day: 2, type: 'judgement', via: 'email', from: 'finance_analyst', minutes: 10,
+      subject: 'Small samples — the thing that will bite you this week',
+      title: 'Read: what a small denominator does to an average',
+      body: `Diya here. You are about to compute average salary per intake year, so a warning about the shape of our data.
+
+Two of those years have almost nobody in them. When you average over two people, the result is not a statistic about hiring — it is two salaries with a division sign between them. Move either person and the whole "trend" moves.
+
+The dangerous part is that it looks identical to a real finding. A table of ten years with one strikingly low number in it invites exactly one sentence: "our most efficient hiring year". That sentence will get repeated in a budget meeting, and it will not survive the first person who asks how many people it is based on.
+
+The fix is not complicated. Put the count next to every average you publish. A reader who can see n = 2 will draw their own conclusion, and it will be the right one.`,
+      check: {
+        kind: 'answer',
+        prompt: 'In two or three sentences: what would you do with the 2022 average, and why?',
+        maxWords: 90,
+        markers: ['two|2 people|small|count|sample|n =|headcount', 'caveat|alongside|beside|footnote|exclude|omit|with the count|show'],
+        why: 'Either report it with the count visible or leave it out and say you have — both are honest. Quoting the average on its own is the only option that is not.',
+      },
+    },
+    {
+      key: 'ha-05', day: 3, type: 'learning', via: 'chat', from: 'people_partner', minutes: 7,
+      title: 'Neha on what six data points can and cannot carry',
+      body: `Before you send me the attrition split — a thing I have learned the hard way in People Ops.
+
+We have had six leavers. Six. Split those across six departments and you get a table that looks like analysis and is actually arithmetic on almost nothing. One more departure anywhere reorders it completely.
+
+I will still ask you for the split, because that is what the plan template has on it. What I need from you is the push-back, with the reason attached. "Not enough data" on its own I will argue with. "Six leavers, and one more anywhere changes the ranking" I cannot argue with.
+
+Say the second one.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What makes a small-sample objection land with a stakeholder?',
+        options: [
+          { key: 'specific', correct: true, label: 'Naming the number, and what would change if it moved by one' },
+          { key: 'vague', correct: false, label: 'Saying the sample is not statistically significant' },
+          { key: 'refuse', correct: false, label: 'Declining to produce the table at all' },
+          { key: 'pct', correct: false, label: 'Converting to percentages so the scale is clearer' },
+        ],
+        why: 'Specifics are arguable with; generalities are not, which sounds like an advantage and is the opposite — an unarguable objection gets ignored. Percentages on a denominator of ten hide the sample rather than exposing it.',
+      },
+    },
+    {
+      key: 'ha-06', day: 3, type: 'policy', via: 'chat', from: 'line_manager', minutes: 5,
+      title: 'Asha: how to say no to a reasonable request',
+      body: `You are about to tell Neha she cannot have something she has asked for politely and for good reasons. A shape that works:
+
+One, lead with what you DO have. A note that opens with a refusal gets read as obstruction no matter how well the rest is argued.
+
+Two, the reason, with a number in it.
+
+Three, the nearest thing you can actually give her.
+
+Four, what would let you answer it properly later.
+
+The bit people skip is the third one. Without it you have given her a problem; with it you have given her a decision.`,
+      check: { kind: 'acknowledge', label: 'Got it' },
+    },
+    {
+      key: 'ha-07', day: 4, type: 'learning', via: 'email', from: 'comms', minutes: 9,
+      subject: 'Ordered or not — the only chart question that matters',
+      title: 'Read: when to sort a chart, and when sorting destroys it',
+      body: `Meera here. You have three charts in this pack and they are not the same kind of thing, which trips people up.
+
+Years are a SEQUENCE. They have an order that exists whether you like it or not, and that order is usually the finding. Never sort a time series by value — you would be destroying the only thing the chart is there to show.
+
+Departments are CATEGORIES. Nothing orders them, so you get to choose, and choosing size means the reader can rank them at a glance instead of hunting. Sorting here does the reader's work for them.
+
+Same data, opposite advice. The skill is knowing which case you are in before you reach for the sort control.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are charting average salary by location. Sort or not?',
+        options: [
+          { key: 'sort', correct: true, label: 'Sort by value — locations have no inherent order' },
+          { key: 'alpha', correct: false, label: 'Alphabetically, so it is easy to find a specific city' },
+          { key: 'none', correct: false, label: 'Leave it in whatever order the query returned' },
+          { key: 'never', correct: false, label: 'Never sort — it misleads the reader' },
+        ],
+        why: 'Cities are categories, so sorting by value is the reader-friendly choice. Alphabetical is defensible in a lookup table and poor in a chart; query order is arbitrary and therefore meaningless.',
+      },
+    },
+    {
+      key: 'ha-08', day: 4, type: 'judgement', via: 'chat', from: 'finance_analyst', minutes: 6,
+      title: 'Diya on two numbers that disagree',
+      body: `We are going to end up with different headcounts, so let us agree how to handle it now rather than in front of the budget round.
+
+Neither of us is going to be wrong. I count people we pay; you are counting people we hired. Those genuinely differ, and the difference is exactly the leavers.
+
+The fix is not to pick a winner. It is to put the population on the label. "Hires since 2016: 69" and "Current headcount: 63" can sit on the same slide all day. Two unlabelled numbers in the sixties cannot, and the meeting will be about the gap instead of the plan.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the one line you would say to Finance when your headcount does not match theirs. Under 40 words.',
+        maxWords: 40,
+        markers: ['both|different question|population|label|mine counts|yours counts|intake|current'],
+        why: 'Concede immediately that both are right, name the populations, and move on. The analyst who tries to win this exchange loses either the argument or the relationship.',
+      },
+    },
+    {
+      key: 'ha-09', day: 5, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul: the median, and why SQLite will not give you one',
+      body: `For the tenure number — SQLite has no median function. No MEDIAN(), no PERCENTILE(). You will not find it, so do not spend twenty minutes looking.
+
+Two options. Do it in the notebook: pull the values, sort them, take the middle one, and handle the even-length case by averaging the two in the middle. Or do it in SQL with a window function and a row count, which works and which nobody reading it in April will thank you for.
+
+Use Python. It is four lines and it is obvious.
+
+And the reason it matters here: you have six tenures. An average over six values with two outliers in it is a number that describes none of the six people.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Six leavers stayed 1, 1, 1, 1, 4 and 4 years. What is the median?',
+        options: [
+          { key: 'one', correct: true, label: '1 year' },
+          { key: 'two', correct: false, label: '2 years' },
+          { key: 'twohalf', correct: false, label: '2.5 years' },
+          { key: 'four', correct: false, label: '4 years' },
+        ],
+        why: 'Sorted, the two middle values are the third and fourth: 1 and 1. Their average is 1. The mean is 2 — a figure no leaver was anywhere near, which is exactly why the median is the honest one to report.',
+      },
+    },
+    {
+      key: 'ha-10', day: 5, type: 'judgement', via: 'email', from: 'line_manager', minutes: 8,
+      subject: 'Before you send the plan',
+      title: 'Read: giving a number when you would rather give a range',
+      body: `Last thing before this goes out, and it is the hardest habit to build.
+
+At some point someone with twenty minutes in a budget meeting will ask you for one number. Your instinct will be to give them the range, the caveats and the reasoning, because that is what is true.
+
+That instinct is right up until the moment they have told you they have read the caveats. After that, continuing to withhold a number is not rigour — it is leaving them to invent one, and the number they invent will have no analysis behind it at all.
+
+If you can defend a figure, give it. Put the assumption in the same sentence if you need to. "Seven, if you mean holding steady" is a single number and a caveat in six words.
+
+The judgement is not "never commit". It is "commit to what you can defend, and be exact about what you are assuming".`,
+      check: {
+        kind: 'answer',
+        prompt: 'Neha has read your caveats and wants one number. Write the sentence you send. Under 40 words.',
+        maxWords: 40,
+        markers: ['seven|7|six|eight', 'steady|replace|attrition|grow|assum|if you|hold'],
+        why: 'A number plus the assumption it rests on, in one line. Either half alone fails her: the number without the assumption gets misused, the assumption without the number gets ignored.',
+      },
+    },
+  ],
   'compensation-review': [
     {
       key: 'ca-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
@@ -210,6 +413,113 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'headcount-trends': [
+    {
+      key: 'hs-01', day: 1, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'One thing I should have said in the brief',
+      body: `Forgot to mention — the budget round wants the plan in the same format as last year, which has a single hiring number at the top and the reasoning underneath.
+
+So whatever else you produce, I need to end up with one figure I can put in that box. Not asking for it now. Just flagging it so it is not a surprise on Friday.
+
+Does that change how you would approach the week?`,
+      needsReply: true,
+      expect: ['acknowledge the constraint', 'say what it changes, or that it does not'],
+      markers: ['yes|no|understood|noted|fine|does not change|helps|will|plan|number|friday'],
+      ifIgnored: 'Neha assumes you have not read it and re-sends it on Thursday, by which point the framing would have been useful two days earlier.',
+      note: 'Knowing the shape of the deliverable on Monday changes what you collect all week. This is the cheapest question you will be asked.',
+    },
+    {
+      key: 'hs-02', day: 1, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Automated: meeting room 4B is now bookable again',
+      body: `Room 4B is back in service following the AV replacement.
+
+This notice is sent to all staff with a booking history in the last quarter. No action required and no reply needed.`,
+      expect: ['archive it'],
+      note: 'An automated notice with "no reply needed" in it is the easiest triage decision you will get. Take the free win.',
+    },
+    {
+      key: 'hs-03', day: 2, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'Can you add contractors to this?',
+      body: `Vikram here — I know this is Neha's piece but I have an interest.
+
+Can the hiring numbers include contractors as well as permanent staff? We have spent a lot on contract engineering over the last two years and if the plan ignores it we will end up making the same decision twice.
+
+Reasonable ask?`,
+      needsReply: true,
+      expect: ['check whether the data holds contractors before answering', 'say what you actually have'],
+      markers: ['employee|table|data|do not have|don.t have|no contractor|only permanent|check|not in|dataset'],
+      ifIgnored: 'Vikram assumes contractors are in the numbers and says so in the budget round. The correction lands on you, in the room.',
+      note: 'The employees table holds permanent staff only. The answer is not "no" — it is "not in this data, and here is what it would take", which is a different conversation.',
+    },
+    {
+      key: 'hs-04', day: 2, type: 'noise', via: 'chat', from: 'engineering_manager',
+      body: `Anyone else getting the warehouse timeout on big GROUP BYs this morning? Platform say it is the index rebuild, should clear by lunch. Not asking for anything, just so nobody spends an hour debugging their own query.`,
+      expect: ['nothing — it is a broadcast'],
+      note: 'Somebody saving you an hour is not somebody asking you for one. A thumbs-up at most.',
+    },
+    {
+      key: 'hs-05', day: 3, type: 'pressure', via: 'chat', from: 'people_partner',
+      body: `Any luck with the attrition split by department? I have the retention section of the plan open in front of me and it is the only bit I cannot fill in. Even a rough version would let me move on.`,
+      needsReply: true,
+      expect: ['say no clearly', 'give the number of leavers', 'offer what you can give instead'],
+      markers: ['six|6 |too few|small|cannot|can.t|not enough', 'tenure|company|overall|instead|but I can|what I can'],
+      ifIgnored: 'Neha fills the retention section with the raw two-two-two table and builds a plan on it. Correcting that on Friday is much more expensive than answering now.',
+      note: '"Even a rough version" is the moment the wrong number enters the document. Rough is fine when the sample is large; it is not what is wrong here.',
+    },
+    {
+      key: 'hs-06', day: 3, type: 'noise', via: 'chat', from: 'comms',
+      body: `Fyi the planning pack template has moved to the new drive. Same link as the all-hands deck. Nothing needed from you, just so you do not go looking in the old place on Friday afternoon.`,
+      expect: ['archive it'],
+      note: 'Useful, and needs nothing. Both of those can be true at once.',
+    },
+    {
+      key: 'hs-07', day: 4, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Which headcount are you using?',
+      body: `I am putting the cost lines together and I want to make sure we are not about to contradict each other.
+
+My baseline is people we currently pay. If your number is bigger than mine, I would like to know why before Friday rather than during it.
+
+What is yours, and what is in it?`,
+      needsReply: true,
+      expect: ['give your number and say what population it covers', 'name the gap as the leavers'],
+      markers: ['69|sixty-nine|ever hired|intake|all hires', 'leaver|left|six|difference|gap|both|current'],
+      ifIgnored: 'Nobody reconciles. On Friday the meeting is about whose spreadsheet is wrong rather than about the hiring plan.',
+      note: 'Two numbers that should match and do not is the most common way an analysis dies in public. Ten minutes on Thursday prevents it.',
+    },
+    {
+      key: 'hs-08', day: 4, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Engineering headcount for next year',
+      body: `I hear you are doing the hiring plan. Engineering is the biggest team and we have hired almost nobody for two years while People Ops has grown steadily.
+
+I am not asking you to argue my case. I am asking whether your numbers show what I think they show, because if they do I would rather raise it myself with the right figure attached than guess.`,
+      needsReply: true,
+      expect: ['answer what the data shows', 'do not take a side in his budget case'],
+      markers: ['engineering|people ops|recent|2023|since|four|seven|hire', 'data|shows|number|figure|not|cannot|argue|decision'],
+      ifIgnored: 'Arjun raises it with a number he estimated himself. If it is wrong, the error is traced to the analyst who did not answer.',
+      note: 'Giving someone the correct figure is not taking their side. Refusing to, because the figure helps them, is taking the other one.',
+    },
+    {
+      key: 'hs-09', day: 5, type: 'pressure', via: 'email', from: 'people_partner',
+      subject: 'In the room in an hour',
+      body: `I am in the budget round at eleven and I still do not have the top-line number.
+
+I have read everything you have sent me and I understand the caveats. I am not asking you to pretend they do not exist. I am asking what to say when they ask how many people we are hiring.`,
+      needsReply: true,
+      expect: ['give a number', 'name the assumption it rests on'],
+      markers: ['seven|7|six|eight', 'steady|replace|attrition|grow|assum|if|hold|net'],
+      ifIgnored: 'Neha goes in without a figure and picks one on the spot. Whatever she says becomes the plan, and it has no analysis behind it.',
+      note: 'The caveats were the work. Withholding the number after she has read them is not rigour — it is making her invent one.',
+    },
+    {
+      key: 'hs-10', day: 5, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Budget round timetable — all sessions',
+      body: `The full budget round timetable for the next fortnight is attached, covering every function.
+
+Circulated to all staff for visibility. Your own session will be booked by your cost centre owner. No action required.`,
+      expect: ['archive it'],
+      note: 'A timetable for twenty meetings you are not in. The temptation to read it carefully is the thing being tested.',
+    },
+  ],
   'compensation-review': [
     {
       key: 'cs-01', day: 1, type: 'invite', via: 'email', from: 'stakeholder',
@@ -353,6 +663,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'headcount-trends': {
+    key: 'hq-head', title: 'Headcount & Hiring Trends — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'You are asked how many people we hired in 2019. Should you filter out people who have since left?',
+        options: [
+          { key: 'b', label: 'No — they were still a 2019 hire', correct: true },
+          { key: 'a', label: 'Yes — we only count people who are still here' },
+          { key: 'c', label: 'Only if they left within a year' },
+          { key: 'd', label: 'Yes, and note the exclusion in a footnote' },
+        ],
+        why: 'Intake and headcount are different populations. Filtering leavers out of a historical hiring series understates every year, and the further back you go the worse it gets — which makes hiring look like it grew when it did not.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'You want only the hire years with at least five hires. Where does that condition go?',
+        options: [
+          { key: 'c', label: 'HAVING COUNT(*) >= 5, after GROUP BY', correct: true },
+          { key: 'a', label: 'WHERE COUNT(*) >= 5' },
+          { key: 'b', label: 'WHERE hire_year IN (SELECT hire_year FROM employees LIMIT 5)' },
+          { key: 'd', label: 'ORDER BY COUNT(*) DESC LIMIT 5' },
+        ],
+        why: 'WHERE runs before the rows are grouped, so there is no COUNT for it to test. HAVING filters the groups once they exist. The LIMIT option answers a completely different question — the five biggest years, not the years above a threshold.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'One hire year shows an average salary far below every other year. It is based on two people. What do you report?',
+        options: [
+          { key: 'd', label: 'The figure with the headcount beside it, or not at all', correct: true },
+          { key: 'a', label: 'That it was our most cost-effective hiring year' },
+          { key: 'b', label: 'Nothing — quietly leave the row out' },
+          { key: 'c', label: 'The figure, since it is what the data says' },
+        ],
+        why: 'Two salaries with a division sign between them is not a finding about hiring cost. Reporting it bare invites a sentence that cannot survive one question; removing it silently is worse, because the reader cannot see that you did.',
+      },
+      {
+        id: 'q4', topic: 'business-sense',
+        q: 'Six people have left the company in total, spread across three departments with two each. What can you say about departmental retention?',
+        options: [
+          { key: 'a', label: 'Nothing useful — one more leaver anywhere reorders the table', correct: true },
+          { key: 'c', label: 'That those three departments have a retention problem' },
+          { key: 'b', label: 'Convert to percentages of each department to make it comparable' },
+          { key: 'd', label: 'That the departments with zero leavers have no retention risk' },
+        ],
+        why: 'A ranking that a single event would reverse carries no information. Percentages on a denominator of ten hide the sample size rather than fixing it, and "no leavers yet" is a very different claim from "no risk".',
+      },
+      {
+        id: 'q5', topic: 'dataViz',
+        q: 'You are charting headcount by department. Should you sort the bars?',
+        options: [
+          { key: 'b', label: 'Yes, by size — departments have no inherent order', correct: true },
+          { key: 'a', label: 'No — never reorder a chart' },
+          { key: 'c', label: 'Alphabetically, so readers can find a department' },
+          { key: 'd', label: 'By cost centre number' },
+        ],
+        why: 'Categories with no natural order let you choose one, and size does the reader\'s ranking work for them. This is the opposite of a time series, where sorting by value destroys the only thing the chart shows — knowing which case you are in is the skill.',
+      },
+      {
+        id: 'q6', topic: 'statistics',
+        q: 'Six leavers stayed 1, 1, 1, 1, 4 and 4 years. Which figure best describes a typical departure?',
+        options: [
+          { key: 'c', label: 'The median, 1 year', correct: true },
+          { key: 'a', label: 'The mean, 2 years' },
+          { key: 'b', label: 'The range, 1 to 4 years' },
+          { key: 'd', label: 'The mode and the mean together' },
+        ],
+        why: 'The mean of 2 describes none of the six people. Four of them left inside a year, which is the actual retention signal, and the median is the figure that carries it.',
+      },
+      {
+        id: 'q7', topic: 'communication',
+        q: 'Finance has 63 and you have 69. What do you do?',
+        options: [
+          { key: 'd', label: 'Label each number with its population and put both on the slide', correct: true },
+          { key: 'a', label: 'Tell Finance their number is wrong' },
+          { key: 'b', label: 'Present 66 as a reconciled figure' },
+          { key: 'c', label: 'Drop headcount from your deck to avoid the clash' },
+        ],
+        why: 'Both are right and they answer different questions — the gap is exactly the six leavers. Averaging two populations produces a number that describes neither, and removing the clash leaves the same confusion to surface later.',
+      },
+      {
+        id: 'q8', topic: 'business-sense',
+        q: 'Comms drafts an intro using your numbers, and one sentence is not supported by them. It goes out under Data & Analytics. What do you do?',
+        options: [
+          { key: 'b', label: 'Name the specific sentences to change, and leave the supported ones alone', correct: true },
+          { key: 'a', label: 'Approve it — Comms owns the wording' },
+          { key: 'c', label: 'Ask for all the numbers to be removed' },
+          { key: 'd', label: 'Rewrite the whole paragraph yourself' },
+        ],
+        why: 'It goes out in your name, so it is yours to check. Challenging everything costs you the credibility you need for the claims that actually matter, and stripping the figures removes the point of the pack.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A stakeholder has read all your caveats and still wants one number for a meeting in twenty minutes. You can defend a figure. What do you send?',
+        options: [
+          { key: 'a', label: 'The number, with the assumption it rests on in the same sentence', correct: true },
+          { key: 'c', label: 'The range, so they can choose' },
+          { key: 'b', label: 'The caveats again — they clearly have not absorbed them' },
+          { key: 'd', label: 'Nothing you cannot state with confidence' },
+        ],
+        why: 'Once they have read the caveats, withholding a number is not rigour — it leaves them to invent one with no analysis behind it. "Seven, if you mean holding steady" is a number and a caveat in six words.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'Hiring over the last three years was 6, 9 and 7. What is the defensible planning assumption?',
+        options: [
+          { key: 'c', label: 'Around seven — which is also the ten-year average', correct: true },
+          { key: 'a', label: 'Fit a trend to the three points and extrapolate' },
+          { key: 'b', label: 'Ten, matching the best year on record' },
+          { key: 'd', label: 'Three, matching the most recent downturn' },
+        ],
+        why: 'Six, nine and seven is noise around seven, not a line — fitting a trend to three points buys false precision. Two independent methods landing on the same figure is the strongest thing you can say about it.',
+      },
+    ],
+  },
   'compensation-review': {
     key: 'cq-comp', title: 'Q1 Compensation Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
