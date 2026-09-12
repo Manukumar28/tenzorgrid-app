@@ -273,6 +273,98 @@ const NOISE = [
     body: "Drinks and something to eat from 17:30 on the ground floor. No agenda, no speeches.\n\nEveryone welcome, including people who are only in for the food." },
 ];
 
+// ---- Company admin you can actually do ------------------------------------------------
+//
+// A reminder that timesheets close on Friday is only realistic if there is somewhere to go
+// and put your hours. Without that it is a sign on a wall, and the learner's first thought
+// is "where would I even do that?" -- which is a fair question and the wrong one to be
+// thinking about mid-analysis.
+//
+// So the admin mail carries the form with it. These are not graded and they do not gate
+// the day; they are the small, dull, compulsory things a job is actually made of, and
+// doing them takes fifteen seconds. Field kinds are deliberately few: a number, a choice,
+// or a tick.
+
+const CHORES = [
+  {
+    key: 'ch-01', day: 1, from: 'finance_ops', senderName: 'Finance Operations',
+    subject: 'Timesheet — your hours for Monday',
+    body: "Hi {name},\n\nTime to log Monday. Hours and what you charged them to, and that is you done for the day.\n\nThe week has to be in by 5pm Friday, but doing it daily takes ten seconds and saves you reconstructing the week from memory on Friday afternoon, which is what everybody else does.",
+    action: {
+      submitLabel: 'Submit timesheet',
+      fields: [
+        { key: 'hours', label: 'Hours worked today', kind: 'number', min: 0, max: 12, step: 0.5, placeholder: '7.5', required: true },
+        { key: 'charged', label: 'Charged to', kind: 'choice', required: true,
+          options: ['{project}', 'Internal / admin', 'Training'] },
+      ],
+    },
+    confirm: 'Logged — {hours} hours against {charged}. Thanks for doing it on the day.',
+  },
+  {
+    key: 'ch-02', day: 2, from: 'security', senderName: 'Security Team',
+    subject: 'Annual confirmation: data handling',
+    body: "This is the yearly one, and it matters more than usual for you this month because you are working on people data.\n\nThree things you are confirming:\n\n  • employee-level extracts stay inside company systems\n  • you aggregate before sharing anything outside your team\n  • if you are not sure whether something can be shared, you ask first\n\nTick and you are done for another year.",
+    action: {
+      submitLabel: 'I confirm',
+      fields: [
+        { key: 'confirmed', label: 'I have read and I confirm the three points above', kind: 'ack', required: true },
+      ],
+    },
+    confirm: 'Recorded. That is you clear for the year — thank you.',
+  },
+  {
+    key: 'ch-03', day: 3, from: 'facilities', senderName: 'Workplace Team',
+    subject: 'Book your desk for next week',
+    body: "Desk booking for next week is open. Pick a floor and how many days you expect to be in.\n\nBook what you will use and release what you will not — we are running at about 80% on Tuesdays and Wednesdays and it makes a real difference.",
+    action: {
+      submitLabel: 'Book it',
+      fields: [
+        { key: 'floor', label: 'Floor', kind: 'choice', required: true,
+          options: ['Floor 2 — Data & Analytics', 'Floor 3 — quiet zone', 'Floor 4 — project rooms'] },
+        { key: 'days', label: 'Days in the office next week', kind: 'number', min: 0, max: 5, step: 1, placeholder: '3', required: true },
+      ],
+    },
+    confirm: 'Booked — {days} days on {floor}. Your badge will let you in from Monday.',
+  },
+  {
+    key: 'ch-04', day: 4, from: 'people_partner', senderName: 'Priya Nair',
+    subject: 'Two questions — engagement pulse',
+    body: "We run this every quarter and it takes about twenty seconds. Answers are anonymous below team level and we do publish what comes back, including the uncomfortable parts.\n\nLast round the biggest theme was clarity of career paths, which is why the levelling guide exists now.",
+    action: {
+      submitLabel: 'Send my answers',
+      fields: [
+        { key: 'clarity', label: 'I am clear on what is expected of me this week', kind: 'choice', required: true,
+          options: ['Strongly agree', 'Agree', 'Neither', 'Disagree', 'Strongly disagree'] },
+        { key: 'workload', label: 'My workload is manageable', kind: 'choice', required: true,
+          options: ['Strongly agree', 'Agree', 'Neither', 'Disagree', 'Strongly disagree'] },
+      ],
+    },
+    confirm: 'Got it, thank you. Results go out in a fortnight.',
+  },
+  {
+    key: 'ch-05', day: 5, from: 'finance_ops', senderName: 'Finance Operations',
+    subject: 'Timesheet — the week closes at 5pm',
+    body: "Last call for this week. Total hours across the five days and anything worth noting.\n\nAfter 5pm it rolls into next month, which is a fortnight of nobody being able to see what this project actually cost.",
+    action: {
+      submitLabel: 'Submit the week',
+      fields: [
+        { key: 'total', label: 'Total hours this week', kind: 'number', min: 0, max: 60, step: 0.5, placeholder: '37.5', required: true },
+        { key: 'overtime', label: 'Did you work beyond your contracted hours?', kind: 'choice', required: true,
+          options: ['No', 'Yes — an hour or two', 'Yes — significantly'] },
+      ],
+    },
+    confirm: 'Week submitted — {total} hours. That is the month closed at your end.',
+  },
+];
+
+function choresFor(dayIndex) {
+  return CHORES.filter((c) => c.day === dayIndex);
+}
+
+function choreByKey(key) {
+  return CHORES.find((c) => c.key === key) || null;
+}
+
 // The ambient senders are not colleagues — you cannot chat to the Programme Office and it
 // has no desk. They exist only as mail, which is why they live here and not in the roster.
 const AMBIENT_SENDERS = {
@@ -302,6 +394,9 @@ module.exports = {
   DESK_PER_DAY,
   DESK,
   NOISE,
+  CHORES,
+  choresFor,
+  choreByKey,
   AMBIENT_SENDERS,
   deskFor,
   noiseFor,

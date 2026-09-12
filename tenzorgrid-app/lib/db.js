@@ -302,6 +302,42 @@ CREATE TABLE IF NOT EXISTS sim_ambient_mail (
   UNIQUE(enrollment_id, project_run_id, mail_key)
 );
 
+-- One row per working day the learner has closed.
+--
+-- A day used to end by simply not having anything left in it, which meant the moment a
+-- learner finished their sixth task the product rolled them into tomorrow without ever
+-- saying well done. Closing a day is now something the learner DOES, and this is where it
+-- is recorded -- so the congratulation has somewhere to live, and so nothing advances on
+-- its own.
+CREATE TABLE IF NOT EXISTS sim_days (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT,
+  day_index INTEGER NOT NULL,
+  closed_at TEXT,
+  started_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id, day_index)
+);
+
+-- The small compulsory things a job is made of: the timesheet, the policy tick, the desk
+-- booking. Not graded and they gate nothing -- they exist because a reminder that
+-- timesheets close on Friday is only realistic if there is somewhere to go and log them.
+CREATE TABLE IF NOT EXISTS sim_chores (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT,
+  chore_key TEXT NOT NULL,
+  day_index INTEGER,
+  message_id TEXT,
+  values_json TEXT,
+  done_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, chore_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_chores_run ON sim_chores(enrollment_id, project_run_id);
+CREATE INDEX IF NOT EXISTS idx_sim_days_run ON sim_days(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_ambient_run ON sim_ambient_mail(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_activities_day ON sim_activities(enrollment_id, assigned_on);
 CREATE INDEX IF NOT EXISTS idx_sim_situations_run ON sim_situations(enrollment_id, project_run_id);
@@ -379,6 +415,8 @@ ensureColumn('sim_tasks', 'carried_from_day', 'INTEGER');
 // a learner who did excellent analysis and ignored every email scored the same as one who
 // did both — and the second is the employable one.
 ensureColumn('sim_enrollments', 'conduct_score', 'INTEGER');
+// Added after sim_days shipped, so a live volume that already has the table gets it too.
+ensureColumn('sim_days', 'started_at', 'TEXT');
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

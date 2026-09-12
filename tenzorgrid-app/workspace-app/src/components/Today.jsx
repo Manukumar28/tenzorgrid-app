@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   CheckCircle2, Circle, Mail, MessageSquare, Clock, Send, Archive,
   ArrowUpRight, Timer, GraduationCap, PartyPopper, AlertTriangle,
+  Moon, Sunrise, ClipboardList,
 } from 'lucide-react';
 import { BentoCard } from './ui.jsx';
 import { api } from '../api.js';
@@ -226,6 +227,110 @@ function Situation({ item, onHandle }) {
   );
 }
 
+// ---- Company admin -----------------------------------------------------------------------
+//
+// The timesheet, the policy tick, the desk booking. A reminder that timesheets close on
+// Friday is only realistic if there is somewhere to go and log them — otherwise the
+// learner's first thought is "where would I even do that?", which is a fair question and
+// exactly the wrong one to be having mid-analysis. So the form comes with the email.
+
+function Chore({ item, onDone }) {
+  const [values, setValues] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const set = (k, v) => setValues((prev) => ({ ...prev, [k]: v }));
+
+  async function submit() {
+    setBusy(true); setError('');
+    try {
+      await onDone(item.key, values);
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className={`rounded-xl border p-4 ${item.done ? 'border-slate-200 bg-slate-50/60' : 'border-slate-200 bg-white'}`}>
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
+          <ClipboardList size={11} /> Admin
+        </span>
+        {item.done && (
+          <span className="text-[10px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+            Done
+          </span>
+        )}
+      </div>
+      {item.senderName && <p className="text-[11px] font-bold text-slate-400 mb-0.5">{item.senderName}</p>}
+      <p className="font-bold text-sm text-slate-900 leading-snug mb-1">{item.subject}</p>
+      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
+
+      {item.done ? (
+        <div className="mt-3 rounded-lg bg-white border border-slate-200 px-3 py-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">Submitted</p>
+          <ul className="space-y-0.5">
+            {Object.entries(item.values || {}).map(([k, v]) => (
+              <li key={k} className="text-[12px] text-slate-600">{k}: <span className="font-semibold text-slate-800">{v}</span></li>
+            ))}
+          </ul>
+        </div>
+      ) : item.action ? (
+        <div className="mt-3 space-y-2.5">
+          {item.action.fields.map((f) => (
+            <div key={f.key}>
+              {f.kind === 'ack' ? (
+                <label className="flex items-start gap-2 text-[13px] text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={values[f.key] === true}
+                    onChange={(e) => set(f.key, e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 shrink-0"
+                  />
+                  <span>{f.label}</span>
+                </label>
+              ) : (
+                <>
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1" htmlFor={`ch-${item.key}-${f.key}`}>
+                    {f.label}
+                  </label>
+                  {f.kind === 'number' ? (
+                    <input
+                      id={`ch-${item.key}-${f.key}`}
+                      type="number"
+                      min={f.min} max={f.max} step={f.step}
+                      placeholder={f.placeholder}
+                      value={values[f.key] ?? ''}
+                      onChange={(e) => set(f.key, e.target.value)}
+                      className="w-full max-w-[180px] rounded-lg border border-slate-200 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  ) : (
+                    <select
+                      id={`ch-${item.key}-${f.key}`}
+                      value={values[f.key] ?? ''}
+                      onChange={(e) => set(f.key, e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    >
+                      <option value="">Choose…</option>
+                      {(f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={submit}
+            disabled={busy}
+            aria-label={`${item.action.submitLabel} — ${item.subject}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-40"
+          >
+            <Send size={12} />{item.action.submitLabel}
+          </button>
+          {error && <p className="text-xs text-rose-700 font-semibold">{error}</p>}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // ---- The Friday quiz ---------------------------------------------------------------------
 
 function Quiz({ quiz, onSubmit }) {
@@ -349,6 +454,10 @@ export default function Today({ state, onStateChange, onTab }) {
     [situations, filter, shownDay],
   );
   const sits = useMemo(() => all.filter((x) => !x.deskMail), [all]);
+  const todaysChores = useMemo(
+    () => (state.chores || []).filter((c) => (filter === 'today' ? c.day === shownDay : true)),
+    [state.chores, filter, shownDay],
+  );
   const desk = useMemo(() => all.filter((x) => x.deskMail), [all]);
   const deskOpen = desk.filter((x) => !x.handledAs).length;
 
@@ -364,6 +473,22 @@ export default function Today({ state, onStateChange, onTab }) {
     const d = await api.submitQuiz(answers);
     if (d.state) onStateChange(d.state);
     return d;
+  }
+  async function doChore(key, values) {
+    const d = await api.completeChore(key, values);
+    if (d.state) onStateChange(d.state);
+  }
+  async function onCloseDay() {
+    try {
+      const d = await api.closeDay();
+      if (d.state) onStateChange(d.state);
+    } catch (e) { /* eslint-disable-next-line no-alert */ alert(e.message); }
+  }
+  async function onStartNextDay() {
+    try {
+      const d = await api.startNextDay();
+      if (d.state) onStateChange(d.state);
+    } catch (e) { /* eslint-disable-next-line no-alert */ alert(e.message); }
   }
 
   const finished = projectCompletion && projectCompletion.complete;
@@ -400,18 +525,70 @@ export default function Today({ state, onStateChange, onTab }) {
         </BentoCard>
       )}
 
-      {day && (
-        <BentoCard hover={false}>
+      {/* The day is over, and it says so.
+          A working day ends with somebody telling you that is enough — and a day that
+          simply runs out of things in it never gets to. This is the one moment in the week
+          where the product has something unambiguously good to say, so it gets the whole
+          card and the next day waits behind a button rather than arriving underneath it. */}
+      {day && day.closed && (
+        <BentoCard hover={false} className="border-indigo-300 bg-indigo-50/50">
+          <div className="flex items-start gap-3">
+            <Moon size={22} className="text-indigo-600 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-bold text-slate-900 mb-1">
+                That's {day.dayName} done — good work.
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {day.tasks.total} tasks through review, {day.activities.total} activities, and you
+                cleared everything that landed on you
+                {day.quizTaken ? ', quiz included' : ''}. Nothing else from Asha today.
+              </p>
+              {day.nextDayName ? (
+                <button
+                  onClick={onStartNextDay}
+                  aria-label={`Start ${day.nextDayName}`}
+                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
+                >
+                  <Sunrise size={13} /> Start {day.nextDayName}
+                </button>
+              ) : (
+                <p className="text-sm font-bold text-indigo-800 mt-2">That was the last day of the project.</p>
+              )}
+            </div>
+          </div>
+        </BentoCard>
+      )}
+
+      {day && !day.closed && (
+        <BentoCard hover={false} className={day.readyToClose ? 'border-emerald-300 bg-emerald-50/40' : ''}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Counter label="Tasks" done={day.tasks.done} total={day.tasks.total} tone="bg-indigo-500" />
             <Counter label="Activities" done={day.activities.done} total={day.activities.total} tone="bg-sky-500" />
             <Counter label="Situations" done={day.situations.done} total={day.situations.total} tone="bg-amber-500" />
           </div>
-          <p className="text-xs text-slate-500 mt-4 leading-relaxed">
-            {day.complete
-              ? 'Everything for today is done. The next day is open whenever you are.'
-              : 'The day finishes when all three are clear — not when the tasks are. Tomorrow opens the moment it does.'}
-          </p>
+
+          {day.readyToClose ? (
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
+              <button
+                onClick={onCloseDay}
+                aria-label="Sign off for the day"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700"
+              >
+                <Moon size={15} /> That's the day — sign off
+              </button>
+              <p className="text-xs text-slate-600 font-semibold">
+                Everything for {day.dayName} is done.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500 mt-4 leading-relaxed">
+              {/* Counters say "4 of 6". This says what the missing two actually are, which
+                  is what a person needs in order to go and do them. */}
+              <span className="font-bold text-slate-700">Still to do today: </span>
+              {day.pending && day.pending.length ? day.pending.join(', ') : 'nothing — you are clear'}.
+              {' '}The day finishes when all of it is clear, not when the tasks are.
+            </p>
+          )}
         </BentoCard>
       )}
 
@@ -459,6 +636,20 @@ export default function Today({ state, onStateChange, onTab }) {
           </div>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
             {desk.map((x) => <Situation key={x.key} item={x} onHandle={doSituation} />)}
+          </div>
+        </div>
+      )}
+
+      {todaysChores.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-baseline gap-2.5 flex-wrap">
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Company admin</h2>
+            <span className="text-xs font-semibold text-slate-400">
+              Dull, compulsory, fifteen seconds — like the real ones
+            </span>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+            {todaysChores.map((c) => <Chore key={c.key} item={c} onDone={doChore} />)}
           </div>
         </div>
       )}
