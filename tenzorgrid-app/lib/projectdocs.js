@@ -295,6 +295,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat', 'crm'],
     datasetKey: 'saas_ops',
   },
+
+  'activation-review': {
+    projectTitle: 'Activation & Onboarding Review',
+    companyName: 'Meridian Systems',
+    companyBlurb: 'Your own employer. This week the product under analysis is the one Meridian sells.',
+    yourRole: 'Senior Data Analyst, embedded with Product',
+    roleResponsibilities: [
+      'Establish what the data covers before you compute anything from it.',
+      'Define the population deliberately. Who is in the table is a decision, not a given.',
+      'Report the thing that is true, including when it is the opposite of what you were asked to confirm.',
+    ],
+    scenario:
+      'Product has two questions and one of them is wrong. Maya believes June signups collapsed. Priya wants to know why signups are not becoming users, and has next quarter of engineering time riding on the answer. Somewhere in between, the numbers on the dashboard everyone already trusts turn out to have been inflated for five weeks.',
+    estimatedMinutes: 100,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible activation picture — correct population, correct funnel shape, correct observation window — and one recommendation Priya can act on.',
+    constraints: [
+      { label: 'Data scope', value: 'The export ends on 12 June 2026. Nothing after that exists, and the last cohorts are incomplete rather than bad.' },
+      { label: 'Population', value: 'Meridian staff use the product too. Decide whether they belong in a customer metric, and say so either way.' },
+      { label: 'Counting rule', value: 'Count users, not rows. There is a reason, and you will find it on Wednesday.' },
+    ],
+    deliverables: [
+      { text: 'A funnel that is monotonic, over a population that makes sense.', via: 'sql-terminal' },
+      { text: 'A scoped bug report for the mobile team.', via: 'email-client' },
+      { text: 'One recommendation to the Head of Product, with its limits stated.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'A third of users were invited into a workspace that already existed. They never create one, which is why a naive funnel step converts above 100%.',
+      'Every funnel event is duplicated in one mobile build. COUNT(*) and COUNT(DISTINCT user_id) disagree, and only one of them is right.',
+      'The newest cohorts have not been observed long enough to have a week-four retention figure. An empty cell is not a zero.',
+      'Zero-duration sessions are twice as common on mobile. Leave them in and mobile looks less engaging; take them out and the finding reverses.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat'],
+    datasetKey: 'product_events',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

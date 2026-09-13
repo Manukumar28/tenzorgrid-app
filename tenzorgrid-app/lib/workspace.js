@@ -324,6 +324,36 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 1,
     },
+    {
+      key: 'activation-review',
+      title: 'Activation & Onboarding Review',
+      description: 'Product wants to know why signups are not turning into users, and whether June really was as bad as it looks.',
+      kind: 'analysis',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      datasetKey: 'product_events',
+      taskKeys: [
+        // Day 1 — the window. June looks like a collapse and is twelve days of data.
+        'ac-101', 'ac-102', 'ac-103', 'ac-104', 'ac-105', 'ac-106',
+        // Day 2 — the funnel that is not a funnel: a step converts at 114%.
+        'ac-110', 'ac-111', 'ac-112', 'ac-113', 'ac-114', 'ac-115',
+        // Day 3 — the wobble. An event fires twice, and only on one mobile build.
+        'ac-120', 'ac-121', 'ac-122', 'ac-123', 'ac-124', 'ac-125',
+        // Day 4 — who is in the table, and what a session with no duration means.
+        'ac-130', 'ac-131', 'ac-132', 'ac-133', 'ac-134', 'ac-135',
+        // Day 5 — activation and retention rank the channels differently. Pick one.
+        'ac-140', 'ac-141', 'ac-142', 'ac-143', 'ac-144', 'ac-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'statistics'],
+      impactValue: 31000,
+      contributors: [
+        { name: 'Rohan Desai', role: 'Mobile Engineer', does: 'Owns the client that fires the events', day: 3 },
+        { name: null, role: 'Senior Data Analyst', does: 'The activation and retention analysis', day: 1, throughDay: 5 },
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Sets next quarter from your recommendation', day: 5, needsYou: true },
+      ],
+      unlockAfter: 2,
+    },
   ],
 };
 
@@ -3818,6 +3848,464 @@ const TASKS = {
     day: 3,
     difficulty: 'medium',
   },
+
+  // ---- Senior 3 · Activation & Onboarding Review (product_events) -----------------
+  // The spine: every number in this dataset is wrong the first time you compute it, and
+  // each day teaches a different reason why. Monday the window is partial. Tuesday the
+  // funnel is not a funnel, because a third of users were invited into a workspace that
+  // already existed. Wednesday an event fires twice. Thursday the company's own staff are
+  // in the numbers. Friday activation and retention disagree about which channel is good,
+  // and the learner has to say which one they would act on.
+
+  'ac-101': {
+    title: 'Read the window before the numbers',
+    hint: "Look at the newest rows in every table before you compute anything from them.",
+    brief: "Maya has asked why signups collapsed in June. Before answering, establish what period this export actually covers — the answer to her question is mostly in that.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Maya Iyer', subject: 'June — what happened?',
+        body: "Pulled the signup numbers this morning and June is 48 against May's 140. That is a two-thirds drop in a month and nobody upstairs knows why.\n\nI need to take something to the product review on Friday. Can you find out what broke?",
+      },
+      prompt: 'Tick everything that follows from the data as it stands.',
+      options: [
+        { key: 'partial', correct: true, label: 'June is not a full month — the data stops on the 12th', why: 'Twelve days against thirty-one. Comparing the totals compares a fortnight with a month, which is the whole of her two-thirds drop.' },
+        { key: 'rate', correct: true, label: 'The comparison has to be a daily rate, not a monthly total', why: 'Four signups a day in June against 4.52 in May. That is a real dip and worth a sentence, but it is not a collapse and it is not what she was told.' },
+        { key: 'sayso', correct: true, label: 'Every chart from this data needs the cut-off stated on it', why: 'The partial month will be re-read as a cliff by everyone who sees it without the caveat, including Maya, who already has.' },
+        { key: 'broke', correct: false, label: 'Something broke in the signup flow in June', why: 'Nothing in the data suggests that, and going looking for a cause before checking the window is how an artefact becomes an incident.' },
+        { key: 'exclude', correct: false, label: 'Drop June entirely so the trend is clean', why: 'Twelve days of real signups are real. Dropping them hides the mild dip that IS there, and hiding data to make a chart tidy is how you lose the right to be believed.' },
+        { key: 'annualise', correct: false, label: 'Scale June up to thirty days so it is comparable', why: 'Tempting and defensible for a rate, but presenting an invented 120 as if it were a count puts a number in the deck that never happened. Give the rate and say it is a rate.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ac-102': {
+    title: 'Signups by month, and by day',
+    hint: "The daily rate is the count divided by the days that actually elapsed, and June's is not 30.",
+    brief: "Put the shape of it on paper. Write ONE SQL SELECT returning, per signup month: the number of signups, the last calendar day seen in that month, and signups per elapsed day rounded to two places. Oldest month first.",
+    referenceSql: "SELECT substr(signup_at, 1, 7) AS month, COUNT(*) AS signups, MAX(substr(signup_at, 9, 2)) AS last_day, ROUND(COUNT(*) * 1.0 / CAST(MAX(substr(signup_at, 9, 2)) AS INTEGER), 2) AS per_day FROM users GROUP BY month ORDER BY month",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ac-103': {
+    title: 'Where they came from',
+    hint: "A plain GROUP BY. You will need this split again on Friday, so get the names right now.",
+    brief: "Write ONE SQL SELECT returning the number of signups per acquisition channel, and each channel's share of all signups as a percentage rounded to one place. Biggest channel first.",
+    referenceSql: "SELECT channel, COUNT(*) AS signups, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 1) AS pct FROM users GROUP BY channel ORDER BY signups DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'normal', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ac-104': {
+    title: 'Two kinds of signup',
+    hint: "invited_by_user_id is NULL for people who arrived on their own. That column decides most of tomorrow.",
+    brief: "Not everyone who signs up is starting a workspace — some are joining one. Write ONE SQL SELECT returning the number of users of each kind, labelling them self_serve and invited.",
+    referenceSql: "SELECT CASE WHEN invited_by_user_id IS NULL THEN 'self_serve' ELSE 'invited' END AS kind, COUNT(*) AS users FROM users GROUP BY kind ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-105': {
+    title: 'What you now know about June',
+    hint: "You have the monthly counts and the daily rates side by side. Read both rows.",
+    brief: "Before you write to Maya, be clear in your own head about what the June number is and is not.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your own query supports.',
+      options: [
+        { key: 'notcollapse', correct: true, label: 'The two-thirds drop is an artefact of an incomplete month', why: '48 signups over 12 days. The month is not over; the data simply stops.' },
+        { key: 'mild', correct: true, label: 'There IS a small real dip — about 4.0 a day against 4.5', why: 'Roughly 11% down on May. Worth a line, not worth an investigation, and saying so protects your credibility when something real does break.' },
+        { key: 'growth', correct: true, label: 'The underlying trend to May is growth, not decline', why: '2.84 a day in January rising to 4.52 in May. The panic is about the one month that cannot be read.' },
+        { key: 'worst', correct: false, label: 'June is the worst month in the data on a per-day basis', why: 'It is the third best of six. January, February and March are all below it.' },
+        { key: 'seasonal', correct: false, label: 'The dip is seasonal', why: 'Six months of data covering one summer cannot establish seasonality. That would need the same month a year earlier and it does not exist here.' },
+        { key: 'sample', correct: false, label: 'Twelve days is too few to say anything at all', why: 'Forty-eight signups is a perfectly usable sample for a daily rate. The problem was never the sample size, it was the denominator.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-106': {
+    title: 'Answer Maya today',
+    hint: "She has a meeting on Friday and a wrong number in her head right now. Fix the number first.",
+    brief: "Write back before the end of day one. She believes signups fell by two-thirds. Tell her what actually happened, and do not oversell the good news either. Under 150 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Maya Iyer', subject: 'June signups — the number is a window, not a cliff', maxWords: 150,
+      prompt: 'What the June figure really is, the honest version of the trend, and what you would put in her Friday pack.',
+      rubric: [
+        { key: 'partial', label: 'That June is a partial month', markers: ['partial|incomplete|12 day|twelve day|12th|cut.?off|stops|half a month|not a full'], why: 'This is the entire answer to her question and it belongs in the first sentence.' },
+        { key: 'rate', label: 'The daily-rate comparison, with numbers', markers: ['per day|a day|daily|4\\.0|4\\.5|rate'], why: 'Replacing a wrong number with no number leaves her with nothing to say on Friday.' },
+        { key: 'dip', label: 'That there is a small genuine dip, not nothing', markers: ['dip|slight|small|modest|11%|down a little|softer|slower'], why: 'Overcorrecting to "everything is fine" is the same failure as the panic, pointing the other way.' },
+        { key: 'trend', label: 'The real trend through to May', markers: ['grow|rising|rose|up|increase|trend|doubl'], why: 'The context that makes the June number readable at all.' },
+        { key: 'caveat', label: 'That the cut-off must be shown on anything she presents', markers: ['label|caveat|footnote|state|mark|show the|note the|annotat'], why: 'Without it the same misreading happens again in the room, and this time with your chart on the screen.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-110': {
+    title: 'The funnel, as everyone computes it',
+    hint: "Count users, not rows. You will find out on Wednesday why that matters more than you think.",
+    brief: "Start the activation analysis. Write ONE SQL SELECT returning, for each of the five funnel events, the number of DISTINCT users who fired it. Most users first.",
+    referenceSql: "SELECT name, COUNT(DISTINCT user_id) AS users FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY name ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ac-111': {
+    title: 'Step over step',
+    hint: "Divide each step by the one before it. Do not fix what comes out — bring it to the stand-up as it is.",
+    brief: "Turn those counts into conversion rates. Write ONE SQL SELECT returning three rows labelled workspace_per_signup, connected_per_workspace and report_per_connected, each the percentage of the previous step, rounded to one place, in that order.",
+    referenceSql: "WITH s AS (SELECT name, COUNT(DISTINCT user_id) AS u FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run') GROUP BY name) SELECT 'workspace_per_signup' AS step, ROUND((SELECT u FROM s WHERE name = 'workspace_created') * 100.0 / (SELECT u FROM s WHERE name = 'signup_completed'), 1) AS pct UNION ALL SELECT 'connected_per_workspace', ROUND((SELECT u FROM s WHERE name = 'data_connected') * 100.0 / (SELECT u FROM s WHERE name = 'workspace_created'), 1) UNION ALL SELECT 'report_per_connected', ROUND((SELECT u FROM s WHERE name = 'first_report_run') * 100.0 / (SELECT u FROM s WHERE name = 'data_connected'), 1)",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-112': {
+    title: 'A step converted at 114%',
+    hint: "More people did the second thing than did the first. Ask how that is possible rather than how to hide it.",
+    brief: "Your middle step says 114.5%. That is not a rounding problem. Work out what it means before you touch the query.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true of a funnel step above 100%.',
+      options: [
+        { key: 'notfunnel', correct: true, label: 'These steps are not a sequence everybody passes through', why: 'A funnel assumes one ordered path. Above 100% is the data telling you that assumption is false — which is information, not an error.' },
+        { key: 'skip', correct: true, label: 'Some users reached data_connected without ever creating a workspace', why: '364 connected against 318 who created one. At least 46 people had a workspace they did not make.' },
+        { key: 'schema', correct: true, label: 'The explanation should be findable in the schema', why: 'users.invited_by_user_id exists for exactly this reason. A person invited into somebody else\'s workspace never creates one.' },
+        { key: 'cap', correct: false, label: 'Cap the step at 100% so the chart reads sensibly', why: 'That deletes the single most interesting fact in the dataset to make a rectangle look tidy.' },
+        { key: 'dedupe', correct: false, label: 'It is duplicate rows — count distinct users instead', why: 'You already counted distinct users. There is a duplicate-row problem in here and you will find it tomorrow, but it is not this.' },
+        { key: 'broken', correct: false, label: 'The event tracking is broken and the data cannot be used', why: 'The tracking is fine. The model you laid over it was wrong, and that is a much cheaper thing to fix.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-113': {
+    title: 'Prove where they came from',
+    hint: "Build a set of user_ids per event name once, then test membership. Do not loop the events table four times.",
+    brief: "Confirm the explanation rather than assuming it. In the notebook, compute for self_serve and invited users separately: how many users there are, and how many of them fired workspace_created, data_connected and first_report_run. Assign a list of dicts with keys kind, users, workspace, connected and activated to `result`, sorted by kind.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.7, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const fired = new Map();
+      for (const e of tables.events) {
+        if (!fired.has(e.name)) fired.set(e.name, new Set());
+        fired.get(e.name).add(e.user_id);
+      }
+      const has = (name, id) => (fired.get(name) || new Set()).has(id);
+      const out = new Map();
+      for (const u of tables.users) {
+        const kind = u.invited_by_user_id == null ? 'self_serve' : 'invited';
+        if (!out.has(kind)) out.set(kind, { kind, users: 0, workspace: 0, connected: 0, activated: 0 });
+        const row = out.get(kind);
+        row.users += 1;
+        if (has('workspace_created', u.id)) row.workspace += 1;
+        if (has('data_connected', u.id)) row.connected += 1;
+        if (has('first_report_run', u.id)) row.activated += 1;
+      }
+      return [...out.values()].sort((a, b) => (a.kind < b.kind ? -1 : 1));
+    },
+  },
+
+  'ac-114': {
+    title: 'The funnel that is actually a funnel',
+    hint: "One population, one ordered path. Everyone in it had to create a workspace to get anywhere.",
+    brief: "Rebuild it properly. Write ONE SQL SELECT over SELF-SERVE users only, returning one row per funnel stage — labelled signups, workspace, connected and activated — with the number of users who reached it. Keep them in funnel order, most users first.",
+    referenceSql: "SELECT 'signups' AS stage, COUNT(*) AS users FROM users WHERE invited_by_user_id IS NULL UNION ALL SELECT 'workspace', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'workspace_created') UNION ALL SELECT 'connected', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'data_connected') UNION ALL SELECT 'activated', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run')",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-115': {
+    title: 'What the split actually revealed',
+    hint: "Compare the two populations on the last column, not just the first.",
+    brief: "Splitting the funnel fixed the impossible number. It also turned up something nobody asked for.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your two queries support.',
+      options: [
+        { key: 'clean', correct: true, label: 'The self-serve funnel is monotonic and readable: 420, 318, 207, 134', why: 'Every step smaller than the one before, one population throughout. That is a funnel.' },
+        { key: 'invitedbetter', correct: true, label: 'Invited users activate at roughly twice the rate of self-serve ones', why: '112 of 184 against 134 of 420 — about 61% against 32%. Landing in a workspace where the data is already connected is a real head start.' },
+        { key: 'nowork', correct: true, label: 'Not one invited user fired workspace_created', why: 'Zero out of 184, which is what makes the invite path a genuinely different journey rather than a variation on the same one.' },
+        { key: 'biggest', correct: false, label: 'The biggest self-serve drop-off is at data_connected', why: '318 to 207 is a loss of 111; 420 to 318 is a loss of 102 — but as a rate, workspace creation loses 24% and connection loses 35%. Say which measure you mean.' },
+        { key: 'invitemore', correct: false, label: 'We should convert self-serve signups into invited ones', why: 'You cannot invite somebody into a workspace that does not exist yet. The two populations are not interchangeable and the comparison does not imply a lever.' },
+        { key: 'causal', correct: false, label: 'Being invited causes higher activation', why: 'Invited users join workspaces someone already cared enough to set up. The selection is doing work here and the data cannot separate the two.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-120': {
+    title: 'Rows against people',
+    hint: "COUNT(*) and COUNT(DISTINCT user_id) on the same events. If they differ, somebody fired twice.",
+    brief: "Before the funnel goes anywhere near a deck, check the raw event counts. Write ONE SQL SELECT returning, for each funnel event: the row count, the distinct user count, and the difference. Biggest difference first.",
+    referenceSql: "SELECT name, COUNT(*) AS rows_, COUNT(DISTINCT user_id) AS users_, COUNT(*) - COUNT(DISTINCT user_id) AS extra FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY name ORDER BY extra DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'ac-121': {
+    title: 'Nobody signs up twice',
+    hint: "One of those five events is logically impossible to repeat. Start there.",
+    brief: "670 signup_completed rows against 604 users. Work out what that tells you before you go looking for the cause.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'impossible', correct: true, label: 'signup_completed repeating is impossible in the real world, so it is a tracking fault', why: 'You cannot complete your own signup twice. Any event with a natural once-per-user meaning is a free integrity check, and this one just failed.' },
+        { key: 'allfive', correct: true, label: 'All five events are affected, so it is not specific to one step', why: '66, 35, 33, 24 and 5 extra rows. A bug that hits every event equally is a client or transport problem, not a product one.' },
+        { key: 'countdistinct', correct: true, label: 'Every rate computed from COUNT(*) is overstated', why: 'Yesterday you used COUNT(DISTINCT user_id) and were right by luck as much as judgement. Now you know why it is the rule.' },
+        { key: 'retry', correct: false, label: 'Users retried because the product was slow', why: 'A plausible story, and testable — but it would not duplicate signup_completed for people who only ever loaded the page once. Find the pattern before writing the narrative.' },
+        { key: 'dedupe', correct: false, label: 'Deduplicate the table and move on', why: 'That fixes your query and leaves the bug in production, still corrupting every number anyone else pulls. Find its shape first so it can be reported.' },
+        { key: 'ignore', correct: false, label: 'The difference is small enough to ignore', why: '66 phantom signups is 11% of the month-one funnel. It is also a live bug, and its size today is not its size next month.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'ac-122': {
+    title: 'Find the shape of the bug',
+    hint: "Events belong to sessions, and sessions know their platform and app version. Join and group by both.",
+    brief: "Locate it. Write ONE SQL SELECT joining funnel events to their sessions, returning per platform and app_version: the row count, the number of distinct user-and-event pairs, and rows divided by pairs rounded to two places. Worst ratio first.",
+    referenceSql: "SELECT s.platform, s.app_version, COUNT(*) AS rows_, COUNT(DISTINCT e.user_id || '|' || e.name) AS steps, ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT e.user_id || '|' || e.name), 2) AS rows_per_step FROM events e JOIN sessions s ON s.id = e.session_id WHERE e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY s.platform, s.app_version ORDER BY rows_per_step DESC, rows_ DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-123': {
+    title: 'Scope it for the engineer',
+    hint: "An engineer needs the blast radius and the window, not an adjective.",
+    brief: "You know which build it is. Now size it. Write ONE SQL SELECT returning one row: how many distinct users fired a duplicated funnel event on mobile 4.3.0, how many surplus rows that produced, and the first and last date ANY mobile 4.3.0 session was seen. Label them users_affected, duplicate_rows, first_seen and last_seen.",
+    referenceSql: "SELECT (SELECT COUNT(DISTINCT e.user_id) FROM events e JOIN sessions s2 ON s2.id = e.session_id WHERE s2.platform <> 'web' AND s2.app_version = '4.3.0' AND e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate')) AS users_affected, (SELECT COUNT(*) - COUNT(DISTINCT e.user_id || '|' || e.name) FROM events e JOIN sessions s3 ON s3.id = e.session_id WHERE s3.platform <> 'web' AND s3.app_version = '4.3.0' AND e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate')) AS duplicate_rows, MIN(substr(s.started_at, 1, 10)) AS first_seen, MAX(substr(s.started_at, 1, 10)) AS last_seen FROM sessions s WHERE s.platform <> 'web' AND s.app_version = '4.3.0'",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-124': {
+    title: 'What the version numbers tell you',
+    hint: "Look at when 4.3.0 stops and what replaces it. The fix may already have shipped.",
+    brief: "You have the version timeline. Read what it says about the state of the bug today.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the data supports.',
+      options: [
+        { key: 'both', correct: true, label: 'It affects iOS and Android equally, at exactly 2.00 rows per step', why: 'Both mobile platforms, both exactly double, web untouched. That points at shared mobile code, which is a useful thing for an engineer to be told.' },
+        { key: 'window', correct: true, label: 'It is bounded: 6 April to 10 May, then 4.3.1 appears', why: 'The last 4.3.0 session is 10 May and 4.3.1 starts on the 11th. Whether or not anyone knew, the bug stopped shipping a month ago.' },
+        { key: 'history', correct: true, label: 'Historical numbers still need correcting even though it is fixed', why: 'Five weeks of inflated events sit in every dashboard anyone has built. A fix forward does not repair the backward record.' },
+        { key: 'live', correct: false, label: 'It is still corrupting data today', why: 'No 4.3.0 session exists after 10 May. Reporting a live incident that ended five weeks ago would cost you the next one.' },
+        { key: 'web', correct: false, label: 'Web is affected too but less severely', why: 'Every web version sits at exactly 1.00. Not less severe — absent.' },
+        { key: 'nofix', correct: false, label: 'Nothing needs reporting since 4.3.1 fixed it', why: 'Somebody fixed a symptom in a release. Whether they knew what it was doing to the analytics is a different question, and the corrupted history is nobody\'s job until you make it somebody\'s.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-125': {
+    title: 'Report it to Rohan',
+    hint: "Lead with the window and the blast radius. He will ask both in his first reply if you do not.",
+    brief: "Rohan runs the mobile team. Write him the bug report: what you found, how big it is, when it happened, and what you want him to do about it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Rohan Desai', subject: 'Mobile 4.3.0 is double-firing funnel events', maxWords: 160,
+      prompt: 'The fault, its exact scope, the fact that it appears already fixed, and the ask.',
+      rubric: [
+        { key: 'what', label: 'What the fault is', markers: ['twice|double|duplicat|two rows|2 rows|fires again|repeat'], why: 'One sentence, no preamble. He triages a queue.' },
+        { key: 'where', label: 'Pinned to mobile 4.3.0 specifically', markers: ['4\\.3\\.0|ios and android|mobile'], why: 'Without the version he has to reproduce it himself, which is a week you do not need to spend.' },
+        { key: 'when', label: 'The window, and that 4.3.1 appears to end it', markers: ['4\\.3\\.1|6 april|10 may|april|may|window|five week|5 week|already fixed|no longer'], why: 'Telling him it is live when it is not turns a data-quality ticket into a false alarm.' },
+        { key: 'size', label: 'The blast radius in numbers', markers: ['89|163|users affected|duplicate row'], why: 'Scope is what decides whether this is looked at today or in the next cycle, and it is the part only you can supply.' },
+        { key: 'ask', label: 'A specific ask', markers: ['confirm|backfill|correct|clean|reprocess|flag|whether|can you|could you'], why: 'A report with no ask gets filed. Name the thing you want: usually confirmation of the cause and a decision on the historical data.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-130': {
+    title: 'Who else is in this table',
+    hint: "Look at the email domains. One of them is not a customer.",
+    brief: "Before Friday's recommendation, establish who the population actually is. Write ONE SQL SELECT returning, for staff (email_domain meridiansystems.com) and customers separately: the number of users, the number of sessions, and sessions per user rounded to two places.",
+    referenceSql: "SELECT CASE WHEN u.email_domain = 'meridiansystems.com' THEN 'staff' ELSE 'customer' END AS seg, COUNT(DISTINCT u.id) AS users, COUNT(s.id) AS sessions, ROUND(COUNT(s.id) * 1.0 / COUNT(DISTINCT u.id), 2) AS sessions_per_user FROM users u LEFT JOIN sessions s ON s.user_id = u.id GROUP BY seg ORDER BY seg",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'ac-131': {
+    title: 'What they are doing to the average',
+    hint: "Compute activation twice — once over everybody, once over customers only — and put the two side by side.",
+    brief: "Quantify the distortion rather than asserting it. Write ONE SQL SELECT returning two rows labelled 'all users' and 'customers only', each with the user count and the activation rate as a percentage rounded to one place. Activation means having fired first_report_run.",
+    referenceSql: "SELECT 'all users' AS scope, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u UNION ALL SELECT 'customers only', COUNT(*), ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) FROM users u WHERE u.email_domain <> 'meridiansystems.com'",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'ac-132': {
+    title: 'Thirty-one people, a quarter of the sessions',
+    hint: "Judge the size of the effect on each metric separately. It is not the same everywhere.",
+    brief: "Staff are 5% of the users and 1,144 of the 4,664 sessions. Decide what that means for the rest of the analysis.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'exclude', correct: true, label: 'They should be excluded from every customer-behaviour metric', why: 'They are not customers, they never churn, and they use it six times as much. Any engagement number that includes them describes the company, not the market.' },
+        { key: 'sessions', correct: true, label: 'The distortion is far worse for session metrics than for activation', why: 'Activation moves 40.7% to 37.7% — three points. Sessions per user is 36.9 against 6.14. The same contamination is nearly invisible in one metric and dominant in another.' },
+        { key: 'say', correct: true, label: 'The exclusion has to be stated wherever the numbers appear', why: 'An unexplained filter is indistinguishable from a mistake to the next person who reruns your query and gets a different answer.' },
+        { key: 'keep', correct: false, label: 'Keep them — more data is better', why: 'More of the wrong population is worse, not better. Volume does not fix a definition problem.' },
+        { key: 'small', correct: false, label: 'At 5% of users they cannot move anything much', why: 'This is the exact intuition the session figure disproves. Five percent of users producing a quarter of the sessions moves any per-session average a long way.' },
+        { key: 'dogfood', correct: false, label: 'Their usage is the best signal we have of what power users do', why: 'They built it, they have no alternative, and their incentives are not a customer\'s. It is the least representative behaviour in the table, not the most.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ac-133': {
+    title: 'Sessions where nothing happened',
+    hint: "SQLite has no median, which is the reason this one is in the notebook. Sort the durations yourself and take the middle, remembering the even-length case.",
+    brief: "Somebody is about to claim mobile users are less engaged. Check it properly. In the notebook, compute for web and mobile separately: total sessions, how many lasted zero seconds, that as a percentage, the mean duration over all sessions, the mean over only those longer than zero, and the MEDIAN over those longer than zero. Round every figure to one decimal place. Assign a list of dicts with keys grp, sessions, zero, zero_pct, avg_all, avg_real and median_real to `result`, sorted by grp.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const s of tables.sessions) {
+        const grp = s.platform === 'web' ? 'web' : 'mobile';
+        if (!by.has(grp)) by.set(grp, []);
+        by.get(grp).push(s.duration_seconds);
+      }
+      const r1 = (n) => Math.round(n * 10) / 10;
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([grp, all]) => {
+          const real = all.filter((d) => d > 0);
+          return {
+            grp,
+            sessions: all.length,
+            zero: all.length - real.length,
+            zero_pct: r1((all.length - real.length) * 100 / all.length),
+            avg_all: r1(all.reduce((s, d) => s + d, 0) / all.length),
+            avg_real: r1(real.reduce((s, d) => s + d, 0) / real.length),
+            median_real: r1(median(real)),
+          };
+        })
+        .sort((a, b) => (a.grp < b.grp ? -1 : 1));
+    },
+  },
+
+  'ac-134': {
+    title: 'The mobile engagement gap',
+    hint: "Compare avg_all across the two rows, then compare avg_real. The two comparisons disagree.",
+    brief: "Mobile averages 540 seconds against web's 625 — until you drop the sessions that recorded nothing. Say what is actually true.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your own numbers support.',
+      options: [
+        { key: 'artefact', correct: true, label: 'The apparent 14% gap is entirely a measurement artefact', why: 'Excluding zero-length sessions, mobile is 718 seconds against web\'s 703 — mobile is marginally the longer of the two. The sign of the finding flips.' },
+        { key: 'bounce', correct: true, label: 'Mobile records far more zero-length sessions: 24.8% against 11.1%', why: 'The beacon fires on load and the user leaves. Twice as often on a phone, which is exactly what you would expect and precisely why it is not an engagement finding.' },
+        { key: 'median', correct: true, label: 'The median agrees with the mean once zeros are out — 550 seconds against 535', why: 'Worth checking, because a mean can be dragged by a handful of very long sessions. Here both measures say the same thing, which is what lets you state it without hedging.' },
+        { key: 'separate', correct: true, label: 'Mobile activation being poor is a separate, real problem', why: '19.2% against 53.2% is not an artefact. Two different mobile stories live in this dataset and conflating them would lose the true one inside the false one.' },
+        { key: 'lessengaged', correct: false, label: 'Mobile users are less engaged once they are in the product', why: 'This is the claim the second average refutes. Once they are genuinely in a session they stay marginally longer.' },
+        { key: 'drop', correct: false, label: 'Zero-length sessions are junk and should be deleted', why: 'They are a real signal about how people arrive and bounce. Exclude them from duration averages, keep them for anything about acquisition.' },
+        { key: 'nothing', correct: false, label: 'There is no mobile problem here at all', why: 'Over-correcting is the mirror of the original error. Mobile activates at a third of web\'s rate, and that is Friday\'s recommendation.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ac-135': {
+    title: 'Activation by platform, cleanly',
+    hint: "Customers only, mobile means not-web, and activation means the event exists.",
+    brief: "Put the real platform finding on the table. Write ONE SQL SELECT over CUSTOMERS ONLY returning, for web and mobile: the number of users and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp ORDER BY activation DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ac-140': {
+    title: 'Which channel activates best',
+    hint: "Customers only. You are ranking channels, so the order of the rows is the answer.",
+    brief: "Friday is the recommendation. Start with acquisition. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per channel: the number of users and the activation rate as a percentage rounded to one place. Best activating channel first.",
+    referenceSql: "SELECT u.channel, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.channel ORDER BY activation DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'ac-141': {
+    title: 'Which channel stays',
+    hint: "A user is retained in week four if they had a session between 28 and 35 days after signing up. Stop at the April cohort so every user has had the chance.",
+    brief: "Activation is not the only measure of a good channel. Write ONE SQL SELECT over CUSTOMERS ONLY who signed up in or before April, returning per channel: the number of users and the percentage who had a session between 28 and 35 days after their signup date, rounded to one place. Best retaining channel first.",
+    referenceSql: "SELECT u.channel, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) >= 28 AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) < 35) THEN 1.0 ELSE 0.0 END) * 100, 1) AS wk4 FROM users u WHERE u.email_domain <> 'meridiansystems.com' AND substr(u.signup_at, 1, 7) <= '2026-04' GROUP BY u.channel ORDER BY wk4 DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-142': {
+    title: 'The two rankings disagree',
+    hint: "Find the channel that moves furthest between the two lists, and ask which metric the business actually pays for.",
+    brief: "Your activation ranking and your retention ranking are not the same ranking. That disagreement is the most useful thing you have found this week.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the two tables support.',
+      options: [
+        { key: 'paid', correct: true, label: 'Paid search activates respectably and then retains worst of all', why: '38.7% activation — third of five — against 14.8% week-four retention, last by a wide margin. It is the clearest disagreement in the data.' },
+        { key: 'partner', correct: true, label: 'Partner is strongest on both and is the smallest channel', why: 'Top of the activation table at 50% and top of the retention table at 39.3%, on the fewest users of any channel. Best on both measures and barely being used.' },
+        { key: 'wrongmetric', correct: true, label: 'Judging channels on activation alone would rank paid search too highly', why: 'Which is the point: activation measures whether onboarding worked, not whether the user was worth acquiring. They are different questions.' },
+        { key: 'kill', correct: false, label: 'Stop spending on paid search', why: 'It is a quarter of all signups. A recommendation that large needs cost-per-acquisition and lifetime value, and neither is in this data.' },
+        { key: 'organic', correct: false, label: 'Organic is the weakest channel overall', why: 'It is last on activation but mid-table on retention, and it is the largest channel by volume. Last on one measure is not weakest overall.' },
+        { key: 'same', correct: false, label: 'The rankings agree once you allow for sample size', why: 'Paid search has the second-largest sample in the table. Sample size is not what is moving it.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-143': {
+    title: 'Retention by cohort',
+    hint: "Report how many days the youngest member of each cohort has actually been observed for, beside the retention figure.",
+    brief: "Somebody will ask whether retention is getting worse. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per signup month: the number of users, the fewest days any of them has been observed for as at 12 June 2026, and the week-four retention percentage rounded to one place. Oldest cohort first.",
+    referenceSql: "SELECT substr(u.signup_at, 1, 7) AS cohort, COUNT(*) AS users, MIN(CAST(julianday('2026-06-12') - julianday(substr(u.signup_at, 1, 10)) AS INTEGER)) AS min_days, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) >= 28 AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) < 35) THEN 1.0 ELSE 0.0 END) * 100, 1) AS wk4 FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY cohort ORDER BY cohort",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-144': {
+    title: 'Retention is falling off a cliff',
+    hint: "Your min_days column is the whole answer. Ask which cohorts could possibly have produced a week-four session.",
+    brief: "The cohort table shows week-four retention dropping from 27.9% in April to 14.3% in May to zero in June. Decide what you are looking at.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'censored', correct: true, label: 'June cannot have a week-four figure at all — nobody has been here 28 days', why: 'The youngest June cohort member has been observed for zero days and the oldest for eleven. That zero is not retention, it is arithmetic.' },
+        { key: 'maypartial', correct: true, label: 'May is partly censored too, which is why it halves rather than falls to zero', why: 'Only the first fortnight of May signups could reach day 28 before the export. The cohort is a mix of the observed and the unobservable.' },
+        { key: 'stopwhere', correct: true, label: 'The chart has to stop at the last fully observed cohort — April', why: 'Jan through April sit between 22.5% and 29.8% with no trend worth reporting. Everything after that is a measurement window, not a behaviour.' },
+        { key: 'declining', correct: false, label: 'Retention has been declining since January', why: '29.8, 22.5, 27.3, 27.9. That is noise around a flat line, and February is the low point, not June.' },
+        { key: 'urgent', correct: false, label: 'The June collapse needs escalating today', why: 'It is the same mistake as Monday\'s signup panic, one table further in. Twice in one week would be a pattern.' },
+        { key: 'impute', correct: false, label: 'Estimate the missing cohorts from the earlier ones', why: 'Then you are reporting your own assumption back to yourself. Leave the cell empty and say why it is empty.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-145': {
+    title: 'The recommendation',
+    hint: "One recommendation, the reason for it, and the things you are explicitly not claiming. Priya reads the caveats.",
+    brief: "Priya runs Product and has to decide where next quarter's onboarding effort goes. Give her the week: what you would change, what the data says, and what it does not. Under 220 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'Activation review — where the effort should go', maxWords: 220,
+      prompt: 'A single clear recommendation, the evidence, and an honest account of the limits.',
+      rubric: [
+        { key: 'rec', label: 'One specific recommendation', markers: ['mobile|onboarding|partner|recommend|priorit|focus|invest|fix'], why: 'A week of analysis that ends in a list of observations makes the decision somebody else\'s problem.' },
+        { key: 'mobile', label: 'The mobile activation gap, with numbers', markers: ['19|53|mobile|platform|third|2\\.7|half'], why: 'The largest real effect you found, and the one with an obvious lever behind it.' },
+        { key: 'clean', label: 'That staff were excluded and the funnel split by invite path', markers: ['staff|internal|exclud|meridian|self.serve|invited|invite path'], why: 'Both corrections changed the answer. Stating them is what lets Priya trust the numbers that follow.' },
+        { key: 'bug', label: 'The 4.3.0 duplicate and its effect on historical reporting', markers: ['4\\.3\\.0|duplicat|double|bug|inflat'], why: 'She owns dashboards built on the corrupted period. She will hear about it eventually; better from you.' },
+        { key: 'limits', label: 'What the data cannot support', markers: ['cannot|can.t|not say|no data|does not|doesn.t|caveat|limit|unable|beyond'], why: 'No cost data, no revenue, censored cohorts. Naming the boundary is what makes the rest of it credible.' },
+        { key: 'window', label: 'That the last cohorts are censored, not declining', markers: ['censor|partial|incomplete|window|28 day|not yet|too recent|cut.?off'], why: 'The trap she is most likely to fall into on her own, twice over — signups and retention both.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
 };
 
 function now() { return new Date().toISOString(); }

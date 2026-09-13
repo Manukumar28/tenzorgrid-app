@@ -24,6 +24,241 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'activation-review': [
+    {
+      key: 'ca-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Before you touch this data — what an export is',
+      title: 'Read: the difference between "no data" and "not yet"',
+      body: `Karthik here. You are about to work with an event export, and event exports have one property that catches everybody once.
+
+They stop. Not at a month boundary, not at anything tidy — at whenever somebody ran the job. This one stops on 12 June. That means the June cohort is twelve days old, the May cohort is between twelve and forty-three days old, and every single rate you compute over "the last month" is really a rate over a ragged, partly observed window.
+
+Here is the rule that saves you: for any metric measured at N days after signup, only cohorts with at least N days of observation can appear in the chart. Everyone else gets an empty cell, not a zero.
+
+The failure looks the same every time. Somebody plots week-four retention by cohort, the newest bar is zero, and the room concludes that retention has collapsed. It has not. Nobody in that cohort has had a fourth week yet.
+
+An empty cell says "we cannot know". A zero says "we know, and it is none". They are opposite claims and one of them is a lie.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A cohort that signed up nine days before the export shows 0% week-four retention. What should the chart show?',
+        options: [
+          { key: 'blank', correct: true, label: 'Nothing — the cohort is excluded until it has 28 days of observation' },
+          { key: 'zero', correct: false, label: 'Zero, because that is what the data says' },
+          { key: 'est', correct: false, label: 'An estimate based on the earlier cohorts' },
+          { key: 'partial', correct: false, label: 'The figure so far, marked provisional' },
+        ],
+        why: 'A zero is a measurement. This is the absence of one. Marking it provisional does not help either — the number is not low, it does not exist.',
+      },
+    },
+    {
+      key: 'ca-02', day: 1, type: 'judgement', via: 'chat', from: 'line_manager', minutes: 6,
+      subject: 'Quick one before you reply to Maya',
+      title: 'Asha: how to correct someone who is already wrong in public',
+      body: `Maya has told her skip-level that signups fell by two-thirds. She will find out from you that it did not.
+
+Two ways to do this. One is to explain the partial-month artefact, which is correct and makes her look like she cannot read a table. The other is to give her the right number and the reason in the same breath, so she has something better to say rather than something to retract.
+
+Do the second one. And do it today — a wrong number gets repeated roughly once a day until it is corrected, and every repetition makes the correction more expensive for her.
+
+One more thing. There IS a small real dip in June. Do not bury it to make the correction cleaner. If you overcorrect to "nothing is wrong" and something is, you own that too.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Maya has already told her skip-level the wrong figure. What is the priority?',
+        options: [
+          { key: 'fast', correct: true, label: 'Get her the right number today, with the reason, so she can correct it herself' },
+          { key: 'careful', correct: false, label: 'Take a day to check thoroughly before saying anything' },
+          { key: 'skip', correct: false, label: 'Tell the skip-level directly since they have the wrong figure' },
+          { key: 'quiet', correct: false, label: 'Let it go — the June number will correct itself next month' },
+        ],
+        why: 'Going over her head corrects the number and costs you the relationship. Waiting lets it spread. The dip is real enough that "it corrects itself" is not true either.',
+      },
+    },
+    {
+      key: 'ca-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'Funnels, and when they are not',
+      title: 'Read: a funnel is a claim about a population',
+      body: `A funnel chart makes a claim most people never notice: that everybody in it is on the same journey, in the same order.
+
+When that holds, the steps shrink monotonically and step-over-step conversion is meaningful. When it does not, you get numbers above 100%, which is the data politely telling you the model is wrong.
+
+There are only a few reasons a step can exceed the one before it:
+
+1. The population is mixed. Some users enter the journey at step three because step two does not apply to them. This is the common one and it is what you have.
+2. Events are duplicated, so you counted rows rather than people.
+3. The steps are not really ordered — users can do them in any sequence.
+4. The window is wrong: step two counted over a shorter period than step three.
+
+The fix is never to cap the number. It is to find which of those four it is, then either split the population or rename the chart. A "funnel" over two different journeys is two funnels drawn on top of each other.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your second funnel step converts at 114%. What is the first thing you do?',
+        options: [
+          { key: 'population', correct: true, label: 'Look for a subgroup that skips the first step entirely' },
+          { key: 'cap', correct: false, label: 'Cap it at 100% and footnote the anomaly' },
+          { key: 'rerun', correct: false, label: 'Rerun the query — it is probably a mistake in the SQL' },
+          { key: 'drop', correct: false, label: 'Drop the step from the chart' },
+        ],
+        why: 'The query is likely fine. Above 100% is a finding about who is in your data, and it is usually the most interesting thing on the page.',
+      },
+    },
+    {
+      key: 'ca-04', day: 2, type: 'question', via: 'chat', from: 'stakeholder', minutes: 5,
+      subject: 'Are invited users better?',
+      title: 'Vikram asks whether we should just invite everyone',
+      body: `Saw your split. Invited users activate at about double the rate of self-serve ones.
+
+So: should we push everyone down the invite path? Seems like an easy win.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer him in a sentence or two.',
+        markers: ['cannot|can.t|no one|nobody|someone|already|exist|selection|confound|not a lever|chicken'],
+        why: 'You cannot be invited into a workspace nobody has made yet. Invited users exist because a self-serve user succeeded first, so the comparison describes selection, not a lever anyone can pull.',
+      },
+    },
+    {
+      key: 'ca-05', day: 3, type: 'learning', via: 'email', from: 'engineering_manager', minutes: 11,
+      subject: 'How to report a data bug to an engineer',
+      title: 'Read: what a mobile engineer needs from you',
+      body: `Arjun. You are going to find things in event data that we broke, and how you report them decides whether they get fixed this week or next quarter.
+
+Four things, in this order:
+
+WHAT. One sentence. "Funnel events fire twice." Not "there appear to be some anomalies in the event stream."
+
+WHERE. Platform and build. "Mobile 4.3.0, both iOS and Android, web unaffected." This is the single most valuable line, because it turns a reproduction hunt into a diff.
+
+WHEN. The window, and whether it is still happening. If a later build fixed it, say so — an engineer who drops everything for a live incident that ended five weeks ago will read your next report more slowly.
+
+HOW BIG. Users and rows. This is what decides priority and it is the part only you can supply.
+
+Then the ask. "Can you confirm the cause, and tell me whether the historical events get reprocessed?" A report with no ask gets read and filed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You have found a duplicate-event bug that a later release already fixed. What must the report say?',
+        options: [
+          { key: 'fixed', correct: true, label: 'That it appears already fixed, alongside the window and the blast radius' },
+          { key: 'urgent', correct: false, label: 'Mark it urgent so it gets attention' },
+          { key: 'nothing', correct: false, label: 'Nothing — it is fixed, so there is no bug to report' },
+          { key: 'vague', correct: false, label: 'Report the symptom and let engineering establish the scope' },
+        ],
+        why: 'Fixed forward is not fixed backward — five weeks of corrupted events are still in every dashboard. But overstating urgency on a closed bug spends credibility you will want later.',
+      },
+    },
+    {
+      key: 'ca-06', day: 3, type: 'pressure', via: 'chat', from: 'line_manager', minutes: 6,
+      subject: 'Priya wants the funnel numbers this afternoon',
+      title: 'Asha: the numbers are wrong and someone wants them now',
+      body: `Priya has asked for the funnel for a two o'clock. You have just found that a chunk of the events are duplicated.
+
+You have three options and only one of them is defensible.
+
+Send what you have and fix it later — no. Those numbers go into a deck and outlive the correction.
+
+Ask for a week — no. She has a meeting and you have a working number for web, which is most of the data.
+
+Send the corrected numbers with the caveat, and say plainly which part you are still checking. Late and right beats early and wrong, but "partial and labelled" beats both when somebody has a meeting at two.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Numbers are needed in two hours and you have just found a duplication bug affecting part of the data. What do you send?',
+        options: [
+          { key: 'partial', correct: true, label: 'The portion you trust, clearly labelled, with what is still being checked' },
+          { key: 'raw', correct: false, label: 'The full numbers as they stand, with a verbal warning' },
+          { key: 'delay', correct: false, label: 'Nothing until the whole thing is verified' },
+          { key: 'estimate', correct: false, label: 'Corrected estimates, adjusting the affected rows by hand' },
+        ],
+        why: 'A verbal warning does not travel with the slide. Hand-adjusting creates a number nobody can reproduce, including you.',
+      },
+    },
+    {
+      key: 'ca-07', day: 4, type: 'learning', via: 'email', from: 'data_engineer', minutes: 13,
+      subject: 'Who is in your table',
+      title: 'Read: population definition is the analysis',
+      body: `Every metric has a population, and most of the time nobody writes it down. That is where the errors live.
+
+Your users table has customers in it. It also has thirty-one Meridian staff, because we dogfood. They never churn, they use the product six times as much as a customer, and nobody put a flag on them — the only way to tell is the email domain.
+
+Two things worth internalising.
+
+First, contamination is not uniform. Excluding staff moves activation by three points, which you might not notice. It moves sessions-per-user from 36.9 to 6.14, which changes the entire story. The same bad rows barely touch one metric and dominate another, so "it is only 5% of users" is not an argument.
+
+Second, the exclusion has to be visible. If your query says WHERE email_domain <> 'meridiansystems.com' and your summary does not, then the next person reruns it, gets a different number, and now there are two figures in circulation and no way to tell which is right.
+
+State the population in the same sentence as the metric. Every time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Staff are 5% of users but a quarter of all sessions. What does that tell you?',
+        options: [
+          { key: 'varies', correct: true, label: 'The distortion will be small on per-user rates and large on per-session ones' },
+          { key: 'small', correct: false, label: 'At 5% of users the effect is negligible either way' },
+          { key: 'all', correct: false, label: 'Every metric is equally compromised' },
+          { key: 'keep', correct: false, label: 'They should be kept — they are real usage' },
+        ],
+        why: 'Which metric you are computing decides how much a contaminated group matters. The share of users tells you almost nothing on its own.',
+      },
+    },
+    {
+      key: 'ca-08', day: 4, type: 'judgement', via: 'email', from: 'stakeholder', minutes: 8,
+      subject: 'Mobile engagement',
+      title: 'Vikram has a slide about mobile already',
+      body: `I have a slide saying mobile users are 14% less engaged, measured by average session length. It is going to the board on Monday.
+
+Your name is on the data source. Before it goes, is there anything I should know?`,
+      check: {
+        kind: 'choice',
+        prompt: "Excluding zero-duration sessions, mobile averages 718 seconds against web's 703. What do you tell him?",
+        options: [
+          { key: 'reverse', correct: true, label: 'The finding reverses once bounced sessions are excluded — pull the slide' },
+          { key: 'caveat', correct: false, label: 'Add a footnote about measurement differences' },
+          { key: 'fine', correct: false, label: 'It is directionally right, so leave it' },
+          { key: 'mobilebad', correct: false, label: 'Leave it — mobile does activate far worse, so the conclusion holds' },
+        ],
+        why: 'The mobile activation problem is real and it is a different claim. Letting a false statement stand because a true one exists nearby is how a deck stops meaning anything.',
+      },
+    },
+    {
+      key: 'ca-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'When two metrics disagree',
+      title: 'Read: activation and retention are not the same question',
+      body: `Your two channel tables rank the channels differently, and paid search is the reason. It activates respectably and retains worst of all.
+
+This is not a contradiction to be resolved. It is two questions being answered honestly.
+
+Activation asks: did onboarding work for the people we got? Retention asks: were they worth getting? A channel can be excellent at the first and terrible at the second — that is the signature of acquisition that brings people who were never going to stay, and it is extremely common in paid search.
+
+What you must not do is pick the metric that makes the story cleaner. What you should do is say the two disagree, say which one the business is actually paying for, and be clear that you cannot settle it from this data because there is no cost per acquisition and no revenue in these tables.
+
+"Here are two measures, they disagree, here is what would resolve it" is a better answer than a confident ranking built on one of them.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Paid search is third on activation and last on retention. What do you report?',
+        options: [
+          { key: 'both', correct: true, label: 'Both rankings, that they disagree, and what data would settle it' },
+          { key: 'retention', correct: false, label: 'The retention ranking, since retention is what matters' },
+          { key: 'blend', correct: false, label: 'A combined score averaging the two' },
+          { key: 'activation', correct: false, label: 'The activation ranking, since that was the question asked' },
+        ],
+        why: 'A blended score hides the disagreement inside a number nobody can interpret. The disagreement is the finding.',
+      },
+    },
+    {
+      key: 'ca-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Before you send it',
+      title: 'Asha: four corrections, one week',
+      body: `Look back at what happened this week. You corrected four things: a partial month read as a collapse, a funnel drawn over two populations, an event counted twice, and a company\'s own staff inside a customer metric.
+
+Every one of them made a number look worse or better than it was. None of them were in the brief. All of them would have shipped.
+
+That is the job at this level. Not writing harder SQL — checking what the numbers are of, before computing anything from them.
+
+One question before you send Priya the recommendation, and it is the one I would ask you in a review: which of your findings would you defend if she pushed back hard on it, and which one are you least sure of?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Name the finding you are least sure of, and why.',
+        markers: ['channel|partner|paid|sample|82|56|small|retention|causal|selection|invite|cohort|censor|cannot|unsure|weak'],
+        why: 'The channel findings sit on the smallest samples and have no cost or revenue behind them. Knowing which of your own numbers is softest is what stops you defending the wrong one in the room.',
+      },
+    },
+  ],
   'account-economics': [
     {
       key: 'ba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
@@ -1228,6 +1463,121 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'activation-review': [
+    {
+      key: 'cs-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'How far back do you want to go?',
+      body: `Before you get too deep — we have older event data in cold storage, back to 2025. Getting it out takes about three days of Karthik's time.
+
+Worth it, or is six months enough for what Priya is asking?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'give a reason tied to the question'],
+      markers: ['enough|sufficient|no|six month|6 month|not need|later|cohort|recent|onboarding|change'],
+      ifIgnored: 'Karthik spends three days on an extract nobody asked him to prioritise, and it lands after the recommendation has gone.',
+      note: 'Six months covers several full cohorts and the onboarding has changed since. More history would answer a different question.',
+    },
+    {
+      key: 'cs-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: analytics warehouse maintenance window',
+      body: `A routine maintenance window is scheduled for Saturday 02:00-04:00 IST.
+
+Query access will be unavailable during this period. No action required.`,
+      expect: ['archive it'],
+      note: 'Weekend, automated, nothing to do. Archive.',
+    },
+    {
+      key: 'cs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Can I have the funnel now?',
+      body: `I know you are mid-analysis. I have a slide deadline at four.
+
+Just the top-line funnel numbers — I will caveat them myself. Whatever you have.`,
+      needsReply: true,
+      expect: ['say what is safe to use', 'name what is not settled'],
+      markers: ['self.serve|invited|split|population|caveat|not|still|check|which|careful|label|two'],
+      ifIgnored: 'He builds the slide from the raw funnel, including the step that converts at 114%, and presents it.',
+      note: 'He will caveat them himself is never true. Give him the numbers you trust and name the one you do not.',
+    },
+    {
+      key: 'cs-04', day: 2, type: 'question', via: 'chat', from: 'data_engineer',
+      subject: 'invited_by_user_id — did you spot it?',
+      body: `Saw you querying the events table hard this morning.
+
+Did you find invited_by_user_id on users? It is the only thing that explains the funnel shape and it is not documented anywhere. I keep meaning to write it up.`,
+      needsReply: true,
+      expect: ['confirm you found it', 'say what it explained'],
+      markers: ['yes|found|114|over 100|above 100|workspace|skip|invited|explain|split'],
+      ifIgnored: 'Karthik assumes you are stuck on something else and does not mention the column that unblocks your Tuesday.',
+      note: 'He is offering the key fact in the dataset. Say what it explained so he knows it landed.',
+    },
+    {
+      key: 'cs-05', day: 3, type: 'judgement', via: 'email', from: 'engineering_manager',
+      subject: 'Heard you found something in the mobile events',
+      body: `Rohan mentioned you were digging into the 4.3.0 event stream.
+
+If there is a problem in there I would rather hear it early and roughly than late and polished. What have you got?`,
+      needsReply: true,
+      expect: ['say what the fault is', 'give the build and the scope'],
+      markers: ['4\\.3\\.0|double|twice|duplicat|mobile|ios|android|89|163'],
+      ifIgnored: 'Arjun plans the sprint without it, and the historical correction gets raised after the planning is done.',
+      note: 'He has asked for rough and early. Give him the build number and the size — that is what changes his plan.',
+    },
+    {
+      key: 'cs-06', day: 3, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Desk moves — Analytics pod, Thursday',
+      body: `The Analytics pod is moving one floor up on Thursday afternoon.
+
+Please clear your desk by Wednesday evening. Monitors and docks stay; laptops come with you.`,
+      expect: ['archive it'],
+      note: 'Real, but not yours to answer. Archive.',
+    },
+    {
+      key: 'cs-07', day: 4, type: 'policy', via: 'email', from: 'people_partner',
+      subject: 'Reminder: staff accounts in customer reporting',
+      body: `A reminder now that more teams are self-serving analytics.
+
+Employee accounts on our own product are covered by the internal usage policy. They can be analysed for product-quality purposes, but they must not be presented as customer behaviour in any external or board-facing material.
+
+If you are unsure whether something counts, ask me rather than guessing.`,
+      expect: ['read it and apply it'],
+      note: 'A standing policy note sent to everyone. It changes what you do — staff rows come out of the customer numbers — but it does not need an answer.',
+    },
+    {
+      key: 'cs-08', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'The mobile slide',
+      body: `You said to pull the mobile engagement slide. I have pulled it.
+
+But I still need something about mobile for Monday — it is half the board's questions. What CAN I say?`,
+      needsReply: true,
+      expect: ['give him the true mobile finding', 'with numbers'],
+      markers: ['activat|19|53|third|half|onboard|funnel|not engagement|first report'],
+      ifIgnored: 'He goes to the board with nothing on mobile, having pulled a slide on your advice, and remembers that.',
+      note: 'Taking a claim away without replacing it is half a job. The activation gap is real, large and his.',
+    },
+    {
+      key: 'cs-09', day: 5, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'Can we say paid search is not working?',
+      body: `Your retention table has paid search at the bottom by a mile. We spend a lot there.
+
+I would like to take "paid search is not working" to the budget conversation next week. Can I?`,
+      needsReply: true,
+      expect: ['answer the question directly', 'say what is missing'],
+      markers: ['no|not yet|cannot|cost|spend|cac|acquisition|revenue|value|activat|38|missing|careful'],
+      ifIgnored: 'A quarter of the acquisition budget gets argued about on one retention column, with your name attached.',
+      note: 'It retains worst and activates third. Without cost per acquisition or revenue, "not working" is a claim the data cannot carry.',
+    },
+    {
+      key: 'cs-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the product review',
+      body: `Priya's review is Friday and I have to summarise your week in one line for the agenda.
+
+What is it? Not the caveats — the single thing that changes what we do.`,
+      needsReply: true,
+      expect: ['one finding', 'stated as a decision, not an observation'],
+      markers: ['mobile|activat|onboard|19|53|third|priorit|fix|invest'],
+      ifIgnored: 'Asha writes the line herself from your task titles, and it is the wrong one.',
+      note: 'Four corrections and one recommendation. Only one of them belongs on an agenda.',
+    },
+  ],
   'account-economics': [
     {
       key: 'bs-01', day: 1, type: 'scope', via: 'email', from: 'finance_analyst',
@@ -1896,6 +2246,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'activation-review': {
+    key: 'cq-activation', title: 'Activation & Onboarding Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'statistics',
+        q: 'June shows 48 signups against May\'s 140, and the export ends on 12 June. What is the honest comparison?',
+        options: [
+          { key: 'a', label: 'Signups per elapsed day: 4.0 in June against 4.52 in May', correct: true },
+          { key: 'b', label: 'The monthly totals, since that is what the business plans on' },
+          { key: 'c', label: 'June scaled up to a full month, so 120 against 140' },
+          { key: 'd', label: 'Neither — twelve days is too short to compare' },
+        ],
+        why: 'The rate is the only comparison that holds. Scaling up invents a count that never happened, and 48 signups is a perfectly adequate sample for a daily rate.',
+      },
+      {
+        id: 'q2', topic: 'business-sense',
+        q: 'A funnel step converts at 114.5%. What does that mean?',
+        options: [
+          { key: 'c', label: 'The population is mixed — some users skip the earlier step entirely', correct: true },
+          { key: 'a', label: 'The query has a join fanout' },
+          { key: 'b', label: 'Events are being double-counted' },
+          { key: 'd', label: 'The steps were measured over different time windows' },
+        ],
+        why: 'All four can cause it in general. Here it is the invited users: 184 of them joined a workspace somebody else created, so they reach data_connected without ever firing workspace_created.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'Why does counting funnel events with COUNT(*) give the wrong answer in this dataset?',
+        options: [
+          { key: 'b', label: 'Mobile build 4.3.0 fires every funnel event twice', correct: true },
+          { key: 'a', label: 'The events table has no primary key' },
+          { key: 'c', label: 'Users can legitimately repeat most funnel steps' },
+          { key: 'd', label: 'COUNT(*) includes NULL user_ids' },
+        ],
+        why: '670 signup_completed rows for 604 users. Nobody signs up twice, which is what makes that event a free integrity check on the whole table.',
+      },
+      {
+        id: 'q4', topic: 'business-sense',
+        q: 'You find the duplicate bug is confined to mobile 4.3.0, which stopped shipping on 10 May. What do you report?',
+        options: [
+          { key: 'a', label: 'The fault, the window, the blast radius, and that the historical data still needs correcting', correct: true },
+          { key: 'b', label: 'Nothing — a later build already fixed it' },
+          { key: 'c', label: 'An urgent live incident, since the data is corrupted' },
+          { key: 'd', label: 'Just the symptom, and let engineering scope it' },
+        ],
+        why: 'Fixed forward is not fixed backward. Five weeks of inflated events sit in every dashboard built on that period, and nobody will correct them until somebody says so.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'Meridian staff are 5% of users but 25% of sessions. Which metric is most distorted?',
+        options: [
+          { key: 'd', label: 'Sessions per user — it moves from 36.9 to 6.14 once they are excluded', correct: true },
+          { key: 'a', label: 'Activation rate, which moves from 40.7% to 37.7%' },
+          { key: 'b', label: 'All metrics equally, in proportion to their 5% share' },
+          { key: 'c', label: 'None of them — 5% is too small to matter' },
+        ],
+        why: 'The share of USERS tells you how much a per-user rate moves. It tells you nothing about a per-session one, where the same 31 people carry a quarter of the weight.',
+      },
+      {
+        id: 'q6', topic: 'statistics',
+        q: 'Mobile sessions average 540 seconds against web\'s 625. Excluding zero-duration sessions, mobile is 718 against web\'s 703. What is true?',
+        options: [
+          { key: 'b', label: 'The engagement gap is a tracking artefact — mobile bounces more, it does not engage less', correct: true },
+          { key: 'a', label: 'Mobile users are less engaged, and the second figure is a filtering trick' },
+          { key: 'c', label: 'Both figures are valid and the difference is not meaningful' },
+          { key: 'd', label: 'Zero-duration sessions should be deleted from the table' },
+        ],
+        why: 'A zero-length session is a beacon firing before the user left. It belongs in a bounce-rate metric and not in a duration average — and 24.8% of mobile sessions against 11.1% of web ones is the whole of the apparent gap.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Invited users activate at 61% against self-serve users\' 32%. What follows?',
+        options: [
+          { key: 'c', label: 'Nothing actionable — invited users exist only because a self-serve user succeeded first', correct: true },
+          { key: 'a', label: 'Push more signups down the invite path' },
+          { key: 'b', label: 'Being invited causes higher activation' },
+          { key: 'd', label: 'Self-serve onboarding should be replaced with an invite-only flow' },
+        ],
+        why: 'You cannot invite somebody into a workspace that does not exist. The two populations are not interchangeable, and the gap measures selection rather than any lever a product team can pull.',
+      },
+      {
+        id: 'q8', topic: 'statistics',
+        q: 'Week-four retention by cohort reads 29.8, 22.5, 27.3, 27.9, 14.3, 0. What is happening?',
+        options: [
+          { key: 'a', label: 'The last two cohorts are censored — they have not been observed for 28 days', correct: true },
+          { key: 'b', label: 'Retention collapsed in May and June' },
+          { key: 'c', label: 'Retention has declined steadily since January' },
+          { key: 'd', label: 'The May and June cohorts are too small to measure' },
+        ],
+        why: 'The youngest June user has been observed for zero days. That zero is arithmetic, not behaviour. The first four cohorts are flat noise, and the chart should stop at April.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'Paid search ranks third on activation and last on retention. What do you put in the recommendation?',
+        options: [
+          { key: 'd', label: 'Both rankings, that they disagree, and what data would settle it', correct: true },
+          { key: 'a', label: 'The retention ranking, since retention is what the business cares about' },
+          { key: 'b', label: 'A blended score combining the two' },
+          { key: 'c', label: 'That paid search is not working and the spend should be cut' },
+        ],
+        why: 'The disagreement is the finding. A blend hides it inside a number nobody can interpret, and a spending recommendation needs cost per acquisition and revenue — neither of which is in these tables.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'Vikram has a board slide saying mobile users are 14% less engaged, sourced to your data. You know the finding reverses when bounced sessions are excluded. What do you do?',
+        options: [
+          { key: 'b', label: 'Tell him to pull it, and give him the mobile activation gap to use instead', correct: true },
+          { key: 'a', label: 'Add a footnote about measurement methodology' },
+          { key: 'c', label: 'Leave it — mobile genuinely does have problems, so the conclusion holds' },
+          { key: 'd', label: 'Pull it and say nothing else, since the claim was never yours' },
+        ],
+        why: 'A true statement nearby does not rescue a false one. But taking a claim away without replacing it leaves him with nothing for half the board\'s questions, and the activation gap is real, large and exactly what he needs.',
+      },
+    ],
+  },
   'account-economics': {
     key: 'bq-economics', title: 'Account Economics Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
