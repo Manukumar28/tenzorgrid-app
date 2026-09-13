@@ -227,7 +227,19 @@ const PROJECT_CATALOG = {
       kind: 'audit',
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
-      taskKeys: ['da-003', 'da-005'],
+      taskKeys: [
+        // Day 1 — what equity means here, and how small our role populations are.
+        'pe-101', 'pe-102', 'pe-103', 'pe-104', 'pe-105', 'pe-106',
+        // Day 2 — spread within role, and whether tenure explains it.
+        'pe-110', 'pe-111', 'pe-112', 'pe-113', 'pe-114', 'pe-115',
+        // Day 3 — the wobble: nobody is outside their band, so the headline deliverable
+        // comes back empty and has to be reported as the assurance it is.
+        'pe-120', 'pe-121', 'pe-122', 'pe-123', 'pe-124', 'pe-125',
+        // Day 4 — compression. Every Staff Engineer out-earns every Engineering Manager.
+        'pe-130', 'pe-131', 'pe-132', 'pe-133', 'pe-134', 'pe-135',
+        // Day 5 — the report, under pressure to have found something.
+        'pe-140', 'pe-141', 'pe-142', 'pe-143', 'pe-144', 'pe-145',
+      ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 15000,
       contributors: [
@@ -2264,6 +2276,484 @@ const TASKS = {
       ],
     },
     estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Project 4: Pay Equity Audit --------------------------------------------------
+  //
+  // An audit where the headline finding is that there is nothing to find, which almost no
+  // training material ever covers and every auditor meets in their first year. The week:
+  //
+  //   Monday    what equity means here, and how small our role populations are
+  //   Tuesday   spread within role — and eleven of eighteen roles are big enough to look at
+  //   Wednesday the wobble: nobody is outside their band. The deliverable is empty.
+  //   Thursday  compression — every Staff Engineer out-earns every Engineering Manager
+  //   Friday    the report, under pressure to have found something
+  //
+  // Every figure measured against the dataset. The pressure running through it is the one
+  // an auditor actually feels: an empty finding reads as a wasted week unless you can say
+  // precisely what you looked for and did not find.
+
+  'pe-101': {
+    title: 'What are we actually auditing for',
+    hint: "Three different things get called pay equity. Neha's note tells you which one she means if you read it carefully.",
+    brief: "Neha has asked for a pay equity audit. That phrase means at least three different things, and doing the wrong one carefully is worse than doing the right one roughly.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'Pay equity audit — before the comp cycle',
+        body: "We are going into the comp cycle in six weeks and I would rather find problems now than have them found for us.\n\nWhat I want to know is whether people doing the same job here are paid consistently, and whether anyone has drifted somewhere they should not be. I am not asking about market rates — we do not have that data and I know it.\n\nWhatever you find, I need to be able to defend the method.",
+      },
+      prompt: 'Tick everything that follows from what she has asked.',
+      options: [
+        { key: 'internal', correct: true, label: 'This is internal consistency — same job, same pay — not market benchmarking', why: 'She has explicitly ruled market rates out and told you why. Doing it anyway would answer a question nobody asked with data we do not have.' },
+        { key: 'bands', correct: true, label: 'Drift outside the agreed salary bands is in scope', why: '"Drifted somewhere they should not be" is the band question. We hold band_low and band_high, so it is answerable.' },
+        { key: 'method', correct: true, label: 'The method matters as much as the finding', why: 'She has to defend it in a comp cycle. An audit whose method cannot be explained is worth nothing regardless of what it found.' },
+        { key: 'gender', correct: false, label: 'Break the analysis down by gender and ethnicity', why: 'That is a legitimate and important audit, and this dataset holds neither field. Producing it would mean inventing the inputs.' },
+        { key: 'market', correct: false, label: 'Compare our salaries against industry benchmarks', why: 'She ruled it out in the second paragraph. Ignoring an explicit exclusion is how an analyst gets a reputation for not reading the brief.' },
+        { key: 'perf', correct: false, label: 'Adjust for individual performance before comparing', why: 'We hold no performance data. Adjusting for something you cannot measure is a way of making any result you like.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'pe-102': {
+    title: 'How many roles are we comparing within',
+    hint: "Two counts in one row. COUNT(DISTINCT role) is the one that decides how much this audit can say.",
+    brief: "An audit that compares within roles is limited by how many people share a role. Write ONE SQL SELECT returning, in a single row: how many distinct roles there are among CURRENT staff, and how many current staff there are.",
+    referenceSql: 'SELECT COUNT(DISTINCT role) AS roles, COUNT(*) AS people FROM employees WHERE exit_year IS NULL',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'pe-103': {
+    title: 'How many people share each role',
+    hint: "Look at the bottom of this list before you plan the rest of the week.",
+    brief: "Now the distribution. Write ONE SQL SELECT returning each role held by CURRENT staff and how many people hold it, most people first. The shape of this result decides what the audit can and cannot conclude.",
+    referenceSql: 'SELECT role, COUNT(*) AS people FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY people DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'pe-104': {
+    title: 'Which roles can be audited at all',
+    hint: "HAVING filters groups after they are formed. Pick a floor and be ready to defend it.",
+    brief: "You cannot say anything about consistency within a role held by one person. Write ONE SQL SELECT returning each role with AT LEAST THREE current holders: the role, how many people, the lowest and highest salary, and the gap between them. Widest gap first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, MIN(salary) AS lowest, MAX(salary) AS highest, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'pe-105': {
+    title: 'What the coverage means for the audit',
+    hint: "Count how many roles survived the floor, and how many people those roles cover. Both numbers matter and they say different things.",
+    brief: "You have eighteen roles and a floor of three holders. Work out what your audit can actually claim before you spend four more days on it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'eleven', correct: true, label: 'Eleven of the eighteen roles have enough holders to compare within', why: 'Seven do not. Any statement about those roles is a statement about one or two individuals.' },
+        { key: 'most', correct: true, label: 'Those eleven roles still cover most of the company', why: 'The excluded roles are small by definition, so excluding them costs far less coverage than the count of roles suggests. Worth saying — it is what makes the audit useful rather than partial.' },
+        { key: 'declare', correct: true, label: 'The floor has to be stated in the report', why: 'A threshold you chose and did not disclose is the first thing a reviewer finds and the last time they trust the rest.' },
+        { key: 'nothing', correct: false, label: 'With seven roles excluded the audit cannot conclude anything', why: 'Too pessimistic and it abandons the job. Partial coverage, clearly stated, is a normal audit outcome.' },
+        { key: 'lower', correct: false, label: 'Lower the floor to two so more roles are covered', why: 'A "spread" between two people is the difference between two individuals. Widening coverage by weakening the meaning of the finding is not a trade worth making.' },
+        { key: 'dept', correct: false, label: 'Compare across departments instead, since roles are too small', why: 'Different question. A Support Agent and a Staff Engineer are not doing the same job, so a departmental comparison cannot answer "same job, same pay".' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'pe-106': {
+    title: 'Tell Neha what the audit will cover',
+    hint: "She has to defend the method. Give her the floor, the coverage it buys, and what falls outside it.",
+    brief: "Write back at the end of day one with the scope. She said she needs to defend the method — this note is that method, in the form she will quote it. Under 140 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Pay equity audit — scope and method', maxWords: 140,
+      prompt: 'The method, stated so she can defend it without you.',
+      rubric: [
+        { key: 'question', label: 'What you are auditing for', markers: ['same role|within role|consisten|internal|band|drift'], why: 'Name the question. Three things are called pay equity and she needs the report to say which one this is.' },
+        { key: 'floor', label: 'The minimum role size you are using', markers: ['three|3 |floor|threshold|at least|minimum'], why: 'The number she will be asked about. Volunteering it is what makes it a method rather than a choice you hid.' },
+        { key: 'coverage', label: 'How many roles that covers', markers: ['eleven|11|seven|7 |eighteen|18|most|majority'], why: 'Coverage turns a threshold from an exclusion into a stated limit.' },
+        { key: 'out', label: 'What is explicitly out of scope', markers: ['market|benchmark|gender|performance|not|outside|cannot'], why: 'She ruled market data out; saying so back confirms you read it and stops it being raised later.' },
+        { key: 'when', label: 'When it lands', markers: ['friday|by|end of|day'], why: 'Six weeks to the comp cycle. A date stops her chasing.' },
+      ],
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'pe-110': {
+    title: 'The widest gap in the company',
+    hint: "You already have the spread. Now express it as a share, because a gap in rupees means nothing without the salary it sits on.",
+    brief: "A gap of two lakh means something different on a nine-lakh salary than on a twenty-six-lakh one. Write ONE SQL SELECT returning, for roles with at least three current holders: the role, the count, the lowest salary, and the gap as a PERCENTAGE of the lowest. Widest percentage first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, MIN(salary) AS lowest, ROUND((MAX(salary) - MIN(salary)) * 100.0 / MIN(salary), 1) AS spread_pct FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread_pct DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'pe-111': {
+    title: 'Is a twelve percent spread a problem',
+    hint: "There is no threshold in the data. Whatever you decide, the report has to say who decided it and on what basis.",
+    brief: "Your widest role spread is about twelve percent. Neha will ask whether that is acceptable. Decide what you can honestly say.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'nothreshold', correct: true, label: 'The data contains no standard for what an acceptable spread is', why: 'Nothing in the dataset says twelve percent is fine or alarming. Pretending otherwise would be inventing a benchmark and attributing it to the analysis.' },
+        { key: 'explain', correct: true, label: 'Tenure and hiring year are plausible explanations you can actually check', why: 'Both are in the table. An unexplained spread and a spread explained by time served are very different findings.' },
+        { key: 'report', correct: true, label: 'Report the number and let People Ops set the threshold', why: 'Where the line sits is a policy decision owned by Neha. Measuring is yours; deciding is hers, and being clear about that boundary is most of what makes an audit trusted.' },
+        { key: 'fine', correct: false, label: 'Twelve percent is normal, so report no issue', why: '"Normal" according to what? You would be importing a standard from outside the analysis and presenting it as a finding.' },
+        { key: 'alarm', correct: false, label: 'Twelve percent is a serious inequity and should be flagged as such', why: 'Equally unfounded in the other direction, and far more expensive — it starts a remediation conversation on the strength of an adjective.' },
+        { key: 'hide', correct: false, label: 'Leave the number out and describe the spread qualitatively', why: 'The number is the only checkable thing you have. Replacing it with a word makes the report shorter and useless.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'pe-112': {
+    title: 'Does tenure explain the spread',
+    hint: "Group by role AND hire year. Look at the cell counts before you read anything into the averages.",
+    brief: "If the people paid more have been here longer, the spread has an innocent explanation. Write ONE SQL SELECT returning, for CURRENT staff in roles with at least three holders: the role, the hire year, how many people, and the average salary. Role, then year.",
+    referenceSql: 'SELECT role, hire_year, COUNT(*) AS people, AVG(salary) AS avg_salary FROM employees WHERE exit_year IS NULL AND role IN (SELECT role FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3) GROUP BY role, hire_year ORDER BY role, hire_year',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'pe-113': {
+    title: 'Chart the spread by role',
+    hint: "Roles have no order of their own. Give them one that lets the reader rank them.",
+    brief: "One slide showing the pay spread as a percentage, per role, for the roles big enough to audit. Roles are categories rather than a sequence, which decides the chart type and the ordering.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Pay spread as a percentage of the lowest salary, by role.',
+      sourceSql: 'SELECT role, ROUND((MAX(salary) - MIN(salary)) * 100.0 / MIN(salary), 1) AS spread_pct FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread_pct DESC',
+      columns: ['role', 'spread_pct'],
+      correct: { type: 'bar', x: 'role', y: 'spread_pct', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted widest first so the roles needing attention are at the top.',
+      why: {
+        type: 'Roles are categories, not a sequence. A line between Senior Engineer and Recruiter would imply a progression that does not exist.',
+        x: 'The role is the category being compared.',
+        y: 'Spread as a percentage is the measured value.',
+        sort: 'Nothing orders roles for you, so sorting by size puts the ones that need a conversation where the reader looks first.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'pe-114': {
+    title: 'The roles you cannot audit',
+    hint: "The mirror of Monday's filter. Name them, because a reader will ask which ones fell out.",
+    brief: "Your report has to say what it did not cover. Write ONE SQL SELECT returning each role with FEWER THAN THREE current holders and how many people hold it, smallest first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) < 3 ORDER BY people ASC, role',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'pe-115': {
+    title: 'Send Neha the spread picture',
+    hint: "Give her the widest role, the number, and the fact that you have not yet found anyone out of band.",
+    brief: "Mid-week note. She is planning the comp cycle and wants to know whether to expect a big remediation bill. Under 150 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Spread within roles — where we are', maxWords: 150,
+      prompt: 'The spread picture, with the threshold question handed back to her.',
+      rubric: [
+        { key: 'widest', label: 'The widest spread and which role it is in', markers: ['senior engineer|software engineer|widest|twelve|12|11|%'], why: 'The concrete headline. Everything else is context for it.' },
+        { key: 'pct', label: 'Expressed as a share, not just rupees', markers: ['%|percent|per cent|share|relative|of the'], why: 'Two lakh on nine lakh and two lakh on twenty-six lakh are different findings.' },
+        { key: 'threshold', label: 'That where the acceptable line sits is her call', markers: ['your|you|policy|people ops|decide|threshold|standard|not for me|no standard'], why: 'Measuring is yours, deciding is hers. Being explicit about that boundary is what makes an audit trusted rather than resented.' },
+        { key: 'tenure', label: 'Whether tenure explains it', markers: ['tenure|hire year|year|longer|time|explain|cell|few'], why: 'The obvious innocent explanation, and the cells are too thin to lean on. Say so before she assumes it.' },
+        { key: 'coverage', label: 'The roles outside the audit', markers: ['seven|7 |fewer|small|excluded|not covered|one or two'], why: 'Repeating the limit mid-week stops it being a surprise on Friday.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+
+  'pe-120': {
+    title: 'Anyone paid outside their band',
+    // Deliberately returns nothing. An empty result is a finding, and an auditor who
+    // cannot report one convincingly will eventually invent something instead.
+    expectEmpty: true,
+    hint: "Run it and trust the result. If it comes back empty, that is an answer — check your query once, then believe it.",
+    brief: "The headline check of the whole audit. Write ONE SQL SELECT returning every CURRENT employee whose salary falls OUTSIDE their department's agreed band — below band_low or above band_high — with their name, department, role, salary and both band edges. Highest salary first.",
+    referenceSql: 'SELECT e.name, d.name AS department, e.role, e.salary, d.band_low, d.band_high FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary < d.band_low OR e.salary > d.band_high) ORDER BY e.salary DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'pe-121': {
+    title: 'Your audit found nothing',
+    hint: "An empty result is not a failed query. Work out what it entitles you to say, and what it does not.",
+    brief: "The band check came back with no rows at all. Nobody in the company is paid outside their band. Neha is expecting findings and you have an empty table. Decide what that actually means.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'finding', correct: true, label: 'An empty result IS the finding, and a good one', why: 'Nobody outside band is exactly what an audit hopes to establish. Reporting it as a result rather than as an absence of results is the whole skill here.' },
+        { key: 'verify', correct: true, label: 'Verify it before reporting — run a query you know returns rows', why: 'An empty result and a broken query look identical. Proving the join and the filter work on a case you can predict is ten minutes that protects the entire report.' },
+        { key: 'limits', correct: true, label: 'Say what "within band" does and does not guarantee', why: 'Our bands are wide. Sitting inside one says nothing about where in it you sit, which is the finding that IS there.' },
+        { key: 'wider', correct: false, label: 'Widen the test until something fails, so there is something to report', why: 'Choosing a threshold because it produces findings is the definition of a rigged audit. It is also very easy to spot afterwards.' },
+        { key: 'nothing', correct: false, label: 'Report that the audit found nothing of note', why: '"Nothing of note" throws away a positive assurance that took a week to earn, and invites the question of why anyone bothered.' },
+        { key: 'broken', correct: false, label: 'Assume the query is wrong and keep rewriting it', why: 'Reasonable for ten minutes, corrosive after an hour. At some point you have to accept a result that disagrees with what you expected.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-122': {
+    title: 'Prove the check actually works',
+    hint: "Same join, same band arithmetic, a threshold you know will catch people. If this returns rows, the empty result was real.",
+    brief: "Before you report an empty finding, prove the machinery works. Write ONE SQL SELECT returning every CURRENT employee sitting in the BOTTOM QUARTER of their department's band: name, department, role, salary, both band edges, and their position in the band as a percentage. Lowest position first.",
+    referenceSql: 'SELECT e.name, d.name AS department, e.role, e.salary, d.band_low, d.band_high, ROUND((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low)) AS band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low) < 25 ORDER BY band_pct',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-123': {
+    title: 'Where each department sits in its band',
+    hint: "Average the position, not the salary. A department can be entirely in band and still sit at the bottom of it.",
+    brief: "The real finding is not who is outside the band but where inside it people sit. Write ONE SQL SELECT returning, per department: how many current staff, and their average position within the band as a percentage. Lowest first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS people, ROUND(AVG((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low))) AS avg_band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_band_pct',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-124': {
+    title: 'What the band positions tell you',
+    hint: "Compare the bottom two departments against the rest, and check how many people each one is.",
+    brief: "You have every department's average position in its band. This is the finding the empty band check could not give you. Decide what it supports.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'spread', correct: true, label: 'Departments sit at very different heights within their own bands', why: 'Thirty-seven percent at the bottom against sixty-six at the top. Everyone is compliant and the experience of being paid here is not remotely uniform.' },
+        { key: 'compliant', correct: true, label: 'Every one of those departments is fully within band', why: 'Which is precisely why the band check found nothing. The two results together are the story: compliant, and unequal.' },
+        { key: 'sizes', correct: true, label: 'The two lowest cover nineteen people between them, so this is not a rounding artefact', why: 'Nine and ten. Large enough that the gap is about how those functions are paid, not about one or two individuals.' },
+        { key: 'breach', correct: false, label: 'Marketing being at thirty-seven percent is a band breach', why: 'It is the bottom third of a band they are entirely inside. Calling compliance a breach would be the single fastest way to lose the room.' },
+        { key: 'underpaid', correct: false, label: 'Those departments are underpaid relative to the market', why: 'You have no market data — Neha ruled it out on Monday. Against our own bands is the only claim available.' },
+        { key: 'fix', correct: false, label: 'Recommend lifting everyone to the band midpoint', why: 'A costed recommendation nobody asked for, on a policy decision that is not yours. Measure, then let People Ops decide where the line goes.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-125': {
+    title: 'Report an empty finding without sounding empty-handed',
+    hint: "Lead with the assurance, not with the absence. Then give her the thing you did find.",
+    brief: "Tell Neha that nobody is out of band. This is the hardest note of the week: a true, valuable, week-long result that reads like you found nothing unless you write it properly. Under 160 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Band compliance — the result', maxWords: 160,
+      prompt: 'The empty finding, framed as the assurance it is, with the real finding attached.',
+      rubric: [
+        { key: 'assurance', label: 'Nobody is outside their band — stated as a result', markers: ['no one|nobody|none|every|all|within band|inside|compliant|zero'], why: 'Lead with it. Written as an absence it reads as a wasted week; written as an assurance it is the thing she wanted to be able to say.' },
+        { key: 'verified', label: 'That you verified the check rather than trusting an empty table',
+          markers: ['verif|check|confirm|tested|proved|sense.check|ran|bottom quarter|control'],
+          why: 'An empty result and a broken query look identical. Saying you proved the machinery works is what turns "no rows" into "no exceptions".' },
+        { key: 'position', label: 'The real finding — where departments sit inside their bands', markers: ['37|thirty.seven|66|sixty.six|marketing|support|bottom|position|within|lower'], why: 'Compliant and unequal. This is the finding the band check could not produce and it is the one worth acting on.' },
+        { key: 'limit', label: 'What being in band does not guarantee', markers: ['wide|does not|doesn.t|not mean|only|still|says nothing|guarantee'], why: 'Our bands are wide enough to contain the whole disparity. Saying so stops "all compliant" being read as "all fine".' },
+        { key: 'hers', label: 'That the threshold decision is hers', markers: ['your|you|policy|decide|people ops|not for me|judgement'], why: 'Measuring is yours; setting the acceptable line is hers. Keeping that boundary clean is what makes the audit usable.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-130': {
+    title: 'Managers against their own people',
+    hint: "Two conditional MAXes in one pass. LIKE '%Manager%' is crude and it is enough here.",
+    brief: "Pay compression is when the people below start catching the people above. Write ONE SQL SELECT returning, per department: the highest-paid manager's salary and the highest-paid non-manager's salary among CURRENT staff. Department order.",
+    referenceSql: "SELECT d.name AS department, MAX(CASE WHEN e.role LIKE '%Manager%' THEN e.salary END) AS top_manager, MAX(CASE WHEN e.role NOT LIKE '%Manager%' THEN e.salary END) AS top_ic FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY d.name",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'pe-131': {
+    title: 'The Engineering ladder, rung by rung',
+    hint: "One department, grouped by role. Read the top two rows carefully.",
+    brief: "One department stands out. Write ONE SQL SELECT returning, for CURRENT Engineering staff only: each role, how many hold it, and the lowest and highest salary in it. Highest-paid role first.",
+    referenceSql: "SELECT e.role, COUNT(*) AS people, MIN(e.salary) AS lowest, MAX(e.salary) AS highest FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND d.name = 'Engineering' GROUP BY e.role ORDER BY highest DESC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'pe-132': {
+    title: 'Is compression a problem',
+    hint: "Check whether it is one person or the whole rung. That difference decides whether it is an anomaly or a structure.",
+    brief: "Every Staff Engineer out-earns every Engineering Manager. Decide what to say about it — and notice this is a case where the obvious alarmed reaction is wrong.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'structural', correct: true, label: 'It is the whole rung, not one individual — so it is a structure, not an anomaly', why: 'Both Staff Engineers sit above all three Engineering Managers. A single overlap is a case; a clean separation is a design.' },
+        { key: 'deliberate', correct: true, label: 'It may well be deliberate, and the data cannot tell you', why: 'Plenty of engineering organisations pay senior ICs above line managers on purpose. Reporting it as a fault would assume an intention nobody has stated.' },
+        { key: 'report', correct: true, label: 'Report it as an observation and ask whether it is intended', why: 'The right register for a finding you cannot interpret. It gets the fact in front of the person who knows the answer.' },
+        { key: 'error', correct: false, label: 'Flag it as a pay error requiring correction', why: 'You do not know that. Recommending someone\'s pay be corrected on the strength of a role title comparison is a serious thing to be wrong about.' },
+        { key: 'ignore', correct: false, label: 'Leave it out — managers and ICs are different jobs, so the comparison is meaningless', why: 'The comparison is standard and Neha would expect it. Omitting an awkward finding because it is hard to interpret is the failure mode this whole audit exists to avoid.' },
+        { key: 'title', correct: false, label: 'Recommend renaming the Staff Engineer role to resolve it', why: 'Changing a label to make a number look different is the worst option on the list, and somebody will suggest it.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'pe-133': {
+    title: 'Chart where departments sit in band',
+    hint: "Departments are categories. Sorting them by value is what lets a reader see the gap at a glance.",
+    brief: "One slide for the comp cycle: average band position per department. This is the finding the audit actually has, so the chart has to make the gap obvious without a caption.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Average position within the salary band, by department.',
+      sourceSql: 'SELECT d.name AS department, ROUND(AVG((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low))) AS avg_band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_band_pct',
+      columns: ['department', 'avg_band_pct'],
+      correct: { type: 'bar', x: 'department', y: 'avg_band_pct', sort: 'asc' },
+      whyRight: 'Categories compared by size, sorted so the departments sitting lowest — the ones the comp cycle has to decide about — come first.',
+      why: {
+        type: 'Departments are categories, not a sequence, so bars rather than a line.',
+        x: 'The department is the category.',
+        y: 'Average position in band, as a percentage.',
+        sort: 'Ascending, because the finding is who sits at the BOTTOM. Sorting descending would bury the point under the departments that are fine.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'pe-134': {
+    title: 'What it would cost to lift the bottom',
+    hint: "The cost per person is the target minus what they earn now. Sum it per department.",
+    brief: "Neha will ask what remediation costs before she asks whether to do it. Write ONE SQL SELECT returning, per department: how many CURRENT staff sit below a quarter of the way up their band, and what it would cost in total to lift each of them to that quarter mark. Most expensive first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS people, SUM(d.band_low + (d.band_high - d.band_low) * 0.25 - e.salary) AS cost_to_lift FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low) < 25 GROUP BY d.name ORDER BY cost_to_lift DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'pe-135': {
+    title: 'What Meera has written about your audit',
+    hint: "Three sentences. One is the opposite of what you found.",
+    brief: "Meera is drafting the People Ops newsletter item about the audit. It goes out under your analysis. Read it properly.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Newsletter item on the pay audit — OK to send?',
+        body: "Short piece for the People Ops update:\n\n\"An independent review of pay across the company found no employees paid outside their agreed salary bands. The review did identify that some departments sit lower within their bands than others, and People Ops will consider this in the coming compensation cycle. No pay inequities were found.\"",
+      },
+      prompt: 'Tick every sentence you would change or cut.',
+      options: [
+        { key: 'noineq', correct: true, label: 'The "no pay inequities were found" sentence', why: 'It contradicts the sentence before it. Thirty-seven percent against sixty-six is a disparity — compliant with the bands and not equitable, which is the entire point of the audit.' },
+        { key: 'independent', correct: true, label: 'Calling it an "independent review"', why: 'It was done in-house by an analyst reporting to the person commissioning it. That is fine and normal; calling it independent is a claim that would not survive scrutiny.' },
+        { key: 'noout', correct: false, label: 'The "no employees outside their bands" sentence', why: 'True, verified, and the assurance the audit exists to provide. Keep it.' },
+        { key: 'consider', correct: false, label: 'The "People Ops will consider this" sentence', why: 'Accurate about who owns the decision, which is exactly the boundary you have kept all week.' },
+        { key: 'numbers', correct: false, label: 'Ask her to add the specific percentages', why: 'A staff newsletter naming which department is paid lowest would land badly with the people in it. The detail belongs in the report, not the broadcast.' },
+        { key: 'pull', correct: false, label: 'Ask her to hold the whole item until after the comp cycle', why: 'Two sentences need fixing. Blocking a communication you could correct in one reply makes you the obstacle rather than the check.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+
+  'pe-140': {
+    title: 'How far the average sits below the top',
+    hint: "MAX minus AVG, per role. It answers a different question from MAX minus MIN and Neha will want both.",
+    brief: "A spread tells you the range; this tells you whether most people sit near the top or are dragged along behind one high earner. Write ONE SQL SELECT returning, for roles with at least three CURRENT holders: the role, the count, the average salary, and the gap between the highest and the average. Biggest gap first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, AVG(salary) AS avg_salary, MAX(salary) - AVG(salary) AS gap_to_top FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY gap_to_top DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-141': {
+    title: 'Median against mean, by role, in Python',
+    // Flagged for rework: Neha accepts it and then wants it a different way.
+    rework: true,
+    hint: "SQLite has no median. Group the salaries by role yourself, sort each group, take the middle — and handle the even-length case.",
+    brief: "Every figure in this audit so far has been a mean, and a mean on seven people moves when one of them is unusual. In the notebook, compute for each role with at least three CURRENT holders: the mean salary, the median salary, and the headcount. Sort by the difference between mean and median, largest first. Assign a list of dicts with keys role, mean_salary, median_salary and people to `result`.",
+    tool: 'python', datasetKey: 'hr_core',
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const e of tables.employees) {
+        if (e.exit_year != null) continue;
+        if (!by.has(e.role)) by.set(e.role, []);
+        by.get(e.role).push(e.salary);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .filter(([, v]) => v.length >= 3)
+        .map(([role, v]) => ({
+          role,
+          mean_salary: v.reduce((a, b) => a + b, 0) / v.length,
+          median_salary: median(v),
+          people: v.length,
+        }))
+        .sort((a, b) => Math.abs(b.mean_salary - b.median_salary) - Math.abs(a.mean_salary - a.median_salary));
+    },
+  },
+
+  'pe-142': {
+    title: 'What the audit is entitled to conclude',
+    hint: "Separate the things you measured from the things you would like to be true.",
+    brief: "Before you write the report, fix exactly what this week established. Neha will quote whatever you write, so the boundary between measured and inferred has to be exact.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything the audit can actually claim.',
+      options: [
+        { key: 'inband', correct: true, label: 'No current employee is paid outside their department\'s agreed band', why: 'Measured, verified against a control query, and the assurance the audit was commissioned to provide.' },
+        { key: 'position', correct: true, label: 'Departments sit at materially different heights within their bands', why: 'Thirty-seven percent against sixty-six, on nine and sixteen people. Measured and large.' },
+        { key: 'compression', correct: true, label: 'In Engineering, every Staff Engineer out-earns every Engineering Manager', why: 'A clean structural separation, not a single overlap. Reportable as an observation without claiming it is wrong.' },
+        { key: 'fair', correct: false, label: 'Pay at this company is fair', why: 'Fairness is a judgement about whether the differences are justified. You measured the differences; nothing in the data speaks to whether they are deserved.' },
+        { key: 'nogap', correct: false, label: 'There are no pay inequities', why: 'Contradicted by your own band-position finding. This is the exact sentence in Meera\'s draft that you asked her to cut.' },
+        { key: 'market', correct: false, label: 'Our salaries are competitive', why: 'Requires market data that was ruled out on Monday. It is also the claim people most want the audit to make, which is why it has to be refused explicitly.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-143': {
+    title: 'Who is furthest below their own role average',
+    hint: "A correlated subquery gets each person's role average onto their own row.",
+    brief: "The last piece: individuals, not departments. Write ONE SQL SELECT returning each CURRENT employee whose salary is BELOW the average for their own role — name, role, salary, the role average, and the gap. Biggest gap first. Restrict to roles with at least three holders.",
+    referenceSql: 'SELECT e.name, e.role, e.salary, (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) AS role_avg, (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) - e.salary AS below_by FROM employees e WHERE e.exit_year IS NULL AND e.role IN (SELECT role FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3) AND e.salary < (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) ORDER BY below_by DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-144': {
+    title: 'Neha wants a headline',
+    hint: "She is not asking you to soften the finding. She is asking for a sentence, and the honest one has two halves.",
+    brief: "An hour before her comp-cycle prep, Neha asks for the line. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'One line for the comp cycle',
+        body: "I have the full report and I have read it. What I need now is the sentence I open with.\n\nIf the honest answer is that we are fine, say that — I will take good news. If it is not, I would rather know today than in the meeting.",
+      },
+      prompt: 'Which openings are honest and useful?',
+      options: [
+        { key: 'both', correct: true, label: '"Everyone is inside their band, and two departments sit near the bottom of theirs"', why: 'Both halves, in one sentence. The assurance she can give, and the thing she has to decide about.' },
+        { key: 'compliant', correct: true, label: '"No band breaches — the question for the comp cycle is where inside the bands people sit"', why: 'Same content, framed as the decision she actually owns. Hands her the agenda rather than a verdict.' },
+        { key: 'cost', correct: true, label: '"Nobody is out of band; lifting the fifteen lowest to a quarter of band would cost about eight lakh"', why: 'Assurance plus a costed option. She is going into a budget conversation and this is the number she will be asked for.' },
+        { key: 'fine', correct: false, label: '"We are fine — no issues found."', why: 'She offered to take good news, which is exactly when it is tempting. Your own band-position finding contradicts it, and she would be repeating it in a room where somebody has the same data.' },
+        { key: 'serious', correct: false, label: '"We have a serious pay equity problem."', why: 'Unfounded in the other direction. Everyone is compliant; "serious problem" is an adjective the data does not support and would start an expensive conversation.' },
+        { key: 'more', correct: false, label: '"I would need market data before I could say anything."', why: 'You measured plenty without it. Refusing to summarise a week of real findings because one dimension was out of scope wastes the work.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-145': {
+    title: 'The audit report',
+    hint: "Assurance first, then the finding, then the cost, then the limits. The limits are what make the rest believable.",
+    brief: "The deliverable. It goes into the comp cycle pack and Neha will defend the method without you in the room, so the method has to be in the document.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni and the compensation review', subject: 'Pay equity audit — findings', maxWords: 220,
+      prompt: 'The report. What you checked, what you found, what it would cost, and what you did not look at.',
+      rubric: [
+        { key: 'assurance', label: 'Nobody is outside their band', markers: ['no one|nobody|none|all|every|within|inside|compliant|zero|no breach'], why: 'The assurance the audit was commissioned for. It leads.' },
+        { key: 'finding', label: 'The band-position disparity', markers: ['37|thirty.seven|66|sixty.six|marketing|support|bottom|position|lower|within their band'], why: 'Compliant and unequal. The finding the band check could not produce.' },
+        { key: 'method', label: 'The method — the role-size floor and the coverage it gives', markers: ['three|3 |floor|threshold|eleven|11|seven|7 |minimum|at least'], why: 'She has to defend this. A threshold that appears only in your head is the first thing a reviewer finds.' },
+        { key: 'compression', label: 'The Engineering compression, as an observation not a fault', markers: ['staff engineer|compression|manager|out.earn|above|engineering'], why: 'Raise it, do not rule on it. You cannot tell from the data whether it is deliberate.' },
+        { key: 'cost', label: 'What remediation would cost', markers: ['cost|lakh|\\d|lift|remediat|eight|805|quarter'], why: 'She is going into a budget conversation. A finding without a price is a problem rather than a decision.' },
+        { key: 'limits', label: 'What the audit did NOT cover', markers: ['market|benchmark|gender|performance|not|outside|did not|cannot'], why: 'Volunteering the boundary before someone finds it is what makes everything inside it credible.' },
+      ],
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
   // ---- Senior track -----------------------------------------------------------------

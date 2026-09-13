@@ -24,6 +24,207 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'pay-equity-audit': [
+    {
+      key: 'ea-01', day: 1, type: 'learning', via: 'email', from: 'people_partner', minutes: 11,
+      subject: 'Before you start — what our salary bands actually are',
+      title: 'Read: bands, and the three things called pay equity',
+      body: `Neha here. Two things before you open the data, because both decide what your audit can conclude.
+
+First, the bands. Every department has a band_low and a band_high that we agreed with Finance. They are WIDE — often a factor of two from bottom to top — because one band has to cover a new joiner and somebody with eight years in the same function. Being inside your band is therefore a very weak statement. It means nothing has gone badly wrong. It does not mean you are paid the same as the person next to you.
+
+Second, "pay equity" means at least three different things and people use them interchangeably:
+
+  INTERNAL CONSISTENCY — do people doing the same job get paid the same
+  BAND COMPLIANCE — is anyone outside the range we agreed
+  MARKET COMPETITIVENESS — are we paying what the outside world pays
+
+We can answer the first two from this data. We cannot answer the third at all, and I would rather you said so loudly than quietly produced something that looks like an answer.`,
+      check: {
+        kind: 'choice',
+        prompt: 'An employee sits inside their band. What does that establish?',
+        options: [
+          { key: 'weak', correct: true, label: 'Only that their pay is within the agreed range — the band is wide' },
+          { key: 'fair', correct: false, label: 'That they are paid fairly' },
+          { key: 'same', correct: false, label: 'That they are paid the same as others in their role' },
+          { key: 'market', correct: false, label: 'That their pay is competitive' },
+        ],
+        why: 'A band often spans a factor of two. Two people in the same band can be paid very differently and both be compliant, which is exactly the gap this audit exists to look into.',
+      },
+    },
+    {
+      key: 'ea-02', day: 1, type: 'policy', via: 'email', from: 'security', minutes: 7,
+      subject: 'Read and confirm: individual salary data',
+      title: 'Read and confirm: handling individual pay records',
+      body: `This audit puts you closer to individual salaries than anything you have done here, so the rules matter more than usual.
+
+Aggregates by department or role are shareable with People Ops, Finance and the leadership team. Individual rows are not, with one exception: a named individual's own pay may be discussed with Neha and with that person's manager, and nobody else.
+
+If your analysis produces a list of named people, that list goes to Neha directly and does not appear in any pack, deck or newsletter. A group small enough to identify someone is the same as naming them.
+
+And the one that catches people: do not discuss what you have found with colleagues, including ones who help you with the SQL. "I noticed something odd in Marketing" is a disclosure.
+
+Confirm you have read this.`,
+      check: { kind: 'acknowledge', label: 'I have read and understood' },
+    },
+    {
+      key: 'ea-03', day: 2, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul on band position arithmetic',
+      body: `You will want "how far up their band is this person" a lot this week. The formula is simple and the mistakes are not.
+
+  (salary - band_low) * 100.0 / (band_high - band_low)
+
+Two things. Use 100.0 rather than 100 — integer division will quietly give you zeros and they look like real answers. And the denominator is the band WIDTH, not band_high; dividing by the top of the band gives you a number that means nothing but still comes out between 0 and 100, which is the worst kind of wrong.
+
+Zero percent means sitting exactly on the floor of the band. A hundred means at the ceiling. Anything outside that range means the person is out of band, which is what your headline check is looking for.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Band is 800,000 to 1,800,000. Somebody earns 1,050,000. Where are they?',
+        options: [
+          { key: 'q', correct: true, label: '25% of the way up the band' },
+          { key: 'half', correct: false, label: '58% of the way up the band' },
+          { key: 'over', correct: false, label: 'Above the band' },
+          { key: 'low', correct: false, label: '13% of the way up the band' },
+        ],
+        why: '250,000 above the floor, over a width of 1,000,000, is 25%. The 58% answer is what you get dividing by band_high instead of the width — a plausible-looking number that answers no question at all.',
+      },
+    },
+    {
+      key: 'ea-04', day: 2, type: 'judgement', via: 'email', from: 'line_manager', minutes: 9,
+      subject: 'Where the line sits is not your call',
+      title: 'Read: measuring versus deciding',
+      body: `Asha. A word about the boundary in this piece of work, because getting it wrong is the most common way an analyst loses a stakeholder.
+
+You are going to produce a number — a spread of twelve percent, say — and somebody is going to ask whether that is acceptable. It is extremely tempting to answer, because you have spent three days with the data and nobody knows it better.
+
+Do not. Whether twelve percent is acceptable is a policy question owned by People Ops. It depends on things you cannot see: what we promised people at hire, what the market did last year, what we can afford. Your job is to make the number impossible to misunderstand and then let Neha decide.
+
+This is not timidity. An analyst who stays inside their evidence gets believed on the things they do assert. One who drifts into policy gets treated as another opinion in the room, and the numbers go with them.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Neha asks whether a 12% spread within a role is acceptable. Write your reply. Under 60 words.',
+        maxWords: 60,
+        markers: ['not|no standard|nothing in the data|your call|policy|you decide|people ops|depends', 'can|will|here is|what I can|measure|tenure|compare|context'],
+        why: 'Decline the policy question, give the reason it is not yours, and immediately offer what you CAN provide — context on what drives the spread. A refusal with nothing attached reads as unhelpful.',
+      },
+    },
+    {
+      key: 'ea-05', day: 3, type: 'learning', via: 'chat', from: 'finance_analyst', minutes: 8,
+      title: 'Diya on results that come back empty',
+      body: `You are about to run a check that might return nothing, so — the thing nobody teaches and everybody meets.
+
+An empty result and a broken query look exactly the same. Both are zero rows. There is no error, no warning, nothing to tell them apart, and the natural reaction to "no rows" is to assume you have made a mistake and start rewriting.
+
+The fix is a control. Run the same join and the same arithmetic with a threshold you KNOW will catch people — say, anyone in the bottom quarter of their band. If that returns rows, your machinery works and the empty result is real. If it also returns nothing, you have a bug.
+
+Ten minutes, and it turns "I think nobody is out of band" into "nobody is out of band, and here is why I am sure". In an audit, that second sentence is the whole product.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your exception query returns zero rows. What do you do first?',
+        options: [
+          { key: 'control', correct: true, label: 'Run a control query with a threshold you know will match, to prove the logic works' },
+          { key: 'trust', correct: false, label: 'Report it — zero rows means zero exceptions' },
+          { key: 'rewrite', correct: false, label: 'Rewrite the query until it returns something' },
+          { key: 'widen', correct: false, label: 'Widen the threshold until exceptions appear' },
+        ],
+        why: 'Trusting it blindly risks reporting a bug as an assurance. Rewriting until something appears, or widening until it does, is how an audit gets rigged — usually without anyone intending to.',
+      },
+    },
+    {
+      key: 'ea-06', day: 3, type: 'policy', via: 'chat', from: 'comms', minutes: 6,
+      title: 'Meera on writing up a negative finding',
+      body: `Heard your band check came back clean. A note on how to write that, because it is genuinely hard and most people do it badly.
+
+"We found no issues" reads as "we did not look very hard". It is the same sentence you would write if you had done nothing all week, which is why it lands so poorly.
+
+What works is naming the test. "We checked every current employee against their department's agreed band and found no exceptions" is the same finding, and it is now an assurance somebody can rely on — because the reader can see what was actually done.
+
+Then give them the thing you did find. A report that is only a negative, however well written, leaves the reader with nowhere to go.`,
+      check: { kind: 'acknowledge', label: 'Got it' },
+    },
+    {
+      key: 'ea-07', day: 4, type: 'learning', via: 'email', from: 'engineering_manager', minutes: 9,
+      subject: 'About the Staff Engineer thing',
+      title: 'Read: why senior ICs sometimes out-earn managers',
+      body: `Arjun. I gather your audit has noticed that our Staff Engineers are paid above our Engineering Managers. Before you write that up as a fault — some context you will not find in the table.
+
+It is deliberate. A Staff Engineer is a technical leadership role and we compete for those people against companies that pay very well. An Engineering Manager is a people-leadership role with a different and, frankly, larger supply of candidates. Paying the IC track above the management track at that level is how we stop our best engineers becoming mediocre managers just to get a raise.
+
+Plenty of companies do it the other way and they are not wrong either. It is a design choice.
+
+What I would ask is that you report it as an observation and ask whether it is intended, rather than as an error to be corrected. If it turns up in a pack as "pay anomaly in Engineering" I will spend a month explaining it.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Every Staff Engineer out-earns every Engineering Manager. How do you report it?',
+        options: [
+          { key: 'ask', correct: true, label: 'As an observation, with a question about whether it is intended' },
+          { key: 'error', correct: false, label: 'As a pay anomaly requiring correction' },
+          { key: 'omit', correct: false, label: 'Leave it out — the roles are not comparable' },
+          { key: 'rename', correct: false, label: 'Suggest retitling the roles so the comparison disappears' },
+        ],
+        why: 'You cannot tell intent from the data, and a clean separation across the whole rung looks far more like a design than an accident. Omitting it is worse — hiding an awkward finding because it is hard to interpret is the failure this audit exists to avoid.',
+      },
+    },
+    {
+      key: 'ea-08', day: 4, type: 'judgement', via: 'chat', from: 'people_partner', minutes: 7,
+      title: 'Neha on what remediation actually costs',
+      body: `When you cost the remediation, one thing to build in from the start.
+
+A salary increase is not a one-off. Lifting somebody by fifty thousand costs fifty thousand this year and every year after, plus whatever it compounds to at the next review, plus the employer contributions on top. Finance will apply the multiplier themselves, but if your number looks like a one-off payment they will assume that is what you meant and the conversation goes wrong in the first minute.
+
+So label it. "Annual, recurring, before on-costs" is six words and it stops the whole misunderstanding.
+
+Same for the population: say how many people, so nobody divides your total by the wrong headcount.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the line that presents your remediation total so Finance reads it correctly. Under 45 words.',
+        maxWords: 45,
+        markers: ['annual|recurring|per year|ongoing|each year', 'people|headcount|\\d|across|covering'],
+        why: 'The number, the population it covers, and the word "annual". Without the last one Finance reads a recurring cost as a one-off and budgets a fraction of what is needed.',
+      },
+    },
+    {
+      key: 'ea-09', day: 5, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul: the mean is hiding things again',
+      body: `Last one. Every figure in your audit so far is a mean, and you have roles with three to seven people in them.
+
+On seven people, one unusual salary moves the mean by a seventh of its distance. That is enough to make a role look like it has a problem when it has one well-paid person, or to hide a genuinely low-paid person behind six normal ones.
+
+Compute the median alongside. Where they agree, the mean is telling you about the group. Where they diverge, the mean is telling you about one individual, and that individual is the finding.
+
+The gap between mean and median is itself the most useful column you can add — sort by it and you have a list of exactly the roles worth looking at person by person.`,
+      check: {
+        kind: 'choice',
+        prompt: 'In one role the mean is well above the median. What does that tell you?',
+        options: [
+          { key: 'high', correct: true, label: 'At least one person is paid well above the rest of the role' },
+          { key: 'low', correct: false, label: 'Most people in the role are overpaid' },
+          { key: 'even', correct: false, label: 'Pay in the role is evenly distributed' },
+          { key: 'error', correct: false, label: 'There is an error in the data' },
+        ],
+        why: 'The mean is pulled toward outliers and the median is not, so a mean above the median means weight at the top. That person may be entirely justified — but they are the reason the role average looks the way it does, and the report should say so rather than let the average speak for six people it does not describe.',
+      },
+    },
+    {
+      key: 'ea-10', day: 5, type: 'judgement', via: 'email', from: 'line_manager', minutes: 9,
+      subject: 'Before the report goes in',
+      title: 'Read: reporting an audit that found nothing wrong',
+      body: `Last thing. This report says the company is compliant, and there is a specific pressure that comes with that which you should expect.
+
+Somebody will want you to have found more. Not maliciously — an audit that confirms everything is fine feels, to the person who commissioned it, like a week nobody needed. There will be a gentle pull toward emphasising the band-position finding harder than it deserves, or toward language like "concerning" and "significant" that the numbers do not carry.
+
+Resist it, and resist it in a specific way: put the assurance and the finding in the same paragraph, both stated plainly. "No band exceptions. Two departments sit near the bottom of their bands." Nobody reading that thinks the week was wasted, and nothing in it is overstated.
+
+An audit that overstates once is never trusted to have understated anything again.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the opening two sentences of the report. Under 50 words.',
+        maxWords: 50,
+        markers: ['no|none|nobody|within band|inside|compliant|exception', 'but|however|two|marketing|support|bottom|lower|position|37|66'],
+        why: 'Assurance and finding, adjacent, neither dressed up. The first sentence is what she can say; the second is what she has to decide about.',
+      },
+    },
+  ],
   'outage-recovery': [
     {
       key: 'pa-01', day: 1, type: 'learning', via: 'email', from: 'support_lead', minutes: 10,
@@ -612,6 +813,111 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'pay-equity-audit': [
+    {
+      key: 'es-01', day: 1, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'One thing I should have put in the brief',
+      body: `Meant to say — the comp cycle opens in six weeks and whatever you find has to be actionable by then.
+
+That does not mean rush it. It means if you find something that would take three months to investigate properly, I need to know that on day two rather than on Friday.
+
+Anything so far that looks like it will not fit?`,
+      needsReply: true,
+      expect: ['answer the question asked', 'flag anything that will not fit the timeline'],
+      markers: ['no|nothing|fine|fits|on track|yes|market|gender|performance|outside|would need|cannot'],
+      ifIgnored: 'Neha assumes everything fits and plans the comp cycle around it. If something does not, she finds out on Friday with six weeks gone.',
+      note: 'A stakeholder asking "tell me early if this will not work" is doing you a favour. The only wrong answer is silence.',
+    },
+    {
+      key: 'es-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: scheduled password rotation reminder',
+      body: `Your account password is due for rotation in 21 days.
+
+You will be prompted automatically at next sign-in after that date. No action needed now.`,
+      expect: ['archive it'],
+      note: 'Automated, three weeks away, and explicitly says no action needed. Three seconds.',
+    },
+    {
+      key: 'es-03', day: 2, type: 'pressure', via: 'chat', from: 'engineering_manager',
+      body: `Someone mentioned you are doing a pay audit. Can you tell me where my team sits? I have got two people asking about their next review and it would help to know if I am arguing from a strong position or a weak one.`,
+      needsReply: true,
+      expect: ['do not share findings mid-audit', 'say who can tell him and when'],
+      markers: ['cannot|can.t|not yet|mid|before|not shar|neha|people ops|through', 'once|when|finish|report|friday|go through|ask'],
+      ifIgnored: 'Arjun assumes silence means bad news for his team and starts managing expectations downward on the strength of nothing.',
+      note: 'Reasonable question, and the answer is still no. Findings go to the commissioner first — partly for confidentiality, and partly because a half-finished audit quoted by a manager is very hard to retract.',
+    },
+    {
+      key: 'es-04', day: 2, type: 'noise', via: 'chat', from: 'comms',
+      body: `Newsletter goes out Thursday rather than Wednesday this week, printers are behind. Nothing needed from anyone, just so the usual people do not chase me about it.`,
+      expect: ['nothing — it is a broadcast'],
+      note: 'A message whose entire purpose is to prevent other people asking questions. Do not become one of them.',
+    },
+    {
+      key: 'es-05', day: 3, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Did your band check actually run?',
+      body: `Neha mentioned the band exception check came back empty and asked me whether that was plausible.
+
+I said it was, but I would feel better knowing you had sanity-checked it. An empty result and a query with a bad join look identical from the outside.
+
+How do you know the check works?`,
+      needsReply: true,
+      expect: ['describe the control', 'do not just assert it is fine'],
+      markers: ['control|check|same join|threshold|bottom|quarter|25|known|returns rows|verif|tested'],
+      ifIgnored: 'Diya cannot vouch for it, so the assurance goes into the comp cycle pack with a question mark attached that you could have removed in two sentences.',
+      note: 'Somebody offering to back your finding if you can show your working is the best kind of colleague. The answer is the control query, described in one line.',
+    },
+    {
+      key: 'es-06', day: 3, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Compensation cycle timeline — for managers',
+      body: `The timeline for the upcoming compensation cycle is attached, covering manager submission dates and calibration sessions.
+
+Circulated to all staff for visibility. Managers will receive their own instructions separately. No action required for non-managers.`,
+      expect: ['archive it'],
+      note: 'Directly relevant to your work and asking nothing of you. Reading it is fine; replying to it is not a thing anyone wants.',
+    },
+    {
+      key: 'es-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Can we say the audit found no problems?',
+      body: `Vikram here. Neha tells me the audit is coming back clean, which is good news and I would like to use it.
+
+I am writing the board update and I want to say "an audit found no pay inequities". Can I say that?`,
+      needsReply: true,
+      expect: ['say no, and why', 'offer the sentence he CAN use'],
+      markers: ['no|not quite|cannot|careful|would not|too strong|contradic', 'band|within|compliant|position|bottom|37|marketing|support|instead|could say|can say'],
+      ifIgnored: 'The board update goes out saying the audit found no pay inequities. That sentence is now on the record, attributed to your work, and contradicted by your own report.',
+      note: 'The whole audit turns on this distinction: compliant with the bands, and not equal within them. If that does not survive contact with the board update, the week produced nothing.',
+    },
+    {
+      key: 'es-08', day: 4, type: 'question', via: 'chat', from: 'line_manager',
+      body: `Neha asked me whether your audit could be re-run each quarter automatically. I said I would ask you rather than guess. Could it?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'name what would need to be fixed or decided'],
+      markers: ['yes|could|possible|can be|automat|repeat|rerun|re.run', 'threshold|floor|three|decide|policy|band|agree|fixed|same method'],
+      ifIgnored: 'Asha guesses on your behalf. Whatever she says becomes the plan, and if it is yes you will be asked to deliver it.',
+      note: 'The queries are deterministic so the answer is mostly yes — but the role-size floor and the band-position threshold are judgements that would have to be fixed in advance rather than chosen each time.',
+    },
+    {
+      key: 'es-09', day: 5, type: 'pressure', via: 'email', from: 'people_partner',
+      subject: 'Two of the names on your list report to me',
+      body: `I have the individual list and two of the people furthest below their role average are in my own function.
+
+I am not asking you to change anything. I am asking whether there is context I should be reading into it — tenure, when they joined, anything that explains it — before I take this to their manager.`,
+      needsReply: true,
+      expect: ['give the context the data holds', 'do not speculate beyond it'],
+      markers: ['hire year|tenure|joined|when|year|role average|below|data|shows', 'cannot|does not|no performance|not|only|beyond|would need|nothing'],
+      ifIgnored: 'Neha takes the list to a manager with no context, and a conversation about two named people starts from a number with nothing around it.',
+      note: 'Give what the table holds — hire year, role, position — and stop. Performance is the obvious explanation and it is the one thing you have no data on, so saying that explicitly is part of the answer.',
+    },
+    {
+      key: 'es-10', day: 5, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Lift maintenance Monday — north tower',
+      body: `The north lift will be out of service Monday morning for its annual inspection. The south lift and the stairs are unaffected.
+
+Sent to all staff in the north tower.`,
+      expect: ['archive it'],
+      note: 'Arriving on the day the report is due, about a lift. The correct handling takes less time than reading this note about it.',
+    },
+  ],
   'outage-recovery': [
     {
       key: 'ps-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -967,6 +1273,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'pay-equity-audit': {
+    key: 'eq-equity', title: 'Pay Equity Audit — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'An employee is paid inside their department\'s band. What does that establish?',
+        options: [
+          { key: 'c', label: 'Only that their pay is within the agreed range — the band is wide', correct: true },
+          { key: 'a', label: 'That they are paid fairly' },
+          { key: 'b', label: 'That they are paid the same as others in their role' },
+          { key: 'd', label: 'That their pay is competitive with the market' },
+        ],
+        why: 'A band often spans a factor of two. Two people can sit in the same band, be paid very differently, and both be compliant — which is the gap the audit exists to look into.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'Band is 800,000 to 1,800,000 and somebody earns 1,050,000. How far up the band are they?',
+        options: [
+          { key: 'b', label: '25%', correct: true },
+          { key: 'a', label: '58%' },
+          { key: 'c', label: '13%' },
+          { key: 'd', label: '131%' },
+        ],
+        why: '250,000 above the floor over a width of 1,000,000. The 58% answer comes from dividing by band_high instead of the width — it lands between 0 and 100 and answers no question at all.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'Your exception query returns zero rows. What is the first thing you do?',
+        options: [
+          { key: 'd', label: 'Run a control with a threshold you know will match, to prove the logic works', correct: true },
+          { key: 'a', label: 'Report it — zero rows means zero exceptions' },
+          { key: 'b', label: 'Rewrite the query until it returns something' },
+          { key: 'c', label: 'Widen the threshold until exceptions appear' },
+        ],
+        why: 'An empty result and a broken query are both zero rows with no error. Trusting it blindly risks reporting a bug as an assurance; widening until something appears is how an audit gets rigged, usually without anyone intending to.',
+      },
+      {
+        id: 'q4', topic: 'communication',
+        q: 'Nobody is outside their band. How do you report it?',
+        options: [
+          { key: 'a', label: '"Every current employee was checked against their band; no exceptions."', correct: true },
+          { key: 'c', label: '"No issues found."' },
+          { key: 'b', label: '"The audit was inconclusive."' },
+          { key: 'd', label: 'Widen the test until there is something to report' },
+        ],
+        why: '"No issues found" is the same sentence you would write if you had done nothing all week, which is why it lands so badly. Naming the test turns an absence into an assurance a reader can rely on.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'A role has three holders. What can you say about pay consistency within it?',
+        options: [
+          { key: 'b', label: 'Something, with the headcount stated beside it', correct: true },
+          { key: 'a', label: 'Nothing — three is too few for any comparison' },
+          { key: 'c', label: 'As much as for a role with thirty holders' },
+          { key: 'd', label: 'Only if you first adjust for tenure' },
+        ],
+        why: 'Three is thin, not useless. The honest handling is to report it with n visible so the reader can weigh it — the same rule as any average. Refusing entirely abandons most of the company.',
+      },
+      {
+        id: 'q6', topic: 'statistics',
+        q: 'In one role the mean salary is well above the median. What does that tell you?',
+        options: [
+          { key: 'c', label: 'At least one person is paid well above the rest of the role', correct: true },
+          { key: 'a', label: 'Most people in the role are overpaid' },
+          { key: 'b', label: 'Pay in the role is evenly spread' },
+          { key: 'd', label: 'The data contains an error' },
+        ],
+        why: 'The mean is pulled toward outliers and the median is not, so a gap means weight at the top. That person may be entirely justified, but they are the reason the average looks as it does and the report should say so.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Every Staff Engineer out-earns every Engineering Manager. How do you report it?',
+        options: [
+          { key: 'd', label: 'As an observation, asking whether it is intended', correct: true },
+          { key: 'a', label: 'As a pay anomaly requiring correction' },
+          { key: 'b', label: 'Leave it out — the roles are not comparable' },
+          { key: 'c', label: 'Suggest retitling the roles so the comparison disappears' },
+        ],
+        why: 'A clean separation across a whole rung looks far more like a design than an accident, and plenty of engineering organisations pay the IC track above the management track deliberately. Omitting it is worse — hiding a finding because it is hard to interpret is the failure the audit exists to avoid.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A stakeholder wants to tell the board "an audit found no pay inequities". You found no band breaches and a large spread in band position. What do you say?',
+        options: [
+          { key: 'b', label: 'No — offer him "no band exceptions" and the band-position finding instead', correct: true },
+          { key: 'a', label: 'Yes — nobody is outside their band' },
+          { key: 'c', label: 'Yes, but ask him to add a caveat' },
+          { key: 'd', label: 'Tell him you cannot comment on board communications' },
+        ],
+        why: 'Compliant with the bands is not the same as equitable within them, and that distinction is the entire output of the week. A caveat under a headline nobody reads does not fix it, and declining to engage leaves him to write it anyway.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'You are asked whether a 12% spread within a role is acceptable. What do you do?',
+        options: [
+          { key: 'c', label: 'Report the number and say the threshold is a People Ops decision', correct: true },
+          { key: 'a', label: 'Say it is normal and no action is needed' },
+          { key: 'b', label: 'Flag it as a serious inequity' },
+          { key: 'd', label: 'Leave the number out and describe it qualitatively' },
+        ],
+        why: 'Nothing in the data says where the acceptable line sits — calling it normal or serious both import a standard from outside the analysis. Measuring is yours, deciding is theirs, and keeping that boundary is what gets you believed on the things you do assert.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You cost the remediation at about eight lakh. How do you present it to Finance?',
+        options: [
+          { key: 'a', label: 'As an annual recurring cost, with the number of people it covers', correct: true },
+          { key: 'c', label: 'As a total figure — Finance will work out the rest' },
+          { key: 'b', label: 'As a one-off adjustment' },
+          { key: 'd', label: 'As a percentage of payroll' },
+        ],
+        why: 'A salary increase repeats every year and compounds at the next review. A bare total gets read as a one-off, and Finance budgets a fraction of what is actually needed — a misunderstanding that six words would have prevented.',
+      },
+    ],
+  },
   'outage-recovery': {
     key: 'pq-phoenix', title: 'Project Phoenix — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
