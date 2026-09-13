@@ -400,6 +400,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'retail_sales',
   },
+
+  'margin-review': {
+    projectTitle: 'Margin & Promotion Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Know which version of a number answers which question, and label both.',
+      'Refuse measures that can be hit without anything improving.',
+      'Give a decision-maker the trade, not your opinion of the trade.',
+    ],
+    scenario:
+      'Finance are rebuilding the range plan and want gross margin by category. There is no margin column, and the cost column is today\'s cost rather than the cost when each sale happened — fifteen products were repriced upward during the year and they carry a quarter of revenue. Somewhere in the middle of it, one month turns out to have been a promotion nobody wrote down.',
+    estimatedMinutes: 130,
+    difficulty: 'Hard',
+    primaryObjective: 'Margin the range review can be planned on, and an honest account of what the promotion bought.',
+    constraints: [
+      { label: 'Cost basis', value: 'Reporting uses the cost that applied on the day of sale. A forward-looking view uses current cost. Never one table for both.' },
+      { label: 'Data scope', value: 'Comparisons across periods use the stable estate — two stores opened inside the window and one closed.' },
+      { label: 'Measure rule', value: 'A rate that can be improved by changing the sales mix is not, on its own, a target.' },
+    ],
+    deliverables: [
+      { text: 'Margin by category on the cost that applied, with contribution beside rate.', via: 'sql-terminal' },
+      { text: 'A quantified account of what the promotion cost and bought.', via: 'python-notebook' },
+      { text: 'Replacement wording for the planning note.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The naive cost error is uneven — 7% in Equipment, nothing in Tea — so it distorts the comparison between categories rather than shifting the total.',
+      'It also flatters the present against the past, because the two methods agree after a cost change and diverge before it.',
+      'Equipment has the lowest margin rate and the largest margin contribution. A range review that confuses those loses a crore.',
+      'The discount curve reverses at the deepest band, on 326 lines out of 9,022. That tail is the thinnest part of the data and the easiest place to lose money.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

@@ -24,6 +24,227 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'margin-review': [
+    {
+      key: 'tba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'Cost is a date, not a number',
+      title: 'Read: which cost, and when',
+      body: `Diya. Before you compute a margin, the thing nobody tells you: a product does not have a cost. It has a cost on a date.
+
+Our products table carries unit_cost, and that is the cost right now. It also carries previous_unit_cost and cost_changed_on, which exist precisely because the current one is not what we paid all year. Fifteen of sixty-eight products moved, all upward, by 19% on average.
+
+Two questions get asked of the same table and they want different answers.
+
+WHAT HAPPENED wants the cost that applied on the day of the sale. Restating last year at today's cost rewrites history and always in the same direction — it makes the past look worse than it was, because costs rise.
+
+WHAT SHOULD WE DO wants today's cost, because next year's margin depends on next year's costs. It should also use undiscounted price, or you project forward a promotion nobody has decided to repeat.
+
+Produce both, label both, never blend them. A single column headed "margin" with no basis stated is how two teams end up with different numbers and no way to reconcile.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are asked which products to stock next year. Which cost basis?',
+        options: [
+          { key: 'current', correct: true, label: "Today's cost, and undiscounted price" },
+          { key: 'applied', correct: false, label: 'The cost that applied at the time of each sale' },
+          { key: 'avg', correct: false, label: 'An average of the two, weighted by volume' },
+          { key: 'either', correct: false, label: 'Either — the difference is immaterial for a planning exercise' },
+        ],
+        why: 'It is a forward-looking decision, so the historical cost is irrelevant to it. Averaging produces a figure correct for neither question and impossible to explain. And 26.6% of revenue sits on the products that moved.',
+      },
+    },
+    {
+      key: 'tba-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Rate and contribution',
+      title: 'Read: the two numbers that get confused',
+      body: `Asha. The single most expensive confusion in retail analytics, and you will meet it this week.
+
+MARGIN RATE is margin over revenue — a percentage. MARGIN CONTRIBUTION is margin in rupees. They answer different questions and they frequently rank things in opposite orders.
+
+Here, Merchandise earns 65% and contributes ₹28 lakh. Equipment earns 34.7% and contributes ₹1.08 crore. Rank by rate and Equipment is worst in the book. Rank by contribution and it is the business.
+
+A range review that acts on the rate table cuts the category paying the rent.
+
+The rule: whenever you publish a rate, publish the contribution beside it. It costs one column and it prevents the entire class of decision where somebody improves a percentage by shrinking the company.
+
+The same applies to targets, which you will be asked about on Tuesday. A blended rate target can always be hit by selling a different mix. Pair it with an absolute figure and it stops being gameable in the one direction that matters.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A category has the lowest margin rate and the highest margin contribution. What does that tell you?',
+        options: [
+          { key: 'both', correct: true, label: 'Nothing on its own — you need to know what the decision is before either number matters' },
+          { key: 'cut', correct: false, label: 'It is a candidate for reduction' },
+          { key: 'grow', correct: false, label: 'It should be grown, since it contributes most' },
+          { key: 'normal', correct: false, label: 'It is normal for a large category and needs no comment' },
+        ],
+        why: 'A pricing decision cares about the rate. A range decision cares about the contribution. A capacity decision cares about neither. The mistake is reading a number before knowing the question.',
+      },
+    },
+    {
+      key: 'tba-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Just the margin percentage',
+      title: 'Vikram wants one number per category',
+      body: `For the range slide I want one number per category. Margin percentage. Clean.
+
+Contribution is a second column and the slide is already busy.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['equipment|contribution|rupee|crore|1\\.08|rank|order|revers|cut|largest|merchandise|65'],
+        why: 'A rate-only slide puts Merchandise top and Equipment bottom. Equipment is ₹1.08 crore of margin. The second column is what stops somebody cutting the category that pays the rent.',
+      },
+    },
+    {
+      key: 'tba-04', day: 2, type: 'policy', via: 'email', from: 'finance_analyst', minutes: 8,
+      subject: 'Margin figures leaving the team',
+      title: 'Diya: margin numbers are commercially sensitive',
+      body: `A standing note now that you are producing margin by category.
+
+Product-level and category-level margin is commercially sensitive. It must not appear in anything that goes to suppliers, and that includes range review documents that get shared during negotiation.
+
+If a supplier learns what we make on their line, the next cost conversation starts from a different place. Aggregate figures at total-business level are fine; anything that lets a supplier infer their own line is not.
+
+If in doubt, send it to me before it leaves the building.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A supplier asks for the range review document that contains category margin. What do you do?',
+        options: [
+          { key: 'check', correct: true, label: 'Do not send it, and route the request to Diya' },
+          { key: 'send', correct: false, label: 'Send it — they supply the category, so it is their own data' },
+          { key: 'redact', correct: false, label: 'Redact their line and send the rest' },
+          { key: 'total', correct: false, label: 'Send total-business margin instead' },
+        ],
+        why: 'Redacting one line still lets them infer it from the total. Substituting a different figure without being asked to is a decision that is not yours to take alone.',
+      },
+    },
+    {
+      key: 'tba-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'Errors that shift and errors that distort',
+      title: 'Read: why an uneven error is worse than a big one',
+      body: `Karthik. You have found that the naive cost method understates margin by about 4% overall. Before you decide whether that matters, look at how it is distributed.
+
+Equipment 6.99%. Coffee 3.22%. Bakery 1.46%. Tea and Merchandise exactly nothing.
+
+If the error were a uniform 4% everywhere, every ranking, every ratio and every trend would be intact. You could publish the numbers with a note and nothing built on them would be wrong.
+
+It is not uniform. It sits wherever the repriced products are, which is wherever it likes. So it moves categories relative to each other, and the range review is a decision about categories relative to each other.
+
+The same thing happens across time, and this one is nastier. Before a cost change the two methods differ; after it they agree. So the naive method always penalises the past and never the present, which manufactures an improving trend out of nothing at all.
+
+Rule of thumb: ask whether an error is a shift or a distortion. A shift you can caveat. A distortion you have to fix.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which error is more dangerous in a comparison?',
+        options: [
+          { key: 'uneven', correct: true, label: 'A 7% error in one category and none in another' },
+          { key: 'uniform', correct: false, label: 'A uniform 15% error across every category' },
+          { key: 'random', correct: false, label: 'A random error averaging 10% with no pattern' },
+          { key: 'same', correct: false, label: 'They are equally dangerous — size is what matters' },
+        ],
+        why: 'A uniform error preserves every ranking and ratio. A random one averages out across a large table. A structured, uneven one moves things relative to each other, which is exactly what a comparison measures.',
+      },
+    },
+    {
+      key: 'tba-06', day: 3, type: 'pressure', via: 'chat', from: 'finance_analyst', minutes: 6,
+      subject: 'How many old reports are wrong?',
+      title: 'Diya realises what this means for history',
+      body: `If margin has always been computed on current cost, then every margin figure we have published is wrong.
+
+How far back does this go, and do I have to restate?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both parts.',
+        markers: ['every|all|since|reprice|september|uneven|categor|restate|which|material|forward|from now|not all'],
+        why: 'Everything computed since the first reprice in September is affected, unevenly. Whether to restate is her call, and the useful input is which figures moved enough to matter — not a blanket yes or no.',
+      },
+    },
+    {
+      key: 'tba-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'Reading a promotion',
+      title: 'Read: three numbers, not one',
+      body: `Vikram. Every promotion readout I have seen in fifteen years is argued with one number, and it is always the wrong one.
+
+Marketing quotes revenue. Finance quotes margin rate. Both are true and neither settles anything.
+
+The only honest readout has three: volume, revenue and absolute margin, each against a normal period. Here that is 55% more units, 39% more revenue, 12% more margin. Three numbers, and the shape of them tells you everything — volume rising fastest and margin slowest is the signature of buying turnover with discount.
+
+Whether that is good depends entirely on what the promotion was for. Clearing stock that would otherwise be written off: excellent. Buying customers who come back: possibly excellent, and you cannot tell from till data. Hitting a revenue target: you succeeded at a cost you should be able to state.
+
+Which is why the readout should never end in a recommendation. State the trade and the objective it was measured against. If nobody wrote down the objective, that is the finding.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A promotion delivers 55% more units, 39% more revenue and 12% more margin. Was it worth it?',
+        options: [
+          { key: 'depends', correct: true, label: 'Unanswerable from this data — it depends what it was for' },
+          { key: 'yes', correct: false, label: 'Yes, margin went up' },
+          { key: 'no', correct: false, label: 'No, the margin rate collapsed' },
+          { key: 'marginal', correct: false, label: 'Marginally, since margin rose less than costs of the discount' },
+        ],
+        why: 'Margin rising is a fact, not a verdict. So is the rate falling. Clearing dead stock, buying share and hitting a target are three objectives judged on three different numbers, and nobody recorded which applied.',
+      },
+    },
+    {
+      key: 'tba-08', day: 4, type: 'judgement', via: 'email', from: 'engineering_manager', minutes: 8,
+      subject: 'The discount curve',
+      title: 'Arjun wants to model the discount curve',
+      body: `Your discount table is interesting. Margin falls with discount up to 20% and then flattens — 25.4% and 26.6% at the two deepest bands.
+
+I could fit a curve to that and give pricing a model. Worth doing?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you tell him?',
+        options: [
+          { key: 'thin', correct: true, label: 'Not on this data — the two deepest bands are 326 lines out of 9,022' },
+          { key: 'yes', correct: false, label: 'Yes, a fitted curve would be more useful than a table' },
+          { key: 'shape', correct: false, label: 'Yes, but constrain it to be monotonic' },
+          { key: 'never', correct: false, label: 'No — discount curves cannot be modelled from transaction data' },
+        ],
+        why: 'Constraining the shape means imposing the answer you wanted. And the objection is not that it cannot be done — it is that the region he is most interested in is the region with almost no data in it.',
+      },
+    },
+    {
+      key: 'tba-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Words that survive being forwarded',
+      title: 'Read: "held up", "accretive", and other load-bearing words',
+      body: `You are about to sign off a note. Watch for words that are technically defensible and leave the wrong impression, because those are much harder to challenge than plain errors.
+
+"Margin held up at 35.5%" — against a normal 44%. Nothing held up. The word is doing all the work and it is unfalsifiable, because nobody said what it held up against.
+
+"Margin-accretive" — absolute margin rose, so it is true. Everyone reads it as margin improving. The rate fell nine points.
+
+"Analytics confirm" — you did not confirm anything, you measured something. That phrase converts a measurement into an endorsement and attaches your team's name to a decision you did not make.
+
+The test I use: if this sentence were forwarded on its own, with no table under it and nobody to ask, what would the reader believe? If the answer is something you would not say out loud, the sentence is wrong even if every word in it is accurate.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which phrase is most dangerous in a note you sign off?',
+        options: [
+          { key: 'confirm', correct: true, label: '"Analytics confirm the promotion was margin-accretive and recommend repeating it"' },
+          { key: 'held', correct: false, label: '"Margin held up at 35.5%"' },
+          { key: 'best', correct: false, label: '"November was our strongest trading month"' },
+          { key: 'rev', correct: false, label: '"39% more revenue than a typical month"' },
+        ],
+        why: 'All but the last are slippery. But that one attributes a recommendation to your team that you never made, and it is the sentence that will be quoted when the decision is questioned.',
+      },
+    },
+    {
+      key: 'tba-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Before the range review',
+      title: 'Asha: you changed a number everyone was using',
+      body: `Worth noticing what happened this week.
+
+Margin has been reported on the wrong cost basis for as long as anyone has been reporting it. Nobody was careless — the column is called unit_cost and it behaves like a cost. The failure was that nobody asked WHEN.
+
+That question, "as of when", is most of what separates a number that is right from a number that is nearly right. Cost as of when. Estate as of when. Price as of when. Almost every quantity in a business has a date attached and almost every table drops it.
+
+One question before you send the range review: which other figures your team publishes have a hidden "as of when" in them that nobody has asked about?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Name one, and say what could be wrong with it.',
+        markers: ['store|estate|open|clos|price|list|categor|product|band|target|stock|count|as of|when|change|histor|current'],
+        why: 'Store format and the estate itself both change. List price changes. A product\'s category can be reclassified. Any of them applied retrospectively rewrites history the same way the cost did.',
+      },
+    },
+  ],
   'trading-review': [
     {
       key: 'taa-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
@@ -1906,6 +2127,115 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'margin-review': [
+    {
+      key: 'tbs-01', day: 1, type: 'scope', via: 'email', from: 'finance_analyst',
+      subject: 'Do you need supplier invoices?',
+      body: `If the cost column is not reliable I can request the actual invoice history from procurement. It is about a week to get it.
+
+Do you need it, or can you work with what is in the table?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'say what the table already supports'],
+      markers: ['previous_unit_cost|cost_changed_on|two point|enough|no|not need|table|sufficient|later|history|already'],
+      ifIgnored: 'Procurement spend a week on an extract that arrives after the range review, and the review uses the naive figure anyway.',
+      note: 'The table has the previous cost and the date it changed. That is a two-point history and it is enough for this.',
+    },
+    {
+      key: 'tbs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly all-hands — slides due Friday',
+      body: `A reminder that slides for the quarterly all-hands are due with Comms by Friday.
+
+Function leads have been contacted directly where a contribution is expected.`,
+      expect: ['archive it'],
+      note: 'Directed at people who have been contacted directly. You have not been.',
+    },
+    {
+      key: 'tbs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Range slide, this afternoon',
+      body: `Range review prep is at four. Send me margin by category — I will put it straight on the slide.`,
+      needsReply: true,
+      expect: ['send rate and contribution together', 'say why both'],
+      markers: ['contribution|rupee|both|two column|crore|lakh|equipment|rank|revers|1\\.08'],
+      ifIgnored: 'The rate-only table goes on the slide, Equipment ranks last, and the range review opens with a proposal to cut it.',
+      note: 'Rate alone ranks Merchandise first and the largest margin contributor last. Send both columns.',
+    },
+    {
+      key: 'tbs-04', day: 2, type: 'question', via: 'chat', from: 'data_engineer',
+      subject: 'Which cost do you want in the view?',
+      body: `Building the cost view you asked about. Quick question — do you want it to carry the applicable cost, the current cost, or both?
+
+Both is barely more work if you tell me now.`,
+      needsReply: true,
+      expect: ['answer', 'say what each is for'],
+      markers: ['both|two|applicable|current|report|forward|range|purpose|label|column'],
+      ifIgnored: 'The view ships with one cost, and the range review rebuilds the other one by hand three weeks later.',
+      note: 'Both, clearly named. One is for reporting what happened, the other for deciding what to stock.',
+    },
+    {
+      key: 'tbs-05', day: 3, type: 'noise', via: 'email', from: 'security',
+      subject: 'Automated: supplier portal certificate renewed',
+      body: `The certificate for the supplier pricing portal has been renewed and will expire in twelve months.
+
+No action required. Access is unaffected.`,
+      expect: ['archive it'],
+      note: 'Automated, renewed, nothing to do.',
+    },
+    {
+      key: 'tbs-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: query timeout threshold raised',
+      body: `The analytics warehouse query timeout has been raised from 60 to 180 seconds following a review of long-running reports.
+
+No action required.`,
+      expect: ['archive it'],
+      note: 'Automated, helpful, nothing to answer.',
+    },
+    {
+      key: 'tbs-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Marketing want the November number',
+      body: `Marketing are writing up the November promotion and want a line from us.
+
+They have asked for "the revenue uplift". Can I just give them 39%?`,
+      needsReply: true,
+      expect: ['say what else has to go with it', 'give the other figures'],
+      markers: ['margin|12|units|55|rate|35\\.5|44|three|alone|context|not just'],
+      ifIgnored: 'A 39% uplift figure enters circulation with no margin beside it, and next year\'s promotion is planned on it.',
+      note: 'The revenue number alone is the most flattering of the three and it will be the only one anybody remembers.',
+    },
+    {
+      key: 'tbs-08', day: 4, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'Store manager bonus and margin',
+      body: `Store manager bonuses are partly on margin percentage. Now that the cost basis is changing, some managers will see their figure move through no action of their own.
+
+Does that affect anyone materially, and what should I tell them?`,
+      needsReply: true,
+      expect: ['say the restatement is a basis change, not performance', 'say who is most affected'],
+      markers: ['basis|not performance|no action|equipment|categor|mix|restate|same period|both|compar|explain'],
+      ifIgnored: 'Managers see their margin percentage change with no explanation and conclude the numbers are arbitrary.',
+      note: 'Stores selling more Equipment move most, because that is where the reprices are. It is a basis change and both bases should be shown for the same period.',
+    },
+    {
+      key: 'tbs-09', day: 5, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'Planning want a recommendation',
+      body: `Planning have asked again for a straight recommendation on repeating November. They say a trade-off table is not a decision.
+
+They are not wrong about that. What do we do?`,
+      needsReply: true,
+      expect: ['hold the line on who decides', 'say what would let you recommend'],
+      markers: ['objective|what it was for|stock|repeat|came back|would need|if|then|their decision|cannot|missing'],
+      ifIgnored: 'Analytics is recorded as having recommended the promotion, and owns the outcome.',
+      note: 'They are right that a table is not a decision. The answer is what is missing — the objective, and whether those customers returned.',
+    },
+    {
+      key: 'tbs-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the range review agenda',
+      body: `Range review is Monday. One line from you on the agenda — what does the team need to know before they start?`,
+      needsReply: true,
+      expect: ['one thing', 'the one that changes the decision'],
+      markers: ['cost basis|restate|contribution|rate|equipment|crore|both|margin moved|not what|basis'],
+      ifIgnored: 'The review opens on the old margin figures and the correction comes out halfway through.',
+      note: 'Every margin figure they have seen was on the wrong basis, and Equipment is the largest contributor despite the lowest rate. One of those two.',
+    },
+  ],
   'trading-review': [
     {
       key: 'tas-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -2917,6 +3247,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'margin-review': {
+    key: 'tbq-margin', title: 'Margin & Promotion Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'products.unit_cost is the cost today. You are reporting what last year earned. Which cost do you use?',
+        options: [
+          { key: 'b', label: 'The cost that applied on the day of each sale', correct: true },
+          { key: 'a', label: 'The current cost, since it is the most accurate figure available' },
+          { key: 'c', label: 'An average of current and previous cost' },
+          { key: 'd', label: 'Either — the difference is immaterial' },
+        ],
+        why: 'Restating history at current cost rewrites it, always in the same direction, because costs rise. And 26.6% of revenue sits on products that were repriced upward by 19% on average.',
+      },
+      {
+        id: 'q2', topic: 'business-sense',
+        q: 'You are deciding what to stock NEXT year. Which cost basis?',
+        options: [
+          { key: 'c', label: 'Current cost, and undiscounted price', correct: true },
+          { key: 'a', label: 'The cost that applied at the time of each historical sale' },
+          { key: 'b', label: 'Current cost, and the prices actually realised' },
+          { key: 'd', label: 'Whichever was used in the last range review, for consistency' },
+        ],
+        why: 'A forward decision depends on forward costs. Using realised prices bakes in a promotion nobody has decided to repeat — half the Equipment revenue was discounted.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'The naive cost method understates Equipment margin by 7%, Coffee by 3%, and Tea by nothing. Why is that worse than a uniform 15% error?',
+        options: [
+          { key: 'a', label: 'An uneven error moves categories relative to each other, which is what the comparison measures', correct: true },
+          { key: 'b', label: 'It is not worse — 15% is a larger absolute distortion' },
+          { key: 'c', label: 'Because Equipment is the largest category' },
+          { key: 'd', label: 'Because the error cannot be corrected without invoice data' },
+        ],
+        why: 'A uniform error preserves every ranking and every ratio and can be caveated. A structured one has to be fixed, because the range review is a decision about categories relative to each other.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Why does the naive method manufacture an improving trend?',
+        options: [
+          { key: 'd', label: 'The two methods diverge before a cost change and agree after it, so the past is penalised and the present is not', correct: true },
+          { key: 'a', label: 'Because costs rise faster than prices' },
+          { key: 'b', label: 'Because more products were repriced in the second half' },
+          { key: 'c', label: 'It does not — the distortion is constant over time' },
+        ],
+        why: 'It is systematic, not random. The naive figure understated the first half by 6.5% and the second by 2.3%, so a real decline reads as a mild one.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'Equipment has the lowest margin RATE in the book and the highest margin CONTRIBUTION. What follows?',
+        options: [
+          { key: 'b', label: 'Nothing until you know what decision is being made', correct: true },
+          { key: 'a', label: 'It should be de-emphasised in favour of higher-rate categories' },
+          { key: 'c', label: 'Its pricing needs review' },
+          { key: 'd', label: 'The blended rate should be the reported measure' },
+        ],
+        why: 'A pricing decision cares about the rate, a range decision about the contribution. Halving Equipment loses half of ₹1.08 crore, and Merchandise would have to quadruple to replace it.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why is a blended gross margin target of 46% a bad target?',
+        options: [
+          { key: 'c', label: 'It can be hit by selling less Equipment, with no product trading better', correct: true },
+          { key: 'a', label: 'It is too ambitious given the category mix' },
+          { key: 'b', label: 'Targets should always be absolute, never rates' },
+          { key: 'd', label: 'It does not account for returns' },
+        ],
+        why: 'Equipment is 64% of revenue at the lowest rate, so shrinking it lifts the blend and shrinks the business — and the target records that as success. Pairing it with an absolute figure fixes it.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'November delivered 55% more units, 39% more revenue and 12% more margin than a normal month. What is the shape of that telling you?',
+        options: [
+          { key: 'a', label: 'Turnover was bought with discount — volume rose fastest and margin slowest', correct: true },
+          { key: 'b', label: 'The promotion failed, since the margin rate fell nine points' },
+          { key: 'c', label: 'The promotion succeeded, since it was the best revenue month' },
+          { key: 'd', label: 'Nothing — three measures moving together is normal seasonality' },
+        ],
+        why: 'The ordering of the three rises is the signature. Whether the trade was worth it depends on what the promotion was for, which nobody recorded.',
+      },
+      {
+        id: 'q8', topic: 'statistics',
+        q: 'Margin falls steadily with discount to 20%, then rises slightly at the 25% and 30% bands. What is that?',
+        options: [
+          { key: 'd', label: 'Noise — those two bands hold 326 lines out of 9,022', correct: true },
+          { key: 'a', label: 'A floor below which margin stops eroding' },
+          { key: 'b', label: 'Evidence that deep discounts are safe' },
+          { key: 'c', label: 'A data error in the discount field' },
+        ],
+        why: 'Under 2% of the data each, and which products happened to be discounted drives the difference. Fitting a curve through the thinnest region is how a table becomes a licence to discount harder.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A draft note says "Analytics confirm the promotion was margin-accretive and recommend repeating it". What is the worst part?',
+        options: [
+          { key: 'b', label: '"Recommend" — you measured a trade, you did not make a recommendation', correct: true },
+          { key: 'a', label: '"Margin-accretive", which is misleading about the rate' },
+          { key: 'c', label: '"Confirm", which overstates certainty' },
+          { key: 'd', label: 'Nothing — absolute margin did rise' },
+        ],
+        why: 'All three phrases are slippery. But attributing a recommendation to your team puts your name on a decision you did not make, and that is the sentence quoted when it is questioned.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'Store manager bonuses depend partly on margin percentage, and the cost basis is being corrected. What do you tell People Ops?',
+        options: [
+          { key: 'a', label: 'That it is a basis change, not performance, and both bases should be shown for the same period', correct: true },
+          { key: 'b', label: 'That the new figures are correct and the old ones should be discarded' },
+          { key: 'c', label: 'That bonuses should be frozen until the basis is settled' },
+          { key: 'd', label: 'Nothing — the change is technical and does not concern them' },
+        ],
+        why: 'Stores selling more Equipment move most, through no action of their own. Showing both bases for one period is what makes the change legible instead of arbitrary.',
+      },
+    ],
+  },
   'trading-review': {
     key: 'taq-trading', title: 'Half-Year Trading Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

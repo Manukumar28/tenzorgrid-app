@@ -420,6 +420,37 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 0,
     },
+    {
+      key: 'margin-review',
+      title: 'Margin & Promotion Review',
+      description: 'Finance want margin by category. The cost column is today\'s cost, and one month of the year was a promotion nobody documented.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — there is no margin column, and unit_cost is the cost today.
+        'tb-101', 'tb-102', 'tb-103', 'tb-104', 'tb-105', 'tb-106',
+        // Day 2 — Equipment is two thirds of revenue at the worst rate in the book.
+        'tb-110', 'tb-111', 'tb-112', 'tb-113', 'tb-114', 'tb-115',
+        // Day 3 — the wobble. The naive cost understates margin UNEVENLY, so it distorts
+        // the comparison rather than shifting it, and invents an improving trend.
+        'tb-120', 'tb-121', 'tb-122', 'tb-123', 'tb-124', 'tb-125',
+        // Day 4 — November: 55% more units, 39% more revenue, 12% more margin.
+        'tb-130', 'tb-131', 'tb-132', 'tb-133', 'tb-134', 'tb-135',
+        // Day 5 — whether to do it again, and what to instrument before anyone does.
+        'tb-140', 'tb-141', 'tb-142', 'tb-143', 'tb-144', 'tb-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 46000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Owns the range review this feeds', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Team Lead', does: 'The margin and promotion analysis', day: 1, throughDay: 5 },
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Drafts the planning note', day: 5 },
+      ],
+      unlockAfter: 1,
+    },
   ],
 };
 
@@ -5309,6 +5340,508 @@ const TASKS = {
         { key: 'lfl', label: 'Like-for-like as a standing rule when the estate changes', markers: ['like.for.like|lfl|open|clos|estate|new store|exclude'], why: 'Two openings and a closure in one year, and nothing in the reporting knew about any of them.' },
         { key: 'review', label: 'That drafts get checked before they reach a board, not after', markers: ['draft|check|review|before|sign.?off|circulat|early'], why: 'Ravi did the right thing by sending it. Making that a step rather than a favour is the lead\'s job.' },
         { key: 'own', label: 'Written as decisions you would make, not suggestions', markers: ['I would|we should|I will|propose|put in place|add|introduce|make'], why: 'This is the first thing you are asked as a lead. Hedging it reads as declining the responsibility.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 2 · Margin & Promotion Review (retail_sales) --------------------------
+  // The week the learner finds out that the cost column is a lie of timing. Monday there
+  // is no margin column and the cost that exists is today's. Tuesday Equipment turns out
+  // to be two thirds of revenue and the worst margin in the book. Wednesday the naive
+  // cost understates margin UNEVENLY — 7% in Equipment, nothing in Tea — so it distorts
+  // the ranking rather than shifting it. Thursday November: 55% more units, 39% more
+  // revenue, 12% more margin. Friday, whether to do it again.
+
+  'tb-101': {
+    title: 'There is no margin column',
+    hint: "Look at what products actually carries, and at the two columns next to unit_cost.",
+    brief: "Finance want margin by category before the range review. Establish what you can compute and what the cost column actually means before writing anything.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Margin by category — before the range review',
+        body: "We are rebuilding the range plan and I need gross margin by category for the year.\n\nI assume it is unit_price minus unit_cost times quantity? If it is that simple just send me the table and I will stop bothering you.",
+      },
+      prompt: 'Tick everything that is true before you run her query.',
+      options: [
+        { key: 'today', correct: true, label: 'unit_cost is the cost TODAY, not the cost when the sale happened', why: 'The table carries previous_unit_cost and cost_changed_on beside it. Those two columns exist precisely because the current cost is not what we paid all year.' },
+        { key: 'fifteen', correct: true, label: 'Fifteen products were repriced during the year, and they are a quarter of revenue', why: '26.6% of turnover sits on products whose cost moved. That is far too much to wave through as immaterial.' },
+        { key: 'direction', correct: true, label: 'Applying current cost to old sales will understate margin, because the reprices were increases', why: 'Every one of the fifteen went up, by 19% on average. Charging this year\'s cost against last year\'s sales makes the earlier period look less profitable than it was.' },
+        { key: 'simple', correct: false, label: 'Her formula is right — it is that simple', why: 'It is right for the 53 products that never moved and wrong for the 15 that did, which is the quarter of revenue she most cares about.' },
+        { key: 'cannot', correct: false, label: 'Margin cannot be computed at all without a proper cost history', why: 'You have the previous cost and the date it changed. That is a cost history — a two-point one, but enough to do this properly.' },
+        { key: 'returns', correct: false, label: 'Returns make margin impossible to compute', why: 'A return reverses a sale at the price paid, so the margin reverses with it. Negative quantities handle themselves here, which is unusual and worth noticing.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tb-102': {
+    title: 'What moved, and by how much',
+    hint: "Only the repriced rows matter here. The percentage is against the OLD cost.",
+    brief: "Size the problem. Write ONE SQL SELECT over products whose cost changed, returning: name, category, previous_unit_cost, unit_cost, the increase as a percentage of the previous cost rounded to one place, and the date it changed. Biggest rise first.",
+    referenceSql: "SELECT name, category, previous_unit_cost, unit_cost, ROUND((unit_cost - previous_unit_cost) * 100.0 / previous_unit_cost, 1) AS rise_pct, cost_changed_on FROM products WHERE cost_changed_on IS NOT NULL ORDER BY rise_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tb-103': {
+    title: 'How much revenue sits on moved costs',
+    hint: "One row, two figures, and the share is the point.",
+    brief: "Establish materiality. Write ONE SQL SELECT over products THAT SOLD, split by whether the product was ever repriced, returning: the number of such products, net revenue, and that revenue as a percentage of the total rounded to one place. Label the split column repriced with values yes and no.",
+    referenceSql: "SELECT CASE WHEN p.cost_changed_on IS NOT NULL THEN 'yes' ELSE 'no' END AS repriced, COUNT(DISTINCT p.id) AS products, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 100.0 / (SELECT SUM(quantity * unit_price) FROM sales), 1) AS pct_of_revenue FROM products p JOIN sales s ON s.product_id = p.id GROUP BY repriced ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tb-104': {
+    title: 'Margin, with the cost that applied',
+    hint: "A CASE on the sale date against cost_changed_on. Write it once and you will reuse it every day this week.",
+    brief: "Build the expression the whole project rests on. Write ONE SQL SELECT returning, per category: net revenue, gross margin using the cost that applied on the day of sale, and margin as a percentage of revenue to one place. Biggest margin first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY margin DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tb-105': {
+    title: 'Answer Diya',
+    hint: "She offered to stop bothering you if it was simple. It nearly is, and the exception is a quarter of revenue.",
+    brief: "Write back on day one. Tell her what is wrong with the formula, how wrong, and give her the version that works. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Margin — the cost column is today\'s cost', maxWords: 150,
+      prompt: 'What her formula misses, how material it is, and the corrected expression.',
+      rubric: [
+        { key: 'today', label: 'That unit_cost is current, not historical', markers: ['today|current|now|not.*time of sale|changed|historic'], why: 'The whole finding in one sentence, and it is not obvious from the column name.' },
+        { key: 'size', label: 'How much revenue it affects', markers: ['15|fifteen|26|quarter|27%|material'], why: 'Materiality is what decides whether she cares. A quarter of revenue does.' },
+        { key: 'fix', label: 'The corrected rule, stated so she can apply it', markers: ['previous_unit_cost|cost_changed_on|before|case|date|which cost'], why: 'Give her the expression. A description of the problem leaves her unable to run anything.' },
+        { key: 'direction', label: 'Which way the error goes', markers: ['understate|lower|worse|too low|below|increase|rose|up'], why: 'The reprices were increases, so the naive figure makes the past look less profitable. Knowing the direction tells her which of her old numbers to distrust.' },
+        { key: 'yes', label: 'That she was nearly right', markers: ['right|correct|close|nearly|almost|53|most product|otherwise'], why: 'She asked a good question and 53 of 68 products behave exactly as she assumed. Saying so is accurate and keeps the questions coming.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tb-106': {
+    title: 'Which cost belongs in which question',
+    hint: "Two different questions are being asked of the same table, and they want different costs.",
+    brief: "Diya replies asking a sharper question: if she is planning NEXT year's range, should she still use the historical cost?",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Re: Margin — one more thing',
+        body: "Understood for reporting what happened. But the range review is about what to stock NEXT year.\n\nFor that, surely I want today's cost, not what we paid in September?",
+      },
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'forward', correct: true, label: 'She is right for the forward-looking question — current cost is the relevant one', why: 'What a product will earn next year depends on what it will cost next year. The historical cost is irrelevant to a stocking decision.' },
+        { key: 'backward', correct: true, label: 'And wrong for the reporting question, where the historical cost is the only honest one', why: 'Last year\'s performance has to be measured against last year\'s costs. Restating it at current cost rewrites history.' },
+        { key: 'both', correct: true, label: 'The two figures should be produced separately and labelled by purpose', why: 'One table headed "margin" with no statement of which cost basis it uses is how two teams end up with different numbers and no way to reconcile them.' },
+        { key: 'volume', correct: true, label: 'A forward view should also use current PRICE, not the discounted prices actually charged', why: 'Half the year\'s Equipment revenue was sold at a discount. Projecting forward on realised prices bakes in a promotion nobody has decided to repeat.' },
+        { key: 'never', correct: false, label: 'Current cost should never be used — it is not what happened', why: 'Too rigid. It is exactly right for a decision about the future, which is what a range review is.' },
+        { key: 'avg', correct: false, label: 'Average the two costs, so one figure serves both purposes', why: 'That produces a number that is correct for neither question and is impossible to explain in a meeting.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tb-110': {
+    title: 'Where the money actually is',
+    hint: "Revenue share and margin share are different columns and they will not agree.",
+    brief: "Set up the category picture. Write ONE SQL SELECT returning, per category: net revenue, its share of total revenue to one place, margin on the cost that applied, and margin's share of total margin to one place. Biggest revenue first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 100.0 / (SELECT SUM(quantity * unit_price) FROM sales), 1) AS revenue_share, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / (SELECT SUM(s2.quantity * (s2.unit_price - CASE WHEN p2.cost_changed_on IS NOT NULL AND s2.sold_at < p2.cost_changed_on THEN p2.previous_unit_cost ELSE p2.unit_cost END)) FROM sales s2 JOIN products p2 ON p2.id = s2.product_id), 1) AS margin_share FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'tb-111': {
+    title: 'Equipment is the business',
+    hint: "Two thirds of revenue at the worst rate in the book. Ask what follows and what does not.",
+    brief: "Equipment is 63.9% of revenue and 34.7% margin — the lowest rate of the five categories. Read that properly.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'dominant', correct: true, label: 'Equipment is the business by revenue and still the largest margin contributor', why: '₹3.1 crore of revenue and ₹1.08 crore of margin. The worst RATE in the book is also the biggest absolute contribution, and confusing the two is how a range gets cut.' },
+        { key: 'rate', correct: true, label: 'Merchandise earns 65% margin and contributes a fraction of the money', why: '₹28 lakh of margin against Equipment\'s ₹1.08 crore. A high rate on a small base is a nice thing to have, not a strategy.' },
+        { key: 'mix', correct: true, label: 'The blended margin rate is mostly a statement about the sales mix', why: 'Shift a little revenue between Equipment and Merchandise and the blended rate moves without any product changing price or cost. Any target set on the blended rate can be hit by mix alone.' },
+        { key: 'kill', correct: false, label: 'Equipment should be de-emphasised in favour of higher-margin categories', why: 'Sell half as much Equipment and you lose half of ₹1.08 crore. Merchandise would have to quadruple to replace it, and there is no evidence anybody wants four times as many mugs.' },
+        { key: 'bad', correct: false, label: 'A 34.7% margin on the largest category is a problem to fix', why: 'It may be entirely normal for hardware. Nothing in this data says what the category should earn, and calling it a problem assumes an answer.' },
+        { key: 'target', correct: false, label: 'The blended rate is the right measure to set a target on', why: 'It is the one number in the table that can be improved by selling a different mix rather than trading better. Targets set on it get hit without anything improving.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-112': {
+    title: 'Margin by store, like for like',
+    hint: "Restrict to the stable estate — a store that opened in February cannot be compared on a year of margin.",
+    brief: "Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per store: net revenue, margin on the cost that applied, and margin percentage to one place. Best rate first.",
+    referenceSql: "SELECT st.name, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY margin_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-113': {
+    title: 'The margin chart',
+    hint: "Two things per category — the size of the money and the rate it earns. Only one of them is what a bar length should mean here.",
+    brief: "Build the visual for the range review: margin contribution by category, so the reader sees where the money comes from before they see which rate is highest. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT p.category, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS margin FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY margin DESC",
+      prompt: 'Gross margin contribution by category, for the range review.',
+      answer: { type: 'bar', x: 'category', y: 'margin', sort: 'desc', baselineZero: true },
+      why: 'Five named categories compared on one quantity is a bar chart, sorted so the contribution order is the first thing read. Margin in rupees rather than margin rate, because the decision the review is about is where the money comes from — a rate chart would put Merchandise first and Equipment last, which is the exact inversion that gets a range cut.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tb-114': {
+    title: 'Ravi has a margin target',
+    hint: "Ask what somebody could do to hit this target without anything actually improving.",
+    brief: "Ravi proposes a target. Decide what is wrong with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Ravi Menon', subject: '#retail-analytics',
+        body: "Proposing we set the team a blended gross margin target of 46% for next year, up from 44.1%.\n\nSimple, one number, everyone understands it. Thoughts?",
+      },
+      prompt: 'Tick every problem with the target as proposed.',
+      options: [
+        { key: 'mix', correct: true, label: 'It can be hit by selling less Equipment, with no product trading better', why: 'Equipment is 64% of revenue at the lowest rate. Shrinking it lifts the blend and shrinks the business, and the target would record that as success.' },
+        { key: 'absolute', correct: true, label: 'It sets a rate target on a business that needs absolute margin', why: 'Rent and payroll are paid in rupees, not percentages. A higher rate on a smaller base can be a worse year in every way that matters.' },
+        { key: 'basis', correct: true, label: 'It does not say which cost basis it is measured on', why: 'Current cost or cost at time of sale changes the whole-year figure by more than four percent — which is twice the improvement he is asking for.' },
+        { key: 'pair', correct: true, label: 'A rate target needs a volume or absolute-margin figure beside it', why: 'Two numbers that cannot both be gamed in the same direction. That is the whole fix and it costs one extra line.' },
+        { key: 'low', correct: false, label: '46% is too ambitious given the category mix', why: 'You have no basis for that. Nothing in this data says what margin is achievable, and guessing at ambition is the same error as guessing at causes.' },
+        { key: 'category', correct: false, label: 'Targets should be set per category instead', why: 'Reasonable and it does not fix the main problem — per-category rate targets are still hit by shifting mix within the category.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-115': {
+    title: 'Reply to Ravi in the channel',
+    hint: "He proposed something in public and asked for thoughts. Give him a better version, not a veto.",
+    brief: "Answer in the channel. The idea is right and the measure is gameable. Propose the fix. Under 120 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: blended margin target', maxWords: 120,
+      prompt: 'Why the blended rate alone is gameable, and what to pair it with.',
+      rubric: [
+        { key: 'game', label: 'How the target can be hit without improving', markers: ['mix|equipment|less|shift|sell fewer|shrink|without'], why: 'Concrete and specific. "Gameable" on its own sounds like a theoretical objection.' },
+        { key: 'pair', label: 'A specific pairing', markers: ['absolute|rupee|total margin|volume|alongside|both|pair|second'], why: 'The fix, in one line, so the proposal survives rather than dying.' },
+        { key: 'basis', label: 'That the cost basis has to be stated', markers: ['cost basis|which cost|time of sale|current|historic|define'], why: 'Otherwise the baseline moves by more than the target.' },
+        { key: 'yes', label: 'Support for the underlying idea', markers: ['good|agree|right|worth|like|yes|support|sensible'], why: 'A target is a good instinct. Replying with only objections is how people stop proposing things in the open.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tb-120': {
+    title: 'Both versions, side by side',
+    hint: "Same query twice, one with the CASE and one without. The difference is the column that matters.",
+    brief: "Quantify what Diya's original formula would have cost her. Write ONE SQL SELECT returning, per category: margin using current cost only, margin using the cost that applied, and how much the naive figure understates it as a percentage of the correct margin, to two places. Most understated first.",
+    referenceSql: "SELECT p.category, ROUND(SUM(s.quantity * (s.unit_price - p.unit_cost))) AS margin_naive, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin_correct, ROUND((SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) - SUM(s.quantity * (s.unit_price - p.unit_cost))) * 100.0 / SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 2) AS understated_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY understated_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-121': {
+    title: 'An error that is not a shift',
+    hint: "Compare the size of the error across the five categories. It is not the same anywhere.",
+    brief: "The naive method understates Equipment by 6.99%, Coffee by 3.22%, Bakery by 1.46% and Tea and Merchandise by nothing at all. Work out why that matters more than the size of the error.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'uneven', correct: true, label: 'Because it is uneven, it distorts the comparison between categories, not just the totals', why: 'A uniform 4% error would leave every ranking and every ratio intact. This one moves Equipment relative to Tea, which is exactly the comparison a range review is built on.' },
+        { key: 'where', correct: true, label: 'The error sits wherever the repriced products are, which is not evenly spread', why: 'Tea and Merchandise had no reprices at all. Equipment carries most of them and most of the revenue, so it absorbs almost all the distortion.' },
+        { key: 'trend', correct: true, label: 'It also distorts any comparison across time, because the error grows the further back you look', why: 'Before a cost change the two methods differ; after it they agree. So the naive method penalises the past and flatters the present, which manufactures an improving trend.' },
+        { key: 'small', correct: false, label: 'At under 7% it is within tolerance for a range review', why: 'The decision is between categories whose rates differ by 30 points, but the CHANGES being argued about are two or three points. A 7% distortion on one category swamps the thing being measured.' },
+        { key: 'uniform', correct: false, label: 'It could be corrected with a flat adjustment to the total', why: 'A flat adjustment fixes the total and leaves every category comparison wrong. The error has structure, so the correction has to as well.' },
+        { key: 'ignore', correct: false, label: 'Since Tea and Merchandise are unaffected, their figures can be used as published', why: 'Their absolute margins are fine and their SHARES of total margin are not, because the denominator moved.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-122': {
+    title: 'The trend the naive method invents',
+    hint: "Half on half, like for like, both methods. Look at what the naive version says about the direction.",
+    brief: "Test whether the distortion creates a false trend. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per half: margin using current cost only, margin using the cost that applied, and the understatement as a percentage of the correct figure to two places. First half first.",
+    referenceSql: "SELECT CASE WHEN s.sold_at < '2026-01-01' THEN 'H1' ELSE 'H2' END AS half, ROUND(SUM(s.quantity * (s.unit_price - p.unit_cost))) AS margin_naive, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin_correct, ROUND((SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) - SUM(s.quantity * (s.unit_price - p.unit_cost))) * 100.0 / SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 2) AS understated_pct FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY half ORDER BY half",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-123': {
+    title: 'The decline the naive method hides',
+    hint: "Work out the half-on-half change under each method. They are not the same number.",
+    brief: "The naive method understates the first half by 6.5% and the second by 2.3%. Say what that does to anyone reading a trend.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'flatter', correct: true, label: 'The naive method makes the margin decline look smaller than it is', why: 'It penalises the earlier period by 6.5% and the later one by only 2.3%, so the gap between them narrows. A real decline reads as a mild one.' },
+        { key: 'direction', correct: true, label: 'Both methods still show a decline — the distortion changes the size, not the sign', why: 'Worth stating plainly. Overclaiming that the naive method reverses the finding would be the same sin as the naive method itself.' },
+        { key: 'grow', correct: true, label: 'With a larger reprice the same mechanism could invert the trend entirely', why: 'The direction of the distortion is systematic, not random. It will always flatter the present relative to the past, and how much depends only on how big the reprices were.' },
+        { key: 'restate', correct: true, label: 'Any margin figure published before this was found needs restating', why: 'Every earlier report used the naive basis. They are not slightly off — they are off by different amounts in different categories.' },
+        { key: 'reverse', correct: false, label: 'The naive method reverses the direction of the trend', why: 'Check your own numbers rather than assuming the error is maximal. Both show a fall.' },
+        { key: 'noone', correct: false, label: 'Since the direction is unchanged, nothing needs correcting', why: 'The direction is unchanged this half. The category ranking is not, and that is what the range review is deciding on.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-124': {
+    title: 'A cost basis everybody can apply',
+    hint: "Karthik can build it once. Say what it should contain and who has to use it.",
+    brief: "This will keep happening while every analyst writes their own CASE expression. Write to Karthik specifying what to build. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Karthik Iyer', subject: 'Cost-at-time-of-sale — can we make this a view', maxWords: 150,
+      prompt: 'What the view should contain, why it matters, and what it prevents.',
+      rubric: [
+        { key: 'what', label: 'What the view holds', markers: ['cost|line|sale|join|applicable|at the time|effective|per row|view'], why: 'Specific enough for him to build without another round trip.' },
+        { key: 'why', label: 'Why hand-written expressions are the problem', markers: ['everyone|each|own|different|inconsisten|reproduc|three version|hand'], why: 'The case for the work. Without it this reads as a preference.' },
+        { key: 'both', label: 'That both cost bases are needed, for different questions', markers: ['both|current|historic|forward|report|two|purpose|range review'], why: 'A view that only carries the historical cost breaks the range review two weeks later.' },
+        { key: 'size', label: 'The materiality, so it gets prioritised', markers: ['26|quarter|15|fifteen|7%|6\\.2|material|crore|lakh'], why: 'Engineers prioritise by impact. Give him the number.' },
+        { key: 'clear', label: 'A specific ask rather than a discussion', markers: ['can you|could you|please|would you|propose|suggest|build|add'], why: 'Something he can say yes or no to.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'tb-125': {
+    title: 'Margin per product, both bases',
+    hint: "One pass over the sales, two accumulators per product. Do not query twice.",
+    brief: "Give the range review its working table. In the notebook, compute for every product that sold: name, category, units sold (positive quantities only), net revenue, margin on the cost that applied, and margin on current cost. Round the money to whole rupees. Assign the ten products with the LOWEST margin-at-time-of-sale, as a list of dicts with keys name, category, units, revenue, margin_applied and margin_current, sorted ascending by margin_applied, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      const acc = new Map();
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const applied = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        if (!acc.has(p.id)) acc.set(p.id, { name: p.name, category: p.category, units: 0, revenue: 0, margin_applied: 0, margin_current: 0 });
+        const row = acc.get(p.id);
+        if (s.quantity > 0) row.units += s.quantity;
+        row.revenue += s.quantity * s.unit_price;
+        row.margin_applied += s.quantity * (s.unit_price - applied);
+        row.margin_current += s.quantity * (s.unit_price - p.unit_cost);
+      }
+      return [...acc.values()]
+        .map((r) => ({ ...r, revenue: Math.round(r.revenue), margin_applied: Math.round(r.margin_applied), margin_current: Math.round(r.margin_current) }))
+        .sort((a, b) => a.margin_applied - b.margin_applied)
+        .slice(0, 10);
+    },
+  },
+
+  'tb-130': {
+    title: 'The month that does not fit',
+    hint: "Revenue, margin, margin rate and average discount, by month. One row will not look like the others.",
+    brief: "Before the promotion question, find it in the data. Write ONE SQL SELECT returning, per month: net revenue, margin on the cost that applied, margin percentage to one place, units sold on positive lines, and average discount to one place. Oldest month first.",
+    referenceSql: "SELECT substr(s.sold_at, 1, 7) AS month, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, ROUND(AVG(s.discount_pct), 1) AS avg_discount FROM sales s JOIN products p ON p.id = s.product_id GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-131': {
+    title: 'What November bought',
+    hint: "Compare November against the average of the other eleven months on three measures, not one.",
+    brief: "November has a 16.9% average discount against about 4% everywhere else — a promotion nobody documented. Read what it did.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your monthly table supports.',
+      options: [
+        { key: 'units', correct: true, label: 'It moved about 55% more units than a normal month', why: '2,638 against roughly 1,700. The discount worked, in the sense that it shifted stock.' },
+        { key: 'revenue', correct: true, label: 'Revenue was up about 39%, less than the volume rise', why: 'Because each unit went out cheaper. Revenue rising less than volume is the signature of a discount-driven month.' },
+        { key: 'margin', correct: true, label: 'Gross margin was up only about 12%', why: '₹19.3 lakh against a normal ₹17.2 lakh. Fifty-five percent more units for twelve percent more margin is the whole finding.' },
+        { key: 'rate', correct: true, label: 'The margin rate fell from about 44% to 35.5%', why: 'Nearly nine points. Whether that is a good trade depends on what the volume was for, and nothing in the data says.' },
+        { key: 'failed', correct: false, label: 'The promotion failed — margin rate collapsed', why: 'Absolute margin went up. A promotion that increases margin has not failed; it may simply have been an expensive way to do it.' },
+        { key: 'succeeded', correct: false, label: 'The promotion succeeded — it was the best month of the year', why: 'Best on revenue, twelfth of twelve on margin rate, and barely ahead on margin. "Best month" is exactly the framing this analysis exists to interrogate.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-132': {
+    title: 'Margin at every discount level',
+    hint: "Group by the discount column itself. Watch the two deepest bands — there are very few lines in them.",
+    brief: "Establish the trade-off curve. Write ONE SQL SELECT returning, per discount level: lines, units on positive quantities, net revenue, margin on the cost that applied, and margin percentage to one place. Shallowest discount first.",
+    referenceSql: "SELECT s.discount_pct, COUNT(*) AS lines, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY s.discount_pct ORDER BY s.discount_pct",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-133': {
+    title: 'Where the discount landed',
+    hint: "November only, by category. The category carrying the discount is the one that can least afford it.",
+    brief: "Write ONE SQL SELECT over November 2025 only, returning per category: net revenue, margin percentage to one place, and average discount to one place. Biggest revenue first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct, ROUND(AVG(s.discount_pct), 1) AS avg_discount FROM sales s JOIN products p ON p.id = s.product_id WHERE substr(s.sold_at, 1, 7) = '2025-11' GROUP BY p.category ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tb-134': {
+    title: 'The 25% band earns more than the 30%',
+    hint: "Look at how many lines sit in each of those two bands before deciding what the curve is doing.",
+    brief: "Your discount curve falls steadily and then goes back up at the deepest level. Decide what that is.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'small', correct: true, label: 'Both bands are tiny — 151 and 175 lines out of 9,022', why: 'Under 2% of the data each. The difference between 25.4% and 26.6% on those volumes is not a signal about anything.' },
+        { key: 'mix', correct: true, label: 'Which products happened to be discounted at each level drives the difference', why: 'A deep discount on a high-margin mug and a deep discount on a low-margin grinder land in the same band and earn completely different rates.' },
+        { key: 'report', correct: true, label: 'The curve should be reported as monotonic down to 20% and unreliable beyond it', why: 'Honest and useful. The shape is clear where the data is thick and the tail should be marked as thin rather than smoothed away.' },
+        { key: 'floor', correct: false, label: 'There is a floor around 25% below which margin stops falling', why: 'That is a model fitted to 326 lines with no mechanism behind it, and it would be quoted as a reason to discount harder.' },
+        { key: 'deeper', correct: false, label: 'Deeper discounts are therefore safe', why: 'The one conclusion that would actually cost money, drawn from the thinnest part of the data.' },
+        { key: 'error', correct: false, label: 'It indicates a data error in the discount field', why: 'Nothing is wrong with the data. Small samples are noisy, which is not the same as broken.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-135': {
+    title: 'Diya asks whether to run it again',
+    hint: "She wants a yes or no. Work out what would have to be true for either answer.",
+    brief: "Diya wants a yes or no on repeating the November promotion, and calls it our biggest revenue month. Answer the question she actually asked, state the trade, and be clear about what this data cannot settle. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Repeating the November promotion', maxWords: 160,
+      prompt: 'The trade in numbers, what it cannot settle, and the one change worth making if it runs again.',
+      rubric: [
+        { key: 'trade', label: 'The trade in three numbers', markers: ['55|39|12|units|revenue|margin'], why: 'Three figures carry the decision, and she can act on them without following any of the method.' },
+        { key: 'notno', label: 'That it did add margin, so the answer is not simply no', why: 'Absolute margin rose about ₹2 lakh. Discount-driven volume that still grows margin is a legitimate tactic, just an expensive one.', markers: ['add|rose|up|more margin|accretive|higher|2 lakh|12'] },
+        { key: 'rate', label: 'The rate fall, stated plainly', markers: ['35\\.5|44|nine|rate|fell|down'], why: 'The number she is least likely to have been shown.' },
+        { key: 'cannot', label: 'What this data cannot settle', markers: ['stock|clear|competitor|repeat|came back|cannot|do not have|don.t have|depends|objective'], why: 'Whether it was worth it turns on whether those customers returned, and four tables of till data say nothing about that.' },
+        { key: 'equipment', label: 'Where the discount landed', markers: ['equipment|25\\.7|lowest|least margin|hardest|63'], why: 'If it runs again, this is the single actionable change available.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-140': {
+    title: 'The promotion, per store',
+    hint: "Like-for-like stores only. Compare each store's November against its own other months, not against the estate.",
+    brief: "Planning will ask whether it worked everywhere. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per store: November net revenue, average monthly net revenue across its other months, and November as a percentage of that average, to one place. Biggest uplift first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN substr(s.sold_at, 1, 7) = '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) AS nov_revenue, ROUND(SUM(CASE WHEN substr(s.sold_at, 1, 7) <> '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) / 11.0) AS other_month_avg, ROUND(SUM(CASE WHEN substr(s.sold_at, 1, 7) = '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) * 100.0 / (SUM(CASE WHEN substr(s.sold_at, 1, 7) <> '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) / 11.0), 1) AS nov_vs_avg_pct FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY nov_vs_avg_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-141': {
+    title: 'The promotion summary',
+    hint: "One pass, two buckets: November and everything else. Report both and the ratio.",
+    brief: "Build the figure planning will quote. In the notebook, compare November 2025 against the average of the other eleven months on four measures: units sold on positive lines, net revenue, margin on the cost that applied, and margin percentage. Round money and units to whole numbers and percentages to one decimal place. Assign a dict with keys nov and other_month_avg — each a dict with keys units, revenue, margin and margin_pct — to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      const bucket = { nov: { units: 0, revenue: 0, margin: 0 }, other: { units: 0, revenue: 0, margin: 0 } };
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const cost = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        const b = s.sold_at.slice(0, 7) === '2025-11' ? bucket.nov : bucket.other;
+        if (s.quantity > 0) b.units += s.quantity;
+        b.revenue += s.quantity * s.unit_price;
+        b.margin += s.quantity * (s.unit_price - cost);
+      }
+      const shape = (b, months) => ({
+        units: Math.round(b.units / months),
+        revenue: Math.round(b.revenue / months),
+        margin: Math.round(b.margin / months),
+        margin_pct: Math.round((b.margin / b.revenue) * 1000) / 10,
+      });
+      return { nov: shape(bucket.nov, 1), other_month_avg: shape(bucket.other, 11) };
+    },
+  },
+
+  'tb-142': {
+    title: 'What the range review is told',
+    hint: "Separate what you measured from what you were asked to conclude.",
+    brief: "Decide what goes to Diya's range review.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'basis', correct: true, label: 'That margin is stated on the cost that applied at the time of sale, and why', why: 'Every earlier figure used a different basis. Without the statement, hers and yours will differ and nobody will know which is right.' },
+        { key: 'contribution', correct: true, label: 'Margin contribution in rupees alongside margin rate', why: 'The decision is where the money comes from. A rate table alone ranks Merchandise first and Equipment last, which is the inversion that gets a range cut.' },
+        { key: 'promo', correct: true, label: 'That a discount month sits inside the year and distorts any annual rate', why: 'One month at 35.5% pulls the annual blend down. Anybody comparing this year to a year without a promotion is comparing two different trading strategies.' },
+        { key: 'forward', correct: true, label: 'A forward-looking view at current cost and undiscounted price, separately labelled', why: 'She asked for this explicitly and she was right to. Stocking decisions are about next year, and it must not be confused with the reporting figure.' },
+        { key: 'target', correct: false, label: 'A recommended blended margin target', why: 'You argued against exactly this on Tuesday. Nothing in the data says what margin is achievable.' },
+        { key: 'cut', correct: false, label: 'A recommendation to reduce the Equipment range', why: 'Equipment is the largest margin contributor in the business. The rate is the lowest and the money is the biggest, and a range review that confuses those loses ₹1.08 crore.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    // Deliberately flagged for rework: Diya accepts the summary and then wants the same
+    // margin table with current cost as well, for the forward view.
+    rework: true,
+  },
+
+  'tb-143': {
+    title: 'Sign off the planning note',
+    hint: "The numbers came from you. Read what the sentences claim on top of them.",
+    brief: "Planning have drafted the note that goes with the promotion decision. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'Promotion note — OK to send?',
+        body: "\"November remains our strongest trading month, delivering 39% more revenue than a typical month. Margin held up at 35.5%. Analytics confirm the promotion was margin-accretive and recommend repeating it. Discounts beyond 25% show no further margin erosion.\"",
+      },
+      prompt: 'What has to change before this goes out?',
+      options: [
+        { key: 'held', correct: true, label: '"Margin held up at 35.5%" describes a nine-point fall as stability', why: 'Every other month is around 44%. "Held up" is doing an enormous amount of work in that sentence and it is the opposite of what happened to the rate.' },
+        { key: 'recommend', correct: true, label: 'You did not recommend repeating it', why: 'You said it added margin and that whether it was worth it depends on things this data does not hold. Attributing a recommendation to analytics is the line to strike.' },
+        { key: 'tail', correct: true, label: 'The claim about discounts beyond 25% rests on 326 lines', why: 'It is the thinnest part of the data and the sentence turns it into a licence to discount harder. Of everything in the note, this one could actually cost money.' },
+        { key: 'accretive', correct: true, label: '"Margin-accretive" is true and will be read as "margin-improving"', why: 'Absolute margin rose 12%; the rate fell nine points. The word is defensible and the impression it leaves is not, which is worse than a plain error.' },
+        { key: 'revenue', correct: false, label: 'The 39% revenue figure is wrong', why: 'It is your figure and it is right. As usual the problem is the sentences built on top.' },
+        { key: 'units', correct: false, label: 'It should lead with the 55% volume rise', why: 'Arguable, and a matter of emphasis rather than accuracy. Fix the four claims that are wrong before rewriting the ones that are merely a choice.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-144': {
+    title: 'Rewrite the promotion note',
+    hint: "Same decision, none of the four claims. Give planning the trade and let them decide.",
+    brief: "Send Ravi replacement wording. It has to be usable by someone deciding whether to run the promotion again, with you not in the room. Under 130 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Promotion note — suggested wording', maxWords: 130,
+      prompt: 'The trade stated in three numbers, the rate fall stated honestly, and the decision left where it belongs.',
+      rubric: [
+        { key: 'trade', label: 'The trade in numbers', markers: ['55|39|12|units|revenue|margin'], why: 'Three figures carry the entire decision and nobody needs the method.' },
+        { key: 'rate', label: 'The rate fall stated as a fall', markers: ['35\\.5|44|fell|down|nine|lower|drop'], why: 'The sentence the draft was written to avoid.' },
+        { key: 'nodecide', label: 'The decision left with planning', markers: ['depend|for planning|their call|decide|whether|if the aim|context'], why: 'Analytics supplies the trade. Whether it is worth it needs stock, competitor and repeat-purchase information nobody has.' },
+        { key: 'tail', label: 'The deep-discount claim removed or qualified', markers: ['thin|few|326|151|175|small|unreliable|cannot|not enough|below 20'], why: 'The only sentence in the draft that could directly cause a loss.' },
+        { key: 'equipment', label: 'Where the discount landed', markers: ['equipment|25\\.7|lowest|least margin|hardest'], why: 'If it runs again, this is the single actionable change available.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-145': {
+    title: 'What you would measure next time',
+    hint: "Every gap you hit this week was a measurement that does not exist. Name the ones worth building.",
+    brief: "Asha wants your view as the lead. If the promotion runs again, what has to be in place before it starts so the readout is not another week of this? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'If the promotion runs again — what to instrument first', maxWords: 200,
+      prompt: 'What to record before it starts, and what question each thing answers.',
+      rubric: [
+        { key: 'flag', label: 'That promotions should be recorded as such, not inferred', markers: ['flag|record|mark|table|calendar|know|documented|inferred|discover'], why: 'You found this one by noticing a discount column. The next one should not need finding.' },
+        { key: 'baseline', label: 'A pre-agreed comparison period', markers: ['baseline|compar|before|prior|control|which month|agree'], why: 'Otherwise the readout is an argument about which months count as normal.' },
+        { key: 'repeat', label: 'Whether discounted customers come back', markers: ['repeat|return|again|retention|subsequent|later|next month|cohort'], why: 'The single biggest unknown in this week\'s answer, and the one that decides whether the trade was good.' },
+        { key: 'stock', label: 'What the promotion was FOR', markers: ['stock|clear|objective|aim|purpose|why|goal|intent'], why: 'Clearing old stock and buying market share are different objectives that would be judged on different numbers.' },
+        { key: 'basis', label: 'The cost basis agreed in advance', markers: ['cost basis|time of sale|current|view|standard|agree'], why: 'Half of this week went on establishing which cost to use. That is a decision that can be made once.' },
       ],
       skills: { communication: 100, businessLogic: 100 },
     },
