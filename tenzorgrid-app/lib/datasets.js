@@ -633,6 +633,224 @@ function generateProductEvents(seed) {
 }
 
 // ---------------------------------------------------------------------------
+// Dataset: retail_sales
+//
+// Twelve months of till data across a small retail estate: stores, products, line-level
+// sales and periodic stock counts. Built for the Team Lead track, where the work is less
+// "compute this" and more "decide whether the number somebody else computed can be
+// defended", so the quirks here are the kind that survive a first review and fail a
+// second one.
+//
+// It is a deliberately different shape again from the first three datasets. hr_core is a
+// snapshot, saas_ops is an incident log, product_events is a behavioural stream. This is
+// a transaction ledger — every row is money that moved, some of it backwards.
+//
+// Deliberate quirks, authored on purpose because finding them IS the analysis:
+//
+//   1. Returns are negative quantities on the same table. SUM(quantity) nets them, which
+//      is right for units sold and wrong for "how many transactions"; COUNT(*) counts a
+//      return as a sale. Nearly every naive revenue or basket figure picks one of these
+//      two wrong.
+//
+//   2. The estate changed during the year. Two stores opened mid-year and one closed, so
+//      ranking stores by annual total ranks them by how long they were open. A like-for-
+//      like comparison has to restrict to the months every store was trading.
+//
+//   3. One store's feed was loaded twice. March 2026 for Ashok Nagar exists as exact
+//      duplicate rows — same store, product, date, quantity and price, different id. A
+//      few identical rows occur naturally elsewhere in a year of till data; what marks
+//      this one out is the pattern, not the fact of it. One store, one contiguous month,
+//      every row doubled. It inflates that store enough to move it up the ranking.
+//
+//   4. products.unit_cost is TODAY's cost, not the cost at the time of sale. Fifteen
+//      products were repriced upward by suppliers partway through the year, and the
+//      table carries the previous cost and the date it changed. Margin computed against
+//      the current cost alone applies this year's increases to last year's sales, so it
+//      UNDERSTATES margin by about 4% overall and does so unevenly across the months.
+//
+//   5. There was a promotion, in November, and nothing in the data says so. It is the
+//      best month on revenue by a distance and the worst on margin RATE — 40.5% against
+//      a typical 46%. The honest reading is the one in between: revenue up about 26% on
+//      a normal month, gross margin up about 11%. The discount bought a great deal of
+//      turnover and very little profit, and either single number on its own tells the
+//      wrong story.
+//
+//   6. Seven products never sold at all. They are listed in the range and were never
+//      ranged in any store, so they are absent from the sales table entirely and any
+//      inner join silently drops them — and "which products underperform" is exactly the
+//      question where the missing rows are the answer.
+// ---------------------------------------------------------------------------
+
+const RETAIL_FROM = '2025-07-01';
+const RETAIL_TO = '2026-06-30';
+
+const RETAIL_STORES = [
+  { id: 1, name: 'Indiranagar', city: 'Bengaluru', region: 'South', format: 'flagship', opened_on: '2019-04-12', closed_on: null },
+  { id: 2, name: 'Koramangala', city: 'Bengaluru', region: 'South', format: 'standard', opened_on: '2020-08-01', closed_on: null },
+  { id: 3, name: 'Ashok Nagar', city: 'Chennai', region: 'South', format: 'standard', opened_on: '2018-11-20', closed_on: null },
+  { id: 4, name: 'Banjara Hills', city: 'Hyderabad', region: 'South', format: 'flagship', opened_on: '2019-09-05', closed_on: null },
+  { id: 5, name: 'Andheri West', city: 'Mumbai', region: 'West', format: 'standard', opened_on: '2017-06-15', closed_on: null },
+  { id: 6, name: 'Bandra', city: 'Mumbai', region: 'West', format: 'flagship', opened_on: '2021-02-10', closed_on: null },
+  { id: 7, name: 'Baner', city: 'Pune', region: 'West', format: 'express', opened_on: '2022-05-01', closed_on: null },
+  { id: 8, name: 'Vastrapur', city: 'Ahmedabad', region: 'West', format: 'standard', opened_on: '2021-11-08', closed_on: null },
+  { id: 9, name: 'Connaught Place', city: 'Delhi', region: 'North', format: 'flagship', opened_on: '2016-03-22', closed_on: null },
+  { id: 10, name: 'Saket', city: 'Delhi', region: 'North', format: 'standard', opened_on: '2020-01-17', closed_on: null },
+  // Quirk 2. Two of these opened during the window and one closed inside it, so any
+  // annual total silently ranks the estate by trading days.
+  { id: 11, name: 'Sector 29', city: 'Gurugram', region: 'North', format: 'express', opened_on: '2025-10-06', closed_on: null },
+  { id: 12, name: 'Salt Lake', city: 'Kolkata', region: 'East', format: 'standard', opened_on: '2026-02-02', closed_on: null },
+  { id: 13, name: 'Park Street', city: 'Kolkata', region: 'East', format: 'express', opened_on: '2019-07-30', closed_on: '2026-01-31' },
+];
+
+const RETAIL_CATEGORIES = [
+  { name: 'Coffee', subs: ['Beans', 'Ground', 'Capsules'], cost_lo: 240, cost_hi: 900, markup_lo: 1.9, markup_hi: 2.6, weight: 5 },
+  { name: 'Tea', subs: ['Leaf', 'Bags', 'Speciality'], cost_lo: 120, cost_hi: 620, markup_lo: 2.0, markup_hi: 2.9, weight: 4 },
+  { name: 'Equipment', subs: ['Brewers', 'Grinders', 'Accessories'], cost_lo: 850, cost_hi: 9800, markup_lo: 1.4, markup_hi: 1.9, weight: 3 },
+  { name: 'Bakery', subs: ['Biscuits', 'Cakes'], cost_lo: 60, cost_hi: 340, markup_lo: 2.2, markup_hi: 3.2, weight: 3 },
+  { name: 'Merchandise', subs: ['Mugs', 'Bottles', 'Apparel'], cost_lo: 180, cost_hi: 1400, markup_lo: 2.4, markup_hi: 3.6, weight: 2 },
+];
+
+const PRODUCT_WORDS = [
+  'Arabica', 'Robusta', 'Monsoon', 'Nilgiri', 'Coorg', 'Chikmagalur', 'Assam', 'Darjeeling',
+  'Highland', 'Estate', 'Reserve', 'Heritage', 'Morning', 'Midnight', 'Amber', 'Copper',
+  'Slate', 'Ember', 'Harvest', 'Cascade', 'Summit', 'Grove', 'Terrace', 'Meridian',
+];
+const PRODUCT_SUFFIX = ['Blend', 'Select', 'Classic', 'Gold', 'No. 7', 'Single Origin', 'Everyday', 'Signature'];
+
+// The promotion. One month of heavy discounting that buys volume and gives back margin —
+// quirk 5. The dates are real and knowable from the data, not stated anywhere.
+const PROMO_MONTH = '2025-11';
+// Quirk 3. One store, one week, loaded twice.
+const DUPLICATE_STORE_ID = 3;
+const DUPLICATE_WINDOW = ['2026-03-01', '2026-03-31'];
+
+function retailDays(fromDate, toDate) {
+  return Math.round((Date.parse(toDate + 'T00:00:00Z') - Date.parse(fromDate + 'T00:00:00Z')) / 86400000);
+}
+function retailAddDays(date, n) {
+  return new Date(Date.parse(date + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+}
+
+function generateRetailSales(seed) {
+  const rng = makeRng(seed);
+
+  // --- Products -------------------------------------------------------------
+  const products = [];
+  let pid = 1;
+  for (const cat of RETAIL_CATEGORIES) {
+    const count = cat.weight * 4;
+    for (let i = 0; i < count; i++) {
+      const cost = roundTo(intBetween(rng, cat.cost_lo, cat.cost_hi), 10);
+      const markup = cat.markup_lo + rng() * (cat.markup_hi - cat.markup_lo);
+      // Quirk 4. A supplier repriced these partway through the year, and the table keeps
+      // the old cost beside the new one. Margin before that date uses the old figure.
+      const repriced = rng() < 0.14;
+      const changedOn = repriced ? retailAddDays(RETAIL_FROM, intBetween(rng, 60, 300)) : null;
+      products.push({
+        id: pid++,
+        name: `${pick(rng, PRODUCT_WORDS)} ${pick(rng, PRODUCT_SUFFIX)}`,
+        category: cat.name,
+        subcategory: pick(rng, cat.subs),
+        unit_cost: cost,
+        previous_unit_cost: repriced ? roundTo(cost * (0.78 + rng() * 0.14), 10) : null,
+        cost_changed_on: changedOn,
+        list_price: roundTo(cost * markup, 10),
+      });
+    }
+  }
+
+  // Quirk 6. Seven products are in the range and ranged by nobody — signed off by
+  // buying, never put on a planogram. They will not appear in the sales table at all.
+  const neverStocked = new Set();
+  while (neverStocked.size < 7) neverStocked.add(products[intBetween(rng, 0, products.length - 1)].id);
+
+  // --- Sales ----------------------------------------------------------------
+  const sales = [];
+  let sid = 1;
+  const span = retailDays(RETAIL_FROM, RETAIL_TO);
+
+  // How busy each store is, so the estate is not uniform. Flagships carry the volume.
+  const busyness = { flagship: 1.0, standard: 0.62, express: 0.34 };
+
+  // Which products a store actually stocks. An express store carries a fraction of the
+  // range, which is why some products look like they failed when they were never listed.
+  const rangeFor = (store) => (store.format === 'flagship' ? 1.0 : store.format === 'standard' ? 0.78 : 0.42);
+
+  for (const store of RETAIL_STORES) {
+    const stocked = products.filter((p) => !neverStocked.has(p.id) && rng() < rangeFor(store));
+    if (!stocked.length) stocked.push(products.find((p) => !neverStocked.has(p.id)));
+
+    for (let d = 0; d < span; d++) {
+      const date = retailAddDays(RETAIL_FROM, d);
+      if (store.opened_on > date) continue;
+      if (store.closed_on && date > store.closed_on) continue;
+      // Sunday is quiet, Saturday is busy. A day with no rows at all is a real closure.
+      const dow = new Date(date + 'T00:00:00Z').getUTCDay();
+      const dayWeight = dow === 0 ? 0.45 : dow === 6 ? 1.45 : 1.0;
+      const month = date.slice(0, 7);
+      const promo = month === PROMO_MONTH;
+      // The promotion buys roughly half as much volume again.
+      const lines = Math.round(intBetween(rng, 1, 5) * busyness[store.format] * dayWeight * (promo ? 1.5 : 1));
+
+      for (let k = 0; k < lines; k++) {
+        const product = pick(rng, stocked);
+        // Quirk 1. A return is a negative quantity on the same table, priced at what was
+        // originally paid. Around one line in eighteen.
+        const isReturn = rng() < 0.055;
+        const qty = isReturn ? -intBetween(rng, 1, 2) : intBetween(rng, 1, 4);
+        // Discount is deeper and far commoner during the promotion.
+        const discount = promo
+          ? pick(rng, [0, 10, 15, 20, 20, 25, 30])
+          : pick(rng, [0, 0, 0, 0, 5, 10, 15]);
+        sales.push({
+          id: sid++,
+          store_id: store.id,
+          product_id: product.id,
+          sold_at: date,
+          quantity: qty,
+          unit_price: roundTo(product.list_price * (1 - discount / 100), 1),
+          discount_pct: discount,
+        });
+      }
+    }
+  }
+
+  // Quirk 3. The feed for one store, one week, was loaded a second time. Same store,
+  // product, date, quantity and price — a different id, which is the only thing that
+  // makes them two rows rather than one.
+  const dupes = sales.filter((s) => s.store_id === DUPLICATE_STORE_ID
+    && s.sold_at >= DUPLICATE_WINDOW[0] && s.sold_at <= DUPLICATE_WINDOW[1]);
+  for (const s of dupes) sales.push({ ...s, id: sid++ });
+
+  // --- Stock counts ---------------------------------------------------------
+  // Counted quarterly, for the range each store actually carries. Quarterly rather than
+  // monthly because four counts a year answer every stock question this dataset is for,
+  // and monthly counts were four times the rows for no extra teaching.
+  const stock_counts = [];
+  let stid = 1;
+  for (const store of RETAIL_STORES) {
+    const sold = new Set(sales.filter((s) => s.store_id === store.id).map((s) => s.product_id));
+    for (let m = 0; m < 4; m++) {
+      const date = retailAddDays(RETAIL_FROM, m * 91);
+      if (store.opened_on > date) continue;
+      if (store.closed_on && date > store.closed_on) continue;
+      for (const product of products) {
+        if (!sold.has(product.id)) continue;
+        stock_counts.push({
+          id: stid++,
+          store_id: store.id,
+          product_id: product.id,
+          counted_on: date,
+          units_on_hand: intBetween(rng, 0, 40),
+        });
+      }
+    }
+  }
+
+  return { stores: RETAIL_STORES, products, sales, stock_counts };
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 //
 // `seed` is fixed per dataset, NOT per learner. Two learners on the same task see the
@@ -828,6 +1046,89 @@ const DATASETS = {
       CREATE INDEX idx_sessions_user ON sessions (user_id, started_at);
     `,
     generate: generateProductEvents,
+  },
+
+  retail_sales: {
+    key: 'retail_sales',
+    label: 'Retail Sales',
+    description: 'Twelve months of store, product, till-line and stock-count data across a thirteen-store estate.',
+    seed: 20260904,
+    tables: [
+      {
+        name: 'stores',
+        note: 'The estate. closed_on is NULL for stores still trading; opened_on can fall inside the reporting window.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'name', type: 'TEXT' },
+          { name: 'city', type: 'TEXT' },
+          { name: 'region', type: 'TEXT', note: 'North, South, East or West' },
+          { name: 'format', type: 'TEXT', note: 'flagship, standard or express' },
+          { name: 'opened_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'closed_on', type: 'TEXT', note: 'NULL if still trading' },
+        ],
+      },
+      {
+        name: 'products',
+        note: 'The range. unit_cost is the cost TODAY; previous_unit_cost and cost_changed_on describe a supplier reprice.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'name', type: 'TEXT' },
+          { name: 'category', type: 'TEXT' },
+          { name: 'subcategory', type: 'TEXT' },
+          { name: 'unit_cost', type: 'INTEGER', note: 'Current cost to us, INR' },
+          { name: 'previous_unit_cost', type: 'INTEGER', note: 'NULL if never repriced' },
+          { name: 'cost_changed_on', type: 'TEXT', note: 'NULL if never repriced' },
+          { name: 'list_price', type: 'INTEGER', note: 'Undiscounted shelf price, INR' },
+        ],
+      },
+      {
+        name: 'sales',
+        note: 'One row per till line. quantity is NEGATIVE for a return. unit_price is what was actually charged.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'store_id', type: 'INTEGER', note: 'References stores.id' },
+          { name: 'product_id', type: 'INTEGER', note: 'References products.id' },
+          { name: 'sold_at', type: 'TEXT', note: 'ISO date' },
+          { name: 'quantity', type: 'INTEGER', note: 'Negative for returns' },
+          { name: 'unit_price', type: 'INTEGER', note: 'Price charged per unit, INR' },
+          { name: 'discount_pct', type: 'INTEGER', note: 'Discount applied, as a percentage of list' },
+        ],
+      },
+      {
+        name: 'stock_counts',
+        note: 'Monthly physical counts, for the range each store actually carries.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'store_id', type: 'INTEGER', note: 'References stores.id' },
+          { name: 'product_id', type: 'INTEGER', note: 'References products.id' },
+          { name: 'counted_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'units_on_hand', type: 'INTEGER' },
+        ],
+      },
+    ],
+    schema: `
+      CREATE TABLE stores (
+        id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL, region TEXT NOT NULL,
+        format TEXT NOT NULL, opened_on TEXT NOT NULL, closed_on TEXT
+      );
+      CREATE TABLE products (
+        id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, subcategory TEXT NOT NULL,
+        unit_cost INTEGER NOT NULL, previous_unit_cost INTEGER, cost_changed_on TEXT,
+        list_price INTEGER NOT NULL
+      );
+      CREATE TABLE sales (
+        id INTEGER PRIMARY KEY, store_id INTEGER NOT NULL, product_id INTEGER NOT NULL,
+        sold_at TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price INTEGER NOT NULL,
+        discount_pct INTEGER NOT NULL
+      );
+      CREATE TABLE stock_counts (
+        id INTEGER PRIMARY KEY, store_id INTEGER NOT NULL, product_id INTEGER NOT NULL,
+        counted_on TEXT NOT NULL, units_on_hand INTEGER NOT NULL
+      );
+      CREATE INDEX idx_sales_store ON sales (store_id, sold_at);
+      CREATE INDEX idx_sales_product ON sales (product_id);
+    `,
+    generate: generateRetailSales,
   },
 };
 
