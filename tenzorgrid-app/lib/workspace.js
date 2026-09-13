@@ -294,7 +294,19 @@ const PROJECT_CATALOG = {
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
       level: 'senior',
-      taskKeys: ['sa-002', 'sa-004'],
+      taskKeys: [
+        // Day 1 — there is no cost column, so build a proxy and say it is one.
+        'sb-101', 'sb-102', 'sb-103', 'sa-002', 'sb-104', 'sb-105',
+        // Day 2 — flat support load against thirteenfold revenue variation.
+        'sb-110', 'sb-111', 'sb-112', 'sb-113', 'sb-114', 'sb-115',
+        // Day 3 — the wobble. SUM(DISTINCT mrr), the fix taught last week, silently loses
+        // a client because two Starter accounts bill the same amount.
+        'sb-120', 'sb-121', 'sb-122', 'sa-004', 'sb-123', 'sb-124',
+        // Day 4 — concentration, and a CSM analysis that turns out to be a non-finding.
+        'sb-130', 'sb-131', 'sb-132', 'sb-133', 'sb-134', 'sb-135',
+        // Day 5 — the Starter recommendation, under pressure to just kill the tier.
+        'sb-140', 'sb-141', 'sb-142', 'sb-143', 'sb-144', 'sb-145',
+      ],
       skillFocus: ['sql', 'python', 'businessLogic'],
       impactValue: 34000,
       contributors: [
@@ -2770,6 +2782,208 @@ const TASKS = {
   // brief written vaguer. So these are different questions, not harder wording: they
   // ask for a rate rather than a total, make the learner decide what to exclude, and
   // end with a recommendation the data does not hand them.
+  'sb-130': {
+    title: 'What each signing year is worth now',
+    hint: "Group by the year they signed. Watch the client counts — some years are one account.",
+    brief: "If small accounts grow into large ones, the Starter question answers itself. Write ONE SQL SELECT returning, per signing year across ACTIVE clients: how many clients, their total revenue, and the average. Oldest year first.",
+    referenceSql: "SELECT c.signed_year, COUNT(*) AS clients, SUM(c.mrr) AS mrr, ROUND(AVG(c.mrr)) AS avg_mrr FROM clients c WHERE c.status = 'active' GROUP BY c.signed_year ORDER BY c.signed_year",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'sb-131': {
+    title: 'How the CSM load is distributed',
+    hint: "Group by the CSM. Read the result and then decide whether there is anything to report.",
+    brief: "Customer Success wants to know whether any CSM is carrying an unfair share. Write ONE SQL SELECT returning, per CSM across ACTIVE clients: how many accounts they hold and the total revenue on them. Most accounts first, then most revenue.",
+    referenceSql: "SELECT csm_name, COUNT(*) AS accounts, SUM(mrr) AS mrr FROM clients WHERE status = 'active' GROUP BY csm_name ORDER BY accounts DESC, mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'medium', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'sb-132': {
+    title: 'Reporting that there is nothing to report',
+    hint: "Fifteen CSMs, fifteen accounts. Count how many accounts each one holds before deciding what to say.",
+    brief: "The CSM load query came back with every CSM holding exactly one account. Priya is expecting a finding about workload balance. Decide what to tell her.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'uniform', correct: true, label: 'Account load is perfectly uniform — one each — so there is no imbalance to find', why: 'A real answer to the question asked. It is not a failed analysis, it is a negative result and it took one query to establish.' },
+        { key: 'revenue', correct: true, label: 'Revenue per CSM is not uniform, and that is the question worth asking instead', why: 'One account at 386,000 and one at 15,000 are very different jobs. The count hides a spread the question was really reaching for.' },
+        { key: 'quick', correct: true, label: 'Say it in one line and move on', why: 'A non-finding deserves a sentence, not a section. Spending a page proving nothing is happening is how a report loses the reader before the real findings.' },
+        { key: 'fail', correct: false, label: 'Report that the analysis was inconclusive', why: 'It was entirely conclusive. "Inconclusive" describes a failure to establish something, not a clean finding of no difference.' },
+        { key: 'drop', correct: false, label: 'Leave it out — nothing interesting came back', why: 'She asked. Silently dropping a question a stakeholder raised means she asks again, or assumes you found something awkward.' },
+        { key: 'stretch', correct: false, label: 'Break it down by tier and tenure until a difference appears', why: 'Slicing until something looks significant is how false findings are manufactured, and with fifteen accounts every slice is one or two people.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.3, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sb-133': {
+    title: 'Chart the concentration',
+    hint: "Fifteen accounts, one measure. Sorted, so the reader can see how fast it falls away.",
+    brief: "One slide showing each active account's share of total revenue. The point is how quickly it drops after the top few, so the ordering does all the work.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Each active account as a share of total revenue.',
+      sourceSql: "SELECT company, ROUND(mrr * 100.0 / (SELECT SUM(mrr) FROM clients WHERE status = 'active'), 1) AS pct_of_book FROM clients WHERE status = 'active' ORDER BY pct_of_book DESC",
+      columns: ['company', 'pct_of_book'],
+      correct: { type: 'bar', x: 'company', y: 'pct_of_book', sort: 'desc' },
+      whyRight: 'Categories compared by size, sorted descending so the concentration in the top few accounts is visible without reading a single label.',
+      why: {
+        type: 'Companies are categories. Bars compare them; a line would suggest a sequence between unrelated accounts.',
+        x: 'The company is the category.',
+        y: 'Share of total revenue, as a percentage.',
+        sort: 'Descending. The shape of the fall-off IS the finding — unsorted, the concentration is invisible.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sb-134': {
+    title: 'The Starter tier, account by account',
+    hint: "Five rows. Look at how much of the tier's load sits on one of them.",
+    brief: "Your recommendation is about a tier, so look at the accounts inside it individually. Write ONE SQL SELECT returning each ACTIVE Starter client: company, revenue, ticket count, incident count, and tickets per hundred thousand of revenue. Heaviest load per rupee first.",
+    referenceSql: "SELECT c.company, c.mrr, (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) AS tickets, (SELECT COUNT(*) FROM incidents i WHERE i.client_id = c.id) AS incidents, ROUND((SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c WHERE c.status = 'active' AND c.tier = 'Starter' ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sb-135': {
+    title: 'What Finance has written from your numbers',
+    hint: "Three sentences. One converts your proxy into rupees, which you never did.",
+    brief: "Diya has drafted the summary for the pricing review using your analysis. It carries your name as the source. Read it properly.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Draft for the pricing review — check before I circulate',
+        body: "Here is what I have:\n\n\"Analysis shows Starter accounts generate a support burden comparable to Enterprise accounts while contributing 5% of revenue. At an estimated 4,000 per ticket, the Starter tier costs us roughly 92,000 a month to serve against 114,000 of revenue. Support load per account is flat across all three tiers. We recommend closing the Starter tier at renewal.\"",
+      },
+      prompt: 'Tick every sentence you would change or cut.',
+      options: [
+        { key: 'cost', correct: true, label: 'The "estimated 4,000 per ticket" costing', why: 'That number is hers, not yours, and it converts a relative proxy into an absolute rupee claim — the exact thing you said on Monday the analysis could not do.' },
+        { key: 'recommend', correct: true, label: 'The recommendation to close the tier', why: 'Five accounts, no view of what they grow into, and no churn or win-back cost. Your analysis supports a pricing question, not a closure decision.' },
+        { key: 'five', correct: true, label: 'The "5% of revenue" figure', why: 'Starter is 114,000 of 2,073,000 — about 5.5%, and it was 99,000 in the version you first sent. Worth checking which number she used before it is circulated.' },
+        { key: 'flat', correct: false, label: 'The "support load per account is flat" sentence', why: 'Measured, correct, and the strongest finding in the week. Keep it.' },
+        { key: 'burden', correct: false, label: 'The "comparable support burden" sentence', why: 'Also supported — 4.6 tickets against 5.0. It is the sentence the whole review turns on.' },
+        { key: 'all', correct: false, label: 'Ask her to remove all the figures and describe it qualitatively', why: 'The figures are the only checkable part. Two claims need fixing, not the existence of numbers.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sb-140': {
+    title: 'What the book looks like without Starter',
+    hint: "Compare the totals with and without the tier, in one row.",
+    brief: "Before recommending anything, size what would actually be lost. Write ONE SQL SELECT returning, in a single row: total active revenue, total active clients, revenue excluding Starter, clients excluding Starter, and the percentage of revenue Starter represents.",
+    referenceSql: "SELECT SUM(mrr) AS total_mrr, COUNT(*) AS total_clients, SUM(CASE WHEN tier != 'Starter' THEN mrr ELSE 0 END) AS mrr_without_starter, SUM(CASE WHEN tier != 'Starter' THEN 1 ELSE 0 END) AS clients_without_starter, ROUND(SUM(CASE WHEN tier = 'Starter' THEN mrr ELSE 0 END) * 100.0 / SUM(mrr), 1) AS starter_pct FROM clients WHERE status = 'active'",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-141': {
+    title: 'Load per account, mean against median, in Python',
+    // Flagged for rework: Diya accepts it and then wants it a different way.
+    rework: true,
+    hint: "Group the ticket counts by tier yourself, then take both the mean and the middle value. One tier will disagree with itself.",
+    brief: "Every tier figure this week has been a mean over four to six accounts, and one Starter account is twice as heavy as any other. In the notebook, compute for each tier across ACTIVE clients: the mean tickets per account, the median tickets per account, and the number of accounts. Sort by median descending. Assign a list of dicts with keys tier, mean_tickets, median_tickets and clients to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const active = tables.clients.filter((c) => c.status === 'active');
+      const counts = new Map();
+      for (const t of tables.tickets) counts.set(t.client_id, (counts.get(t.client_id) || 0) + 1);
+      const by = new Map();
+      for (const c of active) {
+        if (!by.has(c.tier)) by.set(c.tier, []);
+        by.get(c.tier).push(counts.get(c.id) || 0);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([tier, v]) => ({
+          tier,
+          mean_tickets: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 100) / 100,
+          median_tickets: median(v),
+          clients: v.length,
+        }))
+        .sort((a, b) => b.median_tickets - a.median_tickets);
+    },
+  },
+
+  'sb-142': {
+    title: 'What to actually recommend about Starter',
+    hint: "Closing a tier and repricing a tier are different decisions with different evidence requirements. Work out which one you have evidence for.",
+    brief: "Diya wants a recommendation. Decide what your week actually supports — and notice that the dramatic option is the one it does not.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick every recommendation you could defend.',
+      options: [
+        { key: 'reprice', correct: true, label: 'Reprice the tier — the ratio is defensible evidence about price, not about existence', why: 'You have measured load against revenue. That is directly a pricing input, and repricing is reversible in a way that closure is not.' },
+        { key: 'selfserve', correct: true, label: 'Reduce the support entitlement at Starter rather than the account count', why: 'It acts on the side you actually measured. If the cost is contact volume, changing what Starter includes addresses it without losing the accounts.' },
+        { key: 'watch', correct: true, label: 'Name the one heavy account and handle it separately from the tier', why: 'Orchid Pharma is roughly double the next per rupee. A single-account problem does not need a tier-wide policy.' },
+        { key: 'close', correct: false, label: 'Close the tier at renewal', why: 'Five accounts, no data on what they grow into, no churn or acquisition cost, and it is irreversible. The evidence is about pricing and the decision would be about strategy.' },
+        { key: 'nothing', correct: false, label: 'Recommend nothing — the sample is too small to act on', why: 'A thirteenfold revenue gap against flat support load is a real signal. Refusing to recommend anything wastes a genuine finding.' },
+        { key: 'raise', correct: false, label: 'Raise Starter prices to match the Enterprise revenue-per-ticket ratio', why: 'That would be roughly a fourteenfold increase. Following a ratio to its arithmetic conclusion without asking whether anyone would pay it is not a recommendation.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-143': {
+    title: 'Which accounts would a price rise reach',
+    hint: "Starter accounts with above-median load. Five rows in, fewer out.",
+    brief: "A repricing lands on specific customers, so name them. Write ONE SQL SELECT returning each ACTIVE Starter client whose tickets per hundred thousand of revenue is ABOVE the Starter average, with their revenue, tickets and that ratio. Heaviest first.",
+    referenceSql: "SELECT c.company, c.mrr, (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) AS tickets, ROUND((SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c WHERE c.status = 'active' AND c.tier = 'Starter' AND (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr > (SELECT AVG((SELECT COUNT(*) FROM tickets t2 WHERE t2.client_id = x.id) * 100000.0 / x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = 'Starter') ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.85, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-144': {
+    title: 'Diya wants the closure recommendation',
+    hint: "She is asking you to sign off a strategic decision on pricing evidence. Work out what you can give her instead.",
+    brief: "An hour before the pricing review, Diya pushes for the stronger version. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Can we just say close it?',
+        body: "The numbers are stark and everybody in that room already believes Starter is a drag. If your analysis says close it, we close it and we save ourselves a year of arguing.\n\nDoes it say that?",
+      },
+      prompt: 'Which responses are honest and useful?',
+      options: [
+        { key: 'no', correct: true, label: '"It says the pricing is wrong. It does not say the tier should not exist."', why: 'Precise about what was measured. One sentence, and it draws the line exactly where the evidence does.' },
+        { key: 'missing', correct: true, label: '"Closure needs what Starter accounts become — and I have no data on that"', why: 'Names the specific gap rather than being vague about rigour. If Starter accounts become Growth accounts, closure destroys the pipeline.' },
+        { key: 'offer', correct: true, label: '"I can give you a repricing case today that is fully supported"', why: 'Turns a refusal into a deliverable. She gets something for the room and nobody has overstated anything.' },
+        { key: 'yes', correct: false, label: '"Yes — the ratio is overwhelming."', why: 'A fourteenfold ratio is overwhelming evidence about price. It is not evidence about strategy, and the room will not preserve that distinction once you have blurred it.' },
+        { key: 'room', correct: false, label: '"If the room already believes it, my analysis supports the direction."', why: 'Analysis that agrees with the prevailing view because it is the prevailing view is worth nothing — and this is the exact moment that happens.' },
+        { key: 'silent', correct: false, label: 'Give her the numbers and let her draw the conclusion', why: 'She will draw the one she already has, and it will be attributed to you. Declining to interpret your own work is not neutrality here.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-145': {
+    title: 'The account economics review',
+    hint: "The proxy first, then the finding, then what you are and are not recommending.",
+    brief: "The deliverable. It goes into the pricing review and Diya will defend the method without you, so the proxy and its limits have to be in the document rather than in your head.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra and the pricing review', subject: 'Account economics — findings and recommendation', maxWords: 220,
+      prompt: 'The proxy, the finding, the recommendation, and the decision you are explicitly not making.',
+      rubric: [
+        { key: 'proxy', label: 'That cost is proxied by support volume', markers: ['proxy|ticket|incident|volume|no cost|not a cost|stand.in'], why: 'The load-bearing assumption. It goes first, not in a footnote, because everything after it depends on it.' },
+        { key: 'finding', label: 'Flat support load against thirteenfold revenue variation', markers: ['flat|similar|same|4\\.6|5|per account', 'thirteen|13|14|310|23|times|gap'], why: 'The finding of the week, and the sentence that shapes the pricing decision.' },
+        { key: 'recommend', label: 'A recommendation about pricing', markers: ['repric|price|entitlement|support|tier|recommend|propose|adjust'], why: 'She needs something to take into the room. A finding with no recommendation gets one supplied by somebody else.' },
+        { key: 'not', label: 'That you are NOT recommending closure, and why', markers: ['not|closure|close|do not|cannot|strategy|grow|become|churn|pipeline'], why: 'The distinction the whole week turns on. Left out, it is the conclusion the room will reach anyway.' },
+        { key: 'sample', label: 'That the tier is five accounts and one is unusually heavy', markers: ['five|5 |orchid|one account|single|outlier|heavier|double'], why: 'A tier-wide recommendation resting on five accounts has to say so before somebody else notices.' },
+        { key: 'correction', label: 'The corrected Starter revenue figure', markers: ['114|correct'], why: 'You sent a wrong number on Tuesday. The final document is where the right one has to appear.' },
+      ],
+    },
+    estHours: 0.85, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
   // ---- Senior project 1: Platform Reliability Review, days 2-5 ----------------------
   //
   // Senior questions, not harder junior ones: rates rather than totals, the learner
@@ -3146,6 +3360,261 @@ const TASKS = {
       ],
     },
     estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Senior project 2: Account Economics Review -----------------------------------
+  //
+  // Which accounts cost more to serve than they return -- with no cost column anywhere in
+  // the data, so the week begins by building a proxy and saying out loud that it is one.
+  //
+  //   Monday    there is no cost column. Build a defensible proxy or answer nothing.
+  //   Tuesday   the finding: support load per account is flat across tiers while revenue
+  //             per account varies thirteenfold.
+  //   Wednesday the wobble. SUM(DISTINCT mrr) -- the fix taught last week -- silently
+  //             loses a client, because two Starter accounts bill the same amount.
+  //   Thursday  concentration. Four accounts are sixty percent of the book, and the CSM
+  //             load analysis turns out to be a non-finding.
+  //   Friday    the Starter tier recommendation, under pressure to just kill it.
+  //
+  // Measured: Enterprise 5.0 tickets per account, Growth 4.83, Starter 4.6 -- against
+  // 310k, 120k and 23k of revenue per account. Starter raises more tickets than
+  // Enterprise for nine percent of the revenue.
+
+  'sb-101': {
+    title: 'There is no cost column',
+    hint: "Look at what the tables actually contain before deciding what can be answered. Then decide what a defensible proxy looks like.",
+    brief: "Diya has asked which accounts cost more to serve than they return. Before writing anything, establish what you can actually measure — because the central quantity in that question is not in the data.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Cost to serve — for the pricing review',
+        body: "We are reviewing tier pricing next month and the question I keep being asked is whether the smaller accounts actually pay for themselves.\n\nI do not have a cost-to-serve figure and I do not think anyone does. You have the support and incident data — can you get me close enough to make a pricing decision, or should I stop asking?",
+      },
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'proxy', correct: true, label: 'A proxy has to be built — nothing in the data is a cost', why: 'Tickets and incidents are volume, not money. The analysis is possible only if you construct something and are explicit that it is constructed.' },
+        { key: 'name', correct: true, label: 'The proxy has to be named and defended in the output', why: 'A pricing decision made on an undisclosed proxy is a pricing decision nobody can audit. Saying "tickets as a proxy for support cost" in the first line is the difference.' },
+        { key: 'relative', correct: true, label: 'It can support relative comparisons between tiers, not absolute costs', why: 'You can say Starter costs more per rupee than Enterprise. You cannot say it costs four lakh, and the distinction has to survive into the summary.' },
+        { key: 'stop', correct: false, label: 'Tell her to stop asking until Finance produces a cost model', why: 'She offered you that exit and it would be the wrong one. The relative answer is genuinely useful for a pricing decision and it is available today.' },
+        { key: 'invent', correct: false, label: 'Estimate a cost per ticket and multiply through', why: 'That converts a defensible relative finding into an invented absolute one. The moment a rupee figure exists it gets quoted without its assumption.' },
+        { key: 'mrr', correct: false, label: 'Use revenue alone — low-revenue accounts are the unprofitable ones', why: 'That assumes what the analysis is meant to establish. A small account that never contacts us may be the most profitable thing in the book.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'sb-102': {
+    title: 'What each tier is worth',
+    hint: "No join here, so a plain SUM is correct. Remember that for Wednesday.",
+    brief: "Start with the revenue side. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, the total monthly revenue, and the average revenue per client. Biggest tier by revenue first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS mrr, ROUND(AVG(mrr)) AS mrr_per_client FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'sb-103': {
+    title: 'What each tier costs to support',
+    hint: "LEFT JOIN so a client with no tickets still counts in the denominator. Compare the answer against the revenue table.",
+    brief: "Now the cost proxy. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, how many tickets in total, and tickets per client. Heaviest support load per client first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, COUNT(t.id) AS tickets, ROUND(COUNT(t.id) * 1.0 / COUNT(DISTINCT c.id), 2) AS tickets_per_client FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY tickets_per_client DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-104': {
+    title: 'What the two tables say together',
+    hint: "Put revenue per client beside tickets per client. The ratio between the tiers is the finding.",
+    brief: "You have revenue per account and support load per account. Read them together before anyone else does.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'flat', correct: true, label: 'Support load per account is almost identical across the three tiers', why: 'Five, 4.8 and 4.6 tickets. Whatever drives a client to contact us, it is not what they pay.' },
+        { key: 'revenue', correct: true, label: 'Revenue per account varies by more than thirteen times', why: 'About 310,000 against about 23,000. Flat cost against steeply varying revenue is the entire economics of this book.' },
+        { key: 'starter', correct: true, label: 'Starter accounts raise more tickets in total than Enterprise ones do', why: 'Twenty-three against twenty, for nine percent of the revenue. The sentence a pricing review needs.' },
+        { key: 'ent', correct: false, label: 'Enterprise accounts are the most expensive to support', why: 'They have the highest tickets per account by a rounding margin and by far the most revenue behind each one. Reading the raw ticket count as cost ignores the denominator.' },
+        { key: 'more', correct: false, label: 'Bigger accounts demand more support', why: 'Your own table says they demand about the same. This is the assumption the analysis exists to test, and it does not survive.' },
+        { key: 'kill', correct: false, label: 'The Starter tier should be discontinued', why: 'Five accounts, and you have not looked at what they become. That is Friday\'s decision and it needs more than one ratio.' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-105': {
+    title: 'Tell Diya what you can and cannot give her',
+    hint: "She asked whether to stop asking. Answer that directly, then say what the proxy is.",
+    brief: "Write back on day one. She offered you a way out of the question and you are not taking it, so say what you will produce and what it will not be. Under 150 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Cost to serve — what I can build', maxWords: 150,
+      prompt: 'The proxy, its limits, and the answer to the question she actually asked.',
+      rubric: [
+        { key: 'yes', label: 'That the question can be answered, at least relatively', markers: ['can|yes|will|able|worth|keep asking|do not stop'], why: 'She asked whether to stop asking. Answer that before anything else.' },
+        { key: 'proxy', label: 'What the proxy is', markers: ['ticket|incident|support|volume|proxy|stand.in|substitute'], why: 'Name it in the note, not in a footnote. It is the load-bearing assumption of everything that follows.' },
+        { key: 'nocost', label: 'That no cost figure exists in the data', markers: ['no cost|not have|do not have|don.t have|absent|missing|nothing'], why: 'Stating the gap yourself is what stops somebody later treating your ratio as rupees.' },
+        { key: 'relative', label: 'That the output is comparative, not absolute', markers: ['relative|compar|between|rank|not absolute|cannot say|per rupee|order'], why: 'The one sentence that prevents your work becoming a cost model somebody budgets against.' },
+        { key: 'early', label: 'Something concrete she can already use', markers: ['flat|similar|same|tier|per account|starter|enterprise|thirteen|13'], why: 'The flat-load finding is available on day one and it is the thing that will shape her pricing review.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-110': {
+    title: 'Incidents per tier',
+    hint: "COUNT(DISTINCT i.id) once you have joined, or the count multiplies. The ordering will surprise you.",
+    brief: "Tickets are what clients ask us; incidents are what we broke. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, how many incidents, and incidents per client. Most incidents per client first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, COUNT(DISTINCT i.id) AS incidents, ROUND(COUNT(DISTINCT i.id) * 1.0 / COUNT(DISTINCT c.id), 2) AS incidents_per_client FROM clients c LEFT JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY incidents_per_client DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'sb-111': {
+    title: 'The tier that breaks most is the one that pays least',
+    hint: "Three tiers, three measures, and the ordering is the same every time except for revenue.",
+    brief: "Starter accounts have three incidents each; Enterprise accounts have one. Decide what that adds to the economics picture, and be careful about what it does not establish.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'compound', correct: true, label: 'Starter accounts cost more on both proxies while paying least', why: 'Similar tickets, three times the incidents, a fourteenth of the revenue. Two independent measures pointing the same way is much stronger than either alone.' },
+        { key: 'why', correct: true, label: 'Nothing here explains why smaller accounts have more incidents', why: 'Could be product surface, could be self-service, could be which services they use. The data supports the observation and none of the explanations.' },
+        { key: 'ask', correct: true, label: 'It is worth asking Engineering before publishing', why: 'Arjun will know in thirty seconds whether Starter accounts sit on a different part of the platform. That converts an odd finding into an explained one.' },
+        { key: 'cause', correct: false, label: 'Starter accounts are less technically capable, which causes more incidents', why: 'An incident is something WE broke. Reading client capability into our own failure rate is both unfounded and the sort of sentence that should never leave a building.' },
+        { key: 'proof', correct: false, label: 'This proves the Starter tier is unprofitable', why: 'It is strong evidence on the cost side of a ratio whose other side you have proxied. "Proves" is doing work the data cannot.' },
+        { key: 'drop', correct: false, label: 'Starter incidents should be deprioritised to reduce cost', why: 'A recommendation about incident response dressed as an economics finding — and one that would make the retention problem worse.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-112': {
+    title: 'How concentrated is the book',
+    hint: "A scalar subquery in the SELECT gives you each client's share of the whole.",
+    brief: "Before recommending anything about small accounts, find out how much the big ones carry. Write ONE SQL SELECT returning every ACTIVE client with their revenue and their percentage share of total active revenue, biggest first.",
+    referenceSql: "SELECT company, mrr, ROUND(mrr * 100.0 / (SELECT SUM(mrr) FROM clients WHERE status = 'active'), 1) AS pct_of_book FROM clients WHERE status = 'active' ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-113': {
+    title: 'Chart the tier economics',
+    hint: "Three tiers and one measure. Tiers have a natural order — decide whether to keep it.",
+    brief: "One slide for the pricing review: revenue per account by tier. Tiers are ordered by size, which makes the sorting decision different from a chart of unordered categories.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Average monthly revenue per account, by tier.',
+      sourceSql: "SELECT tier, ROUND(AVG(mrr)) AS mrr_per_client FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr_per_client DESC",
+      columns: ['tier', 'mrr_per_client'],
+      correct: { type: 'bar', x: 'tier', y: 'mrr_per_client', sort: 'desc' },
+      whyRight: 'Bars for three categories compared by size. Sorting by value happens to match the tier order here, which makes the gap read cleanly.',
+      why: {
+        type: 'Three categories compared by magnitude. A line would imply Starter, Growth and Enterprise are points on a continuum a reader could interpolate.',
+        x: 'The tier is the category.',
+        y: 'Revenue per account is the value.',
+        sort: 'By value, descending. It agrees with the natural tier order, so the chart reads correctly either way — and the thirteenfold drop is the whole message.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sb-114': {
+    title: 'Revenue per ticket, by tier',
+    hint: "Aggregate the revenue with a subquery rather than across the join, or the ticket rows will multiply it.",
+    brief: "One number that combines both sides. Write ONE SQL SELECT returning, per tier across ACTIVE clients: the client count, total revenue, total tickets, and revenue per ticket. Most revenue per ticket first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, (SELECT SUM(x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = c.tier) AS mrr, COUNT(t.id) AS tickets, ROUND((SELECT SUM(x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = c.tier) * 1.0 / COUNT(t.id)) AS mrr_per_ticket FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY mrr_per_ticket DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-115': {
+    title: 'Send Diya the tier picture',
+    hint: "One ratio, three tiers, and the caveat that it is a proxy — in that order.",
+    brief: "Mid-week. She is building the pricing review and this is the number that will shape it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Tier economics — revenue against support load', maxWords: 160,
+      prompt: 'The headline ratio, both measures behind it, and the proxy caveat carried forward.',
+      rubric: [
+        { key: 'ratio', label: 'The revenue-per-ticket gap between tiers', markers: ['62|24|4|thousand|per ticket|fourteen|14|times|gap'], why: 'The single number the pricing review turns on.' },
+        { key: 'flat', label: 'That support load per account is flat', markers: ['flat|similar|same|4\\.|5|per account|tickets per'], why: 'The finding that makes the ratio meaningful rather than obvious.' },
+        { key: 'incidents', label: 'That incidents point the same way', markers: ['incident|three|3 |1 |broke|second measure|also'], why: 'Two independent proxies agreeing is much stronger than one, and worth one sentence.' },
+        { key: 'proxy', label: 'That this is still a proxy', markers: ['proxy|not cost|no cost|relative|stand.in|approximat'], why: 'Repeating it mid-week is what stops it being dropped from the final summary.' },
+        { key: 'next', label: 'What you will look at next', markers: ['next|then|concentrat|cohort|starter|grow|churn|will'], why: 'She is drafting now and a note with no next step makes her ask for one.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-120': {
+    title: 'The fix that breaks',
+    hint: "Compute the tier total both ways in the same query and subtract. Then look at which tier loses money.",
+    brief: "Last week you were taught to use SUM(DISTINCT mrr) to avoid double counting across a join. Test it. Write ONE SQL SELECT returning, per tier across ACTIVE clients: the client count, the total revenue computed with a plain SUM, the total computed with SUM(DISTINCT), and the difference. Biggest difference first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS correct_total, SUM(DISTINCT mrr) AS distinct_total, SUM(mrr) - SUM(DISTINCT mrr) AS lost FROM clients WHERE status = 'active' GROUP BY tier ORDER BY lost DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'sb-121': {
+    title: 'Why DISTINCT lost fifteen thousand',
+    hint: "Find the two Starter accounts billing the same amount. That is the entire mechanism.",
+    brief: "SUM(DISTINCT mrr) reports the Starter tier as fifteen thousand smaller than it is. Work out why, and what it means for the technique generally.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'values', correct: true, label: 'DISTINCT deduplicates VALUES, not clients — two accounts bill exactly the same', why: 'Nimbus Analytics and Orchid Pharma are both on fifteen thousand. SUM(DISTINCT) sees one number and counts it once, silently dropping a customer.' },
+        { key: 'silent', correct: true, label: 'It fails silently and the result still looks plausible', why: 'No error, no warning, and a total that is only slightly wrong. The most dangerous class of bug there is.' },
+        { key: 'subquery', correct: true, label: 'A subquery over distinct client ids is the technique that does not have this failure mode', why: 'Deduplicate the CLIENTS and then sum their revenue. It is longer and it is correct regardless of what the values happen to be.' },
+        { key: 'always', correct: false, label: 'SUM(DISTINCT) is always wrong and should never be used', why: 'Too strong. It is correct whenever the values are genuinely unique — the problem is that whether they are is a property of today\'s data, not of your query.' },
+        { key: 'here', correct: false, label: 'It only matters because this dataset is small', why: 'The opposite. The more clients you have, the more likely two of them share a price point, so the bug becomes more likely at scale, not less.' },
+        { key: 'round', correct: false, label: 'Rounding the values before summing would avoid it', why: 'Rounding makes collisions more likely, not less. This is the fix that looks like diligence and makes it worse.' },
+      ],
+      skills: { sql: 100, businessLogic: 80 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-122': {
+    title: 'Support load per account, properly',
+    hint: "One row per client, so the join cannot double anything. Compare the top of this list with the tier table.",
+    brief: "Rebuild the cost proxy at client level. Write ONE SQL SELECT returning each ACTIVE client with at least one ticket: company, tier, revenue, ticket count, and tickets per hundred thousand of revenue. Heaviest load per rupee first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(t.id) AS tickets, ROUND(COUNT(t.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier, c.mrr HAVING tickets > 0 ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-123': {
+    title: 'Can five accounts carry a tier decision',
+    hint: "Look at how much of the Starter finding is one account, and what happens to the average without it.",
+    brief: "Your recommendation would affect the whole Starter tier. It rests on five accounts, and one of them is twice as heavy as any other. Decide what that permits.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'one', correct: true, label: 'One account drives a large share of the Starter load and must be named', why: 'Orchid Pharma is roughly double the next heaviest per rupee. A tier-wide conclusion resting on one account is a conclusion about that account.' },
+        { key: 'both', correct: true, label: 'Report the tier figure with and without it', why: 'It lets the reader see how much of the finding is structural and how much is one customer, which is the question they would ask anyway.' },
+        { key: 'direction', correct: true, label: 'The direction survives removing it, even if the size does not', why: 'Worth checking and worth saying. A finding that disappears without its biggest contributor is a different and much weaker finding.' },
+        { key: 'enough', correct: false, label: 'Five accounts is enough because the gap is so large', why: 'Effect size does not substitute for sample size — a large gap on five accounts is still five accounts, and two of them leaving would change the picture entirely.' },
+        { key: 'exclude', correct: false, label: 'Exclude the outlier so the tier figure is representative', why: 'Removing your heaviest account to make a cost analysis look calmer is the wrong direction of adjustment, and it would be indefensible if discovered.' },
+        { key: 'all', correct: false, label: 'Pool all fifteen accounts instead so the sample is bigger', why: 'It would dissolve the tier comparison, which is the entire question. A bigger sample answering nothing is not an improvement.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-124': {
+    title: 'Tell Diya the number moved',
+    hint: "You corrected your own figure. Say so plainly and say what it was.",
+    brief: "The Starter total you sent on Tuesday was fifteen thousand light. Write the correction. This is a short note and the tone of it matters more than the length — under 120 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Correction — Starter tier revenue', maxWords: 120,
+      prompt: 'The correction: what was wrong, what it should be, and whether anything downstream changes.',
+      rubric: [
+        { key: 'what', label: 'The corrected figure', markers: ['114|fifteen|15|thousand|correct|should be|actually'], why: 'Lead with the number. A correction that makes the reader hunt for the new value is a second error.' },
+        { key: 'why', label: 'Why it was wrong', markers: ['distinct|same|identical|two account|dedup|collapse|value'], why: 'The mechanism, briefly. It tells her whether anything else you sent is affected.' },
+        { key: 'scope', label: 'Whether the conclusion changes', markers: ['does not|doesn.t|no change|still|unchanged|same conclusion|direction'], why: 'The question she has the moment she reads it. Answer it before she asks.' },
+        { key: 'own', label: 'Owned plainly, without over-apologising', markers: ['I|my|mine|sent|sorry|apolog'], why: 'One clause of ownership. A long apology makes a small correction look like a large one.' },
+      ],
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
   },
 
   'sa-002': {

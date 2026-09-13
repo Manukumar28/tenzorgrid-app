@@ -24,6 +24,207 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'account-economics': [
+    {
+      key: 'ba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
+      subject: 'Before you start — what cost to serve actually means',
+      title: 'Read: cost to serve, and why we do not have it',
+      body: `Diya. You are about to be asked a question whose central quantity does not exist in any table you have, so it is worth being precise about what that means.
+
+Cost to serve is what it costs us to keep a customer: support time, infrastructure, account management, the engineering hours spent on their incidents. Real companies build it from timesheets, cloud allocation and payroll. We have none of that.
+
+What we do have is volume — tickets and incidents, per account. That is a proxy. It correlates with cost and it is not cost, and the difference matters in a specific way: a proxy supports RELATIVE statements and not ABSOLUTE ones. You can say Starter accounts cost more per rupee of revenue than Enterprise ones. You cannot say Starter costs 92,000 a month.
+
+The failure mode is always the same. Somebody multiplies your ticket count by an estimated cost per ticket and now there is a rupee figure in a deck, sourced to you, that you never computed. Say in the first line that it is a proxy and say what it cannot do.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Using tickets as a proxy for support cost, which statement is supportable?',
+        options: [
+          { key: 'rel', correct: true, label: '"Starter accounts generate more support load per rupee of revenue than Enterprise"' },
+          { key: 'abs', correct: false, label: '"The Starter tier costs approximately 92,000 a month to serve"' },
+          { key: 'margin', correct: false, label: '"The Starter tier operates at a negative margin"' },
+          { key: 'profit', correct: false, label: '"Enterprise accounts are our most profitable"' },
+        ],
+        why: 'The first compares two things using the same proxy, which is exactly what a proxy is for. The other three convert volume into money, margin or profit — quantities the data does not contain at all.',
+      },
+    },
+    {
+      key: 'ba-02', day: 1, type: 'policy', via: 'email', from: 'security', minutes: 6,
+      subject: 'Read and confirm: commercial data on named accounts',
+      title: 'Read and confirm: revenue figures and client names',
+      body: `This review pairs named clients with their revenue, which is the most commercially sensitive combination we hold.
+
+Aggregates by tier go to Finance, Customer Success and the leadership team. A named client beside their MRR goes to Finance and that client's own CSM, and nowhere else — not to other account teams, not into a deck that circulates.
+
+The specific risk here is a pricing review. Recommendations about what a segment should pay have a way of reaching customers, and a customer learning what a comparable account pays is a commercial problem that lasts years.
+
+Confirm you have read this.`,
+      check: { kind: 'acknowledge', label: 'I have read and understood' },
+    },
+    {
+      key: 'ba-03', day: 2, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 9,
+      title: 'Rahul on aggregating one side of a join',
+      body: `You are summing revenue across a tickets join this week. The problem and the two fixes, because one of them is a trap.
+
+A JOIN from clients to tickets gives one row per TICKET. SUM(c.mrr) adds each client's revenue once per ticket — an account with eight tickets contributes eight times.
+
+Fix one, the tempting one: SUM(DISTINCT c.mrr). It deduplicates the VALUES. That is correct only while no two clients share an MRR, which is a property of today's data and not of your query. Two accounts on the same price point and you have silently deleted a customer.
+
+Fix two, the one to actually use: aggregate the revenue in a subquery over clients, separately from the ticket count. Longer, uglier, and correct no matter what the values happen to be.
+
+The rule generalises: never deduplicate by value when what you mean is deduplicate by entity.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why is SUM(DISTINCT c.mrr) unsafe as a fix?',
+        options: [
+          { key: 'value', correct: true, label: 'It deduplicates values, so two clients on the same MRR collapse into one' },
+          { key: 'slow', correct: false, label: 'It is too slow on large tables' },
+          { key: 'null', correct: false, label: 'It cannot handle NULL revenue' },
+          { key: 'unsupported', correct: false, label: 'SQLite does not support DISTINCT inside an aggregate' },
+        ],
+        why: 'It is correct by coincidence whenever the values happen to be unique, and wrong the moment they are not — with no error and a total that looks almost right.',
+      },
+    },
+    {
+      key: 'ba-04', day: 2, type: 'judgement', via: 'email', from: 'line_manager', minutes: 9,
+      subject: 'Ratios and denominators',
+      title: 'Read: what a small denominator does to a ratio',
+      body: `Asha. You are computing tickets per hundred thousand of revenue, which is the right shape and has a specific trap in it.
+
+The denominator is revenue, and your smallest accounts have very little of it. An account on fifteen thousand a month needs only a handful of tickets to top the table, while an account on three hundred thousand would need dozens. The ratio is doing what you asked and it will always rank your smallest customers worst.
+
+That does not make it wrong. It makes it a measure whose behaviour you have to explain, because the obvious reading — "these accounts are the problem" — is partly just arithmetic.
+
+Two habits. Publish the numerator and the denominator beside the ratio, every time. And check whether the ranking survives removing the smallest account; if it does not, the finding is about that account rather than about the segment.`,
+      check: {
+        kind: 'answer',
+        prompt: 'In two or three sentences: why will a per-revenue ratio tend to rank the smallest accounts worst, and what do you do about it?',
+        maxWords: 90,
+        markers: ['small|smallest|low|denominator|revenue|little|few ticket', 'show|beside|alongside|both|numerator|check|remove|sensitiv|caveat'],
+        why: 'A small denominator inflates any ratio built on it. Publishing both inputs, and testing whether the ranking survives without the smallest account, is what separates a measure from an artefact.',
+      },
+    },
+    {
+      key: 'ba-05', day: 3, type: 'learning', via: 'chat', from: 'finance_analyst', minutes: 8,
+      title: 'Diya on correcting a number you already sent',
+      body: `You are going to find an error in something you sent me on Tuesday. I want to tell you how to handle that, because it happens to everyone and most people handle it badly.
+
+Send the correction immediately, and lead with the corrected number. Not the explanation, not the apology — the number, so I can fix my model in the ten seconds before I read the rest.
+
+Then one sentence on the cause, so I know whether anything else you sent is affected. Then, crucially, tell me whether the conclusion changes. That is the question I actually have and if you make me ask it, the correction has cost me more than the error did.
+
+What not to do: bury it, wait until the final report and quietly use the right number, or write four paragraphs of apology. The first two are dishonest. The third makes a fifteen-thousand-rupee correction look like a catastrophe and trains me to worry about your work.
+
+Analysts who correct fast get trusted more, not less. That is not a platitude, it is just what happens.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You spot an error in a figure you sent two days ago. What goes in the first line of the correction?',
+        options: [
+          { key: 'number', correct: true, label: 'The corrected number' },
+          { key: 'sorry', correct: false, label: 'An apology for the error' },
+          { key: 'cause', correct: false, label: 'An explanation of what caused it' },
+          { key: 'impact', correct: false, label: 'A reassurance that the conclusion is unaffected' },
+        ],
+        why: 'The recipient has your wrong number in a model right now. Everything else — cause, impact, apology — matters and matters second.',
+      },
+    },
+    {
+      key: 'ba-06', day: 3, type: 'policy', via: 'chat', from: 'engineering_manager', minutes: 6,
+      title: 'Arjun on incidents by tier',
+      body: `You asked about our smaller accounts having more incidents per account. Context, before you write anything about why.
+
+Starter accounts are on the shared infrastructure. Enterprise accounts have dedicated capacity for anything above a certain size, so a shared-tier failure hits every Starter customer at once and shows up as several incidents, one per affected account.
+
+So the pattern is real and the cause is architectural rather than anything about those customers. That distinction matters a lot in how it gets written up — "smaller accounts experience more incidents" is fine, and anything implying they cause them is both wrong and the sort of sentence that ends up in front of a customer.
+
+Happy to be quoted on the shared-infrastructure part.`,
+      check: { kind: 'acknowledge', label: 'Understood' },
+    },
+    {
+      key: 'ba-07', day: 4, type: 'learning', via: 'email', from: 'comms', minutes: 8,
+      subject: 'Negative results are still results',
+      title: 'Read: writing up a question that had no answer',
+      body: `Meera. I hear the CSM workload question came back completely flat — every CSM holding one account. A note on writing that up, because people handle negative results badly in both directions.
+
+One failure is to bury it, on the grounds that nothing interesting happened. The person who asked the question then assumes you did not get to it, or found something awkward. Both are worse than the truth.
+
+The other failure is to spend a section on it. Three paragraphs proving that nothing is happening reads as padding, and it pushes your real findings further down a document people stop reading at the halfway mark.
+
+One sentence. "Account load is uniform — one per CSM — so there is no imbalance to report." Then, if there is a better question underneath, ask it: revenue per CSM is not uniform at all, and that is probably what they meant.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A stakeholder-requested analysis returns a completely flat result. What do you do?',
+        options: [
+          { key: 'one', correct: true, label: 'Report it in one line, and offer the better question if there is one' },
+          { key: 'drop', correct: false, label: 'Leave it out — there is nothing to say' },
+          { key: 'section', correct: false, label: 'Give it a section showing the working, so the negative is credible' },
+          { key: 'slice', correct: false, label: 'Slice it further until a difference appears' },
+        ],
+        why: 'Dropping it makes them assume you skipped it. A section buries your real findings. Slicing until something appears is how false findings are manufactured — and on fifteen accounts, every slice is one or two people.',
+      },
+    },
+    {
+      key: 'ba-08', day: 4, type: 'judgement', via: 'chat', from: 'people_partner', minutes: 6,
+      title: 'Neha on recommendations about customers',
+      body: `Your recommendation touches a tier of real customers, so — a thing worth internalising early.
+
+There is a difference between a recommendation that changes what we charge and one that changes who we serve. The first is a pricing decision: reversible, testable, and squarely supported by the kind of analysis you have done. The second is strategy — it involves what those accounts become, what it costs to replace them, what it signals to the market, and none of that is in your tables.
+
+Analysts get into trouble by letting strong evidence on the first carry them into the second. The ratio is dramatic, everybody nods, and by Friday the recommendation has grown from "reprice" to "exit" without anyone noticing the evidence did not grow with it.
+
+Say which kind of decision your evidence supports. It takes one clause and it is the clause that keeps your name off a decision you did not actually make.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the clause distinguishing what your evidence supports from what it does not. Under 45 words.',
+        maxWords: 45,
+        markers: ['pricing|price|repric|charge|entitlement', 'not|does not|cannot|closure|close|exit|strategy|whether|exist'],
+        why: 'Name the decision the evidence reaches and the one it does not, in the same sentence. Split across two paragraphs, only the first survives into the summary.',
+      },
+    },
+    {
+      key: 'ba-09', day: 5, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 7,
+      title: 'Rahul: four accounts, one average',
+      body: `Last one. Your tier figures are means over four, five and six accounts, and one Starter account is roughly double the next on load per rupee.
+
+On five accounts, one unusual member moves the mean by a fifth of its distance. That is enough to make a tier look like a structural problem when it has one demanding customer in it.
+
+Compute the median beside it. If they agree, the tier genuinely behaves that way. If they diverge, your finding is about an account and you are about to recommend a policy for a segment on the strength of one customer's behaviour.
+
+Either answer is publishable. Only one of them supports a tier-wide recommendation, and you cannot tell which you have without looking.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A tier mean is well above its median across five accounts. What have you found?',
+        options: [
+          { key: 'one', correct: true, label: 'One account is much heavier than the rest — a finding about that account' },
+          { key: 'tier', correct: false, label: 'The tier is structurally expensive to serve' },
+          { key: 'even', correct: false, label: 'Load is evenly distributed across the tier' },
+          { key: 'error', correct: false, label: 'There is a data quality problem' },
+        ],
+        why: 'The mean is pulled by outliers and the median is not. A gap between them on five accounts means the weight sits on one of them — which is a real finding, and not the one that justifies a tier-wide policy.',
+      },
+    },
+    {
+      key: 'ba-10', day: 5, type: 'judgement', via: 'email', from: 'line_manager', minutes: 9,
+      subject: 'Before the pricing review',
+      title: 'Read: when the room already agrees with you',
+      body: `Asha, last thing, and it is the hardest one in this project.
+
+Everybody in that room already believes the Starter tier is a drag. Your analysis appears to confirm it. That combination is the single most dangerous position an analyst can be in, and it feels like the safest.
+
+When your finding contradicts the room, every number gets checked and you find your own errors early. When it agrees, nothing gets checked. The proxy stops being described as a proxy. The recommendation grows from repricing to closure between the draft and the meeting. Nobody is acting in bad faith — agreement just removes all the friction that normally catches overreach.
+
+So be more careful today, not less. Keep the proxy labelled. Keep the sample size visible. Say explicitly what the analysis does not support, because today nobody else in that room will.
+
+The analyst who is trusted in year three is the one who was pedantic on the day everyone agreed with them.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the sentence you would add to the summary specifically because the room already agrees with you. Under 50 words.',
+        maxWords: 50,
+        markers: ['proxy|not a cost|no cost|five|5 |sample|one account|orchid', 'not|does not|cannot|closure|pricing|support|evidence'],
+        why: 'Name the limit that agreement would otherwise let slide — the proxy, the five-account sample, or the line between repricing and closure. It is the sentence nobody else in the room will supply.',
+      },
+    },
+  ],
   'reliability-review': [
     {
       key: 'ra-01', day: 1, type: 'learning', via: 'email', from: 'engineering_manager', minutes: 12,
@@ -1027,6 +1228,111 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'account-economics': [
+    {
+      key: 'bs-01', day: 1, type: 'scope', via: 'email', from: 'finance_analyst',
+      subject: 'One thing I should have said',
+      body: `The pricing review is in four weeks, not next month. I misremembered.
+
+That probably does not change what you do, but if it means you would scope this differently — fewer angles, done properly — I would rather know now.
+
+Does the date change anything?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'say what you will cover'],
+      markers: ['no|does not|doesn.t|fine|same|yes|would|change|tighter|friday|week'],
+      ifIgnored: 'Diya assumes the scope is unchanged and plans the review around it. If it should have been narrower, you both find out late.',
+      note: 'A deadline moving is only a problem if nobody says whether it matters. One line either way.',
+    },
+    {
+      key: 'bs-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: warehouse credentials rotated successfully',
+      body: `Your read credentials for the reporting warehouse were rotated overnight as scheduled.
+
+Existing sessions are unaffected. No action required.`,
+      expect: ['archive it'],
+      note: 'Automated, already done, no action. Three seconds.',
+    },
+    {
+      key: 'bs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      body: `Diya mentioned you are costing out the tiers. Rough number — what does a Starter account cost us a month? I am in a call about pricing in twenty minutes and a ballpark would help.`,
+      needsReply: true,
+      expect: ['refuse the rupee figure', 'give the relative finding instead'],
+      markers: ['no cost|not a cost|proxy|cannot|can.t|do not have|don.t have|no figure', 'relative|per rupee|more|load|flat|ticket|instead|what I can'],
+      ifIgnored: 'Vikram guesses a number in the call. It gets attributed to your analysis and appears in the pricing review as a cost figure you never produced.',
+      note: 'This is the exact failure the day-one activity warned about, arriving as a favour from someone in a hurry. The relative finding is genuinely useful and it is not a rupee figure.',
+    },
+    {
+      key: 'bs-04', day: 2, type: 'noise', via: 'chat', from: 'support_lead',
+      body: `Ticket volumes were up about 15% last week across the board — post-release, expected, already settling. Flagging it so nobody reads a spike into their numbers.`,
+      expect: ['nothing — it is a broadcast'],
+      note: 'Useful context, asking nothing. Worth reading and not worth replying to.',
+    },
+    {
+      key: 'bs-05', day: 3, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Starter total — checking against my model',
+      body: `I have your Starter figure in my model and it is not reconciling with the tier totals I get from billing.
+
+Mine comes out fifteen thousand higher than yours. That is small enough that I assumed I had made an error, but I have checked twice.
+
+Which of us is wrong?`,
+      needsReply: true,
+      expect: ['own the error', 'explain the cause briefly'],
+      markers: ['you are|yours|mine|my|wrong|error|mistake|114|correct', 'distinct|same|identical|two|dedup|collapse|value'],
+      ifIgnored: 'Diya assumes her own model is wrong and adjusts it to match your figure. The error is now in two places and one of them is the pricing review.',
+      note: 'She has done the work of finding your bug and is being polite about it. The only acceptable response is a fast, clear "mine, and here is why".',
+    },
+    {
+      key: 'bs-06', day: 3, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly pricing review — date confirmed',
+      body: `The quarterly pricing review is confirmed for the 28th. Attendees will receive calendar invitations separately.
+
+Circulated to Finance, Sales and Analytics for awareness. No action required.`,
+      expect: ['archive it'],
+      note: 'Relevant to your work and asking nothing of you. The invitation comes separately.',
+    },
+    {
+      key: 'bs-07', day: 4, type: 'pressure', via: 'email', from: 'people_partner',
+      subject: 'Is this going to affect the CSM team?',
+      body: `Word has reached my team that you are analysing CSM workload and that a tier might be closing.
+
+I am not asking you to keep anything from anyone. I am asking what is actually in your analysis, because right now three people are worrying about a rumour and I would rather correct it with facts than reassurance.`,
+      needsReply: true,
+      expect: ['state what the analysis covers', 'do not confirm a decision that has not been made'],
+      markers: ['load|account|uniform|one each|workload|pricing|tier|economics', 'not|no decision|nothing decided|not recommend|closure|not about|headcount'],
+      ifIgnored: 'The rumour runs. By Friday three CSMs believe their accounts are being closed, and the first thing Priya hears about your actual findings is from someone else.',
+      note: 'A rumour correctable with two facts: the workload analysis found nothing, and no closure is being recommended. Silence here is what turns a rumour into a belief.',
+    },
+    {
+      key: 'bs-08', day: 4, type: 'question', via: 'chat', from: 'engineering_manager',
+      body: `Saw your incidents-per-tier numbers going round. Before that lands anywhere, do you want the reason? It is the shared infrastructure, not anything about those customers. I would rather you had the cause than published the pattern on its own.`,
+      needsReply: true,
+      expect: ['take the explanation', 'say how you will use it'],
+      markers: ['yes|please|useful|helpful|thanks|want|do', 'include|write|note|caveat|quote|report|explain|attribut'],
+      ifIgnored: 'Arjun keeps the explanation to himself. The pattern publishes without its cause, and the natural reading — that smaller customers somehow cause more incidents — is the one that spreads.',
+      note: 'Someone offering you the causal explanation for a pattern you found is the best message you will get all week. Take it and say you will attribute it.',
+    },
+    {
+      key: 'bs-09', day: 5, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Board slide — one line on the small accounts',
+      body: `I have one line on the board slide about the small-account question and I want to get it right.
+
+I was going to write "analysis confirms the Starter tier is unprofitable". Tell me what it should say instead.`,
+      needsReply: true,
+      expect: ['reject "unprofitable"', 'supply the sentence he should use'],
+      markers: ['not|cannot|no cost|proxy|profit|margin|unprofitable|would not', 'support load|per rupee|flat|pricing|repric|instead|say|thirteen|13|14'],
+      ifIgnored: 'The slide goes to the board saying the analysis confirms the tier is unprofitable. Profitability was never measured, and the sentence is now attributed to you on the record.',
+      note: 'He has done the right thing by asking. "Unprofitable" is a margin claim and you measured volume — the replacement sentence is about support load against revenue, and it is still strong.',
+    },
+    {
+      key: 'bs-10', day: 5, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Fire alarm testing Tuesday, 07:30',
+      body: `Routine fire alarm testing takes place Tuesday from 07:30. The alarm will sound briefly several times.
+
+No evacuation required. Sent to all staff.`,
+      expect: ['archive it'],
+      note: 'Arriving on the day the recommendation is due, about an alarm that requires nothing.',
+    },
+  ],
   'reliability-review': [
     {
       key: 'rs-01', day: 1, type: 'scope', via: 'email', from: 'engineering_manager',
@@ -1590,6 +1896,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'account-economics': {
+    key: 'bq-economics', title: 'Account Economics Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'You are using ticket volume as a proxy for support cost. Which statement does that support?',
+        options: [
+          { key: 'b', label: '"Starter accounts generate more support load per rupee of revenue than Enterprise"', correct: true },
+          { key: 'a', label: '"The Starter tier costs approximately 92,000 a month to serve"' },
+          { key: 'c', label: '"The Starter tier operates at a negative margin"' },
+          { key: 'd', label: '"Enterprise accounts are our most profitable"' },
+        ],
+        why: 'A proxy supports comparisons using that same proxy. The other three convert volume into money, margin or profit — none of which the data contains.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'Why is SUM(DISTINCT c.mrr) unsafe for totalling revenue across a join?',
+        options: [
+          { key: 'c', label: 'It deduplicates values, so two clients on the same MRR collapse into one', correct: true },
+          { key: 'a', label: 'It is too slow on large tables' },
+          { key: 'b', label: 'It cannot handle NULL revenue' },
+          { key: 'd', label: 'SQLite does not support DISTINCT inside an aggregate' },
+        ],
+        why: 'It is correct by coincidence whenever the values happen to be unique. Two Starter accounts here bill exactly the same amount, so it silently deletes a customer and the total still looks plausible.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Support load per account is roughly equal across tiers while revenue per account varies thirteenfold. What is the finding?',
+        options: [
+          { key: 'a', label: 'Cost to serve is roughly flat per account, so smaller accounts are far worse on a per-rupee basis', correct: true },
+          { key: 'b', label: 'Enterprise accounts are the most expensive to support' },
+          { key: 'c', label: 'Larger accounts demand more support' },
+          { key: 'd', label: 'Support effort is well matched to revenue' },
+        ],
+        why: 'Flat cost against steeply varying revenue is the entire economics of the book. Reading the raw ticket count as cost — which makes Enterprise look worst — ignores the denominator.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'A ratio of tickets per 100,000 of revenue consistently ranks your smallest accounts worst. Why?',
+        options: [
+          { key: 'd', label: 'A small denominator inflates any ratio built on it', correct: true },
+          { key: 'a', label: 'Small accounts genuinely receive more support' },
+          { key: 'b', label: 'Small accounts are less technically capable' },
+          { key: 'c', label: 'The ratio is calculated incorrectly' },
+        ],
+        why: 'An account on 15,000 needs a handful of tickets to top the table; one on 300,000 would need dozens. The measure is doing what you asked — which is why both inputs have to be published beside it.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'A tier mean is well above its median across five accounts. What have you found?',
+        options: [
+          { key: 'b', label: 'One account is much heavier than the rest — a finding about that account', correct: true },
+          { key: 'a', label: 'The tier is structurally expensive to serve' },
+          { key: 'c', label: 'Load is evenly distributed' },
+          { key: 'd', label: 'A data quality problem' },
+        ],
+        why: 'The mean is pulled by outliers and the median is not. On five accounts the weight sits on one of them — a real finding, and not the one that justifies a tier-wide policy.',
+      },
+      {
+        id: 'q6', topic: 'communication',
+        q: 'You find an error in a figure you sent two days ago. What goes in the first line of the correction?',
+        options: [
+          { key: 'd', label: 'The corrected number', correct: true },
+          { key: 'a', label: 'An apology' },
+          { key: 'b', label: 'The cause of the error' },
+          { key: 'c', label: 'Reassurance that the conclusion is unaffected' },
+        ],
+        why: 'They have your wrong number in a model right now. Cause, impact and apology all matter and all matter second — and a long apology makes a small correction look like a catastrophe.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'A stakeholder-requested analysis comes back completely flat — every CSM holds exactly one account. What do you do?',
+        options: [
+          { key: 'c', label: 'Report it in one line, and offer the better question underneath it', correct: true },
+          { key: 'a', label: 'Leave it out — nothing interesting happened' },
+          { key: 'b', label: 'Give it a section so the negative result is credible' },
+          { key: 'd', label: 'Slice it by tier and tenure until a difference appears' },
+        ],
+        why: 'Dropping it makes them assume you skipped it; a section buries your real findings; slicing until something appears manufactures false ones. Revenue per CSM is not flat, and that is probably what they meant.',
+      },
+      {
+        id: 'q8', topic: 'business-sense',
+        q: 'Your evidence is a thirteenfold gap between support load per rupee across tiers. What decision does it support?',
+        options: [
+          { key: 'a', label: 'Repricing the tier — it is evidence about price, not about whether the tier should exist', correct: true },
+          { key: 'b', label: 'Closing the tier at renewal' },
+          { key: 'c', label: 'Nothing — five accounts is too few to act on' },
+          { key: 'd', label: 'Raising Starter prices fourteenfold to match Enterprise' },
+        ],
+        why: 'Closure needs what those accounts become, what replacing them costs, and what it signals — none of which is in the data. Recommending nothing wastes a real finding, and following the ratio to its arithmetic conclusion is not a recommendation.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A stakeholder wants to write "analysis confirms the Starter tier is unprofitable". What do you tell him?',
+        options: [
+          { key: 'c', label: 'No — profitability was never measured; offer the support-load sentence instead', correct: true },
+          { key: 'a', label: 'Yes — the ratio is overwhelming' },
+          { key: 'b', label: 'Yes, with a footnote that cost is proxied' },
+          { key: 'd', label: 'That board wording is not your call' },
+        ],
+        why: 'Profit needs costs and you have volume. A footnote under a board headline does not travel with it, and declining to engage leaves him to write it anyway — with your name attached.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'Your finding agrees with what everyone in the room already believes. What does that change?',
+        options: [
+          { key: 'b', label: 'You have to be more careful — agreement removes the scrutiny that normally catches overreach', correct: true },
+          { key: 'a', label: 'Nothing — the analysis is what it is' },
+          { key: 'c', label: 'You can state it more strongly, since it will not be challenged' },
+          { key: 'd', label: 'You should look for a contrarian angle to add value' },
+        ],
+        why: 'When a finding contradicts the room, every number gets checked and you find your own errors early. When it agrees, the proxy quietly stops being called a proxy and the recommendation grows between draft and meeting — with nobody acting in bad faith.',
+      },
+    ],
+  },
   'reliability-review': {
     key: 'rq-reliability', title: 'Platform Reliability Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
