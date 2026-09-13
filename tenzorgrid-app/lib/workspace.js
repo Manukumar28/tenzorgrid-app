@@ -31,7 +31,15 @@ const PEOPLE_PARTNER_NAME = 'Neha Kulkarni';
 const LEVELS = [
   { key: 'junior', label: 'Junior Data Analyst' },
   { key: 'senior', label: 'Senior Data Analyst' },
+  { key: 'lead', label: 'Data Analytics Team Lead' },
+  { key: 'manager', label: 'Data Analytics Manager' },
 ];
+
+const LEVEL_ORDER = LEVELS.map((l) => l.key);
+function levelLabel(key) {
+  const found = LEVELS.find((l) => l.key === (key || 'junior'));
+  return found ? found.label : 'Data Analyst';
+}
 
 const ROLE_CATALOG = {
   data_analyst: { label: 'Data Analyst', skin: 'Data & Analytics' },
@@ -327,7 +335,7 @@ const PROJECT_CATALOG = {
 // which is the whole thing they are meant to walk into an interview with.
 function catalogFor(role, level, touchedKeys) {
   const all = PROJECT_CATALOG[role] || [];
-  const want = level === 'senior' ? 'senior' : 'junior';
+  const want = LEVEL_ORDER.includes(level) ? level : 'junior';
   const touched = touchedKeys instanceof Set ? touchedKeys : new Set(touchedKeys || []);
   return all.filter((p) => (p.level || 'junior') === want || touched.has(p.key));
 }
@@ -350,113 +358,196 @@ function touchedProjectKeys(role, tasks) {
 // out of four is not a body of work. The two criteria are reported separately with real
 // numbers, because "you were not promoted" is a sentence that has to come with the
 // arithmetic behind it.
-const PROMOTION = {
-  from: 'junior',
-  to: 'senior',
-  // One month of the programme: four projects at five working days each.
-  projectsRequired: 4,
-  // A grade average, not a productivity blend. Timeliness and check-in consistency are
-  // real signals but they are not competence, and a promotion is about competence.
-  minAverage: 70,
-  title: 'Senior Data Analyst',
-};
+// Three rungs, because there are four levels. Each names the average a learner has to be
+// carrying to climb it. The bar rises with the rung: the same score means something
+// different when the work is "answer this question" than when it is "decide what the
+// question should be and defend the answer to a board".
+const PROMOTION_LADDER = [
+  { from: 'junior', to: 'senior', title: 'Senior Data Analyst', minAverage: 75 },
+  { from: 'senior', to: 'lead', title: 'Data Analytics Team Lead', minAverage: 80 },
+  { from: 'lead', to: 'manager', title: 'Data Analytics Manager', minAverage: 85 },
+];
+
+// One month of the programme: four projects at five working days each.
+const PROMOTION_PROJECTS_REQUIRED = 4;
+
+// The conversation opens a project BEFORE the decision, which is the user's rule and is
+// also how it works in a real company: nobody finds out the bar existed on the day they
+// are measured against it. At the third project Asha opens the negotiation and names the
+// number; at the fourth she runs the review against it. That gap is one whole project of
+// knowing exactly what you are playing for — which is the only thing that makes the
+// target actionable rather than a verdict.
+const PROMOTION_OPENS_AFTER = 3;
+const PROMOTION_DECIDES_AFTER = 4;
+
+function promotionRung(level) {
+  return PROMOTION_LADDER.find((r) => r.from === (level || 'junior')) || null;
+}
 
 function getPromotion(enrollment, projects, gradedTasks, tasks) {
-  if ((enrollment.level || 'junior') !== PROMOTION.from && !enrollment.promoted_at) return null;
+  const level = enrollment.level || 'junior';
+  const rung = promotionRung(level);
 
-  const juniorKeys = new Set(
+  // Top of the ladder. There is nothing left to negotiate, and saying that plainly beats
+  // rendering an empty progress card that looks like a bug.
+  if (!rung) {
+    return {
+      awarded: true,
+      atTheTop: true,
+      atLevel: level,
+      toTitle: levelLabel(level),
+      criteria: [],
+      shortfall: null,
+      negotiation: null,
+      eligible: false,
+      atTheEnd: false,
+      parked: [],
+    };
+  }
+
+  const levelKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => (p.level || 'junior') === PROMOTION.from)
+      .filter((p) => (p.level || 'junior') === level)
       .map((p) => p.key),
   );
   // Only projects that are finished being WRITTEN can be finished by a learner, so the
   // bar is the number of them that exist. Without this, shipping the ladder before the
   // content makes promotion permanently unreachable — the learner clears everything in
   // front of them and is told they are two projects short of something that is not there.
-  const readyJuniorKeys = new Set(
+  const readyKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => juniorKeys.has(p.key) && projectReadiness(p).ready)
+      .filter((p) => levelKeys.has(p.key) && projectReadiness(p).ready)
       .map((p) => p.key),
   );
-  const required = Math.min(PROMOTION.projectsRequired, Math.max(1, readyJuniorKeys.size));
-  const completed = projects.filter((p) => juniorKeys.has(p.key) && p.status === 'completed').length;
+  const decideAfter = Math.min(PROMOTION_DECIDES_AFTER, Math.max(1, readyKeys.size));
+  // The conversation still has to come before the decision even on a short level, so it
+  // never lands after the thing it was meant to prepare the learner for.
+  const opensAfter = Math.max(1, Math.min(PROMOTION_OPENS_AFTER, decideAfter - 1));
+
+  const completed = projects.filter((p) => levelKeys.has(p.key) && p.status === 'completed').length;
   const average = gradedTasks.length
     ? Math.round(gradedTasks.reduce((s, t) => s + (t.score || 0), 0) / gradedTasks.length)
     : null;
 
-  const trainingDone = completed >= required;
-  const performanceMet = average !== null && average >= PROMOTION.minAverage;
+  const trainingDone = completed >= decideAfter;
+  const performanceMet = average !== null && average >= rung.minAverage;
 
   // A parked task keeps its project out of `completed`, so a learner who reached the end
   // of the track with parked work would sit in silence forever, never told why the
   // review never came. `atTheEnd` is what actually triggers the conversation: every
-  // junior project started, and every task in them resolved one way or the other.
-  const juniorTaskKeys = new Set(
+  // project at this level started, and every task in them resolved one way or the other.
+  const levelTaskKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => juniorKeys.has(p.key))
+      .filter((p) => levelKeys.has(p.key))
       .flatMap((p) => p.taskKeys),
   );
-  const mine = (tasks || []).filter((t) => juniorTaskKeys.has(t.task_key));
-  const startedProjects = projects.filter((p) => juniorKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
+  const mine = (tasks || []).filter((t) => levelTaskKeys.has(t.task_key));
+  const startedProjects = projects.filter((p) => levelKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
   const parked = mine.filter((t) => t.status === 'parked');
-  const atTheEnd = startedProjects >= required
+  const atTheEnd = startedProjects >= decideAfter
     && mine.length > 0
     && mine.every((t) => t.status === 'graded' || t.status === 'parked');
 
   return {
-    awarded: Boolean(enrollment.promoted_at),
-    awardedAt: enrollment.promoted_at || null,
-    toTitle: PROMOTION.title,
+    awarded: false,
+    atTheTop: false,
+    atLevel: level,
+    toTitle: rung.title,
     eligible: trainingDone && performanceMet,
     criteria: [
       {
         key: 'training',
-        label: `Complete all ${required} junior project${required === 1 ? '' : 's'}`,
+        label: `Complete all ${decideAfter} ${levelLabel(level).toLowerCase()} project${decideAfter === 1 ? '' : 's'}`,
         met: trainingDone,
         value: completed,
-        target: required,
-        detail: `${completed} of ${required} delivered`,
+        target: decideAfter,
+        detail: `${completed} of ${decideAfter} delivered`,
       },
       {
         key: 'performance',
-        label: `Average score of ${PROMOTION.minAverage} or above`,
+        label: `Average score of ${rung.minAverage} or above`,
         met: performanceMet,
         value: average,
-        target: PROMOTION.minAverage,
+        target: rung.minAverage,
         detail: average === null
           ? 'No graded work yet'
           : `${average} across ${gradedTasks.length} graded task${gradedTasks.length === 1 ? '' : 's'}`,
       },
     ],
+    // What the learner is told once the conversation is open: the number to beat, how
+    // far off they are today, and which project decides it.
+    negotiation: {
+      opensAfter,
+      decidesAfter: decideAfter,
+      open: completed >= opensAfter,
+      opened: Boolean(enrollment.promotion_opened_at),
+      openedAt: enrollment.promotion_opened_at || null,
+      target: rung.minAverage,
+      current: average,
+      projectsLeft: Math.max(0, decideAfter - completed),
+    },
     // Only meaningful while short on score: work they could genuinely lift.
-    shortfall: !performanceMet && average !== null ? PROMOTION.minAverage - average : null,
+    shortfall: !performanceMet && average !== null ? rung.minAverage - average : null,
     // Internal: whether the review is due, and what is holding it up.
     atTheEnd,
     parked: parked.map((t) => ({ id: t.id, title: t.title })),
   };
 }
 
-// Runs the review at read time. Promotion is announced to you in a real job — you do not
-// click a button to claim it — so this fires by itself once both criteria hold.
+// Runs at read time, in two phases a project apart.
+//
+// Phase one opens the negotiation when the third project lands: Asha says the promotion
+// conversation has started, names the number, and says which project it will be decided
+// on. Phase two runs the review when the fourth lands.
+//
+// Promotion is announced to you in a real job — you do not click a button to claim it —
+// so both phases fire by themselves.
 function runPromotionReview(enrollment, promotion, tasks) {
-  if (!promotion || promotion.awarded) return false;
+  if (!promotion || promotion.awarded || promotion.atTheTop) return false;
+  const rung = promotionRung(enrollment.level || 'junior');
+  if (!rung) return false;
+  const neg = promotion.negotiation;
 
+  // ---- Phase one: open the conversation, once, at the third project ----------------
+  if (neg && neg.open && !neg.opened && !promotion.eligible) {
+    const standing = neg.current === null
+      ? 'You have nothing graded yet, so there is no number I can quote you — which is its own answer: the next two weeks are the whole case.'
+      : neg.current >= rung.minAverage
+        ? `You're carrying ${neg.current} right now, so you're above it. Staying above it is the job — one weak project pulls an average down faster than a strong one pushes it up.`
+        : `You're carrying ${neg.current} right now, which is ${rung.minAverage - neg.current} short. That's not a verdict, it's a gap with one project left to close it.`;
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `I'm opening your promotion conversation now rather than after the fact, because you should know what you're playing for while you can still do something about it.\n\n`
+      + `The role is ${rung.title}. There are two conditions and both have to hold — one strong project doesn't cover a weak one.\n\n`
+      + `1. All ${neg.decidesAfter} projects at this level delivered. You are on ${neg.decidesAfter - neg.projectsLeft}.\n`
+      + `2. An average of ${rung.minAverage} or above across everything I have graded.\n\n`
+      + `${standing}\n\n`
+      + `I'll run the review the moment your ${ordinalWord(neg.decidesAfter)} project is signed off. Nothing is decided before then, and nothing is deferred after it.`,
+      null, `Promotion conversation — ${rung.title}`);
+    db.prepare('UPDATE sim_enrollments SET promotion_opened_at = ? WHERE id = ?').run(now(), enrollment.id);
+    return false;
+  }
+
+  // ---- Phase two: the decision -----------------------------------------------------
   if (promotion.eligible) {
     const at = now();
-    db.prepare('UPDATE sim_enrollments SET level = ?, promoted_at = ? WHERE id = ?')
-      .run(PROMOTION.to, at, enrollment.id);
+    db.prepare('UPDATE sim_enrollments SET level = ?, promoted_at = ?, promotion_told_at = NULL, promotion_opened_at = NULL WHERE id = ?')
+      .run(rung.to, at, enrollment.id);
     const perf = promotion.criteria.find((c) => c.key === 'performance');
+    const train = promotion.criteria.find((c) => c.key === 'training');
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
-      `I've put you forward for ${PROMOTION.title} and it's gone through.\n\nFour projects delivered and an average of ${perf.value} across them — that's the bar, and you cleared it on both counts rather than scraping one. What changes: you'll get different work, not the same work with less hand-holding. It's less "answer this question" and more "decide what the question should be", and I'll be reviewing your judgement as much as your SQL.\n\nYour first senior project is on your board now.`,
-      null, `Promotion — ${PROMOTION.title}`);
+      `I've put you forward for ${rung.title} and it's gone through.\n\n`
+      + `${train.value} projects delivered and an average of ${perf.value} against a bar of ${rung.minAverage} — you cleared both, which is exactly what I told you the conditions were. `
+      + `What changes is the work, not the amount of hand-holding: ${LEVEL_STEP_UP[rung.to] || "you'll be judged on judgement as much as on execution"}.\n\n`
+      + `Your first ${levelLabel(rung.to).toLowerCase()} project is on your board now.`,
+      null, `Promotion — ${rung.title}`);
     addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
-      `Congratulations — your promotion to ${PROMOTION.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
+      `Congratulations — your promotion to ${rung.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
       null, 'Promotion confirmed');
     return true;
   }
 
   // Not eligible. Say so ONCE, with the arithmetic — but only once they are actually at
-  // the end of the track. Telling someone mid-project that they are short is just noise,
+  // the end of the level. Telling someone mid-project that they are short is just noise,
   // and leaving someone who HAS reached the end in silence is worse: they would never
   // learn why the review did not come.
   const training = promotion.criteria.find((c) => c.key === 'training');
@@ -469,13 +560,25 @@ function runPromotionReview(enrollment, promotion, tasks) {
   let body;
   if (promotion.parked.length) {
     const n = promotion.parked.length;
-    body = `We've reached the end of the junior track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
+    body = `We've reached the end of the ${levelLabel(enrollment.level || 'junior').toLowerCase()} track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
   } else {
-    body = `We've done the promotion round and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training half done. The other half is an average of ${PROMOTION.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
+    body = `We've run the review we opened a project ago, and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training condition met. The other one was an average of ${rung.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
   }
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, body, null, 'Promotion round — where you stand');
   db.prepare('UPDATE sim_enrollments SET promotion_told_at = ? WHERE id = ?').run(now(), enrollment.id);
   return false;
+}
+
+// What actually changes at each rung, in Asha's voice. Kept beside the ladder rather than
+// inline in the message so a new level cannot ship without someone deciding what it means.
+const LEVEL_STEP_UP = {
+  senior: 'it stops being "answer this question" and becomes "decide what the question should be", and I\'ll review your judgement as much as your SQL',
+  lead: "you'll be reviewing other people's analysis as well as producing your own, and you own what leaves the team whether or not you wrote it",
+  manager: 'you own the portfolio and the people in it — what gets worked on, what gets dropped, and what you are prepared to defend upward',
+};
+
+function ordinalWord(n) {
+  return ({ 1: 'first', 2: 'second', 3: 'third', 4: 'fourth', 5: 'fifth' })[n] || `${n}th`;
 }
 
 // A graded task scores 0-100 on each skill axis it exercises. Skill *points* are that
@@ -3777,7 +3880,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       const graded = db.prepare("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'")
         .get(existing.id).c;
       if (graded > 0) {
-        throw new Error(`You're already enrolled as a ${existing.level === 'senior' ? 'Senior' : 'Junior'} Data Analyst and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
+        throw new Error(`You're already enrolled as a ${levelLabel(existing.level)} and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
       }
       // No graded work: wipe the unstarted assignment and re-issue at the new level.
       db.prepare('DELETE FROM sim_tasks WHERE enrollment_id = ?').run(existing.id);
@@ -3785,7 +3888,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       db.prepare('UPDATE sim_enrollments SET level = ? WHERE id = ?').run(level, existing.id);
       const fresh = getEnrollment(userId);
       addMessage(fresh.id, 'people_partner', PEOPLE_PARTNER_NAME,
-        `Your level has been changed to ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
+        `Your level has been changed to ${levelLabel(level)}. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
         null, 'Level updated');
       if (fresh.baseline_at) beginNextProject(fresh);
       return getEnrollment(userId);
@@ -3803,7 +3906,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   `).run(id, userId, role, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
 
   addMessage(id, 'people_partner', PEOPLE_PARTNER_NAME,
-    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
+    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${levelLabel(level)}. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
   // Day one is the skill test, not the first task. The learner asked for this ordering
   // and their reasoning was better than mine: the test is the BASELINE for the skill
   // matrix. Without it, "your SQL improved" is a claim with nothing behind it.
@@ -4842,7 +4945,6 @@ function getState(userId) {
   releaseDueTasks(enrollment);
   nudgeOverdueProjects(userId, enrollment);
 
-  const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
   const attendanceRows = db.prepare('SELECT attended_on FROM sim_attendance WHERE enrollment_id = ? ORDER BY attended_on ASC').all(enrollment.id);
   const attendedDays = attendanceRows.length;
@@ -4876,14 +4978,22 @@ function getState(userId) {
   const skillTest = getSkillTest(enrollment);
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
+
+  // Signs the project off the moment the last of the fifty-one items lands, and says so.
+  // Read time rather than a scheduler, same as the promotion review below it.
+  //
+  // This runs BEFORE the projects are read, not after. It used to sit below them, which
+  // meant the project a learner had just finished was still 'active' when the promotion
+  // round counted, so every promotion event — the conversation opening at project three,
+  // the decision at four — landed one page load late. The learner saw their last task
+  // graded and nothing happen, then heard about it on some unrelated click afterwards.
+  finishProjectIfComplete(enrollment);
+
   let projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
 
   // The promotion round runs here, before anything is rendered: a learner who has just
-  // cleared the bar should see the senior board on this load, not the next one.
+  // cleared the bar should see the next board on this load, not the next one.
   let promotion = getPromotion(enrollment, projects.projects, gradedTasks, tasks);
-  // Signs the project off the moment the last of the fifty-one items lands, and says so.
-  // Read time rather than a scheduler, same as the promotion review below it.
-  finishProjectIfComplete(enrollment);
 
   if (promotion && runPromotionReview(enrollment, promotion, tasks)) {
     enrollment = getEnrollment(userId);
@@ -4898,6 +5008,12 @@ function getState(userId) {
     projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
   }
   closeCompletedRuns(enrollment, projects.projects);
+
+  // Read AFTER the promotion round, not before it. Asha's promotion messages — the
+  // conversation opening, the verdict — are written during that round, so reading the
+  // inbox first showed the learner an unchanged inbox on the very load where the thing
+  // they had been working towards actually happened.
+  const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const rosterList = rosterWithAvatars(enrollment.id);
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);

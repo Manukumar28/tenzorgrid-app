@@ -386,6 +386,10 @@ ensureColumn('sim_enrollments', 'baseline_at', 'TEXT');
 // page reload.
 ensureColumn('sim_enrollments', 'promoted_at', 'TEXT');
 ensureColumn('sim_enrollments', 'promotion_told_at', 'TEXT');
+// When the promotion conversation was OPENED, which now happens a project before the
+// decision rather than at the same moment as it. Cleared on every promotion, because the
+// next rung has its own conversation.
+ensureColumn('sim_enrollments', 'promotion_opened_at', 'TEXT');
 ensureColumn('sim_tasks', 'priority', 'TEXT');
 ensureColumn('sim_tasks', 'due_at', 'TEXT');
 ensureColumn('sim_messages', 'read_at', 'TEXT');
