@@ -584,6 +584,41 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 1,
     },
+    {
+      key: 'intake-review',
+      title: 'Intake & Prioritisation',
+      description: 'A requesting function has stopped sending work. The priority field moves delivery by six days, and thirty-two requests have never been picked up at all.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — a complaint with four claims in it, the shape of a year of demand, and
+        // the thirty-two requests nobody ever started.
+        'mc-101', 'mc-102', 'mc-103', 'mc-104', 'mc-105', 'mc-106',
+        // Day 2 — what the urgent flag buys, which is six days, and what it predicts,
+        // which turns out to be cancellation.
+        'mc-110', 'mc-111', 'mc-112', 'mc-113', 'mc-114', 'mc-115',
+        // Day 3 — the wobble. The published lead time measures to first delivery and
+        // understates the work that went wrong by eighteen days.
+        'mc-120', 'mc-121', 'mc-122', 'mc-123', 'mc-124', 'mc-125',
+        // Day 4 — the load, what replaces the field, and the queue that has to be closed.
+        'mc-130', 'mc-131', 'mc-132', 'mc-133', 'mc-134', 'mc-135',
+        // Day 5 — the proposal, the exception the exec wants, and the baseline recorded
+        // before anything changes so the review in six months means something.
+        'mc-140', 'mc-141', 'mc-142', 'mc-143', 'mc-144', 'mc-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 74000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Raises the complaint that starts it', day: 1, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns intake and what replaces the priority field', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Wants an escalation route kept', day: 5, needsYou: true },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Takes the intake change to the other functions', day: 5 },
+      ],
+      unlockAfter: 2,
+    },
   ],
 };
 
@@ -7931,6 +7966,463 @@ const TASKS = {
         { key: 'ahead', label: 'A renewal calendar with a decision point well before each date', markers: ['renew|calendar|date|60|90|days|before|ahead|advance|diary|reminder'], why: 'The whole week ran on forty-six days of notice. Ninety days of notice turns a scramble into a decision.' },
         { key: 'owner', label: 'Somebody named as the owner of each check', markers: ['own|owner|me|I will|responsib|IT|who|assign|accountable'], why: 'A process with no name against it is a document. Naming yourself for the ones you own is part of the proposal.' },
         { key: 'nottoomuch', label: 'Restraint — not proposing to monitor individual tool use continuously', markers: ['not|individual|monitor|surveil|person|annual|quarterly|light|enough|proportion'], why: 'A standing per-person usage report would catch things, and it would also change what the data means and how the team feels about being measured.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 3 · Intake & Prioritisation (analytics_ops) ------------------------
+  // Third at Manager, and the first where the finding is that a control everybody relies
+  // on does not work. The priority field has four values, every requester uses it, and it
+  // moves delivery by six days out of twenty-six. Worse, urgent predicts cancellation
+  // rather than speed. Monday the intake and the queue. Tuesday what priority buys.
+  // Wednesday the wobble — the published lead time measures to first delivery, which
+  // understates the work that went wrong by eighteen days, and thirty-two requests have
+  // never been picked up at all. Thursday what replaces the field. Friday the proposal,
+  // the requesters who lose their urgent flag, and the standing measure.
+
+  'mc-101': {
+    title: 'A complaint that contains a measurement',
+    hint: "He has made four claims. Two of them the data can settle this morning and two of them it cannot settle at all.",
+    brief: "Read the complaint and sort it before you touch the tables.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'Retail Ops — we have stopped bothering',
+        body: "I need to raise something before the quarterly review.\n\nRetail Ops has largely stopped sending work to analytics. Not because we do not need it — because nothing marked urgent comes back any faster than anything else, and three things we raised last year have simply never been looked at.\n\nMy team now marks everything urgent, because that is the only lever the form gives us. I am aware that makes it worse. I would rather have a system where I did not have to.\n\nCan you tell me whether it is us or whether it is everyone?",
+      },
+      prompt: 'Tick everything that is true about what he has sent you.',
+      options: [
+        { key: 'testable', correct: true, label: 'Whether urgent work comes back faster is directly measurable from the data you hold', why: 'Lead time by priority is one group-by. It is the claim most worth settling first because everything else he says depends on it.' },
+        { key: 'queue', correct: true, label: 'Whether things are never looked at is also measurable, and is a different question from speed', why: 'A request nobody picks up has no lead time at all. It vanishes from any average built on delivered work, which is where this kind of complaint usually hides.' },
+        { key: 'gaming', correct: true, label: 'He has told you the field is being gamed, and that he knows it and does it anyway', why: 'A rational response to a lever that is the only lever. That is a design problem rather than a behaviour problem, and it means asking people to stop will not work.' },
+        { key: 'notus', correct: true, label: '"Is it us or everyone" is the question to answer first, because the two have different remedies', why: 'If Retail Ops is treated worse than everyone else that is a fairness problem. If everyone is treated the same and the field does nothing, that is a system problem. Same complaint, opposite fixes.' },
+        { key: 'volume', correct: false, label: 'Their reduced volume is evidence that the service has got worse this year', why: 'It is evidence that they believe it has. Demand falling because people gave up looks identical in the data to demand falling because they needed less.' },
+        { key: 'sla', correct: false, label: 'The answer is to agree a service level for urgent work with Retail Ops', why: 'A commitment made before you know whether the current one is honoured. Find out what urgent currently buys before promising what it will buy.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mc-102': {
+    title: 'What came in, and what became of it',
+    hint: "Four outcomes. Give each one a share so the reader does not have to divide.",
+    brief: "Establish the shape of a year. Write ONE SQL SELECT over requests returning, per status: the number of requests and the share of all requests to one place. Largest first.",
+    referenceSql: "SELECT status, COUNT(*) AS requests, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct FROM requests GROUP BY status ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'mc-103': {
+    title: 'Is it Retail Ops, or is it everyone',
+    hint: "His question, answered directly. One row per requesting function.",
+    brief: "Answer the fairness question first. Write ONE SQL SELECT returning, per requesting function: requests raised, delivered, cancelled, still queued, and the delivered share to one place. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS requests, SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct FROM requests GROUP BY requested_by ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mc-104': {
+    title: 'What a 68.5% delivery rate is not',
+    hint: "Ask what happened to the other 31.5%, and whether they are all the same kind of thing.",
+    brief: "Two-thirds of requests were delivered. Decide what that figure supports.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of the delivery rate as a headline.',
+      options: [
+        { key: 'open', correct: true, label: 'It counts work still in progress as not delivered, which is only true so far', why: 'Forty-three requests are open and most of them will land. A snapshot rate mixes failure with work in flight and reads as failure.' },
+        { key: 'cancel', correct: true, label: 'Cancelled and never-picked-up are both in the remainder and are completely different failures', why: 'One is the business changing its mind, which is normal. The other is us never starting, which is not. Averaging them together hides the only one we own.' },
+        { key: 'silent', correct: true, label: 'It says nothing about requests people did not raise because they had given up', why: 'Which is exactly what Ravi is describing. Suppressed demand never enters the table and no rate computed from the table can see it.' },
+        { key: 'compare', correct: true, label: 'It is most useful compared across requesters, where the differences are what matters', why: 'A rate with nothing to compare it to is a number. The same rate across six functions is a finding.' },
+        { key: 'good', correct: false, label: 'It is a reasonable headline for the quarterly review', why: 'It is the number most likely to be quoted and least likely to be understood. Every component of the remainder needs a different response.' },
+        { key: 'target', correct: false, label: 'Raising it is a sensible objective for the team next year', why: 'It rises fastest by refusing work that might get cancelled and by never closing anything as stale. Both make the service worse and the number better.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'mc-105': {
+    title: 'The things nobody ever picked up',
+    hint: "Queued means never started. Age them against 30 June 2026 and look at the top of the list.",
+    brief: "Find what Ravi is talking about. Write ONE SQL SELECT returning every queued request: id, title, requesting function, category, priority, the date it was raised, and its age in whole days at 30 June 2026. Oldest first.",
+    referenceSql: "SELECT id, title, requested_by, category, priority, requested_on, CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER) AS age_days FROM requests WHERE status = 'queued' ORDER BY age_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mc-106': {
+    title: 'Answer Ravi today',
+    hint: "He asked a yes or no question. Give him the answer, not the analysis that produced it.",
+    brief: "Reply to Ravi. Retail Ops is not being treated differently — 67.1% delivered against 68.5% across all requesters — and thirty-two requests have never been picked up, three of them raised by his team. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: Retail Ops — it is everyone, and it is real', maxWords: 160,
+      prompt: 'Answer his actual question, confirm the part of his complaint that is true, and say what happens next.',
+      rubric: [
+        { key: 'answer', label: 'The direct answer: it is not Retail Ops specifically', markers: ['not|everyone|all|same|67|68|no difference|equally|across'], why: 'He asked one question in plain terms. Anything that makes him read three paragraphs to find out is a worse answer whatever it contains.' },
+        { key: 'concede', label: 'Confirmation that the never-looked-at part is true', markers: ['32|thirty.two|queue|never|picked up|not started|right|correct|true|three of'], why: 'He is right and the data says so. Conceding it immediately is what makes the rest of the note believable.' },
+        { key: 'urgent', label: 'That you are checking whether the urgent flag does anything, and will tell him either way', markers: ['urgent|priority|flag|check|measur|look|tell you|either way|whether'], why: 'It is the claim he most wants settled and you do not yet know. Naming it as in progress beats guessing at it.' },
+        { key: 'nopromise', label: 'No commitment to a service level you have not yet tested', markers: ['not yet|before|once|when I|first|will|rather than|no promise|premature'], why: 'Promising a turnaround on urgent work before knowing what urgent currently buys is how an unmeetable SLA gets agreed in an email.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mc-110': {
+    title: 'What the urgent flag buys',
+    hint: "Measure to the final close rather than to the first delivery, and only for work that finished.",
+    brief: "Settle the main claim. Write ONE SQL SELECT over delivered requests returning, per priority: the number delivered, average days from raised to first delivery to one place, and average days from raised to final close to one place. Slowest to close first.",
+    referenceSql: "SELECT priority, COUNT(*) AS delivered, ROUND(AVG(julianday(delivered_on) - julianday(requested_on)), 1) AS days_to_first_delivery, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY priority ORDER BY days_to_final_close DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mc-111': {
+    title: 'Six days',
+    hint: "The ordering is right. Ask whether the size of the difference could be noticed by anybody.",
+    brief: "Urgent closes in 25.5 days and low in 31.3. Decide what that means for the priority field.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'order', correct: true, label: 'The ordering is correct — urgent, high, normal, low — so the field is not being ignored', why: 'Worth saying plainly, because "priority does nothing" is the easy summary and it is not quite true. It does something, and the something is too small to matter.' },
+        { key: 'size', correct: true, label: 'Six days out of twenty-six is not a difference a requester could perceive', why: 'Nobody experiences a four-week wait as meaningfully shorter than a four-and-a-half-week one. Ravi is not wrong; he is reporting the size correctly.' },
+        { key: 'promise', correct: true, label: 'A field that offers four choices implies a much larger difference than six days', why: 'The interface is making a promise the system does not keep. That gap is the whole problem, and it is a design decision rather than anybody\'s behaviour.' },
+        { key: 'rational', correct: true, label: 'Marking everything urgent is the correct individual response to a six-day spread', why: 'If the only lever moves things by a fifth and costs nothing to pull, everybody pulls it. That is not abuse, it is arithmetic.' },
+        { key: 'ignored', correct: false, label: 'The team is ignoring the priority field and should be asked to respect it', why: 'The ordering shows they are not ignoring it. Asking thirteen people to try harder at something they are already doing is how a system problem becomes a morale problem.' },
+        { key: 'fine', correct: false, label: 'A six-day advantage is a real effect and the field is working as intended', why: 'Statistically present, operationally invisible. A control nobody can feel is a control that will be gamed until it means nothing.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-112': {
+    title: 'What urgent actually predicts',
+    hint: "Stop asking how fast and start asking what happened to it at all.",
+    brief: "Look at outcomes rather than speed. Write ONE SQL SELECT over all requests returning, per priority: requests raised, and the share delivered, cancelled and still queued, each to one place. Most cancelled first.",
+    referenceSql: "SELECT priority, COUNT(*) AS requests, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct, ROUND(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS cancelled_pct, ROUND(SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS queued_pct FROM requests GROUP BY priority ORDER BY cancelled_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-113': {
+    title: 'Urgent is the worst outcome in the table',
+    hint: "53.4% of urgent work is delivered and 21.9% is cancelled. High priority cancels at 5.9%.",
+    brief: "The flag that was supposed to mean 'do this first' turns out to mean something else entirely. Work out what.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick every reading that is consistent with the numbers.',
+      options: [
+        { key: 'panic', correct: true, label: 'Urgent marks work raised in a hurry, and work raised in a hurry is likelier to stop being needed', why: 'Twenty-two per cent of it is cancelled against six per cent of high-priority work. The flag is recording the requester\'s state of mind at 4pm on a Thursday.' },
+        { key: 'predict', correct: true, label: 'The flag predicts cancellation better than it predicts speed', why: 'And that is genuinely useful information, just not the information the field was built to carry. A signal pointing the wrong way is still a signal.' },
+        { key: 'cost', correct: true, label: 'Doing urgent work first therefore front-loads the work most likely to be thrown away', why: '186 hours went on urgent work that was later cancelled. Honouring the flag harder would increase that, not reduce it.' },
+        { key: 'high', correct: true, label: 'High priority is the healthiest bucket in the table and nobody would guess that from the label', why: '69.1% delivered, 5.9% cancelled. It is what urgent is supposed to be, and it is one step down the same dropdown.' },
+        { key: 'punish', correct: false, label: 'Requesters who over-use the urgent flag should be deprioritised until they stop', why: 'It punishes a rational response to a broken control, and it lands on the individuals rather than on the form that offered them the lever.' },
+        { key: 'causal', correct: false, label: 'Marking a request urgent causes it to be cancelled more often', why: 'Nothing here separates the flag from the circumstances that produced it. The association is real, the direction of cause is not established, and it does not need to be for the decision.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-114': {
+    title: 'How much of the wait priority explains',
+    hint: "Compare the spread between priority groups with the spread inside them. If the second is much larger, the field is not the thing driving the wait.",
+    brief: "Quantify how much of the variation in lead time the priority field accounts for. Using delivered requests, compute days from raised to final close for each, then return a dict with keys overall_mean, between_group_spread (the range of the four group means), within_group_sd (the standard deviation of lead time within groups, pooled) and share_explained (the ratio of the variance between group means to the total variance, as a percentage to one place).",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "import statistics\nrows = query(\"SELECT priority, julianday(closed_on) - julianday(requested_on) AS lead FROM requests WHERE status = 'delivered'\")\nleads = [r['lead'] for r in rows]\noverall = statistics.mean(leads)\ngroups = {}\nfor r in rows:\n    groups.setdefault(r['priority'], []).append(r['lead'])\nmeans = {k: statistics.mean(v) for k, v in groups.items()}\nbetween = sum(len(v) * (means[k] - overall) ** 2 for k, v in groups.items())\nwithin = sum((x - means[k]) ** 2 for k, v in groups.items() for x in v)\npooled_sd = (within / (len(leads) - len(groups))) ** 0.5\nresult = {\n    'overall_mean': round(overall, 1),\n    'between_group_spread': round(max(means.values()) - min(means.values()), 1),\n    'within_group_sd': round(pooled_sd, 1),\n    'share_explained': round(between / (between + within) * 100, 1),\n}",
+    estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-115': {
+    title: 'Tell the team what you have found',
+    hint: "The finding is about the form, not about them. Say so before anybody assumes otherwise.",
+    brief: "Write to the team. The priority field moves delivery by six days and urgent work is cancelled four times as often as high-priority work. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'What I have found about the priority field', maxWords: 150,
+      prompt: 'The finding, what it is not, and what you want from them.',
+      rubric: [
+        { key: 'finding', label: 'The two numbers — six days of difference, and urgent cancelling at 21.9%', markers: ['6|six|day|25|31|urgent|22|21\\.9|cancel|four times'], why: 'Both are short and surprising. A note that summarises without the figures invites people to supply their own.' },
+        { key: 'notblame', label: 'That the ordering is right, so nobody is ignoring the field', markers: ['not|nobody|ordering|order|correct|right|doing|respect|follow|you are'], why: 'The first thing thirteen people will assume is that they are being told they ignore priorities. They are not, and the data agrees.' },
+        { key: 'design', label: 'That the problem is the form offering a lever it cannot deliver', markers: ['form|field|design|lever|promise|interface|system|dropdown|four|choice'], why: 'Naming it as design rather than behaviour is the difference between a team that helps you fix it and a team that gets defensive.' },
+        { key: 'ask', label: 'A specific ask — how they actually decide what to work on next', markers: ['how do you|tell me|what do you|decide|pick|next|actually|really|ask'], why: 'They are already using some other rule to order work. That rule is the best available candidate for what should replace the field.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mc-120': {
+    title: 'The number already on the dashboard',
+    hint: "Split delivered work by whether it ever came back, and measure each to both dates.",
+    brief: "The team reports lead time to first delivery. Test what that hides. Write ONE SQL SELECT over delivered requests returning, for work that was reopened and work that was not: the count, average days to first delivery, and average days to final close, each to one place.",
+    referenceSql: "SELECT CASE WHEN reopened > 0 THEN 'reopened' ELSE 'clean' END AS kind, COUNT(*) AS requests, ROUND(AVG(julianday(delivered_on) - julianday(requested_on)), 1) AS days_to_first_delivery, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY kind",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-121': {
+    title: 'Reopened work looks faster',
+    hint: "25.3 days to first delivery against 26.5 for work that never came back. Then 43.3 to actually finish.",
+    brief: "The reported measure says the work that went wrong was delivered quicker than the work that did not. Work out what is happening and what it costs.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'early', correct: true, label: 'Work sent back early tends to have been sent out early, so first-delivery time flatters exactly the failures', why: 'A first delivery that is wrong is still a first delivery. The measure rewards sending something, not sending something right.' },
+        { key: 'gap', correct: true, label: 'The real cost of a reopen is 18 days, and none of it appears in the reported figure', why: '43.3 against 25.3. The published number is not slightly optimistic about these thirty-two requests, it is wrong by more than half.' },
+        { key: 'incentive', correct: true, label: 'Reporting to first delivery gives the team a reason to deliver before it is ready', why: 'Nobody would do that deliberately. Over a year, a measure that treats a wrong answer on day 25 as better than a right one on day 28 will produce more day-25 answers.' },
+        { key: 'change', correct: true, label: 'The measure should be days to final close, and the change makes the team look worse', why: 'Overall lead time goes up when you start counting the rework. Proposing a measure that worsens your own numbers is the only way anybody believes the new one.' },
+        { key: 'small', correct: false, label: 'Thirty-two reopened requests out of 263 is small enough that the overall average is safe', why: 'It is twelve per cent of delivered work carrying an eighteen-day error. And the average is not what a requester experiences — the ones who were reopened experienced 43 days.' },
+        { key: 'quality', correct: false, label: 'The reopen rate is a quality measure for individual analysts and should be tracked per person', why: 'It is mostly a property of the category — data-fixes come back at 1.6% and reports at 18.8% — and per-person tracking would rank people by what they were assigned.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-122': {
+    title: 'Which work comes back',
+    hint: "Group by what kind of thing was asked for. One category barely ever returns.",
+    brief: "Find where the rework is. Write ONE SQL SELECT over delivered requests returning, per category: the number delivered, the number that were reopened at least once, the reopen rate to one place, and average days to final close to one place. Highest reopen rate first.",
+    referenceSql: "SELECT category, COUNT(*) AS delivered, SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) AS reopened, ROUND(SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS reopen_pct, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY category ORDER BY reopen_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'mc-123': {
+    title: 'Data fixes come back once in sixty-two',
+    hint: "Ask what is different about a data fix, as a request, before anybody arrives.",
+    brief: "Reports reopen at 18.8% and data fixes at 1.6%. Decide what that difference is telling you.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that plausibly explains the gap.',
+      options: [
+        { key: 'spec', correct: true, label: 'A data fix arrives fully specified — the number is wrong, make it right — and a report does not', why: 'The whole difference is how much of the question was settled before work started. That is a property of the request, not of the analyst.' },
+        { key: 'done', correct: true, label: 'A data fix has an unambiguous finished state and a report has an opinion about one', why: 'You can check whether the figure reconciles. You cannot check whether a report is what somebody pictured.' },
+        { key: 'intake', correct: true, label: 'It points at intake rather than delivery — the fix is a better conversation at the start', why: 'The most useful finding of the week. Eighteen per cent rework on reports is not a skill problem, it is twenty minutes that nobody spent in week one.' },
+        { key: 'discover', correct: true, label: 'Some reopens on analysis work are the process working — the first answer raised a better question', why: 'Not all rework is waste, and a proposal that treats every reopen as a defect will stop people exploring. Worth distinguishing before setting a target.' },
+        { key: 'skill', correct: false, label: 'Reports are being written by less experienced people', why: 'Assignment is not in this table in a way that supports that, and reaching for a people explanation before an intake one is exactly the reflex this level is supposed to have lost.' },
+        { key: 'target', correct: false, label: 'The team should be given a reopen rate target by category', why: 'A reopen target is met by arguing with the requester about whether it counts as a reopen. Fix the intake and the rate moves on its own.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-124': {
+    title: 'The queue is ordered by nothing',
+    hint: "Age the queue by priority. If the field worked, urgent would be the youngest group in it.",
+    brief: "Write ONE SQL SELECT over queued requests returning, per priority: the number waiting, average age in days at 30 June 2026 to one place, and the age of the oldest in whole days. Oldest average first.",
+    referenceSql: "SELECT priority, COUNT(*) AS waiting, ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) AS avg_age_days, MAX(CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER)) AS oldest_days FROM requests WHERE status = 'queued' GROUP BY priority ORDER BY avg_age_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-125': {
+    title: 'Withdraw the lead time figure',
+    hint: "It is on a dashboard people read. Say what it will become and that the new number is worse.",
+    brief: "Write to Asha. The reported lead time measures to first delivery, which understates reopened work by eighteen days, and the corrected figure makes the team look slower. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Our lead time figure measures the wrong date', maxWords: 160,
+      prompt: 'What is wrong, what it becomes, and why you are proposing a change that makes your own numbers worse.',
+      rubric: [
+        { key: 'what', label: 'The specific fault — measured to first delivery rather than to final close', markers: ['first deliver|delivered_on|closed_on|final|close|date|reopen|back'], why: 'Naming the column is what makes it fixable by somebody other than you.' },
+        { key: 'size', label: 'The size of the error where it bites — eighteen days on reopened work', markers: ['18|eighteen|43|25\\.3|26\\.5|twelve|12%|32|thirty.two'], why: 'Twelve per cent of delivered work carrying an eighteen-day error. Both halves of that sentence matter.' },
+        { key: 'worse', label: 'That the corrected figure is worse for us — 26.4 days becomes 28.6 — and you are proposing it anyway', markers: ['worse|higher|slower|up|unflatter|against|own|even so|still'], why: 'Volunteering a number that makes you look slower is the only thing that makes anyone believe the replacement.' },
+        { key: 'incentive', label: 'Why it matters beyond accuracy — the old measure rewards delivering early and wrong', markers: ['incentive|reward|encourag|early|before ready|wrong|rush|behaviour|drive'], why: 'An inaccurate measure is a reporting problem. One that changes what people do is an operational one, and only the second gets fixed quickly.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-130': {
+    title: 'Who is carrying what',
+    hint: "Below manager level. Open work per person, and how old the oldest of it is.",
+    brief: "Before proposing anything, know the load. Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, requests currently in progress, requests delivered, and the age in whole days of their oldest open request at 30 June 2026. Most open work first.",
+    referenceSql: "SELECT a.name, a.level, SUM(CASE WHEN r.status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress, SUM(CASE WHEN r.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, MAX(CASE WHEN r.status = 'in_progress' THEN CAST(julianday('2026-06-30') - julianday(r.started_on) AS INTEGER) END) AS oldest_open_days FROM analysts a LEFT JOIN requests r ON r.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY in_progress DESC, delivered DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-131': {
+    title: 'The queue chart',
+    hint: "Four named groups, one measure, and the sort is the finding.",
+    brief: "Build the visual that shows the priority field is not ordering the queue: average age of queued work by priority. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT priority, AVG(julianday('2026-06-30') - julianday(requested_on)) AS avg_age_days FROM requests WHERE status = 'queued' GROUP BY priority ORDER BY avg_age_days DESC",
+      prompt: 'Average age of queued work by priority.',
+      answer: { type: 'bar', x: 'priority', y: 'avg_age_days', sort: 'desc', baselineZero: true },
+      why: 'Four named categories on one measure is a bar chart. Sorted by age rather than by priority order, because the whole point is that the two orderings do not match — sorting by priority would hide the finding inside an axis the reader expects.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mc-132': {
+    title: 'What replaces the field',
+    hint: "Whatever replaces it has to be something the requester cannot simply always choose.",
+    brief: "The priority dropdown has to go or change. Decide what goes in its place.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the replacement.',
+      options: [
+        { key: 'date', correct: true, label: 'A needed-by date with a reason, rather than a priority word', why: 'A date can be checked against reality and a reason can be discussed. Neither is a lever you can simply always pull to its maximum.' },
+        { key: 'cost', correct: true, label: 'Something that makes urgency cost the requester something — naming what it displaces', why: 'The current field is free to use, which is the entire reason it means nothing. Any replacement that is also free will mean nothing within a year.' },
+        { key: 'wip', correct: true, label: 'A limit on how much is in progress at once, since forty-three open items and a 191-day queue is a flow problem', why: 'Nothing in the priority field addresses the actual cause of the wait, which is that far more is started than finished.' },
+        { key: 'intake', correct: true, label: 'A short specification step for reports and dashboards, where rework is concentrated', why: 'The 18.8% reopen rate on reports is the cheapest thing on the page to fix and it does not need anybody\'s permission.' },
+        { key: 'strict', correct: false, label: 'Keep the field and enforce it strictly, so that urgent work is genuinely done first', why: 'Urgent work is cancelled at 21.9%. Doing it first means doing the most-likely-to-be-abandoned work first, on purpose.' },
+        { key: 'quota', correct: false, label: 'Give each requesting function a quota of urgent flags per quarter', why: 'It makes the flag scarce without making it mean anything, and the first casualty is the genuinely urgent thing raised in a quarter where the quota is spent.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-133': {
+    title: 'The queue, triaged',
+    hint: "Older than six months, never started. Group them so the mail you have to send is one mail per function.",
+    brief: "Produce the close-out list. Write ONE SQL SELECT over queued requests older than 180 days at 30 June 2026, returning per requesting function: how many, the age of the oldest in whole days, and how many of them are marked urgent. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS stale_requests, MAX(CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER)) AS oldest_days, SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END) AS marked_urgent FROM requests WHERE status = 'queued' AND julianday('2026-06-30') - julianday(requested_on) > 180 GROUP BY requested_by ORDER BY stale_requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-134': {
+    title: 'Where the effort actually went',
+    hint: "Hours against requests, grouped by the flag. Compare each group's share of effort with its share of requests.",
+    brief: "Write ONE SQL SELECT returning, per priority: requests raised, share of all requests to one place, logged hours to one place, and share of all logged hours to one place. Most hours first.",
+    referenceSql: "SELECT r.priority, COUNT(DISTINCT r.id) AS requests, ROUND(COUNT(DISTINCT r.id) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct_of_requests, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_hours FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.priority ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the split is accepted and then wanted against
+    // delivered work only, which removes the cancelled urgent hours and makes the flag
+    // look considerably better than it is.
+    rework: true,
+  },
+
+  'mc-135': {
+    title: 'Closing a request that is 361 days old',
+    hint: "Somebody asked for this and has been waiting. Closing it is right and it is still bad news.",
+    brief: "You are about to close sixteen queued requests that have been waiting more than six months. Decide how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how this is done.',
+      options: [
+        { key: 'named', correct: true, label: 'One message per requesting function, listing their own items rather than a bulk announcement', why: 'A broadcast about queue hygiene gets ignored. A list of three things somebody personally asked for gets read.' },
+        { key: 'reraise', correct: true, label: 'An explicit invitation to re-raise anything still needed, with a commitment that it will be picked up', why: 'Without it, closing the queue is indistinguishable from refusing the work, which is what Ravi already believes is happening.' },
+        { key: 'own', correct: true, label: 'Say plainly that nobody ever started them and that is on us', why: 'They can see the dates. Any framing that implies these lapsed naturally will read as evasive and confirm the thing you are trying to fix.' },
+        { key: 'notquiet', correct: true, label: 'Not closed silently, even though silently is much less uncomfortable', why: 'Sixteen items disappearing from a queue with no message is how a function learns that raising things with analytics is pointless.' },
+        { key: 'keep', correct: false, label: 'Leave them open, since closing them removes the evidence of the backlog', why: 'The evidence is in the analysis and in this week\'s numbers. A queue that is a year stale is not a record, it is a false promise to six functions.' },
+        { key: 'blame', correct: false, label: 'Explain that they were not started because the priority field made ordering impossible', why: 'It is partly true and it reads as an excuse offered to the people who were let down. The system explanation belongs in the proposal, not in the apology.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-140': {
+    title: 'The intake proposal',
+    hint: "Four findings, one proposal, and a number it is expected to move. Asha has to be able to take this to the other functions.",
+    brief: "Write the proposal to Asha. Replace the priority field with a needed-by date and a reason, add a specification step for reports and dashboards, cap work in progress, and close the stale queue. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Intake — what I want to change and what it should move', maxWords: 220,
+      prompt: 'The case, the changes, and what you expect each to do.',
+      rubric: [
+        { key: 'evidence', label: 'The evidence in one line — six days of difference, 21.9% cancellation on urgent, a 191-day queue', markers: ['6|six|day|21\\.9|22|cancel|191|queue|32|thirty.two|stale'], why: 'A proposal that opens with what should change rather than what is wrong gets read as a preference.' },
+        { key: 'replace', label: 'The replacement for the field — a needed-by date with a reason', markers: ['date|needed.by|by when|reason|why|deadline|replace|instead'], why: 'The specific mechanism, not "better prioritisation". Anything unspecific will be implemented as a renamed dropdown.' },
+        { key: 'intake', label: 'The specification step, aimed at reports and dashboards where rework is concentrated', markers: ['spec|scope|brief|upfront|start|report|dashboard|18|rework|reopen'], why: 'The cheapest change on the page and the one that needs nobody\'s approval. Worth naming separately so it is not lost inside the bigger ask.' },
+        { key: 'queue', label: 'Closing the stale queue, with the re-raise commitment', markers: ['close|stale|queue|180|re.raise|raise again|back|invite|tell'], why: 'The part that touches other functions and the part most likely to be softened into nothing if it is not explicit.' },
+        { key: 'measure', label: 'What each change should move, and that lead time will get worse before it gets better', markers: ['measure|expect|move|worse|up|rise|final close|before|track|watch'], why: 'Switching to close date raises the reported lead time. Saying so in the proposal stops it being read in three months as the changes having failed.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-141': {
+    title: 'The functions lose their urgent flag',
+    hint: "Six functions, one of whom asked for this and five of whom did not.",
+    brief: "Decide what the requesting functions are told and when.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how the change is introduced.',
+      options: [
+        { key: 'why', correct: true, label: 'The measured reason — the flag moved delivery by six days, which is why it is going', why: 'Removing a control without evidence reads as analytics deciding it knows better. The six days is checkable and ends the argument.' },
+        { key: 'gain', correct: true, label: 'What they get instead — a date they can hold you to, rather than a word that does nothing', why: 'A change that only removes something will be resisted by everyone. This one genuinely offers more than it takes, and that has to be the headline.' },
+        { key: 'ravi', correct: true, label: 'Credit to Ravi for raising it, since he did and it is why this happened', why: 'It costs nothing, it is true, and it is the difference between a function that complains once and one that keeps telling you things.' },
+        { key: 'trial', correct: true, label: 'A date to review it, so the change is reversible rather than imposed', why: 'A reviewable change gets tried. A permanent one gets negotiated before it starts.' },
+        { key: 'blame', correct: false, label: 'That some functions were marking everything urgent, which is why the field stopped working', why: 'True, and naming it makes five functions defensive about a rational response to a bad form. The form is the explanation to give.' },
+        { key: 'soft', correct: false, label: 'Keep the urgent flag as well, so nobody feels anything has been taken away', why: 'Two mechanisms means the old one continues to be used and the new one is optional. This is the compromise that guarantees nothing changes.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-142': {
+    title: 'The before figures, stated once',
+    hint: "Four measures, one row each, so the review in six months compares like with like.",
+    brief: "Fix the baseline before anything changes. Write ONE SQL SELECT returning four rows with columns measure and value: average days to final close for delivered work, the reopen rate across delivered work as a percentage, the number of queued requests, and the average age in days of the queue at 30 June 2026. All to one decimal place, in that order.",
+    referenceSql: "SELECT 'days_to_final_close' AS measure, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS value FROM requests WHERE status = 'delivered' UNION ALL SELECT 'reopen_rate_pct', ROUND(SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) FROM requests WHERE status = 'delivered' UNION ALL SELECT 'queued_requests', ROUND(COUNT(*), 1) FROM requests WHERE status = 'queued' UNION ALL SELECT 'queue_avg_age_days', ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) FROM requests WHERE status = 'queued'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-143': {
+    title: 'Exec would like to keep their flag',
+    hint: "Work out what he is actually asking for, and whether there is a version of it you can give him.",
+    brief: "The proposal has reached the exec team. Decide how to answer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Re: Intake changes',
+        body: "No objection to any of this for the general population.\n\nBut exec requests do need to jump the queue sometimes — board papers, regulator questions, that sort of thing. Can we keep an escalation route that does not depend on filling in a form about why?\n\nHappy for it to be logged. Just not happy for a board deadline to sit behind a dashboard request.",
+      },
+      prompt: 'Tick everything that belongs in your answer.',
+      options: [
+        { key: 'yes', correct: true, label: 'Yes to an escalation route — some work genuinely does have an external deadline', why: 'A board date and a regulator date are real constraints that exist whatever your intake process says. A system with no escape hatch gets bypassed entirely.' },
+        { key: 'named', correct: true, label: 'With a named person who can invoke it, rather than a function that can', why: 'Exec has twenty-four requests a year. If any of them can be escalated by anybody in the function, the route becomes the new urgent flag within two quarters.' },
+        { key: 'visible', correct: true, label: 'And with what it displaced recorded, so the cost is visible to the person invoking it', why: 'Escalation is always at somebody else\'s expense. Naming whose makes it self-limiting without any rule being needed.' },
+        { key: 'data', correct: true, label: "Note that Exec's own delivery rate is the lowest of the six functions at 54.2%, which this would help", why: 'It turns his request from a demand for special treatment into a fix for a problem he is already having, and it is true.' },
+        { key: 'no', correct: false, label: 'No — an exception for the most senior requester is how the old system failed', why: 'It failed because the lever was free and available to everyone. A named, logged, costed route is a different mechanism, and refusing outright gets you overruled rather than persuaded.' },
+        { key: 'noform', correct: false, label: 'Agree, and drop the requirement to say why, since a board deadline is self-evidently urgent', why: 'The reason is what makes the route reviewable in six months. It is one line, and it is the only thing standing between an escalation route and an escalation habit.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-144': {
+    title: 'Close the loop with Ravi',
+    hint: "He raised it, he was right, and he is about to lose the urgent flag he told you he was abusing.",
+    brief: "Write to Ravi. Tell him what you found, what is changing, and what happens to his team's three queued requests. Under 170 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Ravi Menon', subject: 'What the numbers said, and what is changing', maxWords: 170,
+      prompt: 'The finding, the change, his own items, and the thing he should keep doing.',
+      rubric: [
+        { key: 'right', label: 'That he was right — the flag buys six days and the queue is real', markers: ['right|correct|six|6|day|25|31|queue|32|never|true'], why: 'He took a risk raising it. Confirming he was right is the whole reason the next person raises the next thing.' },
+        { key: 'change', label: 'What replaces it — a needed-by date with a reason', markers: ['date|needed.by|reason|why|instead|replace|deadline'], why: 'He specifically said he would rather not have to game a field. Tell him what he gets instead of the one he is losing.' },
+        { key: 'his', label: 'What happens to his team\'s three queued requests specifically', markers: ['three|3|your|yours|clos|re.raise|raise again|pick up|still need'], why: 'A general answer to a specific complaint is how a complaint gets raised again in a quarter.' },
+        { key: 'keep', label: 'An ask to keep telling you things like this', markers: ['tell me|again|keep|raise|come to me|useful|next time|glad'], why: 'The single most valuable output of this week is that a requester complained instead of quietly giving up. Say so.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'mc-145': {
+    title: 'What you would watch from now on',
+    hint: "Pick measures that get worse when the service gets worse, and that cannot be improved by refusing work.",
+    brief: "Asha asks what the standing intake measures should be. Propose them, with what each one would catch. Under 190 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Intake — what I would watch monthly', maxWords: 190,
+      prompt: 'Three or four measures, what each catches, and what you would deliberately not measure.',
+      rubric: [
+        { key: 'close', label: 'Lead time to final close, not first delivery', markers: ['final|close|closed_on|not first|rework|reopen|whole'], why: 'The specific correction from Wednesday, made permanent. Without it every other measure is optimistic about exactly the failures.' },
+        { key: 'queue', label: 'The age of the oldest thing nobody has started', markers: ['oldest|queue|age|unstarted|not started|never|waiting|days'], why: 'The one measure that cannot be improved by working faster and can only be improved by picking something up or closing it honestly.' },
+        { key: 'rework', label: 'Reopen rate, by category rather than by person', markers: ['reopen|rework|categor|report|dashboard|not person|not individual|by type'], why: 'By category it points at intake. By person it points at whoever was assigned the reports, which is a management decision rather than their work.' },
+        { key: 'notgame', label: 'Awareness that a measure which can be improved by refusing work will be', markers: ['game|refuse|reject|decline|improve|worse|perverse|incentive|manipul|cannot'], why: 'Delivery rate rises fastest by taking less work. Any proposal that does not name that risk will produce it.' },
+        { key: 'not', label: 'Something deliberately not measured, and why', markers: ['not|would not|avoid|resist|individual|per person|utilisation|volume|count of'], why: 'A list of everything worth knowing is not a proposal. Naming what you are choosing to leave out is what makes it one.' },
       ],
       skills: { communication: 100, businessLogic: 100 },
     },

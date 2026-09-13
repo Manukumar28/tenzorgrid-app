@@ -3023,6 +3023,246 @@ Think over the weekend about which other numbers this function publishes have th
       },
     },
   ],
+  'intake-review': [
+    {
+      key: 'mca-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'When a complaint arrives',
+      title: 'Asha: the most valuable email you will get this year',
+      body: `Ravi has told you his team stopped bothering. Before you start work, understand what you have been handed.
+
+Most dissatisfaction never arrives. A function decides analytics is slow, stops raising things, and builds a spreadsheet instead. Nobody tells you, demand quietly falls, and the falling demand gets read as the team having capacity. That is the normal case and it is invisible from inside.
+
+A complaint is the abnormal case. Somebody has spent social capital to tell you something is wrong, which means they still think it is worth fixing. That is worth more than any survey you could run.
+
+Two things follow. Settle the factual parts fast — within a day if you can — because the value of his goodwill decays quickly. And tell him the answer even if the answer is that he is wrong, because the thing you are protecting is his willingness to tell you the next thing.
+
+The one response that guarantees he never writes again is a thoughtful reply in three weeks.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why is a complaint from a requesting function unusually valuable?',
+        options: [
+          { key: 'rare', correct: true, label: 'Most dissatisfaction shows up as quietly falling demand, which is invisible and reads as spare capacity' },
+          { key: 'severe', correct: false, label: 'It indicates a more serious problem than the ones nobody mentions' },
+          { key: 'formal', correct: false, label: 'It creates a record that the issue was raised and when' },
+          { key: 'senior', correct: false, label: 'It comes from somebody senior enough to get the problem prioritised' },
+        ],
+        why: 'The silent version of this is a function that builds its own spreadsheet and stops asking. You never find out, and the drop in requests looks like good news.',
+      },
+    },
+    {
+      key: 'mca-02', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Survivorship in a request queue',
+      title: 'Rahul: the requests that are not in your averages',
+      body: `A structural warning before you compute anything about how long work takes.
+
+Any average lead time is computed over work that finished. Requests that were cancelled have no lead time. Requests nobody ever started have no lead time. Requests somebody decided not to raise because they had given up do not exist at all.
+
+So the measure is taken over exactly the population that did best, and it improves as the service gets worse. If the team stops picking up hard requests, they sit in the queue, they never enter the average, and the average falls. That reads as improvement.
+
+This is the same shape as the retention curves you did at Senior and the same shape as the timesheet coverage. It turns up everywhere: whenever a measure is computed over completions, ask what did not complete and whether there is more of it than there used to be.
+
+The practical fix here is not clever. Report the queue alongside the lead time, always, as a count and an age. One number cannot see the other's failure mode, and together they cannot both be gamed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A team stops picking up its hardest requests. What happens to average lead time?',
+        options: [
+          { key: 'falls', correct: true, label: 'It falls, because the hard work never enters the average at all' },
+          { key: 'rises', correct: false, label: 'It rises, because the backlog grows' },
+          { key: 'same', correct: false, label: 'It stays the same until the unstarted work is eventually picked up' },
+          { key: 'depends', correct: false, label: 'It depends on whether the queue is counted as open or closed' },
+        ],
+        why: 'The measure is computed over survivors. Refusing the difficult work is the fastest way to improve it, which is why it must never be published without the queue beside it.',
+      },
+    },
+    {
+      key: 'mca-03', day: 2, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Levers people can always pull',
+      title: 'Neha: why every free priority field ends up meaningless',
+      body: `You are about to discover that everybody marks everything urgent. This is not a fact about your requesters, so it is worth knowing the general version before you write anything about it.
+
+A priority field given to requesters has three properties. It is free to use. It is invisible to everyone except the person filling it in. And the person filling it in bears none of the cost of choosing the highest value.
+
+Any control with those three properties converges to its maximum. Not because people are dishonest — because the expected value of choosing "urgent" is positive and the expected cost is zero, and over a year everybody works that out independently. We have watched exactly the same thing happen with meeting invitations marked high importance and with the recruitment system's "critical hire" flag, which is now 70% of requisitions.
+
+So the fix is never an instruction. Telling people to use it responsibly works for one quarter, in the teams that were already careful.
+
+The fix is to make the choice cost something: a date somebody can check, a reason somebody reads, a named trade against something else the requester wants. Anything the requester bears rather than absorbs.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What makes a priority field converge to "everything is urgent"?',
+        markers: ['free|cost|nothing|no cost|invisible|bear|expected|rational|maximum|nobody|zero'],
+        why: 'Free to use, invisible to others, and the requester bears none of the cost. Any control with those three properties ends up at its maximum without anybody behaving badly.',
+      },
+    },
+    {
+      key: 'mca-04', day: 2, type: 'learning', via: 'chat', from: 'finance_analyst', minutes: 9,
+      subject: 'Statistically real, operationally invisible',
+      title: 'Diya: six days out of twenty-six',
+      body: `You have a difference that is real in the data and undetectable in life. That combination comes up constantly and it is worth having language for.
+
+Urgent closes in 25.5 days and low in 31.3. The ordering is right, it is consistent across all four levels, and with 263 delivered requests it is not noise. Everything about it says the field works.
+
+And nobody could ever feel it. A requester waiting four weeks does not experience four and a half weeks as a different service. It is inside the variation between two requests with the same priority, so their own experience of "urgent" is roughly the same as their experience of "low".
+
+When a measured effect is smaller than the variation somebody personally experiences, the effect does not exist for them, and telling them the data says otherwise makes you sound like you are managing them rather than listening.
+
+The sentence I would use: it is real, it is too small to notice, and a control nobody can feel is a control that stops meaning anything.`,
+      check: {
+        kind: 'choice',
+        prompt: 'The priority effect is statistically clear and six days wide. What should the write-up say?',
+        options: [
+          { key: 'both', correct: true, label: 'That the field works and the effect is too small for any requester to perceive' },
+          { key: 'works', correct: false, label: 'That the field works, since the ordering is correct at all four levels' },
+          { key: 'broken', correct: false, label: 'That the field does not work and is being ignored by the team' },
+          { key: 'noise', correct: false, label: 'That six days is within noise and the difference cannot be relied upon' },
+        ],
+        why: 'Only the both-halves version is true and only it explains the behaviour. "It works" contradicts everybody\'s experience; "it is ignored" contradicts the data and blames the team.',
+      },
+    },
+    {
+      key: 'mca-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Choosing which date to stop the clock on',
+      title: 'Asha: first delivery or final close',
+      body: `You have found that our lead time measures to the first delivery. Before you propose changing it, the argument for each, because somebody will make the other one.
+
+FIRST DELIVERY is defensible. It is when the requester got something they could use. If a reopen was a small correction to a fundamentally complete piece of work, stopping the clock at first delivery is closer to their experience than waiting for the final close three weeks later.
+
+FINAL CLOSE is the one I want, for a reason that has nothing to do with accuracy. First delivery can be improved by sending something out before it is ready. Final close cannot be improved by anything except doing the work properly.
+
+That is the test for any operational measure: not which is more accurate, but which one behaves badly when somebody tries hard to improve it. Both these numbers are true. Only one of them is safe to put on a wall.
+
+Expect the change to make us look slower — 26.4 becomes 28.6 overall, and worse again for reports. Put that in the note yourself.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the deciding argument for measuring to final close?',
+        options: [
+          { key: 'game', correct: true, label: 'First delivery can be improved by sending work out before it is ready; final close cannot' },
+          { key: 'accurate', correct: false, label: 'It is a more accurate record of how long the work took' },
+          { key: 'requester', correct: false, label: 'It matches what the requester experienced' },
+          { key: 'standard', correct: false, label: 'It is the more conventional definition of lead time' },
+        ],
+        why: 'Accuracy is arguable — first delivery genuinely is when the requester got something. What settles it is how each measure behaves when somebody sets out to improve it.',
+      },
+    },
+    {
+      key: 'mca-06', day: 3, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 10,
+      subject: 'Why data fixes never come back',
+      title: 'Rahul: the reopen rate is an intake measure',
+      body: `Data fixes reopen at 1.6% and reports at 18.8%. I have a strong view about why, having done a lot of both.
+
+A data fix arrives complete. "The September figure in the finance dashboard is wrong." There is one right answer, everybody agrees what it is, and you can tell when you have got there. Nothing about that depends on having understood what somebody wanted.
+
+A report request arrives as a sentence. "Can we get a view of returns by category." That sentence contains none of: which categories, over what window, against what comparison, net or gross, for whom, to decide what. The analyst fills in six blanks and has maybe a one-in-three chance of filling them all the way the requester had imagined.
+
+The reopen is not a mistake being corrected. It is the specification being written, late, by iteration, at full analyst cost.
+
+Which makes the reopen rate a measure of how well work is specified at intake, not of how well it is done. Twenty minutes at the start against eleven days of rework is the trade, and it is not close.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why does the reopen rate point at intake rather than at delivery?',
+        markers: ['spec|scope|question|unclear|blank|ambiguous|start|intake|iterat|late|define|understood|brief'],
+        why: 'A reopen on a report is usually the specification being written late, by iteration, at full cost — not an error in work that was correctly understood.',
+      },
+    },
+    {
+      key: 'mca-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 11,
+      subject: 'Removing a control people rely on',
+      title: 'Vikram: how to take something away',
+      body: `You are going to propose removing the priority field. As somebody who will lose it, here is what will make me say yes.
+
+Do not open with the evidence that it does not work. I will hear that as an argument, and my instinct will be to find the case where it did. Open with what I get instead — a date you will hold to, and a reason somebody actually reads. If the replacement is better, the evidence is just support.
+
+Tell me what happens in my worst case. Mine is a board paper with a fixed date. If your proposal has no answer for that, I will assume it has no answer for anything and argue with all of it.
+
+Give it an end date. "We will review this in six months" is what turns a fight about principle into an experiment I can tolerate losing.
+
+And do not make me the reason. If the note says some functions were over-using the flag, every function reads that as being about them, and you will spend the quarter on that instead of on the change.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What should a proposal to remove a control lead with?',
+        options: [
+          { key: 'gain', correct: true, label: 'What the person gets instead' },
+          { key: 'evidence', correct: false, label: 'The evidence that the control does not work' },
+          { key: 'cost', correct: false, label: 'What the current control is costing the organisation' },
+          { key: 'review', correct: false, label: 'The commitment to review the change in six months' },
+        ],
+        why: 'All four belong in the note. Leading with evidence invites a search for counter-examples; leading with the replacement makes the evidence supporting material rather than the argument.',
+      },
+    },
+    {
+      key: 'mca-08', day: 4, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Work in progress',
+      title: 'Asha: forty-three things started, and a queue a year old',
+      body: `One thing in your numbers that nobody has mentioned and that I think matters more than the priority field.
+
+Forty-three requests are in progress. Thirteen people. The oldest has been open for 340 days. Meanwhile thirty-two things have never been started at all, averaging 191 days in the queue.
+
+That combination is not a prioritisation problem. It is a flow problem. Work is being started faster than it is being finished, so everything is in progress and nothing is finished, and the wait a requester experiences is mostly queueing rather than working.
+
+The uncomfortable part is that starting something feels like responsiveness. Somebody asks, you open it, you do an hour, you tell them it is underway. Everybody feels well served for about a week. Then it sits.
+
+A cap on how much can be open at once is the only intervention I have seen work, and it is unpopular for exactly one quarter, because it forces the conversation about what to stop. Which is the conversation this function has been avoiding for a year.
+
+Put it in the proposal. It will do more than the intake form will.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Forty-three open items across thirteen people, with a 191-day queue. What kind of problem is that?',
+        options: [
+          { key: 'flow', correct: true, label: 'A flow problem — work is started faster than it is finished, so the wait is mostly queueing' },
+          { key: 'priority', correct: false, label: 'A prioritisation problem — the wrong things are being worked on first' },
+          { key: 'capacity', correct: false, label: 'A capacity problem — there are too few people for the demand' },
+          { key: 'skill', correct: false, label: 'A delivery problem — individual requests are taking too long to complete' },
+        ],
+        why: 'Re-ordering a queue that nothing leaves does not shorten it. Neither does hiring, until the started-and-stalled pile is cleared, because new people start more things.',
+      },
+    },
+    {
+      key: 'mca-09', day: 5, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Baselines',
+      title: 'Diya: write down the before, today',
+      body: `You are about to change four things at once. A word about the number nobody remembers to record.
+
+In six months somebody will ask whether this worked. At that point you will need what the measures were the day before the change, computed exactly the way you compute them now. If you do not write them down today you will reconstruct them, and reconstruction always flatters — not dishonestly, but because you will define the baseline while knowing which direction you want the answer to go.
+
+Write them into a document now: the four numbers, the exact query, and the date. Then the six-month review is a comparison rather than an argument.
+
+The second half of this, which people miss: say in advance which direction each is expected to move and by roughly how much. Lead time will RISE, because you are changing which date stops the clock. If that prediction is not recorded, the rise will be read as the changes having failed, and somebody will propose reverting them.
+
+A prediction written down beforehand is the difference between a result and a debate.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why record the expected direction of each measure, not just its current value?',
+        options: [
+          { key: 'predict', correct: true, label: 'Lead time will rise by design, and without the prediction that reads as failure' },
+          { key: 'rigour', correct: false, label: 'It makes the analysis more rigorous and harder to challenge' },
+          { key: 'targets', correct: false, label: 'It gives the team targets to work towards over the six months' },
+          { key: 'blame', correct: false, label: 'It protects you if the changes do not deliver what was hoped' },
+        ],
+        why: 'The measure is deliberately changing definition, so it must get worse before it means anything. Unrecorded, that rise is the argument for reverting the whole thing.',
+      },
+    },
+    {
+      key: 'mca-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager',
+      minutes: 7,
+      subject: 'Third one done',
+      title: 'Asha: three reviews, one shape',
+      body: `Notice what these three have had in common, because there is a fourth coming and it will be the same.
+
+Timesheets: a measure everybody relied on, covering an eighth of what it claimed. Licences: a rate that improved when we wasted money. Intake: a control that everybody used and that moved the outcome by a fifth of nothing.
+
+None of these were broken by anyone. Each was built for a reason, worked at the time, and quietly stopped meaning what it said while continuing to be used. Nobody was ever going to notice, because the person using a measure is not the person who would check it.
+
+That checking is now your job and I do not think it has a natural home anywhere else. An analyst checks the number they were asked for. Only a manager gets to ask whether the number should exist.
+
+One thing to sit with over the weekend: you have now told three different people that a figure they relied on was wrong. Which of those went well, and what did you do differently that time.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What did the three broken measures have in common?',
+        markers: ['built|reason|worked|once|stopped|drift|quietly|nobody|check|user|relied|assumed|still used|meaning'],
+        why: 'Each was built sensibly, worked when it was built, and drifted out of meaning while still being used — because the person relying on a measure is never the person who would think to test it.',
+      },
+    },
+  ],
 };
 
 // ---- Situations ---------------------------------------------------------------------
@@ -4577,6 +4817,115 @@ I said you were handling it. What do I need to know before they ring again?`,
 Entirely optional.`,
       expect: ['archive it'],
       note: 'Optional, and nominating a vendor mid-renewal would be an odd move in any case.',
+    },
+  ],
+  'intake-review': [
+    {
+      key: 'mcs-01', day: 1, type: 'scope', via: 'chat', from: 'line_manager',
+      subject: 'How far does this go?',
+      body: `Ravi's mail could be answered in a paragraph — it is not just you, here are your three items.
+
+Or it could be a review of how work reaches this team at all, which is a proposal I would have to take to five other functions.
+
+Which one am I expecting on Friday?`,
+      needsReply: true,
+      expect: ['the review', 'and say what it would change'],
+      markers: ['review|whole|intake|proposal|bigger|all|five|six|function|priority|field|queue|yes|both'],
+      ifIgnored: 'Asha answers Ravi herself with the narrow version, and the priority field survives another year.',
+      note: 'The paragraph answer is true and changes nothing. The field, the queue and the lead-time measure are all in scope of the same week of work.',
+    },
+    {
+      key: 'mcs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly review — calendar holds',
+      body: `Calendar holds for the quarterly business review have been issued to function heads and their direct reports.
+
+Materials deadlines will follow separately from the programme office.`,
+      expect: ['archive it'],
+      note: 'A calendar hold with a follow-up promised. Nothing to act on.',
+    },
+    {
+      key: 'mcs-03', day: 2, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Urgent — dashboard for tomorrow',
+      body: `Can someone pick up a quick dashboard for me? Marking it urgent in the system.
+
+It is for a meeting tomorrow afternoon.`,
+      needsReply: true,
+      expect: ['ask what it is for and what it displaces'],
+      markers: ['what|which|for|meeting|decid|displace|instead|who|swap|scope|need|by when|tomorrow|ask'],
+      ifIgnored: 'Somebody picks it up because it says urgent, drops a piece of work that was nearly finished, and the meeting is postponed on Thursday morning.',
+      note: 'The exact behaviour you are analysing, arriving live. Asking what it is for and what it should displace is the replacement mechanism, tried once by hand.',
+    },
+    {
+      key: 'mcs-04', day: 2, type: 'noise', via: 'chat', from: 'it_ops',
+      subject: 'Request form — field ordering',
+      body: `We are reordering the fields on the analytics request form so the description box is above the category dropdown.
+
+Cosmetic only, no change to the data. Going out Thursday.`,
+      expect: ['archive it'],
+      note: 'Cosmetic, no data change, and it does not touch the field you care about.',
+    },
+    {
+      key: 'mcs-05', day: 3, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'The lead time number is in the pack',
+      body: `Your team's lead time figure — 26.4 days — is on the people dashboard and in the quarterly pack that goes out Monday.
+
+You mentioned it might be changing. Do I need to pull it?`,
+      needsReply: true,
+      expect: ['not pull it', 'flag it and give her the corrected one'],
+      markers: ['not|leave|keep|no need|flag|footnote|note|28\\.6|28|corrected|final close|reopen|next|going forward|change'],
+      ifIgnored: 'The old figure goes out unqualified, and the corrected one lands in the next pack as an unexplained jump.',
+      note: 'Pulling a number from a pack that is already circulating causes more questions than it answers. Flagging it and naming the replacement costs one line.',
+    },
+    {
+      key: 'mcs-06', day: 3, type: 'noise', via: 'email', from: 'security',
+      subject: 'Phishing simulation — results',
+      body: `Last month's phishing simulation results are available. The analytics team's click rate was zero.
+
+No follow-up training is required for your team.`,
+      expect: ['archive it'],
+      note: 'Zero click rate and no follow-up required. Nothing to do.',
+    },
+    {
+      key: 'mcs-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Are you closing my requests?',
+      body: `I hear old queued items are being closed. Two of those are mine and I still want them.
+
+Before you start deleting things, can we talk?`,
+      needsReply: true,
+      expect: ['nothing is deleted', 'and tell him what actually happens'],
+      markers: ['not delet|nothing|no|closed not|re.raise|raise again|straight|pick up|still want|keep|record|ask|tell me which'],
+      ifIgnored: 'He escalates to Asha before Friday, and the queue clear-out is paused in a meeting rather than done.',
+      note: 'He has heard "closing" and understood "deleting". Two sentences on what actually happens — and an offer to pick his two up now — ends it.',
+    },
+    {
+      key: 'mcs-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Fire alarm test — Thursday 11am',
+      body: `A routine fire alarm test will take place on Thursday at 11am across all floors.
+
+No evacuation is required and no action is needed.`,
+      expect: ['archive it'],
+      note: 'No evacuation, no action. Nothing to do.',
+    },
+    {
+      key: 'mcs-09', day: 5, type: 'judgement', via: 'email', from: 'data_engineer',
+      subject: 'Can I build the WIP cap into the tool?',
+      body: `If you are capping work in progress, I can enforce it in the request tool — nobody can move a seventh item into in-progress.
+
+Cleaner than asking people to remember. Want me to build it?`,
+      needsReply: true,
+      expect: ['not yet', 'try it as an agreement first'],
+      markers: ['not yet|wait|first|try|agree|manual|soft|month|before|hard|enforce|rigid|learn|too early|then'],
+      ifIgnored: 'The cap ships as a hard block, the first person who genuinely needs a seventh item routes around the tool, and nobody says so.',
+      note: 'A limit enforced by software before anybody has agreed the number produces a workaround rather than a conversation. Run it as an agreement for a month, then automate whatever survived.',
+    },
+    {
+      key: 'mcs-10', day: 5, type: 'noise', via: 'chat', from: 'comms',
+      subject: 'Intranet page for analytics',
+      body: `We are refreshing the function pages on the intranet. Yours is being updated from the org chart automatically.
+
+Nothing needed unless you want to change the description, which currently reads "Data & Analytics".`,
+      expect: ['archive it'],
+      note: 'Automatic, and the description is already right.',
     },
   ],
 };
@@ -6212,6 +6561,122 @@ const QUIZZES = {
           { key: 'd', label: 'Describe them as a contingency against vendor price rises' },
         ],
         why: 'Unexplained spare capacity looks exactly like the waste you just finished removing, and the next review removes it. Explained spare capacity is a decision somebody has to argue with.',
+      },
+    ],
+  },
+  'intake-review': {
+    key: 'mcq-intake', title: 'Intake & Prioritisation — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A requesting function emails to say it has stopped sending work. Why is that email worth more than a satisfaction survey?',
+        options: [
+          { key: 'c', label: 'Most dissatisfaction never arrives — it shows up as quietly falling demand, which reads as spare capacity', correct: true },
+          { key: 'a', label: 'It identifies a more serious problem than the ones nobody raises' },
+          { key: 'b', label: 'It comes from somebody senior enough to get the issue prioritised' },
+          { key: 'd', label: 'It creates a record of when the problem was first raised' },
+        ],
+        why: 'The silent version is a function that builds its own spreadsheet and stops asking. You never find out, and the drop in requests looks like good news.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Urgent work closes in 25.5 days and low-priority work in 31.3. What is the right summary?',
+        options: [
+          { key: 'b', label: 'The field works and the effect is far too small for any requester to perceive', correct: true },
+          { key: 'a', label: 'The field works — the ordering is correct at all four levels' },
+          { key: 'c', label: 'The field does not work and the team is ignoring it' },
+          { key: 'd', label: 'Six days is within noise and the difference cannot be relied on' },
+        ],
+        why: 'Only the both-halves version is true. "It works" contradicts everybody\'s experience of it; "it is ignored" contradicts the data and blames thirteen people.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Urgent requests are delivered 53.4% of the time and cancelled 21.9%. High-priority requests cancel at 5.9%. What does the urgent flag predict?',
+        options: [
+          { key: 'd', label: 'Cancellation better than speed — it records the requester\'s state of mind rather than the work\'s importance', correct: true },
+          { key: 'a', label: 'That the work was genuinely time-critical and got deprioritised anyway' },
+          { key: 'b', label: 'Nothing — the four priority levels are used interchangeably' },
+          { key: 'c', label: 'That marking a request urgent causes it to be handled badly' },
+        ],
+        why: 'Work raised in a hurry is likelier to stop being needed. It also means honouring the flag harder would front-load the work most likely to be thrown away.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'A team stops picking up its hardest requests. What happens to its average lead time?',
+        options: [
+          { key: 'a', label: 'It falls, because the hard work never enters the average at all', correct: true },
+          { key: 'b', label: 'It rises as the backlog grows' },
+          { key: 'c', label: 'It is unchanged until the unstarted work is eventually picked up' },
+          { key: 'd', label: 'It depends whether queued work is counted as open or closed' },
+        ],
+        why: 'Lead time is computed over survivors. Refusing difficult work is the fastest way to improve it, which is why it must never be published without the queue beside it.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'Reopened requests average 25.3 days to first delivery and 43.3 to final close; clean ones average 26.5. Which date should stop the clock, and why?',
+        options: [
+          { key: 'c', label: 'Final close — first delivery can be improved by sending work out before it is ready', correct: true },
+          { key: 'a', label: 'First delivery — it is when the requester got something they could use' },
+          { key: 'b', label: 'Final close — it is the more accurate record of how long the work took' },
+          { key: 'd', label: 'Both, reported separately, so the reader can choose' },
+        ],
+        why: 'Accuracy is genuinely arguable. What settles it is how each measure behaves when somebody sets out to improve it, and only one of the two is safe on a wall.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Data fixes reopen at 1.6% and reports at 18.8%. What is the reopen rate mostly measuring?',
+        options: [
+          { key: 'a', label: 'How completely the request was specified before work started', correct: true },
+          { key: 'b', label: 'The technical difficulty of each category of work' },
+          { key: 'c', label: 'The experience level of whoever was assigned it' },
+          { key: 'd', label: 'How demanding each requesting function is' },
+        ],
+        why: 'A data fix arrives with one right answer everybody agrees on. A report arrives as a sentence with six blanks in it, and the reopen is the specification being written late at full analyst cost.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Forty-three requests are in progress across thirteen people, and thirty-two have never been started, averaging 191 days waiting. What kind of problem is this?',
+        options: [
+          { key: 'b', label: 'A flow problem — more is started than finished, so the wait is mostly queueing', correct: true },
+          { key: 'a', label: 'A prioritisation problem — the wrong things are being worked on first' },
+          { key: 'c', label: 'A capacity problem — there are too few people for the demand' },
+          { key: 'd', label: 'A delivery problem — individual requests take too long to complete' },
+        ],
+        why: 'Re-ordering a queue that nothing leaves does not shorten it, and neither does hiring until the started-and-stalled pile clears, because new people start more things.',
+      },
+      {
+        id: 'q8', topic: 'data-ethics',
+        q: 'Why does a free, invisible priority field always end up meaning nothing?',
+        options: [
+          { key: 'd', label: 'The requester bears none of the cost of choosing the highest value, so over a year everybody independently chooses it', correct: true },
+          { key: 'a', label: 'Requesters do not understand what the levels are meant to mean' },
+          { key: 'b', label: 'Delivery teams stop trusting it and start ignoring it' },
+          { key: 'c', label: 'Some functions abuse it and others are penalised for honesty' },
+        ],
+        why: 'Free to use, invisible to others, no cost borne by the chooser. Any control with those three properties converges to its maximum without anybody behaving badly, which is why an instruction to use it responsibly never works.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'You are proposing to remove the priority field. What should the proposal lead with?',
+        options: [
+          { key: 'a', label: 'What the requester gets instead — a date you will hold to, and a reason somebody reads', correct: true },
+          { key: 'b', label: 'The evidence that the current field moves delivery by six days' },
+          { key: 'c', label: 'The cost of the current system in cancelled and stalled work' },
+          { key: 'd', label: 'A commitment to review the change after six months' },
+        ],
+        why: 'All four belong in the note. Leading with evidence invites a search for the counter-example; leading with the replacement makes the evidence supporting material rather than the argument.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You are changing four things and recording the before-figures. What else must be written down today?',
+        options: [
+          { key: 'c', label: 'Which direction each measure is expected to move — lead time will rise by design', correct: true },
+          { key: 'a', label: 'Targets for each measure at the six-month review' },
+          { key: 'b', label: 'Who is accountable for each of the four changes' },
+          { key: 'd', label: 'The exact queries, so the figures can be reproduced' },
+        ],
+        why: 'The queries matter too, but the prediction is the one that decides the six-month conversation: switching to final close makes the team look slower, and unrecorded that rise becomes the argument for reverting everything.',
       },
     ],
   },

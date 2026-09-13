@@ -577,6 +577,43 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'analytics_ops',
   },
+
+  'intake-review': {
+    projectTitle: 'Intake & Prioritisation',
+    companyName: 'Meridian Group',
+    companyBlurb: 'A year of work asked of the analytics team \u2014 384 requests from six functions, the priority everybody attached to them, and what became of each one.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Find out whether the controls this function relies on actually control anything.',
+      'Answer a complaint fast enough that the person keeps complaining next time.',
+      'Propose a replacement before removing a control, and say what each change should move.',
+    ],
+    scenario:
+      'Retail Ops has largely stopped sending work. Their view is that nothing marked urgent comes back faster than anything else, that three things they raised last year have never been looked at, and that their team now marks everything urgent because it is the only lever the form offers. They would like to know whether it is them or whether it is everyone.',
+    estimatedMinutes: 155,
+    difficulty: 'Hard',
+    primaryObjective: 'Settle the complaint with evidence, establish what the priority field actually does, and propose what replaces it \u2014 with the before-figures recorded.',
+    constraints: [
+      { label: 'Speed of reply', value: 'The factual half of a complaint is worth settling within a day. Goodwill decays faster than analysis improves.' },
+      { label: 'Survivorship', value: 'Every lead-time average is computed over work that finished. Publish the queue beside it or the number improves as the service gets worse.' },
+      { label: 'Replace before removing', value: 'A control taken away with nothing in its place gets reinstated. Lead with what the requester gets instead.' },
+    ],
+    deliverables: [
+      { text: 'Demand, outcomes and the queue, from one query per question.', via: 'sql-terminal' },
+      { text: 'How much of the variation in lead time the priority field actually accounts for.', via: 'python-notebook' },
+      { text: 'A reply to the complaint, a proposal to your manager, and the note to six functions.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The priority field works \u2014 urgent closes in 25.5 days and low in 31.3. Six days out of twenty-six is not a difference any requester could perceive.',
+      'Urgent predicts cancellation rather than speed: 21.9% of urgent work is cancelled against 5.9% of high-priority work. Honouring the flag harder would do the most-abandoned work first.',
+      'The reported lead time stops the clock at first delivery. Reopened requests take 25.3 days to first delivery and 43.3 to final close, so the published figure flatters exactly the work that went wrong.',
+      'Thirty-two requests have never been picked up, averaging 191 days in the queue, and the oldest was raised on 4 July 2025.',
+      'Data fixes reopen at 1.6% and reports at 18.8%. That gap is about how completely the request was specified, not about who did the work.',
+      'Forty-three requests are in progress across thirteen people. Re-ordering a queue that nothing leaves does not shorten it.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no
