@@ -1033,7 +1033,8 @@ function generateAnalyticsOps(seed) {
   // --- Licence assignments ---------------------------------------------------
   // Quirk 6. Seats are bought, assignments are made, and use is a third thing. The BI
   // platform has thirty seats for a team of fourteen; the statistical suite is assigned
-  // to people who have not opened it in months.
+  // to people who have not opened it in months; and the January leaver's four seats were
+  // never handed back, which is the commonest and least visible way a tooling bill grows.
   const licence_assignments = [];
   let lid = 1;
   for (const tool of OPS_TOOLS) {
@@ -1050,7 +1051,11 @@ function generateAnalyticsOps(seed) {
         licence_id: tool.id,
         analyst_id: a.id,
         assigned_on: a.started_on > OPS_FROM ? a.started_on : OPS_FROM,
-        last_used_on: opsDate(to - staleness),
+        // Nobody opens a tool after their last day. The seat stays assigned, because
+        // reclaiming it is a job somebody has to remember to do and nobody did.
+        last_used_on: a.left_on && opsDate(to - staleness) > a.left_on
+          ? a.left_on
+          : opsDate(to - staleness),
       });
     }
   }

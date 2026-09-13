@@ -2787,6 +2787,242 @@ Have a think over the weekend about what else in the team's reporting would not 
       },
     },
   ],
+  'tooling-review': [
+    {
+      key: 'mba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
+      subject: 'How a renewal actually works',
+      title: 'Diya: auto-renewal is a decision somebody already made',
+      body: `Before you open the contracts, the mechanics, because they decide what your week looks like.
+
+Every one of these is an auto-renewing annual term. That means nobody has to approve the spend for it to happen. The only action that requires a decision is CHANGING it, and that decision has a deadline written into the contract rather than into anybody's calendar.
+
+The practical effect is that inertia has a price and the price is exact. Miss 15 August and the BI platform costs ₹21.6 lakh for another year, and nobody will have done anything wrong. There is no meeting where that gets decided. There is only a date after which it is decided.
+
+So the first thing to do with any renewing estate is not analysis. It is a list of dates. Then you know which questions have a deadline and which are merely important, and you answer them in that order rather than in order of how interesting they are.
+
+The interesting question here is what the whole estate is worth. The urgent one is fifteen or thirty seats by Friday.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What does an auto-renewal clause change about the analysis?',
+        options: [
+          { key: 'default', correct: true, label: 'Doing nothing is an active choice with a price, and the deadline is the contract\'s, not yours' },
+          { key: 'urgent', correct: false, label: 'It makes the whole estate review urgent rather than important' },
+          { key: 'nothing', correct: false, label: 'Nothing — the analysis is the same whenever the contract renews' },
+          { key: 'vendor', correct: false, label: 'It gives the vendor the stronger position in any negotiation' },
+        ],
+        why: 'The clause does not change what is true about the tools. It changes which truths you have time to act on, and it turns inaction into a decision.',
+      },
+    },
+    {
+      key: 'mba-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Cutting the line nobody defends',
+      title: 'Asha: why tooling cuts go wrong more often than headcount cuts',
+      body: `A warning that will sound backwards.
+
+Headcount cuts are hard to get wrong, in one narrow sense: everybody involved fights, every assumption is challenged, and a bad one usually dies on the way. The process is brutal and it functions as review.
+
+Tooling cuts have none of that. Nobody's job depends on a seat. Nobody will read your analysis carefully, argue with your denominator, or point out that the tool you are cutting is the only one that does the thing. It goes through on the strength of a number on a slide, and the cost shows up four months later as a request that took three days instead of three hours.
+
+So the review has to be done properly precisely because nothing will stop you if it is not. You are the only check in the process.
+
+Concretely: for every seat you propose to remove, be able to say what would have been impossible last year without it. If the answer is nothing, remove it with confidence. If the answer is "I do not know", that is a conversation, not a saving.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why do tooling cuts need more care than the size of the numbers suggests?',
+        markers: ['nobody|no one|defend|challenge|review|check|fight|argue|unopposed|through|only|later|surface'],
+        why: 'Nothing in the process pushes back. The analyst is the whole review, and the cost of a wrong cut appears months later attached to a request rather than to the decision.',
+      },
+    },
+    {
+      key: 'mba-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 13,
+      subject: 'Seats, assignments and use',
+      title: 'Rahul: three tables, three different questions',
+      body: `You are about to compare numbers from three places, so it is worth being precise about what each one records.
+
+The licence table records what Procurement bought. It is a contract fact and it is exactly right — it is what we are invoiced for.
+
+The assignment table records what IT handed out. It is an administrative fact. It is right about what was done and silent about whether it was needed, and it is only updated when somebody remembers to update it.
+
+The last-used date records telemetry. It is a behavioural fact, it is the only one of the three with a human in it, and it is the least reliable — it records opening the tool, not using it well, and some tools report it lazily.
+
+A count that mixes them silently is the commonest error in this kind of review. "Fourteen users" can mean fourteen seats bought, fourteen people given access, or fourteen people who opened it this quarter, and in our estate those are 30, 14 and 13 for the same tool.
+
+Always say which of the three you counted. It takes four words and it is the difference between an analysis and an assertion.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which of the three counts is furthest from what a budget conversation usually means by "users"?',
+        options: [
+          { key: 'seats', correct: true, label: 'Seats contracted — it is a purchasing decision with no person in it at all' },
+          { key: 'assigned', correct: false, label: 'Assignments — because they are only updated when somebody remembers' },
+          { key: 'used', correct: false, label: 'Active users — because opening a tool is not the same as using it' },
+          { key: 'none', correct: false, label: 'None of them; the three are close enough that the distinction rarely matters' },
+        ],
+        why: 'Assignments and active use are both imperfect records of people. Seats are a record of a purchase order, and on the BI platform that is 30 against 13.',
+      },
+    },
+    {
+      key: 'mba-04', day: 2, type: 'learning', via: 'chat', from: 'stakeholder', minutes: 9,
+      subject: 'Per-unit numbers',
+      title: 'Vikram: what a denominator is for',
+      body: `Watching you find the same thing twice this month, so here is the general version.
+
+Every per-unit figure is a claim about what drives the cost. Cost per seat says the thing we buy is seats. Cost per active user says the thing we buy is people being able to work. Those are different claims and only one of them is about the business.
+
+The test I use: if this number improves, has anything got better?
+
+Cost per seat improves when we buy more seats. Nothing got better; the bill went up. That single test would have caught it on Monday.
+
+Cost per active user improves when more people use the tool or when we stop paying for seats nobody uses. Both of those are genuinely better.
+
+It is the same test you used on the timesheets. Cost per logged hour improves when people log less, which is why it read at eight times the real rate. Learn the test rather than the two examples — you will meet it again on cost per report, cost per dashboard, and cost per ticket, and it fails in exactly the same way each time.`,
+      check: {
+        kind: 'answer',
+        prompt: 'State the test, and apply it to cost per seat.',
+        markers: ['improve|better|worse|buy more|seat|nothing|goes up|bill|rewards|game'],
+        why: 'If the number improves, has anything got better? Cost per seat improves by buying seats nobody uses, so the answer is no and the measure is unusable for the decision it is being asked to support.',
+      },
+    },
+    {
+      key: 'mba-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Correcting somebody else\'s number',
+      title: 'Asha: how to do it without making an enemy',
+      body: `You have to tell Diya that the ranking she sent on Monday points at the wrong vendor. Some rules I have learned the hard way.
+
+Do it privately and do it early. A correction made on Wednesday is information. The same correction made in a meeting in September is a public demonstration that she got it wrong, whatever your tone.
+
+Lead with the replacement, not the error. "Northlake is our best-used tool, fourteen seats and thirteen active users" lands completely differently from "cost per seat was the wrong measure". The first gives her something to say; the second gives her something to defend.
+
+Take your share. You reproduced the same ranking on Monday morning and it took you until Tuesday to see the problem. Saying so is not false modesty, it is the actual sequence of events, and it converts a correction into a joint finding.
+
+And give her somewhere to go. She came to you asking where to cut. If you remove her target and hand back nothing, you have made her job harder, and she will remember that far longer than she remembers being wrong.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the single most useful thing to lead a correction with?',
+        options: [
+          { key: 'replace', correct: true, label: 'The replacement finding, stated as a fact she can repeat' },
+          { key: 'method', correct: false, label: 'An explanation of why the original measure was unsound' },
+          { key: 'share', correct: false, label: 'An acknowledgement that you made the same mistake first' },
+          { key: 'soften', correct: false, label: 'A note that the original was a perfectly reasonable first cut' },
+        ],
+        why: 'The other three all belong in the note. Only the replacement gives her something to say in the meeting she is walking into, which is what she actually needs from you.',
+      },
+    },
+    {
+      key: 'mba-06', day: 3, type: 'policy', via: 'email', from: 'it_ops', minutes: 10,
+      subject: 'Offboarding and licence reclamation',
+      title: 'IT: what is meant to happen when somebody leaves',
+      body: `Following your query about the January leaver, the honest position.
+
+The offboarding checklist covers identity: account disabled, building pass returned, device collected, mail forwarded. All of that ran correctly on 30 January.
+
+Licence seats are not on it. They live with the owning function, on the reasonable-sounding grounds that the function knows which tools its people actually need. In practice that means nobody, because a function notices a missing seat immediately and a spare one never.
+
+The cost is asymmetric and that is why it persists. If we remove a seat somebody needs, we hear within an hour. If we keep one nobody needs, we hear in a year, during a review like yours, if somebody happens to join the two tables.
+
+We will reclaim the four. For the standing fix we would need the owning function to confirm that seats can be removed on the leaving date without a check, and that is a decision for you rather than for us — you are the one who carries it if somebody was mid-handover.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why do unreclaimed seats persist even where offboarding otherwise works?',
+        options: [
+          { key: 'asym', correct: true, label: 'A missing seat is noticed in an hour; a spare one is noticed in a year' },
+          { key: 'lazy', correct: false, label: 'The offboarding checklist is not followed consistently' },
+          { key: 'unknown', correct: false, label: 'IT cannot tell which tools a leaver actually had' },
+          { key: 'cost', correct: false, label: 'The cost of any individual seat is too small to be worth a process' },
+        ],
+        why: 'The checklist ran correctly; seats simply are not on it. The asymmetry is why nobody ever put them on it, and why the fix has to be automatic rather than diligent.',
+      },
+    },
+    {
+      key: 'mba-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Recoverable, recommended, realised',
+      title: 'Diya: the three numbers a saving has',
+      body: `You are about to publish a savings figure, so here is how Finance will read it and what happens to each version.
+
+RECOVERABLE is the arithmetic maximum — every seat above what is actively used. It is a real number and it is not a plan. If you publish it alone, it becomes the target and the shortfall is yours.
+
+RECOMMENDED is what you will actually do: recoverable, minus the headroom you deliberately keep, minus anything still needing a conversation, minus anything that renews after the year ends. It is smaller and it is the only one you should be held to.
+
+REALISED is what the invoices show twelve months later, and it is always lower than recommended, because a vendor raises the unit price when the volume drops and because at least one conversation goes the other way.
+
+The useful discipline: publish recommended as the headline, show recoverable beside it, and say in one line why they differ. That way nobody discovers the bigger number on their own — which they will, because the arithmetic is one query — and you are not carrying a target you did not set.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which figure should be the headline of a savings note?',
+        options: [
+          { key: 'rec', correct: true, label: 'Recommended, with recoverable shown beside it and the gap explained' },
+          { key: 'max', correct: false, label: 'Recoverable, since it is what the data supports' },
+          { key: 'real', correct: false, label: 'A conservative estimate of what will be realised' },
+          { key: 'both', correct: false, label: 'Both, without choosing, so the reader can decide' },
+        ],
+        why: 'Recoverable alone becomes a target you did not set. Realised cannot be known yet. Publishing both without choosing is a way of not making the recommendation you were asked for.',
+      },
+    },
+    {
+      key: 'mba-08', day: 4, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      subject: 'Headroom is not waste',
+      title: 'Rahul: why I want you to keep some spare seats',
+      body: `One plea before you set the seat counts.
+
+Lakshmi joined on 2 March. She had every tool she needed on her first morning, because there were spare seats sitting there. That is the only reason. If we had been at exactly the active count, her first week would have been a procurement ticket, a quote, an approval and about nine days of borrowing someone else's screen.
+
+I am not arguing for thirty seats. Sixteen unassigned is not headroom, it is a purchase nobody revisited. But going to exactly the active count converts every joiner, every contractor and every "can you look at this by Thursday" into a procurement conversation, and those cost more than the seats.
+
+Two spare per tool is the number I would ask for. It is about ₹6.5 lakh across the estate at current rates, which is a real cost and worth naming as a choice rather than leaving as slack nobody mentions.
+
+Name it in the note. Unexplained spare capacity becomes next year's saving; explained spare capacity is a decision somebody has to argue with.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why should headroom be named in the note rather than just left in the seat counts?',
+        markers: ['next year|future|saving|target|cut|explain|decision|argue|visible|unexplained|slack|justify'],
+        why: 'Spare capacity nobody has explained looks exactly like the waste you have just finished removing, and the next review removes it. Naming it as a choice makes somebody argue with the choice instead.',
+      },
+    },
+    {
+      key: 'mba-09', day: 5, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'Negotiating when you have done the work',
+      title: 'Vikram: what a vendor is actually responding to',
+      body: `You are about to go back to Clearview. A few things about how the other side of that conversation works.
+
+Their account manager is measured on renewal value, not on your satisfaction. A proposal to halve the seat count is a threat to their number, and the standard play is not to argue with your analysis — it is to change what the comparison is against. Note that their offer is framed against ₹21.6 lakh, the figure you are trying to move away from, rather than against your proposal.
+
+Watch the term length too. The concession they want is not really the discount, it is the two years. A multi-year lock removes your ability to do this exercise again next year, which is worth far more to them than ₹2.4 lakh.
+
+What you have that most buyers do not is checkable counts. Sixteen seats never assigned is not an opinion and they cannot argue with it. Lead with it and stay on it.
+
+And do not bluff. Saying you are evaluating alternatives when you are not costs everything the first time it is tested, and these are people you will negotiate with again in twelve months.`,
+      check: {
+        kind: 'choice',
+        prompt: 'In the vendor\'s counter-offer, what is the concession they most want?',
+        options: [
+          { key: 'term', correct: true, label: 'The two-year term, because it removes next year\'s decision' },
+          { key: 'seats', correct: false, label: 'Keeping all thirty seats on the account' },
+          { key: 'price', correct: false, label: 'Protecting the per-seat unit price at ₹64,000' },
+          { key: 'timing', correct: false, label: 'Settling before 15 August so the renewal is clean' },
+        ],
+        why: 'The seats are this year\'s revenue; the term is every year after it. A lock is what stops the buyer repeating the exercise that just cost them a third of the account.',
+      },
+    },
+    {
+      key: 'mba-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Second review done',
+      title: 'Asha: the same shape twice',
+      body: `Worth noticing before you close this off: you have now done the same analysis twice on two completely different cost lines.
+
+Last month it was cost per logged hour, where the denominator was an eighth of the real one. This week it was cost per seat, where the denominator was a purchase order rather than a person. Both times the published rate was wrong in the direction that flattered whoever produced it, and both times the fix was to put people in the denominator.
+
+That is not a coincidence about this company. Per-unit figures get built from whatever is easiest to count, and what is easiest to count is almost always a thing we bought rather than a thing that happened.
+
+Next time somebody hands you a rate, go straight to the denominator. You will be right more often than is comfortable.
+
+Think over the weekend about which other numbers this function publishes have that shape.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What do the two bad denominators have in common?',
+        markers: ['easy|easiest|count|available|bought|purchase|contract|not people|no person|convenient|record|flatter'],
+        why: 'Both were built from the thing that was easiest to count — hours somebody typed in, seats somebody ordered — rather than from the people or the work the cost is actually for.',
+      },
+    },
+  ],
 };
 
 // ---- Situations ---------------------------------------------------------------------
@@ -4232,6 +4468,115 @@ It is one slide. Is it really worth another round?`,
 Copy has been agreed with Sneha and nothing further is needed from you.`,
       expect: ['archive it'],
       note: 'Already agreed with the person who owns it. Nothing to add.',
+    },
+  ],
+  'tooling-review': [
+    {
+      key: 'mbs-01', day: 1, type: 'scope', via: 'chat', from: 'line_manager',
+      subject: 'Just the BI seat count, or all six?',
+      body: `Diya needs one number by Friday. You could give her that and stop.
+
+Or you could do the whole estate while you are in there, which is more work this week and a much better answer for the round.
+
+Which are you doing?`,
+      needsReply: true,
+      expect: ['all six', 'and say why it is not much more work'],
+      markers: ['all|six|whole|estate|everything|same quer|one quer|little more|both|yes|round|while'],
+      ifIgnored: 'Asha assumes the narrow answer, and the other five contracts renew across the year without anybody looking at them.',
+      note: 'Six contracts is barely more work than one — it is the same query with no WHERE clause — and it is the difference between an answer and a review.',
+    },
+    {
+      key: 'mbs-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Password rotation — analytics tooling',
+      body: `Password rotation for third-party analytics tools is scheduled for the first weekend of next month.
+
+Single sign-on users are unaffected, which is everyone in your team.`,
+      expect: ['archive it'],
+      note: 'Says in its own second line that it does not apply to anybody you manage.',
+    },
+    {
+      key: 'mbs-03', day: 2, type: 'pressure', via: 'chat', from: 'finance_analyst',
+      subject: 'Can I put the Northlake line in the draft?',
+      body: `I am drafting the tooling section now. Can I say Northlake is our most expensive tool per seat and we are reviewing it?
+
+It is true, isn't it?`,
+      needsReply: true,
+      expect: ['say not yet', 'and why'],
+      markers: ['not yet|hold|wait|no|don\'t|true but|per seat|use|active|13|thirteen|misle|tomorrow|by'],
+      ifIgnored: 'It goes into the draft, and by Wednesday the correction has to travel further than the original did.',
+      note: 'It is arithmetically true and it points at the tool you least want to disturb. Saying "true but not yet" costs one message today and saves a retraction on Friday.',
+    },
+    {
+      key: 'mbs-04', day: 2, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Vendor security attestations — annual refresh',
+      body: `All third-party vendors handling company data are being asked to refresh their security attestations this quarter.
+
+Procurement is running this centrally and will contact vendors directly. No action is needed from budget holders.`,
+      expect: ['archive it'],
+      note: 'Run centrally, vendors contacted directly, budget holders explicitly excluded.',
+    },
+    {
+      key: 'mbs-05', day: 3, type: 'judgement', via: 'chat', from: 'stakeholder',
+      subject: 'Heard you are cutting the stats tool',
+      body: `Somebody mentioned the Kestrel suite might go. I use the outputs of that for the quarterly pricing work — not often, but when I need it there is nothing else.
+
+Is that decided?`,
+      needsReply: true,
+      expect: ['nothing is decided', 'and ask him to tell you what it is used for'],
+      markers: ['not decided|nothing|no decision|not yet|asking|conversation|october|time|tell me|what you|useful|before'],
+      ifIgnored: 'He assumes it is going, escalates it to Asha over the weekend, and the conversation restarts as a dispute rather than a question.',
+      note: 'Exactly the information the usage data cannot hold, arriving unprompted. The right answer is that nothing is decided and that this is the kind of thing that decides it.',
+    },
+    {
+      key: 'mbs-06', day: 3, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Pulling the assignment table nightly',
+      body: `Since you are joining licences to assignments to analysts, I am scheduling that as a nightly view so it is there next time.
+
+No change to anything, and nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has read what you are building and made it permanent. Nothing to answer.',
+    },
+    {
+      key: 'mbs-07', day: 4, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Can we have your spare BI seats?',
+      body: `I hear you are handing back BI seats. Before they go back to Clearview — engineering would take four of them. We are at our cap and adding people.
+
+Same company, same contract, no extra cost. Seems obvious?`,
+      needsReply: true,
+      expect: ['say it is not yours to give and route it properly'],
+      markers: ['not mine|not my|procurement|diya|finance|contract|central|route|ask|transfer|happy|support|but'],
+      ifIgnored: 'The seats are quietly moved, the analytics line still carries the cost, and the saving you reported to Finance does not appear on any invoice.',
+      note: 'Reasonable ask, wrong mechanism. Seats moved informally stay on your cost line, so the saving you have just published evaporates and you are the one who has to explain it.',
+    },
+    {
+      key: 'mbs-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Meeting room booking system — new version',
+      body: `The room booking system moves to a new version on the 22nd. Existing recurring bookings carry over automatically.
+
+Training is not required.`,
+      expect: ['archive it'],
+      note: 'Carries over automatically, no training. Nothing to do.',
+    },
+    {
+      key: 'mbs-09', day: 5, type: 'judgement', via: 'email', from: 'line_manager',
+      subject: 'Clearview have called me',
+      body: `Their account director rang me directly about the renewal. Very friendly, wanted to check I was aware of the two-year offer and whether analytics had "the full picture on growth".
+
+I said you were handling it. What do I need to know before they ring again?`,
+      needsReply: true,
+      expect: ['the counts', 'and that going around you is what is happening'],
+      markers: ['16|sixteen|never|assigned|13|thirteen|active|two.year|lock|6\\.6|worse|around|direct|position|hold'],
+      ifIgnored: 'Asha takes the next call without the counts, sounds uncertain about growth, and the two-year offer becomes the path of least resistance.',
+      note: 'Going over the buyer\'s head is a standard play and it works when the person above has no numbers. Two sentences of ammunition is all she needs.',
+    },
+    {
+      key: 'mbs-10', day: 5, type: 'noise', via: 'email', from: 'comms',
+      subject: 'Supplier of the year nominations',
+      body: `Nominations for the annual supplier awards close at the end of the month. Any budget holder may nominate a vendor they have worked well with.
+
+Entirely optional.`,
+      expect: ['archive it'],
+      note: 'Optional, and nominating a vendor mid-renewal would be an odd move in any case.',
     },
   ],
 };
@@ -5751,6 +6096,122 @@ const QUIZZES = {
           { key: 'd', label: 'Neither, until timesheet coverage is good enough to support a rate' },
         ],
         why: 'The naive figure is two lines of arithmetic away and somebody will find it. Far better they find your version of it than discover it themselves and wonder what else was left out. Publishing nothing leaves the room with no analytics rate at all, and the cut lands there.',
+      },
+    ],
+  },
+  'tooling-review': {
+    key: 'mbq-tooling', title: 'Tooling & Licence Renewal — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A ₹21.6 lakh contract auto-renews in forty-six days. What does the auto-renewal clause change about your week?',
+        options: [
+          { key: 'b', label: 'Doing nothing becomes a priced decision, and the deadline belongs to the contract rather than to you', correct: true },
+          { key: 'a', label: 'It gives the vendor the stronger negotiating position' },
+          { key: 'c', label: 'It makes the whole tooling estate urgent rather than important' },
+          { key: 'd', label: 'Nothing — the analysis is the same whenever it renews' },
+        ],
+        why: 'Nothing about the tools changes. What changes is which findings you still have time to act on, and that inaction now has a price of ₹21.6 lakh.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Apply the test: if cost per seat improves, has anything got better?',
+        options: [
+          { key: 'c', label: 'No — it improves when we buy seats nobody uses, which raises the bill', correct: true },
+          { key: 'a', label: 'Yes — a lower unit price is always a better contract' },
+          { key: 'b', label: 'Sometimes, depending on whether the extra seats are later assigned' },
+          { key: 'd', label: 'Yes, provided the seat count is compared against headcount' },
+        ],
+        why: 'Both terms come from the contract. Buying sixteen spare BI seats halved the per-seat figure and cost ₹11.52 lakh, which is the measure rewarding the mistake it should catch.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'The same tool gives 30, 14 and 13 for "users". What are the three numbers?',
+        options: [
+          { key: 'a', label: 'Seats contracted, assignments made, and assignments held by current staff who used it recently', correct: true },
+          { key: 'b', label: 'Seats contracted, seats paid for this year, and seats in use today' },
+          { key: 'c', label: 'Assignments made, logins this year, and logins this quarter' },
+          { key: 'd', label: 'Seats contracted, headcount, and headcount below manager level' },
+        ],
+        why: 'A purchasing fact, an administrative fact and a behavioural fact. Saying which of the three you counted takes four words and is the difference between an analysis and an assertion.',
+      },
+      {
+        id: 'q4', topic: 'business-sense',
+        q: 'Cost per seat ranks Warehouse compute worst in the estate. Cost per active user ranks it third. What is actually true of it?',
+        options: [
+          { key: 'd', label: 'It is the best-used tool we own — fourteen seats, thirteen active users', correct: true },
+          { key: 'a', label: 'It is genuinely overpriced, and both rankings agree it is near the top' },
+          { key: 'b', label: 'It is fairly priced but assigned to more people than need it' },
+          { key: 'c', label: 'The two rankings measure different things and neither describes it well' },
+        ],
+        why: 'It topped the per-seat table because it has almost no spare seats — which is the same thing as being well bought. The measure punished the contract that was got right.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'Sixteen BI seats never assigned to anybody, and five Statistical suite seats unopened since February. Why should these not be added into one waste figure?',
+        options: [
+          { key: 'b', label: 'One is recoverable with no consequence for anybody; the other takes a capability away from named people', correct: true },
+          { key: 'a', label: 'They fall in different financial years' },
+          { key: 'c', label: 'The BI figure is reliable and the usage telemetry is not' },
+          { key: 'd', label: 'They are owned by different vendors and negotiated separately' },
+        ],
+        why: 'A single total hides exactly the part a reader needs in order to judge the risk — and the combined headline is the one that gets quoted.',
+      },
+      {
+        id: 'q6', topic: 'data-ethics',
+        q: 'Five people have not opened the Statistical suite since February. What should happen before those seats are cut?',
+        options: [
+          { key: 'a', label: 'Ask the five — the data records opens, and cannot distinguish disuse from twice-a-year necessity', correct: true },
+          { key: 'c', label: 'Cut them; five months without opening a tool is evidence enough' },
+          { key: 'b', label: 'Leave them; usage telemetry is too weak to support any change' },
+          { key: 'd', label: 'Reassign the seats to people who will use them more often' },
+        ],
+        why: 'Five conversations against ₹4.6 lakh is a good trade, and it renews on 5 October so there is time. Too weak to decide alone is not the same as useless — it tells you which five conversations to have.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Somebody left on 30 January and still held four seats worth ₹2.76 lakh. Why did nobody notice?',
+        options: [
+          { key: 'c', label: 'A missing seat is noticed within an hour and a spare one within a year, so only one of the two errors ever gets reported', correct: true },
+          { key: 'a', label: 'The offboarding checklist was not followed for that leaver' },
+          { key: 'b', label: 'IT has no record of which tools a leaver was assigned' },
+          { key: 'd', label: 'Individual seats are too small to justify a reclamation process' },
+        ],
+        why: 'Offboarding ran correctly — seats simply are not on the checklist. The asymmetry is why nobody ever put them there, and why the fix has to be automatic rather than diligent.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'The table says ₹20.43 lakh is recoverable and you intend to recommend ₹13.89 lakh. What do you publish?',
+        options: [
+          { key: 'd', label: 'The recommendation as the headline, the recoverable figure beside it, and one line on why they differ', correct: true },
+          { key: 'a', label: 'The recoverable figure, since it is what the data supports' },
+          { key: 'b', label: 'The recommendation alone, with the workings available on request' },
+          { key: 'c', label: 'Both without choosing, so the reader can form their own view' },
+        ],
+        why: 'Recoverable alone becomes a target you did not set. Recommended alone invites the question "is that all there is" and somebody will find the bigger number in one query. The gap IS the analysis.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'The vendor offers all thirty seats at ₹64,000 — ₹19.2 lakh a year against ₹21.6 lakh — on a two-year term. What is wrong with it?',
+        options: [
+          { key: 'b', label: 'It is ₹6.6 lakh a year worse than fifteen seats at their own step-up price, and the term removes next year\'s decision', correct: true },
+          { key: 'a', label: 'The unit price is still above market for a contract of that size' },
+          { key: 'c', label: 'A two-year commitment cannot be approved inside a one-year budget' },
+          { key: 'd', label: 'Nothing — it is a genuine saving for no change on our side' },
+        ],
+        why: 'Fifteen seats at ₹84,000 is ₹12.6 lakh. The offer is framed against ₹21.6 lakh, the figure you are trying to leave, and the concession they actually want is the two years.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You are keeping two spare seats per tool. What should the note say about them?',
+        options: [
+          { key: 'a', label: 'Name them as a deliberate choice and what they buy — a March joiner had every tool on day one', correct: true },
+          { key: 'b', label: 'Nothing — they are within the recommended seat counts already' },
+          { key: 'c', label: 'Flag them as a further saving available if required' },
+          { key: 'd', label: 'Describe them as a contingency against vendor price rises' },
+        ],
+        why: 'Unexplained spare capacity looks exactly like the waste you just finished removing, and the next review removes it. Explained spare capacity is a decision somebody has to argue with.',
       },
     ],
   },

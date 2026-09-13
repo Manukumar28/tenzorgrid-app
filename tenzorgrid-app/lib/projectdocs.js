@@ -541,6 +541,42 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'analytics_ops',
   },
+
+  'tooling-review': {
+    projectTitle: 'Tooling & Licence Renewal',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function\u2019s six tooling contracts \u2014 \u20b961.14 lakh a year, 16.5% of what the team costs, and the part of the cost line nobody is defending.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Decide what each contract renews at, before the renewal date decides for you.',
+      'Separate seats nobody has ever held from seats a real person might need next week. They are the same rupees and completely different decisions.',
+      'Hand back what is genuinely spare, and be able to say what the spare you kept is for.',
+    ],
+    scenario:
+      'A \u20b921.6 lakh BI contract auto-renews in forty-six days and Finance needs a seat count by Friday. Sixteen of its thirty seats have never been assigned to anybody. Finance has also sent a cost-per-seat ranking that points squarely at the one contract in the estate that is fully used, and has already repeated it to somebody.',
+    estimatedMinutes: 150,
+    difficulty: 'Hard',
+    primaryObjective: 'A seat count for every contract, split into what can be handed back with no consequence and what needs a conversation first.',
+    constraints: [
+      { label: 'The clock', value: 'An auto-renewal is a decision that gets made by default. Friday is the last day the default can be changed.' },
+      { label: 'Two kinds of spare', value: 'A seat nobody has ever held and a seat somebody stopped opening in February are not the same finding and must not be added up without saying so.' },
+      { label: 'Recoverable vs recommendable', value: 'Publish the theoretical maximum and what you are actually proposing, with the gap explained.' },
+    ],
+    deliverables: [
+      { text: 'Seats contracted, assigned and actively used, per tool, from one query.', via: 'sql-terminal' },
+      { text: 'The two rankings \u2014 cost per seat and cost per active user \u2014 and how far each tool moves between them.', via: 'python-notebook' },
+      { text: 'A renewal recommendation, a correction to Finance, and a reply to the vendor.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Cost per seat divides the contract by the contract. It improves every time we buy a seat nobody uses, which is how the estate got here.',
+      'The per-seat ranking puts Warehouse compute first. It has fourteen seats and thirteen active users and is the best-used tool we own.',
+      'Somebody left on 30 January and still holds four seats worth \u20b92.76 lakh a year. Nobody noticed for five months, because reclaiming them is a step that does not exist.',
+      'The Statistical suite has five seats unopened since February. It is the biggest single-tool saving on the page and the only tool that does what it does.',
+      'The vendor\u2019s counter-offer is a discount measured against the wrong baseline. Against your own proposal it is a \u20b96.6 lakh a year increase, locked in for two years.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

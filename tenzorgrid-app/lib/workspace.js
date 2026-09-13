@@ -549,6 +549,41 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 0,
     },
+    {
+      key: 'tooling-review',
+      title: 'Tooling & Licence Renewal',
+      description: 'A ₹21.6 lakh BI contract auto-renews in forty-six days. Sixteen of its thirty seats have never been assigned to anybody.',
+      kind: 'review',
+      stakeholder: 'finance_analyst',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — the estate, and cost per seat, which is where everybody starts.
+        'mb-101', 'mb-102', 'mb-103', 'mb-104', 'mb-105', 'mb-106',
+        // Day 2 — seats, assignments and active users turn out to be three numbers, and
+        // the per-seat ranking inverts when the denominator has people in it.
+        'mb-110', 'mb-111', 'mb-112', 'mb-113', 'mb-114', 'mb-115',
+        // Day 3 — the wobble. Monday's ranking pointed at the best-used tool in the
+        // estate, and the most visible cut is the one that removes a capability.
+        'mb-120', 'mb-121', 'mb-122', 'mb-123', 'mb-124', 'mb-125',
+        // Day 4 — the recovery in three buckets, and the gap between what is recoverable
+        // and what you are willing to recommend.
+        'mb-130', 'mb-131', 'mb-132', 'mb-133', 'mb-134', 'mb-135',
+        // Day 5 — the renewal, a vendor who would rather you did not, and the checks that
+        // stop next year being this week again.
+        'mb-140', 'mb-141', 'mb-142', 'mb-143', 'mb-144', 'mb-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 1389000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Owns the renewal and the budget line', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Decides the seat counts', day: 1, throughDay: 5 },
+        { name: 'Rahul Verma', role: 'Data Engineer', does: 'Reclaims the seats once they are agreed', day: 4 },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Signs off what becomes standing process', day: 5, needsYou: true },
+      ],
+      unlockAfter: 1,
+    },
   ],
 };
 
@@ -7428,6 +7463,474 @@ const TASKS = {
         { key: 'outcome', label: 'Something about whether delivered work was used', markers: ['used|outcome|value|follow.?up|after|impact|decision|was it'], why: 'The question nobody in the company can currently answer, and the one that would change what the team prioritises.' },
         { key: 'capacity', label: 'Capacity measured from presence, as a standing figure', markers: ['presence|days|person.year|capacity|not headcount|joiner|leaver'], why: 'Headcount overstated capacity by about a person-year this year and will again.' },
         { key: 'own', label: 'Written as decisions, not proposals', markers: ['I will|I am|we will|from|changing|introduce|put in place|next'], why: 'A manager describing a measurement gap without owning the fix has described their own failure twice.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 2 · Tooling & Licence Renewal (analytics_ops) ----------------------
+  // Second project at Manager. The team is still the subject but the cost line is the
+  // tooling rather than the people, which makes it the easier conversation and the more
+  // dangerous analysis: nobody defends a seat, so a bad cut here goes through unopposed.
+  // Monday the estate and cost per seat. Tuesday seats, assignments and use turn out to
+  // be three numbers. Wednesday the wobble — the per-seat ranking pointed at the best-used
+  // tool in the estate, and the obvious cut removes a capability. Thursday the recovery
+  // in three buckets, and the gap between recoverable and recommendable. Friday the
+  // renewal, a vendor who would rather you did not, and the process that stops the drift.
+
+  'mb-101': {
+    title: 'The renewal that starts the clock',
+    hint: "Read what is being decided and when. One of the three dates in here is the one that matters.",
+    brief: "Finance has sent a renewal notice. Work out what is actually being asked of you before you open the data.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Analytics tooling — renewals coming up',
+        body: "The Clearview BI platform auto-renews on 15 August at ₹21.6 lakh and I need your seat count by Friday or it renews as it stands.\n\nWhile you are in there: the whole analytics tooling line is ₹61.14 lakh and the budget round will ask about it. Anything you can hand back before the round would be useful.\n\nI have pulled cost per seat for each tool if that helps — Northlake looks like the expensive one.",
+      },
+      prompt: 'Tick everything that is true about what you have just been asked.',
+      options: [
+        { key: 'deadline', correct: true, label: 'The decision is the BI seat count, and it is due Friday whether or not you are ready', why: 'An auto-renewal is a decision that gets made by default. Friday is not a reporting deadline, it is the last day the default can be changed.' },
+        { key: 'wider', correct: true, label: 'The wider question is which tools are worth what they cost, and that has no deadline at all', why: 'Two questions on two clocks. Answering only the urgent one leaves ₹61.14 lakh unexamined until the round asks.' },
+        { key: 'perseat', correct: true, label: 'Her cost-per-seat ranking is a claim about the contracts, not about use', why: 'It divides price by seats bought. Nobody has yet asked how many of those seats have a person behind them, which is where the answer is.' },
+        { key: 'cheap', correct: false, label: 'Tooling is 16.5% of the analytics cost line, so it is the smaller problem and can wait', why: 'It is the smaller line and the one where money can be handed back this month without anybody losing their job. Small and actionable beats large and immovable.' },
+        { key: 'vendor', correct: false, label: 'Northlake is the tool to renegotiate, since cost per seat is highest there', why: 'That is the conclusion her ranking invites and it will not survive Tuesday. Take the ranking as a starting point rather than a finding.' },
+        { key: 'defer', correct: false, label: 'Ask her to delay the BI renewal until the full review is done', why: 'An auto-renewal date is a contract term, not a preference. Asking for it to move is how the whole year gets renewed at thirty seats.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mb-102': {
+    title: 'What we actually buy',
+    hint: "Six contracts. Order them by how soon each one can still be changed.",
+    brief: "Start with the estate. Write ONE SQL SELECT over licences returning: tool, vendor, seats, annual cost, renewal date, and the number of days from 30 June 2026 to that renewal. Soonest renewal first.",
+    referenceSql: "SELECT tool, vendor, seats, annual_cost, renews_on, CAST(julianday(renews_on) - julianday('2026-06-30') AS INTEGER) AS days_to_renewal FROM licences ORDER BY renews_on",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'mb-103': {
+    title: "Diya's ranking, reproduced",
+    hint: "Reproduce it exactly as she would have. You are not agreeing with it, you are establishing what it says.",
+    brief: "Before you argue with a figure, be able to produce it. Write ONE SQL SELECT over licences returning tool, seats, annual cost and annual cost per seat rounded to the nearest rupee, most expensive per seat first.",
+    referenceSql: "SELECT tool, seats, annual_cost, ROUND(annual_cost * 1.0 / seats) AS cost_per_seat FROM licences ORDER BY cost_per_seat DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'easy',
+  },
+
+  'mb-104': {
+    title: 'What cost per seat can and cannot say',
+    hint: "Everything in that ranking comes from the contract. Ask what is missing.",
+    brief: "You have Warehouse compute at ₹1,03,571 a seat and Scheduling at ₹33,000. Decide what that comparison is worth.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of a cost-per-seat ranking.',
+      options: [
+        { key: 'contract', correct: true, label: 'Both numbers in it come from the contract, so it says nothing about use', why: 'Price and seats are what the vendor sold us. Whether anybody opens the tool is a different table entirely.' },
+        { key: 'buying', correct: true, label: 'A tool bought with generous headroom looks cheap per seat precisely because the extra seats are empty', why: 'Buying thirty seats for a team of fourteen halves the cost per seat and doubles the waste. The measure rewards the mistake.' },
+        { key: 'capability', correct: true, label: 'It treats six tools doing six different jobs as though they were interchangeable', why: 'A warehouse and a scheduler are not substitutes. A per-unit comparison across them is arithmetic without a question behind it.' },
+        { key: 'start', correct: true, label: 'It is still a reasonable place to start, because it puts every contract on one page', why: 'Establishing what is bought is a real step. The error is stopping there and calling the top of the list the problem.' },
+        { key: 'expensive', correct: false, label: 'It correctly identifies the tool where the company is getting least for its money', why: 'It identifies the tool with the highest sticker price per seat. Those are different claims and Tuesday will separate them.' },
+        { key: 'negotiate', correct: false, label: 'It is the right basis for deciding which vendor to renegotiate with', why: 'Renegotiating on price per seat with a vendor whose seats are all in use is a conversation you will lose, and should.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mb-105': {
+    title: 'Seats bought against seats given out',
+    hint: "A seat with nobody assigned to it has never been used by anyone and never will be.",
+    brief: "The first real question. Write ONE SQL SELECT returning, per tool: seats contracted, seats with somebody assigned to them, seats with nobody assigned, and what those unassigned seats cost a year. Most wasted first.",
+    referenceSql: "SELECT l.tool, l.seats, COUNT(la.id) AS assigned, l.seats - COUNT(la.id) AS unassigned_seats, ROUND((l.seats - COUNT(la.id)) * l.annual_cost * 1.0 / l.seats) AS unassigned_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id GROUP BY l.id ORDER BY unassigned_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mb-106': {
+    title: 'Hold the renewal',
+    hint: "She needs to know the Friday date is now a real decision rather than a formality. Do not send her a finding you cannot yet defend.",
+    brief: "Write to Diya on day one. Sixteen of the thirty BI seats have never been assigned to anybody, which is ₹11.52 lakh, and you have not yet looked at whether the other fourteen are used. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'BI renewal — do not let it auto-renew at thirty', maxWords: 150,
+      prompt: 'What you have found so far, and what you will have by Friday.',
+      rubric: [
+        { key: 'finding', label: 'The sixteen unassigned BI seats and what they cost', markers: ['16|sixteen|unassigned|never|no one|nobody|11\\.5|1,?152|lakh'], why: 'One concrete number on day one is what keeps a renewal open. Method can wait.' },
+        { key: 'partial', label: 'That this is seats assigned, not seats used, and use is still to come', markers: ['assign|not used|use|yet|still|Tuesday|further|open|whether'], why: 'The gap between assigned and used is the rest of the week. Implying you already know it is how a number gets quoted early.' },
+        { key: 'date', label: 'A commitment to a seat count before Friday', markers: ['friday|by then|before|will have|number|count|thursday|end of the week'], why: 'She asked for a date-bound answer. Anything that does not name the date reads as a request for more time.' },
+        { key: 'noblame', label: 'No suggestion that anybody bought badly', markers: ['headroom|growth|planned|at the time|reasonable|understand|not|no blame|sensible'], why: 'Thirty seats for fourteen people was somebody\'s judgement about growth. Leading with that being wrong makes the next renewal harder, not easier.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mb-110': {
+    title: 'Three numbers that are not the same number',
+    hint: "Contracted, assigned, and assigned to somebody who is still here and has opened it recently. Count all three.",
+    brief: "Write ONE SQL SELECT returning, per tool: seats contracted, assignments made, assignments held by people who still work here, and assignments held by current staff used since 1 April 2026. Most expensive tool first.",
+    referenceSql: "SELECT l.tool, l.seats, COUNT(la.id) AS assigned, SUM(CASE WHEN a.left_on IS NULL THEN 1 ELSE 0 END) AS held_by_current, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_last_quarter FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY l.annual_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-111': {
+    title: 'Where the three numbers separate',
+    hint: "Look for the tool where assigned and active are furthest apart, and the tool where contracted and assigned are.",
+    brief: "You have three counts per tool and they disagree in two different ways. Work out what each disagreement means.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows from the three counts.',
+      options: [
+        { key: 'bi', correct: true, label: 'BI has sixteen seats no one has ever held — a buying decision, recoverable at renewal with nobody affected', why: 'Nothing has to change for anybody. The seats are handed back and thirteen people carry on exactly as they were.' },
+        { key: 'stat', correct: true, label: 'The Statistical suite has ten assignments and five recent users — a use problem, and cutting it takes something away from somebody', why: 'Every one of those ten seats belongs to a person who might open it next week. That is a different decision from handing back air.' },
+        { key: 'kinds', correct: true, label: 'The two gaps need different remedies and should not be added into one waste figure without saying so', why: 'One is recoverable with no consequence and one has a consequence. A single total hides exactly the part a reader needs.' },
+        { key: 'leaver', correct: true, label: 'Assigned and held-by-current differ, which means at least one seat belongs to somebody who has left', why: 'Four of them, and nobody noticed for five months. Reclaiming a leaver\'s seats is a process that does not exist here.' },
+        { key: 'same', correct: false, label: 'Unassigned seats and unused assignments are both waste and should be reported as one number', why: 'It gives the larger headline and it is the reason cuts get made in the wrong place. A reader who cannot see the split cannot judge the risk.' },
+        { key: 'stat2', correct: false, label: 'The Statistical suite has the clearest case for a cut, since half its seats are idle', why: 'It is the most visible gap and the most consequential cut. Wednesday is about why the visible one is the wrong one to start with.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-112': {
+    title: 'The rate that means something',
+    hint: "Same numerator, a denominator with people in it. Put both rates side by side so the reordering is visible.",
+    brief: "Write ONE SQL SELECT returning, per tool: annual cost, cost per seat, active users (current staff who used it since 1 April 2026), and cost per active user. Most expensive per active user first, both rates rounded to the rupee.",
+    referenceSql: "SELECT l.tool, l.annual_cost, ROUND(l.annual_cost * 1.0 / l.seats) AS cost_per_seat, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, ROUND(l.annual_cost * 1.0 / NULLIF(SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END), 0)) AS cost_per_active_user FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY cost_per_active_user DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-113': {
+    title: 'The ranking turns over',
+    hint: "Compare where each tool sits in the two orderings. One of them moves a long way.",
+    brief: "Cost per seat put Warehouse compute at the top. Cost per active user puts it third. Decide what that tells you.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows from the two rankings disagreeing.',
+      options: [
+        { key: 'warehouse', correct: true, label: 'Warehouse compute is the best-used tool in the estate — fourteen seats, thirteen active users', why: 'It topped the per-seat table because it is genuinely expensive per seat, and it is expensive per seat because almost nobody is wasting one.' },
+        { key: 'bi', correct: true, label: 'BI looks second cheapest per seat and second most expensive per active user', why: 'The clearest illustration of the whole point. Buying sixteen spare seats made the per-seat figure look good and cost ₹11.52 lakh.' },
+        { key: 'denominator', correct: true, label: 'The per-seat figure improves whenever we buy seats we do not need', why: 'A measure that rewards over-buying will, given a year, produce over-buying. That is not a comment about anybody; it is what measures do.' },
+        { key: 'monday', correct: true, label: "Diya's Monday conclusion about Northlake points at the one contract you should not touch", why: 'And she will have said it to somebody by now. Correcting it is Wednesday morning\'s job, before it reaches the round.' },
+        { key: 'both', correct: false, label: 'Both rankings are valid and the honest answer is to publish them side by side without choosing', why: 'They are not equally useful. Publishing both without saying which answers the renewal question is a way of not answering it.' },
+        { key: 'stat', correct: false, label: 'The Statistical suite tops the per-active-user table, so it is the clearest cut', why: 'It tops it because five people have not opened it since February. Whether that is waste or a capability in reserve is not something the rate can tell you.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-114': {
+    title: 'How far each tool moves',
+    hint: "Rank on both measures, then subtract. The movement is the finding, not either ranking on its own.",
+    brief: "Quantify the reordering. Using the six tools, rank them 1 to 6 by cost per seat and again by cost per active user, and report each tool's two ranks and the change. Return a list of dicts with keys tool, rank_per_seat, rank_per_active and rank_change, ordered by the size of the change, largest first.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "import json\nrows = query(\"SELECT l.tool, l.annual_cost, l.annual_cost * 1.0 / l.seats AS per_seat, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id\")\nfor r in rows:\n    r['per_active'] = r['annual_cost'] / r['active']\nby_seat = sorted(rows, key=lambda r: -r['per_seat'])\nby_active = sorted(rows, key=lambda r: -r['per_active'])\nseat_rank = {r['tool']: i + 1 for i, r in enumerate(by_seat)}\nactive_rank = {r['tool']: i + 1 for i, r in enumerate(by_active)}\nout = [{'tool': t, 'rank_per_seat': seat_rank[t], 'rank_per_active': active_rank[t], 'rank_change': seat_rank[t] - active_rank[t]} for t in seat_rank]\nout.sort(key=lambda r: -abs(r['rank_change']))\nresult = out",
+    estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-115': {
+    title: 'Tell the team their seats are being counted',
+    hint: "Thirteen people are about to have their tool use looked at. Same rule as the timesheets: they hear it from you first.",
+    brief: "Write to the team. You are reviewing licence use ahead of renewals and some seats will be handed back. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'Tool seats — what I am looking at and why', maxWords: 150,
+      prompt: 'What you are doing, what it is not, and what to do if a seat they need is at risk.',
+      rubric: [
+        { key: 'what', label: 'What you are actually reviewing — seats and contracts, ahead of renewals', markers: ['seat|licence|license|renew|contract|tool|august|review'], why: 'Naming the thing plainly stops it being guessed at. People assume the worst about any exercise with the word review in it.' },
+        { key: 'notperf', label: 'That this is not about individual performance', markers: ['not|performance|assess|judg|about you|individual|nobody|no one'], why: 'Tool telemetry is the second dataset this month that could be read as watching people. Say it is not before somebody asks.' },
+        { key: 'ask', label: 'An invitation to say if a seat they need looks unused', markers: ['tell me|let me know|speak|shout|if you|need it|use it|flag|come to me'], why: 'The data cannot distinguish a tool nobody needs from one used twice a year for something important. The people can.' },
+        { key: 'nothing', label: 'Reassurance that nothing has been taken away yet', markers: ['nothing|yet|not taken|before|first|no change|will not|until'], why: 'Otherwise the first reaction is to log in to everything on Monday, which destroys exactly the data you are reading.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mb-120': {
+    title: 'The seats nobody handed back',
+    hint: "Somebody left in January. Find out what they still have.",
+    brief: "Write ONE SQL SELECT returning every licence assignment held by somebody who has left: their name, leaving date, the tool, the date they last used it, and what that seat costs a year. Most expensive seat first.",
+    referenceSql: "SELECT a.name, a.left_on, l.tool, la.last_used_on, ROUND(l.annual_cost * 1.0 / l.seats) AS per_seat_cost FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NOT NULL ORDER BY per_seat_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'mb-121': {
+    title: 'Monday pointed at the wrong vendor',
+    hint: "Diya has already told somebody that Northlake is the expensive one. Work out what that costs if it is not corrected today.",
+    brief: "Cost per active user puts Warehouse compute third, not first, and it is the most fully used tool we have. Decide what to do about Monday.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how you handle this.',
+      options: [
+        { key: 'correct', correct: true, label: 'Correct it with Diya today, before the renewal conversation with Northlake happens', why: 'Northlake renews on 30 September. A renegotiation opened on the wrong premise is worse than none — it tells the vendor we have not done the work.' },
+        { key: 'own', correct: true, label: 'Own it as a shared starting point rather than as her error', why: 'Cost per seat was a reasonable first cut and you reproduced it yourself on Monday. Framing it as her mistake buys nothing and costs a working relationship.' },
+        { key: 'concrete', correct: true, label: 'Give her the one sentence that replaces it: fourteen seats, thirteen active users, the best-used tool we have', why: 'A correction without a replacement leaves a hole, and the old number fills holes. Hand her the sentence she can repeat.' },
+        { key: 'where', correct: true, label: 'Point at where the money actually is — sixteen unassigned BI seats at ₹11.52 lakh', why: 'It makes the correction useful rather than merely deflating. She came to you for somewhere to cut and there is somewhere to cut.' },
+        { key: 'quiet', correct: false, label: 'Leave it, since the BI renewal is the urgent one and Northlake is three months away', why: 'Three months is how long a wrong figure has to become the thing everybody knows. Corrections get cheaper the earlier they are made, never later.' },
+        { key: 'blame', correct: false, label: 'Explain that cost per seat was never a sound basis for the comparison', why: 'True, unhelpful, and it invites her to defend it. What she needs is the replacement figure, not a lesson on the old one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-122': {
+    title: 'Seats held by people who are still here and not using them',
+    hint: "Current staff only. The leaver is a different bucket with a different remedy.",
+    brief: "Write ONE SQL SELECT returning every assignment held by somebody still employed who has not used it since 1 April 2026: tool, name, level, last used date, days since use as at 30 June 2026, and the annual cost of that seat. Longest idle first.",
+    referenceSql: "SELECT l.tool, a.name, a.level, la.last_used_on, CAST(julianday('2026-06-30') - julianday(la.last_used_on) AS INTEGER) AS days_since_use, ROUND(l.annual_cost * 1.0 / l.seats) AS per_seat_cost FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NULL AND la.last_used_on < '2026-04-01' ORDER BY days_since_use DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-123': {
+    title: 'The obvious cut',
+    hint: "Every one of those five rows is a named person and one tool. Ask what the tool does before you ask how often it is opened.",
+    brief: "Five idle seats, all on the Statistical suite, worth ₹4.6 lakh a year. Decide whether that is the cut to recommend.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that should shape the decision.',
+      options: [
+        { key: 'capability', correct: true, label: 'It is the only tool in the estate that does what it does, so a cut is a capability decision rather than a cost one', why: 'Handing back an unused BI seat changes nothing. Handing back a statistical seat means the next request needing it gets refused or done badly.' },
+        { key: 'frequency', correct: true, label: 'Low frequency is not low value — some analysis is done twice a year and matters both times', why: 'The usage data records opens. It has no opinion at all about what was produced, and the two are not the same shape.' },
+        { key: 'ask', correct: true, label: 'The five people should be asked before a seat is removed, and they are the only source for the answer', why: 'Five conversations against ₹4.6 lakh is a good trade. The data genuinely cannot distinguish disuse from infrequent necessity.' },
+        { key: 'stagger', correct: true, label: 'It renews on 5 October, so there is time to ask — unlike BI', why: 'Ninety-seven days. The reason to decide BI this week and this one next month is the calendar, not the size.' },
+        { key: 'cut', correct: false, label: 'Cut all five: five months without opening a tool is evidence enough', why: 'It is the largest single-tool saving on the page and the one most likely to come back as a refused request in November.' },
+        { key: 'keep', correct: false, label: 'Leave it entirely — usage data is too weak to support any change here', why: 'Too weak to decide alone is not the same as useless. It tells you exactly which five conversations to have.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-124': {
+    title: 'Three buckets, three remedies',
+    hint: "Never assigned, held by a leaver, held by somebody here who is not using it. Count seats and rupees for each.",
+    brief: "Split the recoverable seats by the kind of thing they are. Write ONE SQL SELECT returning three rows with columns bucket, seats and annual_cost: seats never assigned to anybody; seats held by somebody who has left; seats held by current staff unused since 1 April 2026.",
+    referenceSql: "SELECT 'seats never assigned' AS bucket, SUM(l.seats - x.assigned) AS seats, ROUND(SUM((l.seats - x.assigned) * l.annual_cost * 1.0 / l.seats)) AS annual_cost FROM licences l JOIN (SELECT licence_id, COUNT(*) AS assigned FROM licence_assignments GROUP BY licence_id) x ON x.licence_id = l.id UNION ALL SELECT 'seats held by a leaver', COUNT(*), ROUND(SUM(l.annual_cost * 1.0 / l.seats)) FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NOT NULL UNION ALL SELECT 'held by current staff, unused since 1 April', COUNT(*), ROUND(SUM(l.annual_cost * 1.0 / l.seats)) FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NULL AND la.last_used_on < '2026-04-01'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-125': {
+    title: 'Correct Monday, in writing',
+    hint: "Short. The replacement sentence matters more than the explanation of what was wrong.",
+    brief: "Write to Diya. Her cost-per-seat ranking pointed at Northlake, which turns out to be the best-used tool we have. Under 140 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Northlake is the wrong target — here is the right one', maxWords: 140,
+      prompt: 'The correction, the replacement, and where the money actually is.',
+      rubric: [
+        { key: 'correct', label: 'That Northlake is fully used — fourteen seats, thirteen active users', markers: ['14|fourteen|13|thirteen|active|fully|used|all|best'], why: 'The specific counts are what make the correction stick. "It is fine actually" will not survive a second reading of her own table.' },
+        { key: 'why', label: 'Why cost per seat misled — it rewards buying seats nobody uses', markers: ['per seat|denominator|seats bought|headroom|spare|reward|empty|unassigned|contract'], why: 'Without the mechanism she has no way to avoid repeating it on the next cost line she looks at.' },
+        { key: 'where', label: 'Where the money is instead — the unassigned BI seats', markers: ['BI|Clearview|16|sixteen|11\\.5|1,?152|unassigned|never'], why: 'A correction that only removes a target leaves her worse off than before she asked.' },
+        { key: 'shared', label: 'Framed as a shared first cut rather than her error', markers: ['we|I also|first cut|start|reasonable|same|my own|monday|both'], why: 'You produced the same ranking on Monday. Writing it as her mistake is both unkind and inaccurate.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-130': {
+    title: 'Every tool, one table',
+    hint: "Recoverable means seats beyond what current active users need. One query, so no two figures in the pack can disagree.",
+    brief: "Assemble the review. Write ONE SQL SELECT returning, per tool: seats, annual cost, renewal date, assignments, active users (current staff, used since 1 April 2026), seats above that active count, and what those seats cost a year. Most recoverable first.",
+    referenceSql: "SELECT l.tool, l.seats, l.annual_cost, l.renews_on, COUNT(la.id) AS assigned, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS recoverable_seats, ROUND((l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END)) * l.annual_cost * 1.0 / l.seats) AS recoverable_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY recoverable_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-131': {
+    title: 'The recovery chart',
+    hint: "Six named tools, one measure, sorted. The reader should see where the money is in one glance.",
+    brief: "Build the visual for the budget note: recoverable annual cost by tool. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT l.tool AS tool, (l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END)) * l.annual_cost * 1.0 / l.seats AS recoverable_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY recoverable_cost DESC",
+      prompt: 'Recoverable annual cost by tool.',
+      answer: { type: 'bar', x: 'tool', y: 'recoverable_cost', sort: 'desc', baselineZero: true },
+      why: 'Six named tools compared on one measure is a bar chart, sorted so the reader sees that BI is most of the answer before reading a single label. A zero baseline because the tools with nothing recoverable must read as nothing rather than as a short bar.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mb-132': {
+    title: 'Recoverable is not the same as recommendable',
+    hint: "Some of that ₹20.43 lakh needs a conversation first, and some of it needs headroom kept back.",
+    brief: "The table says ₹20.43 lakh is recoverable. Decide what you are actually willing to put in front of Finance.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that should reduce the headline before it is published.',
+      options: [
+        { key: 'headroom', correct: true, label: 'Some spare seats have to be kept — a joiner in March needed one and there was no delay because the seats were there', why: 'Cutting to exactly the active count buys a procurement conversation every time somebody joins. Two seats of headroom per tool is cheaper than that.' },
+        { key: 'stat', correct: true, label: 'The Statistical suite seats need five conversations before they can be counted as savings', why: 'Recoverable on the table, undecided in reality. Putting it in the headline commits you to a cut you have not yet agreed with the people affected.' },
+        { key: 'timing', correct: true, label: 'Only the tools renewing this financial year can deliver a saving this financial year', why: 'Scheduling renews in January 2027. Reporting its ₹99,000 as an in-year saving is a timing error that Finance will find.' },
+        { key: 'split', correct: true, label: 'The honest headline is smaller than ₹20.43 lakh and should be shown against it, not instead of it', why: 'Show the theoretical maximum and what you are recommending. The gap between them IS the analysis, and hiding it invites somebody else to find the bigger number.' },
+        { key: 'max', correct: false, label: 'Publish ₹20.43 lakh, since it is what the data supports and the caveats are in the appendix', why: 'The headline will be quoted and the appendix will not. A number you cannot deliver becomes a shortfall you have to explain in six months.' },
+        { key: 'nothing', correct: false, label: 'Publish nothing until every conversation has happened, since a partial figure will be misused', why: 'BI renews in forty-six days. Waiting for certainty means the ₹11.52 lakh renews itself, which is the one outcome with no upside at all.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-133': {
+    title: 'Reclaiming the leaver seats',
+    hint: "Four seats, five months, nobody noticed. The note is about the process rather than the person.",
+    brief: "Write to IT operations. Somebody who left on 30 January still holds four licence seats worth ₹2.76 lakh a year. Under 140 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'IT Operations', subject: 'Licence seats not reclaimed on leaving', maxWords: 140,
+      prompt: 'The specific case, the general gap, and what you want to happen.',
+      rubric: [
+        { key: 'facts', label: 'The specific facts — four seats, left 30 January, ₹2.76 lakh a year', markers: ['4|four|seat|january|2\\.7|2\\.8|276|lakh|five months'], why: 'A process complaint with no instance behind it gets filed. One with a date and a number gets actioned.' },
+        { key: 'process', label: 'That the gap is a missing offboarding step, not a mistake by any individual', markers: ['process|step|offboard|leaver|automatic|nobody|checklist|not|blame|system'], why: 'Nobody chose not to reclaim them. Naming it as a process gap is both true and the only framing that gets a process built.' },
+        { key: 'ask', label: 'A specific ask — reclaim these four, and add the step', markers: ['reclaim|remove|revoke|add|step|checklist|going forward|future|both'], why: 'Two asks, one immediate and one structural. Sending only the first guarantees the next leaver repeats it.' },
+        { key: 'scope', label: 'Acknowledgement that this is only what you can see in analytics tooling', markers: ['analytics|our|only|other team|elsewhere|wider|may|likely|suspect'], why: 'One leaver, four seats, one function. If the step is missing everywhere the number is much larger, and that is their finding to make, not yours to assert.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mb-134': {
+    title: 'What to renew each contract at',
+    hint: "Active users plus two seats of headroom, and never more seats than we already hold.",
+    brief: "Produce the recommendation. Write ONE SQL SELECT returning, per tool: renewal date, seats now, active users, proposed seats (active users plus two, capped at the seats we already have), the cost at the proposed seat count, and the saving. Biggest saving first.",
+    referenceSql: "SELECT l.tool, l.renews_on, l.seats AS seats_now, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2) AS seats_proposed, ROUND(l.annual_cost * 1.0 / l.seats * MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2)) AS cost_proposed, l.annual_cost - ROUND(l.annual_cost * 1.0 / l.seats * MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2)) AS saving FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY saving DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the recommendation is accepted and then asked for
+    // with a different headroom rule, which is the same query and a different number in
+    // front of Finance. Worth feeling how cheap that change is once it is one query.
+    rework: true,
+  },
+
+  'mb-135': {
+    title: 'Going into the renewal conversation',
+    hint: "You are about to halve an order with a vendor whose account manager has your number.",
+    brief: "Decide how to approach Clearview about renewing at fifteen seats rather than thirty.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in your approach.',
+      options: [
+        { key: 'evidence', correct: true, label: 'Go in with the assignment counts, because they are checkable and not a matter of opinion', why: 'Thirteen active users out of thirty seats is not an argument, it is an observation. Vendors argue with opinions and concede to counts.' },
+        { key: 'renew', correct: true, label: 'Be clear that we are renewing, not leaving — the disagreement is about volume', why: 'A renewal at half the seats is still a sale. Letting it sound like a churn risk invites a retention offer instead of a price.' },
+        { key: 'unitprice', correct: true, label: 'Expect the per-seat price to rise when the volume falls, and work out the total before agreeing', why: 'Fifteen seats at a higher unit price can cost more than thirty at the old one. The number that matters is the invoice.' },
+        { key: 'timing', correct: true, label: 'Open it now rather than in the last week before 15 August', why: 'A negotiation with no time left in it is a request. Forty-six days is enough to walk away from a first offer.' },
+        { key: 'threat', correct: false, label: 'Open by saying we are evaluating alternatives, to improve the position', why: 'We are not, and a bluff that is called costs the whole relationship for the next four renewals. The counts are a strong enough position.' },
+        { key: 'quiet', correct: false, label: 'Renew at thirty this year and reduce next year once the usage data is longer', why: 'That is ₹11.52 lakh for another year of data confirming something already visible. The seats have never been assigned to anybody.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-140': {
+    title: 'The renewal recommendation',
+    hint: "Two numbers: what the table says is recoverable, and what you are recommending. The gap is the honest part.",
+    brief: "Write to Diya with the answer she asked for on Monday. Fifteen BI seats, ₹13.89 lakh of recommended savings against ₹20.43 lakh theoretically recoverable. Under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Tooling renewals — the seat counts and what they save', maxWords: 200,
+      prompt: 'The BI answer she needs by Friday, the wider recommendation, and what you are not yet claiming.',
+      rubric: [
+        { key: 'bi', label: 'The BI seat count, which is the thing with a Friday deadline', markers: ['15|fifteen|BI|Clearview|seat|renew|10\\.8|1,?080'], why: 'She asked one question with a date on it. Everything else is context, and context that buries the answer is not context.' },
+        { key: 'two', label: 'Both figures — recommended against theoretically recoverable', markers: ['13\\.8|13\\.9|1,?389|20\\.4|2,?043|recover|recommend|against|versus|of which'], why: 'One number invites the question "is that all there is". Two numbers answer it before it is asked.' },
+        { key: 'gap', label: 'Why the recommendation is lower — headroom, conversations still to have, renewal timing', markers: ['headroom|two seats|conversation|ask|statistical|timing|next year|january|spare|joiner'], why: 'The gap is a judgement you made, so it needs your reasoning attached or somebody will close it for you.' },
+        { key: 'northlake', label: 'That Northlake is fully used and should be renewed as it stands', markers: ['northlake|warehouse|fully|13|thirteen|as it stands|no change|renew'], why: 'It was the headline of her Monday email. Leaving it unmentioned means she still half-believes it.' },
+        { key: 'nopeople', label: 'No implication that any of this bears on the people question', markers: ['tooling|seat|contract|separate|not|people|headcount|different'], why: 'Two cost lines, two arguments. A tooling saving offered as evidence in a headcount discussion loses both.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.75, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-141': {
+    title: 'What Finance does with a saving',
+    hint: "A saving offered into a budget round does not stay a saving. Decide what you want it to become.",
+    brief: "You are about to hand back ₹13.89 lakh. Decide what to say about what happens to it.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true about handing back a saving in a budget round.',
+      options: [
+        { key: 'baseline', correct: true, label: 'It becomes next year\'s baseline, so the saving is made once and expected forever', why: 'Which is the correct outcome and worth going in knowing. A saving presented as a one-off will be treated as a recurring one anyway.' },
+        { key: 'credit', correct: true, label: 'Handing it back voluntarily is worth more than having it found, in every round after this one', why: 'A function that finds its own waste is asked to find more. A function whose waste is found for it is cut.' },
+        { key: 'specific', correct: true, label: 'Naming what it buys — the March joiner had a seat on day one because there was headroom — protects the headroom you kept', why: 'Unexplained spare seats look like the next saving. Explained ones look like a decision.' },
+        { key: 'notrade', correct: false, label: 'It can be traded for headcount, since both are analytics cost', why: 'They are separate lines with separate owners and the trade is not in your gift. Offering it makes the tooling saving look like a negotiating position rather than a finding.' },
+        { key: 'hold', correct: false, label: 'Hold it back until the headcount question is settled, so it is available as a concession', why: 'BI renews on 15 August. Holding it means paying it, and being seen to have held it costs the credit as well as the money.' },
+        { key: 'quiet', correct: false, label: 'Reduce the seats without flagging it, so the budget stays where it is', why: 'The invoice arrives in Finance. Being discovered to have quietly kept an underspend is expensive in a way ₹13.89 lakh is not.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-142': {
+    title: 'Tooling against the whole cost line',
+    hint: "The people cost you computed last month, and the tooling cost from the contracts. One row.",
+    brief: "Put the tooling bill in proportion for the budget note. Write ONE SQL SELECT returning one row: total annual tooling cost, total annual people cost from day rates and days present, and tooling as a percentage of the two combined to one place.",
+    referenceSql: "SELECT (SELECT SUM(annual_cost) FROM licences) AS tooling_cost, ROUND((SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) FROM analysts a)) AS people_cost, ROUND((SELECT SUM(annual_cost) FROM licences) * 100.0 / ((SELECT SUM(annual_cost) FROM licences) + (SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) FROM analysts a)), 1) AS tooling_pct",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-143': {
+    title: 'Clearview comes back',
+    hint: "Work out what the offer actually costs over the period it covers, not over the first year.",
+    brief: "The vendor has responded to the fifteen-seat proposal. Decide what to do with the offer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Clearview Account Team', subject: 'Re: Renewal — seat count',
+        body: "Thanks for coming to us early, that helps.\n\nWe can't do fifteen seats at the current unit rate — below twenty the price steps up to ₹84,000 a seat. What we can do is hold all thirty seats at ₹64,000 a seat on a two-year term, which brings the annual down to ₹19.2 lakh from ₹21.6 lakh.\n\nThat is a ₹2.4 lakh saving a year with no change on your side, and it protects you if the team grows.",
+      },
+      prompt: 'Tick everything that is true about this offer.',
+      options: [
+        { key: 'worse', correct: true, label: 'It is worse than fifteen seats at ₹84,000, which is ₹12.6 lakh a year', why: 'Their own step-up price on fifteen seats costs ₹6.6 lakh less a year than the discount they are offering. The offer is a discount on seats we do not want.' },
+        { key: 'lock', correct: true, label: 'A two-year term removes the decision you have just spent a week earning the right to make', why: 'The value of this review is the ability to set seat counts at each renewal. Trading that for ₹2.4 lakh gives away the mechanism to keep the money.' },
+        { key: 'anchor', correct: true, label: 'Comparing it to ₹21.6 lakh makes it look like a saving; comparing it to your proposal makes it a ₹6.6 lakh increase', why: 'The baseline is doing all the work in that email. Choosing which number the comparison is against is most of a negotiation.' },
+        { key: 'counter', correct: true, label: 'The step-up price is itself negotiable and is the thing to push on', why: 'They have told you the fifteen-seat price. A one-year term at a better unit rate is a smaller ask than they have just made of you.' },
+        { key: 'accept', correct: false, label: 'Accept it — ₹2.4 lakh with no change on our side is the lowest-risk saving available', why: 'It is the lowest-effort saving. It also costs ₹6.6 lakh a year against the alternative and locks it in for two.' },
+        { key: 'growth', correct: false, label: 'The growth protection is worth having, given the team may hire next year', why: 'Sixteen seats have gone unused for a year. Paying for growth headroom on that scale is buying insurance against an event that has already failed to happen.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-144': {
+    title: 'Answer the vendor',
+    hint: "Hold the position, name the alternative you want, and keep the relationship. You renew with them next year too.",
+    brief: "Reply to Clearview. You want fifteen seats on a one-year term at a better unit rate than ₹84,000. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Clearview Account Team', subject: 'Re: Renewal — seat count', maxWords: 150,
+      prompt: 'Decline the two-year offer, state what you want, and keep it a negotiation rather than a stand-off.',
+      rubric: [
+        { key: 'decline', label: 'A clear decline of the thirty-seat two-year offer', markers: ['not|no|decline|cannot|won\'t|rather not|unable|pass|30|thirty|two.year'], why: 'An ambiguous answer to a vendor offer is read as an opening. Say no in a sentence and spend the rest on what you do want.' },
+        { key: 'why', label: 'The reason: sixteen seats have never been assigned to anybody', markers: ['16|sixteen|never|unassigned|13|thirteen|active|use|nobody'], why: 'Checkable, unarguable, and it makes the decline a fact about us rather than a judgement about their pricing.' },
+        { key: 'want', label: 'What you are actually asking for — fifteen seats, one year, a rate below the step-up', markers: ['15|fifteen|one.year|12.month|rate|84|unit|below|better'], why: 'A decline with no counter ends the conversation. Naming the shape you want lets them come back with something.' },
+        { key: 'relationship', label: 'Kept warm — this is a renewal, not a departure', markers: ['renew|continue|value|work well|happy|relationship|next|keen|intend'], why: 'We are renewing with them either way and there is another renewal in twelve months. Winning ₹6.6 lakh rudely is not winning.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-145': {
+    title: 'So that this is a smaller job next year',
+    hint: "Every finding this week came from a gap between two tables that nobody was watching. Pick the checks that would have caught them.",
+    brief: "Asha asks what should be standing rather than annual. Propose what gets instrumented. Under 180 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Tooling — what should be standing rather than annual', maxWords: 180,
+      prompt: 'What to check, how often, and who acts on it.',
+      rubric: [
+        { key: 'offboard', label: 'A leaver check — seats reclaimed as part of offboarding', markers: ['leaver|offboard|left|reclaim|revoke|exit|automatic|trigger'], why: 'The cheapest of the three findings to prevent and the only one that recurs with every departure.' },
+        { key: 'unassigned', label: 'A standing view of seats contracted against seats assigned', markers: ['unassign|contract|assigned|gap|seat|monthly|quarterly|view|dashboard|report'], why: 'Sixteen empty seats existed for a year because no query compared two columns in two tables. It is a scheduled report, not a project.' },
+        { key: 'ahead', label: 'A renewal calendar with a decision point well before each date', markers: ['renew|calendar|date|60|90|days|before|ahead|advance|diary|reminder'], why: 'The whole week ran on forty-six days of notice. Ninety days of notice turns a scramble into a decision.' },
+        { key: 'owner', label: 'Somebody named as the owner of each check', markers: ['own|owner|me|I will|responsib|IT|who|assign|accountable'], why: 'A process with no name against it is a document. Naming yourself for the ones you own is part of the proposal.' },
+        { key: 'nottoomuch', label: 'Restraint — not proposing to monitor individual tool use continuously', markers: ['not|individual|monitor|surveil|person|annual|quarterly|light|enough|proportion'], why: 'A standing per-person usage report would catch things, and it would also change what the data means and how the team feels about being measured.' },
       ],
       skills: { communication: 100, businessLogic: 100 },
     },
