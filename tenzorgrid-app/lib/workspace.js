@@ -384,6 +384,42 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 3,
     },
+
+    // ---- Team Lead track ----------------------------------------------------------
+    // The work changes shape here. A lead is rarely the first person to compute a number
+    // — they are handed one somebody else computed and asked whether the business can be
+    // run on it. So these projects open with a draft, a claim or a slide, and the task is
+    // to establish what it is worth before it reaches a room.
+    {
+      key: 'trading-review',
+      title: 'Half-Year Trading Review',
+      description: 'The board pack has a draft headline, a star performer and three definitions nobody agreed. Sign it off or fix it.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — the headline counts refunds as transactions.
+        'ta-101', 'ta-102', 'ta-103', 'ta-104', 'ta-105', 'ta-106',
+        // Day 2 — the store ranking is a ranking of trading days.
+        'ta-110', 'ta-111', 'ta-112', 'ta-113', 'ta-114', 'ta-115',
+        // Day 3 — the wobble. The estate's one growing store is a double-loaded month.
+        'ta-120', 'ta-121', 'ta-122', 'ta-123', 'ta-124', 'ta-125',
+        // Day 4 — rebuild it like for like, and refuse to name a cause you cannot show.
+        'ta-130', 'ta-131', 'ta-132', 'ta-133', 'ta-134', 'ta-135',
+        // Day 5 — the pack, the sign-off, and what changes about how this gets produced.
+        'ta-140', 'ta-141', 'ta-142', 'ta-143', 'ta-144', 'ta-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 42000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Drafted the pack you are checking', day: 1 },
+        { name: null, role: 'Data Analytics Team Lead', does: 'Owns what leaves the team', day: 1, throughDay: 5 },
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Presents the trading slide', day: 5, needsYou: true },
+      ],
+      unlockAfter: 0,
+    },
   ],
 };
 
@@ -4826,6 +4862,457 @@ const TASKS = {
       skills: { communication: 100, statistics: 100, businessLogic: 100 },
     },
     estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 1 · Half-Year Trading Review (retail_sales) ---------------------------
+  // First project at Team Lead, and the difference shows in what is being asked. Nobody
+  // asks the learner to compute a number here — they are handed numbers other people
+  // computed and asked whether the estate can be run on them. Monday the headline double
+  // counts returns. Tuesday the ranking is a ranking of trading days. Wednesday the best
+  // performing store in the estate turns out to be a double-loaded feed. Thursday the
+  // comparison has to be rebuilt like for like. Friday it goes to the board.
+
+  'ta-101': {
+    title: 'What the headline is counting',
+    hint: "Look at what a return does to each of the three numbers in the note before you check any of them.",
+    brief: "Ravi has sent the half-year headline. Before verifying anything, work out which of his three figures can survive contact with the sales table.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'H1 numbers for the board pack',
+        body: "Rough cut for Tuesday:\n\n- Revenue for the year: ₹5.00 crore\n- Transactions: 9,022\n- Average transaction value: ₹5,546\n\nBest store is Indiranagar at ₹74.8 lakh, and the star of the half is Ashok Nagar, up 21% on the second half. Worth calling out.\n\nCan you sanity check before it goes in?",
+      },
+      prompt: 'Tick every problem you can already see, before running a query.',
+      options: [
+        { key: 'returns', correct: true, label: 'A return is a row in the sales table, so "transactions" counts refunds as sales', why: '9,022 lines include 492 returns. A refund is not a transaction in the sense a board reads that word, and nothing in his note says which he means.' },
+        { key: 'atv', correct: true, label: 'Average transaction value computed over all rows is dragged down by negative lines', why: 'Dividing net revenue by a line count that includes refunds is two errors compounding — a smaller numerator over a larger denominator.' },
+        { key: 'grossnet', correct: true, label: '"Revenue" needs to say whether it is gross or net of returns', why: 'The two differ by ₹15.7 lakh here. Both are legitimate figures; publishing one unlabelled is what makes it wrong.' },
+        { key: 'store', correct: false, label: 'Indiranagar cannot be the best store — flagships always are', why: 'It is the best store on revenue, and checking that is a query rather than a prejudice. Guessing the answer before looking is the habit this whole project is against.' },
+        { key: 'crore', correct: false, label: 'Reporting in crore is imprecise and should be avoided', why: 'The unit is fine for a board. What is missing is the definition, not the precision.' },
+        { key: 'ashok', correct: false, label: 'A 21% rise is implausible and must be an error', why: 'It IS an error, and you do not know that yet. "Implausible therefore wrong" is a guess that happens to be right, which is the worst kind of analysis to be rewarded for.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ta-102': {
+    title: 'Gross, returns and net in one row',
+    hint: "A return has a negative quantity. Separate the two directions with CASE inside the SUM rather than filtering the whole query.",
+    brief: "Establish the figures properly, as a bridge a board can follow. Write ONE SQL SELECT returning one row PER MEASURE, with columns measure and value, in this order: gross_revenue, returns_value (positive), net_revenue, units_sold, units_returned (positive), sale_lines.",
+    referenceSql: "SELECT 'gross_revenue' AS measure, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS value FROM sales UNION ALL SELECT 'returns_value', -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales UNION ALL SELECT 'net_revenue', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'units_sold', SUM(CASE WHEN quantity > 0 THEN quantity ELSE 0 END) FROM sales UNION ALL SELECT 'units_returned', -SUM(CASE WHEN quantity < 0 THEN quantity ELSE 0 END) FROM sales UNION ALL SELECT 'sale_lines', SUM(CASE WHEN quantity > 0 THEN 1 ELSE 0 END) FROM sales",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ta-103': {
+    title: 'Return rate by category',
+    hint: "Two different rates — one on lines, one on value — and they rank the categories differently.",
+    brief: "Ravi will be asked which categories come back. Write ONE SQL SELECT returning, per category: the number of lines, returned lines as a percentage of all lines to two places, and returned value as a percentage of gross revenue to two places. Worst by value first.",
+    referenceSql: "SELECT p.category, COUNT(*) AS lines, ROUND(SUM(CASE WHEN s.quantity < 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS return_line_pct, ROUND(-SUM(CASE WHEN s.quantity < 0 THEN s.quantity * s.unit_price ELSE 0 END) * 100.0 / SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END), 2) AS return_value_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY return_value_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ta-104': {
+    title: 'Average transaction value, done properly',
+    hint: "Decide what a transaction is first. Then the query is short.",
+    brief: "Rebuild Ravi's third figure, and show him where it bites. Write ONE SQL SELECT returning, per store: his version — net revenue over all lines — the defensible version — gross revenue over sale lines only — and the gap between them. Round each to the nearest rupee, label them naive_atv, sale_atv and gap, and put the biggest gap first.",
+    referenceSql: "SELECT st.name, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(*)) AS naive_atv, ROUND(SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END) * 1.0 / SUM(CASE WHEN s.quantity > 0 THEN 1 ELSE 0 END)) AS sale_atv, ROUND(SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END) * 1.0 / SUM(CASE WHEN s.quantity > 0 THEN 1 ELSE 0 END)) - ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(*)) AS gap FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY st.id ORDER BY gap DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ta-105': {
+    title: 'Which definition goes in the pack',
+    hint: "There is no single right answer here. There is a right way to present whichever you pick.",
+    brief: "You have both versions. Decide what the board pack should say.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the pack.',
+      options: [
+        { key: 'label', correct: true, label: 'Whichever figure is used, the definition sits beside it', why: 'Net of returns or gross, sale lines or all lines — a board cannot tell from the number, and next quarter somebody will compute the other one and the two will be compared.' },
+        { key: 'both', correct: true, label: 'Gross and net both, with returns shown as the bridge between them', why: 'It is one extra row and it makes the return rate visible as a business fact rather than a definitional footnote.' },
+        { key: 'sales', correct: true, label: 'Transaction counts and average values should use sale lines only', why: 'A refund is a transaction in the till system and not in the sense a board means. Counting it as one drags the average down by about ₹300 for no reason anybody could explain in the room.' },
+        { key: 'net', correct: false, label: 'Use net revenue everywhere — it is the conservative choice', why: 'Conservative is not the same as correct, and a "conservative" figure quoted against a gross target is exactly how two teams end up arguing about whether a number was hit.' },
+        { key: 'drop', correct: false, label: 'Exclude returns from the analysis entirely', why: 'Returns are 3.1% of gross revenue and they are real money leaving. Removing them makes every figure on the page optimistic.' },
+        { key: 'footnote', correct: false, label: 'Put the definitions in an appendix so the headline stays clean', why: 'Nobody reads the appendix and the headline is the bit that gets quoted. The definition has to travel with the number.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ta-106': {
+    title: 'Reply to Ravi',
+    hint: "He asked for a sanity check, not a rewrite. Tell him which figures move and by how much.",
+    brief: "Write back on day one. Two of his three numbers change and one needs a definition attached. Be specific and do not make him feel stupid for asking. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'H1 headline — two of the three need changing', maxWords: 160,
+      prompt: 'Which figures are wrong, what they should be, and the one definition that has to go in the pack.',
+      rubric: [
+        { key: 'txn', label: 'That the transaction count includes returns', markers: ['return|refund|492|8,?530|negative|not transaction'], why: 'The clearest of the three and the easiest for him to fix.' },
+        { key: 'atv', label: 'The corrected average transaction value', markers: ['5,?8|average|atv|transaction value|per sale'], why: 'Replacing a wrong figure with no figure leaves him nothing for Tuesday.' },
+        { key: 'define', label: 'That revenue has to say gross or net', markers: ['gross|net|define|definition|label|state|which'], why: 'The difference is ₹15.7 lakh, and both numbers are defensible — only the silence is not.' },
+        { key: 'specific', label: 'Actual numbers, not just categories of problem', markers: ['\\d{3}|lakh|crore|%|percent'], why: 'A sanity check that returns adjectives is not a sanity check.' },
+        { key: 'tone', label: 'Written so he asks again next time', markers: ['good|worth|glad|thanks|right to|useful|easy fix|small'], why: 'He circulated a draft for checking, which is exactly the behaviour you want. Making that expensive for him is how drafts stop being circulated.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ta-110': {
+    title: 'The estate, with its dates',
+    hint: "opened_on and closed_on are the point of this one. Two stores are younger than the reporting window.",
+    brief: "Before ranking anything, look at what the estate did this year. Write ONE SQL SELECT returning, per store: name, format, opened_on, closed_on, the number of distinct days it recorded a sale, and net revenue. Biggest revenue first.",
+    referenceSql: "SELECT st.name, st.format, st.opened_on, st.closed_on, COUNT(DISTINCT s.sold_at) AS trading_days, SUM(s.quantity * s.unit_price) AS net_revenue FROM stores st LEFT JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ta-111': {
+    title: 'Three stores that break the ranking',
+    hint: "Two opened during the window and one closed during it. Ask what an annual total means for each.",
+    brief: "Your estate table has three stores that cannot be compared with the rest on an annual total. Say what to do about each.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'partial', correct: true, label: 'Sector 29 and Salt Lake opened inside the window, so their totals are part-year', why: 'October and February openings. Ranking them against a full year is ranking them on how long they have existed.' },
+        { key: 'closed', correct: true, label: 'Park Street closed in January and is still in the estate table', why: 'It trades for seven months and then stops. Included in a per-store average it drags the estate down; excluded without saying so, the totals no longer reconcile.' },
+        { key: 'normalise', correct: true, label: 'A per-trading-day figure makes them comparable, and has to be labelled as such', why: 'It is the right normalisation and it changes the ranking, which means somebody will notice and ask. Say it on the chart.' },
+        { key: 'exclude', correct: true, label: 'Any like-for-like growth comparison has to exclude all three', why: 'You cannot compute a half-on-half change for a store that did not trade in both halves. Like-for-like means the same estate in both periods, and that is ten stores here, not thirteen.' },
+        { key: 'drop', correct: false, label: 'Drop the three from the pack entirely', why: 'They are a quarter of the estate and two of them are new investments the board specifically wants to see. Excluded from like-for-like, reported separately.' },
+        { key: 'annualise', correct: false, label: 'Scale the part-year stores up to a full year so the totals compare', why: 'A February opening annualised on four months of trading is a forecast presented as a result. Show the rate and call it a rate.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-112': {
+    title: 'Revenue per trading day',
+    hint: "Divide by the days the store actually recorded sales, not by 365.",
+    brief: "Normalise the ranking. Write ONE SQL SELECT returning, per store: name, format, distinct trading days, net revenue, and net revenue per trading day rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.format, COUNT(DISTINCT s.sold_at) AS trading_days, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(DISTINCT s.sold_at)) AS revenue_per_day FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-113': {
+    title: 'Set the denominator standard',
+    hint: "Baner records a sale on 268 days out of roughly 365 open. A flagship records one on nearly every day. That gap is the whole argument.",
+    brief: "You have used days-with-a-sale as the denominator. There is another — days the store was open — and the two disagree most for exactly the stores the ranking is used to judge. Write to Ravi setting the standard the team will use, and say why. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Store productivity — which denominator we use', maxWords: 150,
+      prompt: 'Which denominator, why it is the right one, and where the two disagree.',
+      rubric: [
+        { key: 'pick', label: 'A clear decision, not a comparison', markers: ['days open|use|standard|we will|going forward|I want|should be'], why: 'Ravi needs a rule he can apply, not a discussion of two options.' },
+        { key: 'why', label: 'Why days open is the honest denominator', markers: ['bad day|no sale|zero|absent|quiet|delete|remove|worst day|still open'], why: 'A day with no sales is a bad day, not a day that did not happen. Dividing by sale-days quietly deletes the worst days from every average.' },
+        { key: 'where', label: 'Where the two disagree, with a store named', markers: ['baner|express|268|quiet|low volume|100|hundred'], why: 'The abstract argument convinces nobody. Baner loses nearly a hundred days between the two definitions.' },
+        { key: 'derive', label: 'That it is derivable from columns we already have', markers: ['opened_on|closed_on|derive|comput|two column|already|window'], why: 'Pre-empts the "we do not have that data" answer, which is the usual reason the worse denominator survives.' },
+        { key: 'scope', label: 'When the annual total is still the right figure', markers: ['total|absolute|board|still|both|alongside|scale|size'], why: 'Per-day is a productivity measure. It does not replace knowing which store is biggest, and a rule that pretends otherwise gets ignored.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-114': {
+    title: 'Revenue per day open',
+    hint: "julianday() on the two dates, bounded by the window, and remember a store open all year gets the full span.",
+    brief: "Do it the better way. Write ONE SQL SELECT returning, per store: name, the number of days it was open within 1 July 2025 to 30 June 2026 inclusive, net revenue, and revenue per day open rounded to the nearest rupee. Best first.",
+    referenceSql: "SELECT st.name, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-115': {
+    title: 'What the normalised ranking changed',
+    hint: "Compare the two orderings you now have, and look hardest at the stores that moved.",
+    brief: "You have the raw ranking and the per-day-open ranking. Read the difference.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your own tables support.',
+      options: [
+        { key: 'flagships', correct: true, label: 'The four flagships lead on both measures, so that part of the story is robust', why: 'Worth saying explicitly. A normalisation that changed everything would be suspicious; one that confirms the obvious part and corrects the rest is doing its job.' },
+        { key: 'saltlake', correct: true, label: 'Salt Lake looks far stronger per day than its annual total suggests', why: 'Last in the estate on a five-month total and ahead of all three express stores on a daily rate. That is a new store trading normally, and the raw ranking makes it look like the worst thing in the business.' },
+        { key: 'baner', correct: true, label: 'Baner is the weakest store per day open, and the normalisation does not rescue it', why: 'It is not the smallest store by annual revenue — Salt Lake is, because Salt Lake opened in February. On a per-day basis Baner is last by a distance, and a finding that survives the correction is worth more than one that depends on it.' },
+        { key: 'format', correct: true, label: 'Format explains most of the spread, so the ranking should be read within format', why: 'Comparing an express store with a flagship on revenue per day is comparing floor space. The useful question is which store is weak FOR ITS FORMAT.' },
+        { key: 'close', correct: false, label: 'Park Street should be closed, given where it ranks', why: 'It closed in January. Recommending an action already taken is the clearest possible sign of not having read the estate table.' },
+        { key: 'sector', correct: false, label: 'Sector 29 is underperforming and the opening should be reviewed', why: 'Eight months of trading for an express store, mid-table on a daily rate. There is no evidence of underperformance here and an opening review is an expensive thing to trigger.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-120': {
+    title: 'The star of the half',
+    hint: "Ravi called out one store as up 21%. Restrict to stores that traded the whole window, then split the year in two.",
+    brief: "Check the claim. Write ONE SQL SELECT over stores that were open before 1 July 2025 and have not closed, returning per store: net revenue in the first half, net revenue in the second half, and the percentage change to one place. Fastest growing first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY pct_change DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'ta-121': {
+    title: 'One store up, nine down',
+    hint: "Every other store in the estate moved the same way. Ask what would make one store an exception.",
+    brief: "Ashok Nagar is up 21.1%. Every other like-for-like store is flat or down, four of them by more than 20%. Decide what to do before you write that up.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is a sound response.',
+      options: [
+        { key: 'suspicious', correct: true, label: 'A single store moving against a uniform estate trend is worth checking before reporting', why: 'Not because it is impossible, but because the cost of checking is an hour and the cost of being wrong in a board pack is the next six months of people checking your work instead of reading it.' },
+        { key: 'monthly', correct: true, label: 'Break that store down by month — a real trend and a data fault look different', why: 'A store that genuinely improved improves gradually. A feed problem is a step change in one month and normal either side of it.' },
+        { key: 'estate', correct: true, label: 'The estate-wide decline is itself the more important finding', why: 'Nine stores down and the second half weaker across the board. That is the sentence the board needs, and it was not in Ravi\'s note at all.' },
+        { key: 'praise', correct: false, label: 'Call it out as the success story, as Ravi suggested', why: 'This is the whole test. A number that flatters somebody is the one you check hardest, not the one you check least.' },
+        { key: 'ignore', correct: false, label: 'Leave the store out of the pack until it can be explained', why: 'Silently dropping the one store that does not fit is how an analysis becomes a story. Check it, then report what you find.' },
+        { key: 'assume', correct: false, label: 'Assume it is a data fault and exclude it', why: 'You would be right, and you would have guessed. Being right by accident is not repeatable and will not survive the first time the guess is wrong.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-122': {
+    title: 'Ashok Nagar, month by month',
+    hint: "Lines as well as revenue. If both double in the same month, it is not a trading story.",
+    brief: "Break it down. Write ONE SQL SELECT for store 3 only, returning per month: the number of sale lines and net revenue. Oldest month first.",
+    referenceSql: "SELECT substr(sold_at, 1, 7) AS month, COUNT(*) AS lines, SUM(quantity * unit_price) AS net_revenue FROM sales WHERE store_id = 3 GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.35, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'ta-123': {
+    title: 'Find the duplicates',
+    hint: "Two rows are suspect when store, product, date, quantity and price all match. Group on all five and count.",
+    brief: "March has twice the lines of a normal month. Test whether they are duplicates. Write ONE SQL SELECT returning, per store and month, the number of groups where the same store, product, date, quantity and price appear more than once. Worst first, and only where there are two or more such groups.",
+    referenceSql: "SELECT store_id, substr(sold_at, 1, 7) AS month, COUNT(*) AS dup_groups FROM (SELECT store_id, product_id, sold_at, quantity, unit_price, COUNT(*) AS c FROM sales GROUP BY store_id, product_id, sold_at, quantity, unit_price HAVING c > 1) GROUP BY store_id, month HAVING dup_groups >= 2 ORDER BY dup_groups DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-124': {
+    title: 'Duplicate, or two people buying the same thing',
+    hint: "A few matching rows in a year of till data is arithmetic. Fifty-two in one store-month is not.",
+    brief: "Identical rows exist elsewhere in the estate too. Decide what distinguishes the March problem from ordinary coincidence.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'pattern', correct: true, label: 'It is the concentration that identifies it: 52 groups in one store-month against at most 2 anywhere else', why: 'Two customers buying the same product at the same price on the same day is ordinary. It happening to every line in a month is a load, not a coincidence.' },
+        { key: 'all', correct: true, label: 'Every one of Ashok Nagar\'s 104 March lines sits in a duplicate group', why: 'That is the decisive test. A partial overlap would be ambiguous; total coverage of one contiguous month is a feed replayed.' },
+        { key: 'lines', correct: true, label: 'Line count doubling alongside revenue rules out a trading explanation', why: 'A genuinely strong month has more lines OR bigger baskets. Exactly twice the lines and exactly twice the revenue is a copy.' },
+        { key: 'corrected', correct: true, label: 'Corrected, March is about ₹3.46 lakh, in line with the other months', why: 'The correction lands the month exactly where its neighbours are, which is the confirmation that the diagnosis is right.' },
+        { key: 'delete', correct: false, label: 'Delete the duplicate rows and carry on', why: 'You do not have write access to the source and should not want it. Report it, quantify it, and exclude it from your own figures.' },
+        { key: 'allstores', correct: false, label: 'The other stores with duplicate groups need investigating too', why: 'One or two matching rows across a year is what you would expect by chance. Raising them as incidents is how a real finding gets lost in noise.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-125': {
+    title: 'Tell Ravi his star is a double load',
+    hint: "He put this in a draft and invited a check. Make the correction easy to carry and give him the real story to replace it.",
+    brief: "Write to Ravi. The store he wanted to celebrate is a data fault, the estate-wide picture is worse than his draft implied, and both go in the same note. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Ashok Nagar — the 21% is a duplicated month', maxWords: 180,
+      prompt: 'What the fault is, how you know, what the corrected picture looks like, and the finding that replaces it.',
+      rubric: [
+        { key: 'what', label: 'That March is loaded twice', markers: ['duplicat|twice|double|loaded|march|repeat'], why: 'Say it plainly in the first line. Everything else is support.' },
+        { key: 'evidence', label: 'The evidence, with numbers', markers: ['52|104|every line|all of|twice the lines|group'], why: '"It looks wrong" is an opinion. "Every one of 104 lines appears twice" is a finding.' },
+        { key: 'corrected', label: 'What the store actually did', markers: ['3\\.4|346|flat|in line|normal|no growth|not up'], why: 'Correcting a number without replacing it leaves him with a hole in the pack.' },
+        { key: 'estate', label: 'The estate-wide decline, which is the real story', markers: ['nine|9|every other|estate|down|decline|second half|weaker'], why: 'The reason this matters is not the one store — it is that the pack was about to celebrate growth in a half that fell.' },
+        { key: 'ask', label: 'A specific ask about the feed', markers: ['feed|load|source|systems|reload|check|who|raise|confirm'], why: 'The duplicate is still in the warehouse. Naming who fixes it is what turns a finding into a fix.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-130': {
+    title: 'The estate trend, corrected',
+    hint: "Same like-for-like population, but exclude the duplicated store-month rather than the whole store.",
+    brief: "Rebuild the half-on-half table with the fault removed. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, EXCLUDING store 3's March 2026 rows, returning per store: first-half revenue, second-half revenue and the percentage change to one place. Fastest growing first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03') GROUP BY st.id ORDER BY pct_change DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-131': {
+    title: 'Region and format',
+    hint: "Careful with the denominator. Joining sales to stores repeats each store's days_open once per till line, so the days have to be summed separately from the revenue.",
+    brief: "The board will ask where the decline is concentrated. Write ONE SQL SELECT returning, per region: the number of stores, net revenue, and net revenue divided by the region's total store-days open, rounded to the nearest rupee. Biggest revenue first.",
+    referenceSql: "WITH d AS (SELECT st.id, st.region, julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS days FROM stores st), r AS (SELECT st.region, SUM(s.quantity * s.unit_price) AS net_revenue FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY st.region) SELECT d.region, COUNT(*) AS stores, r.net_revenue, ROUND(r.net_revenue * 1.0 / SUM(d.days)) AS revenue_per_day_open FROM d JOIN r ON r.region = d.region GROUP BY d.region ORDER BY r.net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-132': {
+    title: 'The chart the board will read',
+    hint: "Ranked comparison across named stores, and the axis has to start at zero or the gaps lie.",
+    brief: "Build the visual: revenue per day open, by store, for the whole estate. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT st.name AS store, SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1) AS revenue_per_day FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day DESC",
+      prompt: 'Revenue per day open, by store, for the board pack.',
+      answer: { type: 'bar', x: 'store', y: 'revenue_per_day', sort: 'desc', baselineZero: true },
+      why: 'Thirteen named categories compared on one measure is a bar chart, and sorting it is what turns a list into a ranking. A zero baseline is not optional here — the estate spans roughly four thousand to twenty thousand rupees a day, and truncating the axis would make the weakest store look like it sells nothing.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ta-133': {
+    title: 'The number Ravi will be asked for',
+    hint: "One figure for the estate, like for like, with the fault out. Say what it covers.",
+    brief: "Produce the single headline. Write ONE SQL SELECT returning one row: first-half revenue, second-half revenue and the percentage change to one place, across like-for-like stores only and excluding the duplicated store-month. Label them h1, h2 and pct_change.",
+    referenceSql: "SELECT SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Ravi accepts the figure and then asks for it with
+    // the new stores added back in, because the board will want the total business too.
+    rework: true,
+  },
+
+  'ta-134': {
+    title: 'Vikram wants a reason',
+    hint: "He is asking you to name a cause. Check what this dataset can and cannot attribute.",
+    brief: "The decline is real. Decide what you can say about why.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Second half decline — cause?',
+        body: "Nine of ten stores down, some by a quarter. That is going to be the first question in the room and I need an answer, not a table.\n\nIs it footfall, pricing, the range, the economy? Pick one.",
+      },
+      prompt: 'Tick everything that is an honest response.',
+      options: [
+        { key: 'cannot', correct: true, label: 'This data cannot separate those causes — there is no footfall, no competitor and no market data in it', why: 'Sales, products, stores, stock. Every candidate cause he listed lives outside all four tables.' },
+        { key: 'promo', correct: true, label: 'Part of the first half is a promotion month, which flatters the comparison', why: 'November is the biggest month of the year by revenue and it is discount-driven. Half-on-half against a period containing it is not a like-for-like period, even across like-for-like stores.' },
+        { key: 'what', correct: true, label: 'You can say what declined — which categories, which formats — without saying why', why: 'That is genuinely useful in the room and it is defensible. "I can tell you where, not why" is a complete answer.' },
+        { key: 'offer', correct: true, label: 'Name what data would answer his question', why: 'Footfall counters and a competitor opening schedule would settle it. Saying so turns a refusal into a request.' },
+        { key: 'pick', correct: false, label: 'Pick the most plausible cause so he has something to say', why: 'He asked you to pick one, and picking one you cannot evidence is how an analyst becomes the source of a wrong answer with their name on it.' },
+        { key: 'economy', correct: false, label: 'Attribute it to the wider market, which is safest', why: 'It is the least falsifiable answer available and therefore the most dangerous. Nothing in the data speaks to the market at all.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-135': {
+    title: 'Category movement, half on half',
+    hint: "Same like-for-like restriction, grouped by category instead of store.",
+    brief: "Answer the half of Vikram's question you can. Write ONE SQL SELECT over like-for-like stores, excluding the duplicated store-month, returning per category: first-half revenue, second-half revenue and percentage change to one place. Worst decline first.",
+    referenceSql: "SELECT p.category, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03') GROUP BY p.category ORDER BY pct_change ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-140': {
+    title: 'The new stores, reported separately',
+    hint: "These three are excluded from like-for-like, which is exactly why they need their own line.",
+    brief: "The board invested in two openings and closed one store. Write ONE SQL SELECT over stores that opened after 1 July 2025 or have closed, returning per store: name, opened_on, closed_on, days open in the window, net revenue, and revenue per day open rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.opened_on, st.closed_on, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-141': {
+    title: 'Every figure, and what it covers',
+    hint: "Build the reconciliation: total business, like-for-like, and the difference between them.",
+    brief: "A board pack has to reconcile. In the notebook, compute three figures for the whole window: total net revenue across the entire estate, net revenue across like-for-like stores only, and net revenue from stores excluded from like-for-like — all with store 3's March 2026 rows removed. Assign a dict with keys total, like_for_like and excluded, each rounded to the nearest rupee, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      let total = 0, lfl = 0, excluded = 0;
+      for (const s of tables.sales) {
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') continue;
+        const value = s.quantity * s.unit_price;
+        const store = stores.get(s.store_id);
+        total += value;
+        if (store.opened_on <= '2025-07-01' && store.closed_on == null) lfl += value;
+        else excluded += value;
+      }
+      return { total: Math.round(total), like_for_like: Math.round(lfl), excluded: Math.round(excluded) };
+    },
+  },
+
+  'ta-142': {
+    title: 'What the pack says',
+    hint: "Five candidate headlines. Two of them are things you established and two are things you were asked to say.",
+    brief: "Decide what the board actually hears.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the pack.',
+      options: [
+        { key: 'decline', correct: true, label: 'Like-for-like trading declined in the second half across nine of ten stores', why: 'The central finding, and it was not in the draft you were sent to check.' },
+        { key: 'fault', correct: true, label: 'One store-month is duplicated in the source and has been excluded', why: 'Disclosing your own correction is what lets somebody reproduce your number. Quietly excluding it means the figures never reconcile with the warehouse again.' },
+        { key: 'new', correct: true, label: 'The two new stores are trading in line with their format, reported separately', why: 'They are excluded from like-for-like for a methodological reason, not a performance one, and the board approved the capital.' },
+        { key: 'nocause', correct: true, label: 'That the cause cannot be established from this data, and what would establish it', why: 'The question will be asked. Having the answer to "what would you need" ready is the difference between a limit and an excuse.' },
+        { key: 'ashokstar', correct: false, label: 'Ashok Nagar as the standout performer', why: 'It is flat once corrected. This is the line the draft opened with and the reason the check was worth doing.' },
+        { key: 'economy', correct: false, label: 'That the decline reflects wider market conditions', why: 'Nothing in four tables of till data speaks to the market. It is the most quotable unfalsifiable sentence available and it would be yours.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-143': {
+    title: 'Sign off Priya\'s slide',
+    hint: "Read what the words claim on top of the numbers. The numbers are yours and they are right.",
+    brief: "Priya has drafted the trading slide using your figures. Tick every problem with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Priya Menon', subject: 'Trading slide — sign off?',
+        body: "\"Like-for-like revenue fell 17.3% in H2, driven by a category-wide slowdown in Equipment. Two new stores are already outperforming the estate average. Data quality issues in one store have been corrected.\"\n\nThat's your numbers. OK to go?",
+      },
+      prompt: 'What needs changing before this goes in?',
+      options: [
+        { key: 'driven', correct: true, label: '"Driven by" claims a cause the analysis does not establish', why: 'Equipment declined and Equipment is the largest category, so of course it moves the total. That is arithmetic, not a driver, and the word invites a decision about Equipment.' },
+        { key: 'outperform', correct: true, label: '"Outperforming the estate average" compares an express store to a flagship average', why: 'Sector 29 is mid-table for its format and below the estate average per day. The claim is flattering and false, and it is about the board\'s own capital decision.' },
+        { key: 'vague', correct: true, label: '"Data quality issues have been corrected" hides what was excluded', why: 'One store-month was dropped from the figures. If the next person reruns this and gets a different number, that sentence is why they will not know where to look.' },
+        { key: 'promo', correct: true, label: 'The comparison period contains a promotion month and the slide does not say so', why: 'November is the biggest month of the year and discount-driven. Half-on-half against it overstates the decline, and the board will not know unless it is written down.' },
+        { key: 'figure', correct: false, label: 'The 17.3% figure is wrong', why: 'It is your figure and it is right. The problem is everything built on top of it.' },
+        { key: 'nothing', correct: false, label: 'It is fine — the numbers are correct and she is the one presenting', why: 'Your name is on the data. A slide that is arithmetically right and rhetorically wrong is still wrong, and sign-off is exactly the moment to say so.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-144': {
+    title: 'Rewrite the slide',
+    hint: "Same four facts, none of the claims. Shorter than hers.",
+    brief: "Send Priya a replacement for the slide text. It has to survive being read aloud with you not in the room. Under 110 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Priya Menon', subject: 'Trading slide — suggested wording', maxWords: 110,
+      prompt: 'The decline, the scope it covers, the new stores stated fairly, and the exclusion named.',
+      rubric: [
+        { key: 'lfl', label: 'The decline, scoped to like-for-like', markers: ['like.for.like|lfl|ten store|10 store|same store|17|decline|fell'], why: 'The number means nothing without the population it covers.' },
+        { key: 'nocause', label: 'No causal claim', markers: ['largest|biggest|share|arithmetic|not|cannot|where|concentrat'], why: 'Describe where the decline sits without asserting what caused it.' },
+        { key: 'newstores', label: 'The new stores stated against their own format', why: 'Comparing an express store to an estate average that is mostly flagships is the error in her draft.', markers: ['format|express|for its|comparable|own|like|separate'] },
+        { key: 'exclusion', label: 'The excluded store-month named', markers: ['march|ashok|store 3|duplicat|excluded|one month'], why: 'So the figure can be reproduced by anyone who tries.' },
+        { key: 'promo', label: 'The promotion in the comparison period', markers: ['promotion|november|discount|promo'], why: 'The single most important caveat on a half-on-half figure this year.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-145': {
+    title: 'What you would do next quarter',
+    hint: "You have found one data fault and one reporting habit. Both have a fix that outlives this pack.",
+    brief: "Asha wants your view as the lead, not as the analyst. What changes about how this reporting is produced? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Trading review — what I would change', maxWords: 200,
+      prompt: 'The process changes that would have caught this week\'s problems before they reached a draft.',
+      rubric: [
+        { key: 'dupcheck', label: 'A duplicate check that runs before the pack is built', markers: ['check|test|automat|before|monitor|alert|routine|each month|validat'], why: 'The fault was findable in one query. The problem was that nobody ran it, and that is fixable permanently.' },
+        { key: 'definitions', label: 'Agreed definitions for revenue, transactions and like-for-like', markers: ['definition|define|agree|document|standard|glossary|consistent'], why: 'Three of this week\'s problems were one team meaning something different by a common word.' },
+        { key: 'lfl', label: 'Like-for-like as a standing rule when the estate changes', markers: ['like.for.like|lfl|open|clos|estate|new store|exclude'], why: 'Two openings and a closure in one year, and nothing in the reporting knew about any of them.' },
+        { key: 'review', label: 'That drafts get checked before they reach a board, not after', markers: ['draft|check|review|before|sign.?off|circulat|early'], why: 'Ravi did the right thing by sending it. Making that a step rather than a favour is the lead\'s job.' },
+        { key: 'own', label: 'Written as decisions you would make, not suggestions', markers: ['I would|we should|I will|propose|put in place|add|introduce|make'], why: 'This is the first thing you are asked as a lead. Hedging it reads as declining the responsibility.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
 };

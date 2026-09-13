@@ -24,6 +24,232 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'trading-review': [
+    {
+      key: 'taa-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'What changes now you are the lead',
+      title: 'Read: you own what leaves the team',
+      body: `Asha. First project at this level, so let me be direct about what is different.
+
+As an analyst you were judged on the work you produced. As a lead you are judged on the work that leaves the team, whether or not you wrote it. Ravi's draft going to the board with a wrong transaction count is your problem now, and "he sent it before I saw it" is not a defence anybody accepts twice.
+
+That has a practical consequence. Most of your week is spent reading other people's numbers rather than making your own, and reading a number properly means asking three things: what is it counting, what population is it over, and what would make it wrong.
+
+The third one is the habit that takes longest to build. It is not scepticism for its own sake — it is that a number which flatters somebody has already passed one filter that a number which embarrasses them has not. Somebody wanted the star performer to be real. Nobody wanted the decline to be real. Guess which one got checked.
+
+So: check the flattering number hardest. Every time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A draft shows nine stores declining and one growing strongly. Which figure do you verify first?',
+        options: [
+          { key: 'growing', correct: true, label: 'The one that is growing' },
+          { key: 'declining', correct: false, label: 'The nine declining, since that is the bigger business impact' },
+          { key: 'total', correct: false, label: 'The estate total, since everything rolls up to it' },
+          { key: 'all', correct: false, label: 'All of them equally — there is no reason to prefer one' },
+        ],
+        why: 'The exception is where the error is, and the flattering exception is the one nobody has already questioned. Checking everything equally sounds rigorous and is how limited time gets spent uniformly on the wrong things.',
+      },
+    },
+    {
+      key: 'taa-02', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Gross, net, and why Finance keeps correcting you',
+      title: 'Read: the words retail arguments are made of',
+      body: `Diya. You are about to publish a revenue figure, so here are the three definitions that cause most of the arguments between Finance and Analytics.
+
+GROSS revenue is what was rung through the till on sales. NET is gross minus returns. Neither is more correct; they answer different questions. Gross tells you what the stores sold, net tells you what the business kept. The unforgivable thing is publishing one without saying which.
+
+A TRANSACTION, to a board, means a customer buying something. In a till table a refund is also a row. Counting it as a transaction inflates the count and deflates the average, and both errors point the same way, so the average transaction value comes out low twice over.
+
+LIKE-FOR-LIKE means the same stores in both periods. The moment an estate opens or closes anything, the total and the like-for-like diverge, and a pack that does not carry both will be asked for the other one in the room.
+
+Get these three right and most of the reconciliation meetings stop happening.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which pair of figures should always appear together in a retail pack?',
+        options: [
+          { key: 'both', correct: true, label: 'Total estate revenue and like-for-like revenue' },
+          { key: 'grossonly', correct: false, label: 'Gross revenue and units sold' },
+          { key: 'netatv', correct: false, label: 'Net revenue and average transaction value' },
+          { key: 'lfl', correct: false, label: 'Like-for-like revenue alone, since it is the cleaner measure' },
+        ],
+        why: 'Like-for-like says whether the shops are trading better. The total says what the business actually earned. Publish one and you will be asked for the other before the end of the meeting.',
+      },
+    },
+    {
+      key: 'taa-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can I just have a league table?',
+      title: 'Vikram wants stores ranked, full stop',
+      body: `I do not need per-day anything. I need a list of stores best to worst so I know who to call.
+
+Can you just send that?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['open|day|february|october|part|new|normalis|per day|format|not compar|salt lake|sector'],
+        why: 'A raw league table puts a store that opened in February at the bottom and a store that closed in January in the middle. He would call the wrong people. Send the ranking, per day open, with the format beside it.',
+      },
+    },
+    {
+      key: 'taa-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 7,
+      subject: 'Store performance data and individual managers',
+      title: 'Neha: store numbers are about people too',
+      body: `Now that you are producing store-level performance reporting, one thing to be aware of.
+
+A store is a person. Every figure you publish about a store is, in practice, a figure about its manager, and it will be read that way whether or not you intend it. That does not mean you should soften anything — it means the figure has to be right, and it has to be normalised so that a manager is not marked down for having opened in February.
+
+Two practical rules. Never circulate a store ranking without the normalisation that makes it fair. And if a store's numbers are affected by something outside the manager's control — a refit, a closure next door, a data fault — that note goes on the same page as the number, not in a follow-up.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A store looks worst in the estate because it opened four months ago. What do you publish?',
+        options: [
+          { key: 'norm', correct: true, label: 'The normalised figure, with the opening date on the same page' },
+          { key: 'raw', correct: false, label: 'The raw figure — it is what actually happened' },
+          { key: 'omit', correct: false, label: 'Leave the store out until it has a full year' },
+          { key: 'later', correct: false, label: 'The raw figure now, with a note circulated separately' },
+        ],
+        why: 'Omitting them hides a new investment the board approved. A note circulated separately never catches up with the number it was meant to qualify.',
+      },
+    },
+    {
+      key: 'taa-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'How feeds break, and how to tell',
+      title: 'Read: the shapes of a broken load',
+      body: `Karthik. You have found a store-month that looks too good. Before you call it a data fault, here is how the common failures actually look, because they are distinguishable.
+
+A DOUBLE LOAD gives you exact duplicate rows — every field identical except the surrogate key — covering one contiguous window for one source. Line count and value both exactly double. This is the one you have.
+
+A PARTIAL LOAD gives you a window with far too few rows and nothing duplicated. It looks like a bad month, which is why it is more dangerous than a double load: nobody questions a bad month.
+
+A LATE LOAD gives you rows arriving with an old business date. Totals for a closed period change after you have published them, which is how you discover it.
+
+A SCHEMA DRIFT gives you a column that changes meaning partway through — prices suddenly ex-VAT, quantities suddenly in cases. No duplicates, no gaps, just a step change in a ratio.
+
+The diagnostic in every case is the same: group by source and period, and look for the period that does not behave like its neighbours. One query, and it should run every month whether or not anybody is suspicious.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which of these failures is most likely to go unnoticed?',
+        options: [
+          { key: 'partial', correct: true, label: 'A partial load — it looks like a bad month, and bad months get accepted' },
+          { key: 'double', correct: false, label: 'A double load, because the numbers look plausible' },
+          { key: 'late', correct: false, label: 'A late load, because published totals change quietly' },
+          { key: 'drift', correct: false, label: 'Schema drift, because no rows are missing or repeated' },
+        ],
+        why: 'All four hide well. But a double load gets caught the moment somebody celebrates it, and drift and late arrival both change something visible. A missing week just looks like trade was soft, and nobody investigates soft.',
+      },
+    },
+    {
+      key: 'taa-06', day: 3, type: 'judgement', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Ravi is going to be embarrassed',
+      title: 'Asha: correcting someone on your own team',
+      body: `You are about to tell Ravi that the headline he was proudest of is a data fault. He drafted it, he called it out specifically, and he sent it to you to check.
+
+Two things matter here and they pull in different directions.
+
+He has to hear it from you, clearly, today. Softening it into "we might want to look at March" means it goes in the pack.
+
+And he has to still send you the next draft. He did the right thing — he circulated early and asked. If being checked costs him something, the next one arrives finished, or does not arrive at all.
+
+The way through is to make the fault the subject, not him. "March is loaded twice" is about the feed. "You did not spot the duplicate" is about Ravi. The first one is also more useful, because the feed is the thing that needs fixing.`,
+      check: {
+        kind: 'choice',
+        prompt: 'How do you open the message to Ravi?',
+        options: [
+          { key: 'fault', correct: true, label: 'With the fault: March is loaded twice in the source' },
+          { key: 'soft', correct: false, label: 'With a suggestion that March might be worth another look' },
+          { key: 'praise', correct: false, label: 'With praise for the draft, then the problem' },
+          { key: 'ask', correct: false, label: 'By asking him how he calculated the 21%' },
+        ],
+        why: 'Asking how he calculated it implies the arithmetic was wrong. It was not — the source is. Leading with praise before a correction reads as a setup, and softening it means it ships.',
+      },
+    },
+    {
+      key: 'taa-07', day: 4, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'When you are asked to name a cause',
+      title: 'Read: "pick one" is not a question you have to answer',
+      body: `Vikram will ask you why the estate declined, and he will frame it so that not answering looks like evasion. That framing is the thing to notice.
+
+You have sales, products, stores and stock counts. Footfall is not in there. Competitors are not in there. Pricing decisions, marketing spend, the weather, the economy — none of it. You can say with confidence WHERE the decline sits. You cannot say WHY, and no amount of pressure changes which tables exist.
+
+The failure mode is picking the most plausible-sounding cause because the room needs one. It feels helpful. What it actually does is put your name on an assertion that will be repeated in three more meetings, acted on in a budget, and never traced back.
+
+The answer that works is three parts: here is what I can show, here is what I cannot, here is what would settle it. The third part is what stops it sounding like a refusal. "Footfall counters would answer this in a month" turns you from an obstacle into the person with the plan.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are pressed to name a cause the data cannot establish. What is the complete answer?',
+        options: [
+          { key: 'three', correct: true, label: 'What you can show, what you cannot, and what would settle it' },
+          { key: 'refuse', correct: false, label: 'That the data cannot answer the question' },
+          { key: 'likely', correct: false, label: 'The most likely cause, flagged as a hypothesis' },
+          { key: 'defer', correct: false, label: 'That you will come back once you have more data' },
+        ],
+        why: 'Stopping at the refusal is accurate and leaves the room stuck. A hypothesis offered under pressure gets quoted without the flag. Coming back later means the decision gets made without you.',
+      },
+    },
+    {
+      key: 'taa-08', day: 4, type: 'judgement', via: 'email', from: 'finance_analyst', minutes: 8,
+      subject: 'Your number does not tie to mine',
+      title: 'Diya cannot reconcile your total',
+      body: `I have ₹4.85 crore net for the year from the warehouse. You have ₹4.78 crore.
+
+Seven lakh apart is not a rounding difference. One of us has a filter the other does not. Which is it?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the difference, and what do you do about it?',
+        options: [
+          { key: 'disclose', correct: true, label: 'You excluded the duplicated store-month; tell her exactly what and why' },
+          { key: 'hers', correct: false, label: 'Her figure is wrong because it includes the duplicates' },
+          { key: 'adopt', correct: false, label: 'Adopt her figure so the pack ties to the warehouse' },
+          { key: 'note', correct: false, label: 'Add a note to the pack saying figures may differ from the warehouse' },
+        ],
+        why: 'Her figure is what the warehouse says, which is a fact about the warehouse rather than an error on her part. Adopting it puts a known-wrong number in the pack. A vague note tells nobody how to reproduce either figure.',
+      },
+    },
+    {
+      key: 'taa-09', day: 5, type: 'learning', via: 'email', from: 'stakeholder', minutes: 10,
+      subject: 'How a slide gets wrong without a wrong number',
+      title: 'Read: arithmetic right, claim wrong',
+      body: `Vikram. A thing worth internalising before you sign anything off.
+
+Most bad slides do not contain a bad number. They contain a correct number with a sentence built on top of it that the number does not support. Three patterns cover nearly all of it.
+
+CAUSAL DRIFT. "Revenue fell, driven by Equipment." Equipment is the biggest category, so of course it moves the total most. "Driven by" turns arithmetic into a cause and invites a decision about Equipment.
+
+COMPARISON DRIFT. "The new store is outperforming the estate average." True only if you compare an express store with an average that is mostly flagships. The number is right and the comparison is not.
+
+DISCLOSURE DRIFT. "Data quality issues have been corrected." Nobody can reproduce your figure from that sentence, and next quarter the difference will be found by somebody who does not know where to look.
+
+When you sign something off you are signing the sentences, not the cells.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A slide says "revenue fell 17%, driven by a slowdown in Equipment". Equipment is 64% of revenue. What is wrong?',
+        options: [
+          { key: 'causal', correct: true, label: '"Driven by" claims a cause; being the largest category is arithmetic' },
+          { key: 'pct', correct: false, label: 'The 17% should be stated per category' },
+          { key: 'nothing', correct: false, label: 'Nothing — Equipment did decline and it is the largest category' },
+          { key: 'scope', correct: false, label: 'It should say which stores are included' },
+        ],
+        why: 'Scope does belong on the slide, and that is a separate fix. The load-bearing error is that "driven by" will send somebody to review the Equipment range when the decline is broad.',
+      },
+    },
+    {
+      key: 'taa-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Before the pack goes',
+      title: 'Asha: what would you change about how this gets made?',
+      body: `Step back from the numbers for a moment.
+
+This week you found a duplicated month that nobody had noticed in three months of reporting, three undefined terms in a board pack, and a store ranking that was really a ranking of trading days. None of those were hard to find. All of them had shipped before.
+
+That is the part that should bother you, and it is the part a lead is actually responsible for. Finding it once is analysis. Making sure it cannot ship again is the job.
+
+So: what is the one change you would make to how this reporting is produced? Not a list — one, the one you would actually put in place on Monday.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Name the single change you would make, and why that one.',
+        markers: ['duplicat|check|test|automat|definition|glossary|agree|like.for.like|review|before|sign.?off|monthly|routine'],
+        why: 'Any of them is defensible. What is not defensible is a list of five — a lead who cannot say which change matters most has not decided, and nothing gets implemented.',
+      },
+    },
+  ],
   'experiment-readout': [
     {
       key: 'ea-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
@@ -1680,6 +1906,119 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'trading-review': [
+    {
+      key: 'tas-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'How deep does this go?',
+      body: `Board is Tuesday. Do you want to do the full job on this pack, or check the headline figures and leave the rest?
+
+Your call — I would rather you told me what is realistic than promised the lot and delivered half.`,
+      needsReply: true,
+      expect: ['pick a scope', 'say what you are leaving out'],
+      markers: ['headline|figure|definition|like.for.like|store|check|scope|full|not|leave|tuesday|priorit'],
+      ifIgnored: 'Vikram assumes a full review, tells the board the pack has been audited, and finds out in the room what was not looked at.',
+      note: 'He has asked you to scope your own work, which is the lead question. Name what you will cover and what you will not.',
+    },
+    {
+      key: 'tas-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: warehouse refresh completed',
+      body: `The nightly retail warehouse refresh completed successfully at 03:14.
+
+No action required.`,
+      expect: ['archive it'],
+      note: 'Automated, successful, nothing to do. Which is worth noticing later in the week — this is the job that loaded March twice and reported success.',
+    },
+    {
+      key: 'tas-03', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Building a store_days view this afternoon',
+      body: `Noticed everyone computes days-open from opened_on and closed_on by hand, and three people have three versions of it.
+
+Putting it in a view this afternoon — store_days, one row per store per reporting window. No action needed from you, just so you know it will be there tomorrow.`,
+      expect: ['archive it'],
+      note: 'He is telling you, not asking you. Useful to know, nothing to answer.',
+    },
+    {
+      key: 'tas-04', day: 2, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Store league table for the ops call',
+      body: `Ops call is in an hour and I want to open with the store ranking.
+
+Send me whatever you have — I will caveat it.`,
+      needsReply: true,
+      expect: ['send the normalised version', 'name what makes it comparable'],
+      markers: ['per day|open|normalis|format|salt lake|sector|february|october|compar|caveat|which'],
+      ifIgnored: 'The raw ranking goes to the ops call, and the manager of a store that opened in February is asked to explain why they are bottom of the estate.',
+      note: '"I will caveat it" never survives the room. Send the version that does not need one.',
+    },
+    {
+      key: 'tas-05', day: 3, type: 'judgement', via: 'email', from: 'engineering_manager',
+      subject: 'You think our loader is broken?',
+      body: `Karthik mentioned you found duplicate rows in the retail feed.
+
+Before this becomes a ticket — are you certain, or is it possible two customers bought the same thing on the same day? That happens.`,
+      needsReply: true,
+      expect: ['state the evidence', 'distinguish it from coincidence'],
+      markers: ['52|104|every|all|contiguous|month|one store|pattern|elsewhere|2|coincidence|concentrat'],
+      ifIgnored: 'Arjun closes it as expected behaviour, and March 2026 stays wrong in every report built on it.',
+      note: 'He is right that coincidental matches happen. The answer is the concentration: every line in one store-month, against at most two anywhere else.',
+    },
+    {
+      key: 'tas-06', day: 3, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Fire drill — Thursday 11:00',
+      body: `A routine fire drill will take place on Thursday at 11:00.
+
+Please leave the building by the nearest exit and reassemble in the car park. Expect to be out for about twenty minutes.`,
+      expect: ['archive it'],
+      note: 'Nothing to answer.',
+    },
+    {
+      key: 'tas-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Just give me a reason',
+      body: `I have asked twice now. Nine stores down and I cannot walk into the board and say "we do not know".
+
+Footfall, pricing, range or economy. Pick the most likely one and I will present it as a hypothesis.`,
+      needsReply: true,
+      expect: ['decline to pick', 'give him what you can show and what would settle it'],
+      markers: ['cannot|can.t|no footfall|not in|no data|categor|where|equipment|show|would need|counter|competitor|promotion|november'],
+      ifIgnored: 'He picks one himself, presents it as analytics\' view, and a budget decision follows from it.',
+      note: 'Naming a cause "as a hypothesis" is how it gets quoted without the hedge. Give him where the decline sits and what would establish why.',
+    },
+    {
+      key: 'tas-08', day: 4, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Which number goes in the statutory pack?',
+      body: `I need one revenue figure for the statutory reporting and I cannot use two.
+
+Gross or net? And is it the whole estate or your like-for-like set?`,
+      needsReply: true,
+      expect: ['answer both questions', 'give a reason'],
+      markers: ['net|whole|all|total|estate|statutory|not like.for.like|every store|entire|include'],
+      ifIgnored: 'Diya picks one, and the statutory figure and the board figure differ with no explanation on record.',
+      note: 'Statutory reporting wants what the business actually earned: net, whole estate. Like-for-like is a management measure, not an accounting one.',
+    },
+    {
+      key: 'tas-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'Ashok Nagar\'s manager has seen the draft',
+      body: `The earlier draft with the 21% growth went out on a distribution list wider than intended. Ashok Nagar's manager has seen it and has told her team.
+
+She is going to see the corrected version on Tuesday. How do you want to handle that?`,
+      needsReply: true,
+      expect: ['say she should be told before Tuesday', 'and by whom'],
+      markers: ['before|today|tomorrow|tell|direct|call|her|advance|not the board|data fault|not her|no reflection'],
+      ifIgnored: 'A store manager finds out in a board pack that her celebrated result was a data error, having already told her team about it.',
+      note: 'She has to hear it before the room does, and she has to hear that it was a feed fault rather than anything she did.',
+    },
+    {
+      key: 'tas-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the leadership summary',
+      body: `I need a single line from you for the leadership summary that goes out with the pack.
+
+Not the caveats. The thing that changes what we do.`,
+      needsReply: true,
+      expect: ['one finding', 'stated as a decision'],
+      markers: ['like.for.like|17|decline|nine|estate|down|second half|check|duplicat|definition'],
+      ifIgnored: 'Asha writes it from the pack\'s opening paragraph, which is the definitions section.',
+      note: 'One sentence. The estate declined, it was not visible in the draft, and that is the thing leadership needs.',
+    },
+  ],
   'experiment-readout': [
     {
       key: 'es-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -2578,6 +2917,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'trading-review': {
+    key: 'taq-trading', title: 'Half-Year Trading Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A draft shows nine stores declining and one growing strongly. Which do you verify first?',
+        options: [
+          { key: 'a', label: 'The one that is growing', correct: true },
+          { key: 'b', label: 'The nine declining, since that is the larger business impact' },
+          { key: 'c', label: 'The estate total, since everything rolls up to it' },
+          { key: 'd', label: 'All equally — there is no reason to prefer one' },
+        ],
+        why: 'The exception is where the error is, and a flattering exception has already passed one filter that an unflattering one has not. Somebody wanted the star to be real.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'Returns are stored as negative quantities in the sales table. What does COUNT(*) give you?',
+        options: [
+          { key: 'c', label: 'Till lines, including refunds — not transactions in the sense a board means', correct: true },
+          { key: 'a', label: 'The number of transactions' },
+          { key: 'b', label: 'The number of items sold' },
+          { key: 'd', label: 'The number of transactions, net of returns' },
+        ],
+        why: '9,022 lines against 8,530 sale lines. Counting refunds as transactions inflates the count and deflates the average value, and both errors push the same way.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Two stores opened during the reporting year and one closed. What must the pack carry?',
+        options: [
+          { key: 'b', label: 'Both a total-estate figure and a like-for-like figure over a stable set of stores', correct: true },
+          { key: 'a', label: 'The total estate figure, since that is what the business earned' },
+          { key: 'c', label: 'Like-for-like only, since it is the cleaner comparison' },
+          { key: 'd', label: 'The total with the part-year stores scaled up to a full year' },
+        ],
+        why: 'Like-for-like says whether the shops are trading better; the total says what the business earned. Publish one and you will be asked for the other in the room. Scaling a four-month store to twelve is a forecast presented as a result.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Revenue per trading day and revenue per day open give different rankings. Which is the better productivity measure, and why?',
+        options: [
+          { key: 'd', label: 'Per day open — a day with no sales is a bad day, not an absent one', correct: true },
+          { key: 'a', label: 'Per trading day, because it only counts days the store actually traded' },
+          { key: 'b', label: 'Neither — use the annual total' },
+          { key: 'c', label: 'They are equivalent for a busy estate' },
+        ],
+        why: 'Dividing by days with a sale deletes the worst days from the average, and it flatters exactly the quietest stores. Baner records a sale on 268 days of roughly 365 open.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'How do you distinguish a double-loaded feed from two customers coincidentally buying the same thing?',
+        options: [
+          { key: 'a', label: 'By concentration — every line in one contiguous store-month, against one or two anywhere else', correct: true },
+          { key: 'b', label: 'By checking whether the rows have sequential ids' },
+          { key: 'c', label: 'By whether the duplicated revenue is material' },
+          { key: 'd', label: 'You cannot — identical rows are always ambiguous' },
+        ],
+        why: 'Coincidental matches are scattered and rare. Fifty-two duplicate groups covering all 104 of one store\'s March lines is a feed replayed.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'You exclude the duplicated store-month from your figures. What else must you do?',
+        options: [
+          { key: 'c', label: 'Disclose the exclusion, so the figure can be reproduced and reconciled', correct: true },
+          { key: 'a', label: 'Nothing — the corrected figure is the right one' },
+          { key: 'b', label: 'Delete the duplicate rows from the warehouse' },
+          { key: 'd', label: 'Use the warehouse figure instead, so the pack ties' },
+        ],
+        why: 'Finance has the uncorrected figure. An undisclosed filter means the two never reconcile and nobody knows which to believe — and you should not have write access to the source anyway.',
+      },
+      {
+        id: 'q7', topic: 'communication',
+        q: 'You are pressed to name a cause for the decline. Footfall, competitor and market data are all absent. What is the complete answer?',
+        options: [
+          { key: 'b', label: 'What you can show, what you cannot, and what data would settle it', correct: true },
+          { key: 'a', label: 'The most plausible cause, clearly flagged as a hypothesis' },
+          { key: 'c', label: 'That the data cannot answer the question' },
+          { key: 'd', label: 'That you will investigate and come back' },
+        ],
+        why: 'A hypothesis offered under pressure gets repeated without its flag. Stopping at the refusal leaves the room stuck. The third part is what makes it a plan rather than an obstacle.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A slide reads "revenue fell 17%, driven by a slowdown in Equipment". Equipment is the largest category. What is wrong?',
+        options: [
+          { key: 'd', label: '"Driven by" asserts a cause; being the biggest category is arithmetic', correct: true },
+          { key: 'a', label: 'Nothing — Equipment declined and it is the largest category' },
+          { key: 'b', label: 'The figure should be stated per category' },
+          { key: 'c', label: 'It should name the stores included' },
+        ],
+        why: 'Scope belongs on the slide too, but the load-bearing error is that "driven by" will send somebody to review the Equipment range when the decline is broad.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'Half-on-half comparison shows a 17.3% decline. The first half contains a discount-driven promotion month. What does that mean?',
+        options: [
+          { key: 'a', label: 'The comparison overstates the decline, and the pack has to say so', correct: true },
+          { key: 'b', label: 'Nothing — both halves are six months' },
+          { key: 'c', label: 'The promotion month should be excluded from both halves' },
+          { key: 'd', label: 'The decline is understated, since the promotion cost margin' },
+        ],
+        why: 'November is the biggest revenue month of the year and it sits entirely in the first half. Excluding it is defensible too — silently leaving it in and calling the result like-for-like is not.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'A store manager has already told her team about a growth figure that turns out to be a data fault. When does she find out?',
+        options: [
+          { key: 'c', label: 'Before the board pack circulates, and told that it was a feed fault, not her result', correct: true },
+          { key: 'a', label: 'In the corrected pack, along with everyone else' },
+          { key: 'b', label: 'She does not need to be told — the figure was never hers' },
+          { key: 'd', label: 'After the board meeting, so the correction is settled first' },
+        ],
+        why: 'She acted on a number your team published. Letting her discover the correction in a room, or after it, is a cost your error imposed on somebody who did nothing wrong.',
+      },
+    ],
+  },
   'experiment-readout': {
     key: 'eq-experiment', title: 'Onboarding Experiment Readout — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

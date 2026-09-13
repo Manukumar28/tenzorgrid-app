@@ -365,6 +365,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'product_events',
   },
+
+  'trading-review': {
+    projectTitle: 'Half-Year Trading Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'You own what leaves the team, whether or not you wrote it.',
+      'Check the number that flatters somebody hardest, not least.',
+      'Say what you can show and refuse, out loud, to say what you cannot.',
+    ],
+    scenario:
+      'Ravi has drafted the half-year pack and sent it for a sanity check. It has a revenue figure with no definition, a transaction count that includes refunds, a store ranking that is really a ranking of trading days, and one celebrated star performer. The board meets Tuesday.',
+    estimatedMinutes: 120,
+    difficulty: 'Hard',
+    primaryObjective: 'A trading picture the board can act on: defined figures, a like-for-like comparison, and no claim the data cannot carry.',
+    constraints: [
+      { label: 'Data scope', value: 'Twelve months to 30 June 2026. The estate changed during it — two openings and a closure.' },
+      { label: 'Counting rule', value: 'Returns are negative rows in the same table. Decide what a transaction is and say so.' },
+      { label: 'Reporting rule', value: 'Any figure you correct has to be disclosed, or the pack stops reconciling with the warehouse.' },
+    ],
+    deliverables: [
+      { text: 'A defined gross-to-net bridge for the year.', via: 'sql-terminal' },
+      { text: 'A like-for-like half-on-half comparison across a stable estate.', via: 'sql-terminal' },
+      { text: 'Sign-off, or a rewrite, of the trading slide.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The one store growing against a uniformly declining estate is the one to check first, not last.',
+      'Revenue per trading day and revenue per day open are different denominators, and they disagree most for the quietest stores.',
+      'The comparison period contains a discount-driven promotion month. Half-on-half against it overstates the decline.',
+      'A slide can be arithmetically right and still claim something the analysis never established.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no
