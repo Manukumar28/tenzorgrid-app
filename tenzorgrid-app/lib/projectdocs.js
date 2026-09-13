@@ -330,6 +330,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat'],
     datasetKey: 'product_events',
   },
+
+  'experiment-readout': {
+    projectTitle: 'Onboarding Experiment Readout',
+    companyName: 'Meridian Systems',
+    companyBlurb: 'Your own employer. The experiment under review is one the product team ran on Meridian customers.',
+    yourRole: 'Senior Data Analyst, embedded with Product',
+    roleResponsibilities: [
+      'Check whether a comparison is valid before reporting what it says.',
+      'Correct a number the business has already been told, without making the person who told them look careless.',
+      'Report the effect you can defend, at the precision you can defend it to.',
+    ],
+    scenario:
+      'onboarding_v2 ran for ten weeks and the headline says it lost: 36% activation against control\'s 45%. Priya wants a rollback note by Wednesday and the growth channel is about to post the result. The assignment, it turns out, was bucketed on device — so the treatment arm is three-quarters mobile and the control arm is three-quarters web, on a product where mobile activates at a third of web\'s rate.',
+    estimatedMinutes: 110,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible readout of what onboarding_v2 actually did, and a decision Priya can act on.',
+    constraints: [
+      { label: 'Data scope', value: 'Customers only. Eight Meridian staff sit in each arm.' },
+      { label: 'Comparison rule', value: 'Two arms can only be compared on the thing being tested if they match on everything else. Establish that before reading any result.' },
+      { label: 'Reporting rule', value: 'A subgroup result you went looking for after seeing the answer is a hypothesis, not a finding.' },
+    ],
+    deliverables: [
+      { text: 'A balance check on the two arms, before any outcome is computed.', via: 'sql-terminal' },
+      { text: 'A standardised comparison that holds the platform mix constant.', via: 'python-notebook' },
+      { text: 'A readout that replaces the circulated figure and ends in a decision.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The arms are 169 and 122 — but the unequal SIZE costs precision, while the unequal COMPOSITION is what biases the result. They are different problems.',
+      'Treatment wins on web and wins on mobile, and loses overall. Both calculations are correct.',
+      'Sixteen subgroup splits will always produce two or three extremes. Two of them here point the opposite way to the result, on cells of fifteen users.',
+      'A larger sample would have reproduced this skew more precisely, not fixed it. Sample size does not cure biased assignment.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'product_events',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

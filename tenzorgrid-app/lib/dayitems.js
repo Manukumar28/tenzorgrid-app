@@ -24,6 +24,223 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'experiment-readout': [
+    {
+      key: 'ea-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'Read this before you open the assignment table',
+      title: 'Read: what randomisation is actually for',
+      body: `Karthik. You are about to read an A/B test, so it is worth being exact about what the method buys you.
+
+Randomisation does one job: it makes the two arms identical in expectation on EVERYTHING, including the things nobody measured or thought of. That is why a difference in outcome can be attributed to the change. It is the whole argument.
+
+Break the randomisation and you have two groups of people who differ in the treatment and in who-knows-what-else. The arithmetic still works. The inference does not.
+
+So the first query on any experiment is never the outcome. It is the balance check: are the arms the same size, and are they made of the same people? Compare them on every attribute you have that plausibly predicts the outcome.
+
+And note the asymmetry. If the balance check passes, you have learned a little. If it fails, you have learned that the headline everyone is quoting means something other than what they think. That is the highest-value query you will run all week and it takes about four lines.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What does randomisation protect against that a balance check does not?',
+        options: [
+          { key: 'unknown', correct: true, label: 'Confounders nobody measured or thought to check' },
+          { key: 'noise', correct: false, label: 'Random variation in the outcome' },
+          { key: 'small', correct: false, label: 'Small sample sizes' },
+          { key: 'bias', correct: false, label: 'Bias in how the outcome is measured' },
+        ],
+        why: 'A balance check can only test the attributes you have. Randomisation covers the ones you do not, which is why adjusting after the fact is always weaker than assigning properly in the first place.',
+      },
+    },
+    {
+      key: 'ea-02', day: 1, type: 'judgement', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Priya has already told people it lost',
+      title: 'Asha: correcting a conclusion that is already circulating',
+      body: `Read the situation before you read the data. Priya has a number, she believes it, and she has said it out loud to people above her.
+
+If you come back Thursday with "actually it won", you are not delivering a finding. You are asking her to reverse herself in public, and how you hand that over decides whether she thanks you or fights you.
+
+Two rules. Tell her early — the moment you know the comparison is broken, not when you know the answer. A day-one "this may not say what we think" is a collaboration. A day-four reversal is an ambush.
+
+And never frame it as her being wrong. She read a correctly computed number. The number answered a different question than the one she asked it. Those are genuinely different things and the distinction is not a kindness, it is accurate.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You know on Monday that the arms are imbalanced. You will not have the corrected result until Wednesday. When do you tell Priya?',
+        options: [
+          { key: 'monday', correct: true, label: 'Monday — that the comparison is broken, even without knowing which way it will go' },
+          { key: 'wednesday', correct: false, label: 'Wednesday, with the corrected result, so you only disturb her once' },
+          { key: 'ifreverses', correct: false, label: 'Only if the result actually reverses' },
+          { key: 'friday', correct: false, label: 'Friday, in the readout, where it belongs' },
+        ],
+        why: 'She is briefing people on it today. Every day you wait is another room that heard the old number, and the correction gets more expensive for her each time.',
+      },
+    },
+    {
+      key: 'ea-03', day: 2, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Reproduce before you correct',
+      title: 'Read: always match the number you are about to change',
+      body: `Small habit, disproportionate payoff.
+
+Before you correct anybody's figure, reproduce it exactly. Same filters, same population, same decimal. If you cannot get to 45.0 and 36.1, you do not yet know whether you are correcting their analysis or arguing with a different one.
+
+Two things happen when you skip this. The conversation becomes about whose query is right, which you will not win quickly and which teaches nobody anything. And occasionally you discover the original number was not reproducible at all, which is a completely different and much more urgent finding.
+
+When you can say "I get your number exactly, and here is why it answers a different question", the disagreement is over in one sentence. The alternative is a week of two people running queries at each other.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why reproduce a figure you already believe is misleading?',
+        options: [
+          { key: 'same', correct: true, label: 'So the disagreement is about interpretation rather than about whose query is right' },
+          { key: 'polite', correct: false, label: 'Politeness — it shows you took their work seriously' },
+          { key: 'check', correct: false, label: 'To check your own SQL' },
+          { key: 'audit', correct: false, label: 'Because the audit trail requires it' },
+        ],
+        why: 'All four have something to them, but only one changes how the conversation goes. Matching their number removes the entire category of argument you cannot win quickly.',
+      },
+    },
+    {
+      key: 'ea-04', day: 2, type: 'pressure', via: 'chat', from: 'people_partner', minutes: 5,
+      subject: 'Heads up on the all-hands',
+      title: 'Neha: the result is going in the all-hands deck',
+      body: `Just so you know — the onboarding result is in Friday's all-hands deck. Slide 14, "what we learned from onboarding_v2".
+
+Comms have already drafted it around the rollback. If that changes, I need to know by Thursday lunchtime or it ships as written.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What do you tell Neha today?',
+        markers: ['may change|might|likely|reverse|hold|draft|thursday|will know|wednesday|not final|expect'],
+        why: 'She has given you a deadline and an escape hatch. Tell her today that it may reverse and when you will know, so the slide is not built twice.',
+      },
+    },
+    {
+      key: 'ea-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 15,
+      subject: "Simpson's paradox, and what to do about it",
+      title: "Read: when the parts and the whole disagree",
+      body: `You have just produced a table where treatment beats control on web, beats control on mobile, and loses overall. Nothing is broken. This is a known and entirely arithmetic phenomenon.
+
+A pooled rate is a weighted average of its segment rates, weighted by how many people are in each segment. If the two arms have different weights, the pooled comparison is partly a comparison of the WEIGHTS rather than of the rates.
+
+Here treatment is 73% mobile and control is 28% mobile, and mobile activates at roughly a third of web's rate. So treatment is carrying a heavier load of the low-activating segment. Give it the same load as control and it wins.
+
+The fix is standardisation. Take one reference population — usually the pooled mix of everyone in the experiment — and apply each arm's within-segment rates to it. Both arms are then scored against the same mix, so the only remaining difference is the thing you are testing.
+
+One caution. Standardising corrects the confounder you measured. It does nothing about the ones you did not, and an experiment whose assignment was broken on one attribute may well be broken on others you cannot see. Report the adjusted number AND the fact that the assignment was not random.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Standardising the two arms to a common platform mix gives treatment +9.5 points. What can you now claim?',
+        options: [
+          { key: 'adjusted', correct: true, label: 'An adjusted estimate, with the caveat that assignment was not random' },
+          { key: 'causal', correct: false, label: 'That the new onboarding causes a 9.5 point improvement' },
+          { key: 'nothing', correct: false, label: 'Nothing — the broken assignment makes the data unusable' },
+          { key: 'exact', correct: false, label: 'That the true effect is 9.5 points, since the confounder is now removed' },
+        ],
+        why: 'Adjustment removes the confounder you measured. Anything else correlated with device is still in there, so the estimate is real but it is not experimental evidence.',
+      },
+    },
+    {
+      key: 'ea-06', day: 3, type: 'judgement', via: 'email', from: 'engineering_manager', minutes: 8,
+      subject: 'How did the bucketing go wrong?',
+      title: 'Arjun wants to know whose fault it was',
+      body: `I hear the assignment was bucketed on device identifier. That is my team's code.
+
+Before this becomes a thing in a post-mortem — is the finding "the experiment was run wrong" or "the analysis caught something"? Those land very differently for the people who wrote it.`,
+      check: {
+        kind: 'choice',
+        prompt: 'How do you characterise the bucketing problem in your readout?',
+        options: [
+          { key: 'mechanism', correct: true, label: 'As a mechanism to fix in the re-run, stated without attributing it to anyone' },
+          { key: 'blame', correct: false, label: 'As an error by the team that implemented the assignment' },
+          { key: 'omit', correct: false, label: 'Leave it out — the corrected result is what matters' },
+          { key: 'downplay', correct: false, label: 'Mention it as a minor technical detail' },
+        ],
+        why: 'It is the single most important thing to change next time, so it cannot be omitted or softened. But naming it as a mechanism rather than a culprit is what gets it fixed instead of defended.',
+      },
+    },
+    {
+      key: 'ea-07', day: 4, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'Subgroups, and how findings get manufactured',
+      title: 'Read: the difference between a finding and a story',
+      body: `You now have the means to produce almost any conclusion anyone wants, and this is the week you learn not to.
+
+Five channels, three plans, two invite paths, two platforms. That is sixteen or so subgroup comparisons available to you. If the treatment genuinely does nothing at all, two or three of those will still look striking. That is not bad luck, it is what sixteen comparisons do.
+
+Two tests before a subgroup result becomes a finding.
+
+Was the split named before you saw the result? The platform split here was forced on you by the assignment mechanism — you had no choice but to look at it. Channel and plan you went to AFTER seeing the answer, which makes them hypotheses.
+
+Is the cell big enough to distinguish a real difference from a few coin flips? Fifteen users means one person is nearly seven percentage points. A twenty-point swing on that base is unremarkable.
+
+The partner result in your table fails both tests. Somebody will find it anyway, so the readout should say you looked, say what it is worth, and say what would settle it.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What makes the platform split different from the channel split in this analysis?',
+        options: [
+          { key: 'forced', correct: true, label: 'The assignment mechanism forced it — it was not chosen after seeing the result' },
+          { key: 'bigger', correct: false, label: 'Platform has larger cells' },
+          { key: 'predicts', correct: false, label: 'Platform predicts activation and channel does not' },
+          { key: 'binary', correct: false, label: 'Platform is binary and channel has five levels' },
+        ],
+        why: 'Cell size and predictive power both matter, but the decisive difference is that you had to look at platform. A split you were compelled into is evidence; a split you chose after seeing the answer is a hypothesis.',
+      },
+    },
+    {
+      key: 'ea-08', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Just give me the carve-out',
+      title: 'Vikram pushes again on partner',
+      body: `I hear you on sample size. But the partner number is 67 vs 33 — that is not a rounding error, it is double.
+
+We only have 42 partner users in the test. Excluding them from the rollout costs us basically nothing and covers the downside. Why is that not just sensible risk management?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer the risk-management framing specifically.',
+        markers: ['permanent|two path|maintain|forever|cost|not free|both direction|equally likely|noise|15|would also'],
+        why: 'A carve-out is not free — it is two onboarding paths to maintain indefinitely. And a swing that size on 15 users is as likely to point the wrong way as the right one, so the "downside cover" is imaginary in both directions.',
+      },
+    },
+    {
+      key: 'ea-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Precision you can defend',
+      title: 'Read: how many digits you have earned',
+      body: `Your standardised result is 47.1 against 37.6. You will be tempted to write exactly that, because it is what came out of the notebook.
+
+Do not. On 291 users, the second digit is not real. Quote it and it gets repeated to one decimal place for a year, in decks you never see, as though it were measured.
+
+Round to what you can defend. "About nine points better." "Better in both segments." Those survive being forwarded without you in the thread, which is the actual test of a number in a readout.
+
+There is a related habit worth having. Prefer percentage points to ratios for effects like this. "Nine points better" is hard to misread. "A quarter better" is the same fact framed to sound larger, and somebody will use it that way.
+
+The rule underneath both: write the number at the precision your evidence supports, not the precision your tool printed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your standardised figures are 37.6 and 47.1 on 291 users. What goes in the readout headline?',
+        options: [
+          { key: 'about', correct: true, label: '"About nine points better, once the arms are matched"' },
+          { key: 'exact', correct: false, label: '"47.1% against 37.6%"' },
+          { key: 'ratio', correct: false, label: '"Roughly 25% better"' },
+          { key: 'round', correct: false, label: '"47% against 38%"' },
+        ],
+        why: 'The last one is better than quoting decimals but still presents two point estimates as though they were measured. Leading with the difference, hedged, is what survives being forwarded.',
+      },
+    },
+    {
+      key: 'ea-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Before the readout goes',
+      title: 'Asha: you have reversed a company decision',
+      body: `Worth sitting with for a moment. Ten days ago this company was going to roll back a change that works. The only reason it is not is that somebody checked the composition of the arms before reading the outcome.
+
+That is the senior job in one sentence. Not harder SQL — asking whether the comparison in front of you is a comparison at all.
+
+Two questions before you send it, and they are the ones I would ask in a review.
+
+If Priya forwards your readout to someone who was not in any of these conversations, what is the one sentence they will take away? Make sure it is the one you want.
+
+And: what would have to be true for you to be wrong?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer the second one. What would make your conclusion wrong?',
+        markers: ['confound|unmeasur|device|correlat|not random|another|other variable|assign|small|33|web arm|selection|unknown'],
+        why: 'Something else correlated with device that you cannot see, and a 33-user web treatment cell carrying the larger of the two segment effects. Naming your own weakest point is what stops somebody else naming it for you.',
+      },
+    },
+  ],
   'activation-review': [
     {
       key: 'ca-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
@@ -1463,6 +1680,121 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'experiment-readout': [
+    {
+      key: 'es-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'Do you need the raw assignment logs?',
+      body: `The bucketing service writes its own logs — every assignment decision with the inputs it used.
+
+Karthik can pull them but it is a day of work. Do you need them, or is the assignment table enough?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'say what would change your mind'],
+      markers: ['enough|no|not need|table|later|if|confirm|mechanism|device|cause|would help'],
+      ifIgnored: 'Karthik spends a day on logs that arrive after the readout, or the mechanism goes into the re-run recommendation unverified.',
+      note: 'The assignment table shows the imbalance. The logs would confirm WHY, which matters for the re-run but not for the readout.',
+    },
+    {
+      key: 'es-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'All-hands moved to Friday 4pm',
+      body: `This week's all-hands has moved from Thursday to Friday at 4pm to accommodate the leadership offsite.
+
+Calendar invites have been updated automatically.`,
+      expect: ['archive it'],
+      note: 'Calendar already updated. Nothing to do.',
+    },
+    {
+      key: 'es-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Posting in 10 minutes',
+      body: `Drafting the #growth post now — treatment 36 vs control 45, rolling back.
+
+Going out in ten minutes unless I hear otherwise.`,
+      needsReply: true,
+      expect: ['ask him to hold', 'give the reason'],
+      markers: ['hold|wait|don.t|do not|pause|73|27|mobile|composition|not comparable|before'],
+      ifIgnored: 'The rollback goes out to the whole growth channel and has to be publicly retracted on Thursday.',
+      note: 'Ten minutes is enough for one sentence. The composition numbers are the sentence.',
+    },
+    {
+      key: 'es-04', day: 2, type: 'question', via: 'chat', from: 'data_engineer',
+      subject: 'Assignment table — one thing to know',
+      body: `Saw you in the assignment table. One thing that is not documented anywhere: users who signed up outside 1 March to 15 May were never assigned at all.
+
+Might be useful to you as an untouched comparison group. Might not. Flagging it either way.`,
+      needsReply: true,
+      expect: ['acknowledge', 'say whether it is useful'],
+      markers: ['useful|yes|baseline|control|unassign|outside|compar|confirm|platform|thanks'],
+      ifIgnored: 'Karthik stops flagging things that are not in the docs, which is most of what is worth knowing about this data.',
+      note: 'It is extremely useful — it is the baseline that proves the platform gap exists independently of the experiment.',
+    },
+    {
+      key: 'es-05', day: 3, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'Friday all-hands, slide 14',
+      body: `Comms have slide 14 drafted as "what we learned from onboarding_v2 — knowing when to roll back".
+
+You mentioned the result might move. I need the final version by Thursday lunchtime or this ships as written. What should it say?`,
+      needsReply: true,
+      expect: ['say the result reversed', 'give the line for the slide'],
+      markers: ['revers|opposite|better|won|both segment|mix|composition|not roll|ship|keep'],
+      ifIgnored: 'The company is told at an all-hands that it wisely rolled back a change that actually works.',
+      note: 'She has given you a deadline and offered to rewrite it. This is the cheapest correction available all week.',
+    },
+    {
+      key: 'es-06', day: 3, type: 'noise', via: 'email', from: 'security',
+      subject: 'Automated: quarterly access review complete',
+      body: `Your access to the analytics warehouse has been reviewed and retained at the current level.
+
+No action required. The next review is scheduled for December.`,
+      expect: ['archive it'],
+      note: 'Automated, retained, nothing required.',
+    },
+    {
+      key: 'es-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'The partner carve-out',
+      body: `Still think we should exclude partner signups from the rollout. 67 vs 33 is not nothing.
+
+What is the actual harm in being cautious here?`,
+      needsReply: true,
+      expect: ['name the cost of the carve-out', 'address the cell size'],
+      markers: ['15|27|small|permanent|two path|maintain|not free|noise|both direction|as likely'],
+      ifIgnored: 'The rollout ships with a permanent carve-out built on fifteen users, and nobody ever revisits it.',
+      note: 'Being cautious is not free. Two onboarding paths forever, on evidence that points either way.',
+    },
+    {
+      key: 'es-08', day: 4, type: 'policy', via: 'email', from: 'people_partner',
+      subject: 'Experiment results and external communication',
+      body: `A standing reminder as more teams run their own tests.
+
+Experiment results involving customer behaviour must not be shared outside the company — including in conference talks, blog posts and recruiting material — without review. This applies to aggregate results as well as anything user-level.
+
+The review is quick. Getting it wrong is not.`,
+      expect: ['read it and apply it'],
+      note: 'A standing policy sent to everyone. Relevant to what you are writing, but it does not need an answer.',
+    },
+    {
+      key: 'es-09', day: 5, type: 'judgement', via: 'email', from: 'engineering_manager',
+      subject: 'Post-mortem framing',
+      body: `We are doing a short post-mortem on the bucketing. I want to write it up as "analysis caught a methodology problem" rather than "engineering shipped a broken experiment".
+
+Is that a fair characterisation of what happened, in your view?`,
+      needsReply: true,
+      expect: ['answer honestly', 'keep the mechanism in the record'],
+      markers: ['fair|yes|both|mechanism|device|bucket|user id|must|record|change|re.run|so long as'],
+      ifIgnored: 'The post-mortem ships without the one detail that stops it happening again, and Arjun believes you were fine with that.',
+      note: 'The framing is fine. What must survive it is "bucket on user id, not device" — that is the whole lesson.',
+    },
+    {
+      key: 'es-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for Priya\'s leadership update',
+      body: `Priya has a leadership update Monday and wants one line from you.
+
+Not the readout — one line. What does she say?`,
+      needsReply: true,
+      expect: ['one sentence', 'the corrected direction, hedged appropriately'],
+      markers: ['better|about nine|9|both|web and mobile|matched|like for like|ship|keep|reverse'],
+      ifIgnored: 'Asha writes it from the readout\'s first paragraph, which is not the same as the sentence you would have chosen.',
+      note: 'One sentence that survives being repeated without you in the room. That is the whole skill.',
+    },
+  ],
   'activation-review': [
     {
       key: 'cs-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -2246,6 +2578,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'experiment-readout': {
+    key: 'eq-experiment', title: 'Onboarding Experiment Readout — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'statistics',
+        q: 'What is the first query you run on an experiment result?',
+        options: [
+          { key: 'b', label: 'A balance check — are the arms the same size and made of the same people?', correct: true },
+          { key: 'a', label: 'The outcome, per arm' },
+          { key: 'c', label: 'A significance test on the difference' },
+          { key: 'd', label: 'The sample size needed for the effect you expect' },
+        ],
+        why: 'If the balance check fails, the outcome number means something other than what everyone thinks it means. It takes four lines and it is the highest-value query of the week.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Control is 27.8% mobile and treatment is 73.0% mobile. Why does this matter more than the arms being 169 and 122?',
+        options: [
+          { key: 'c', label: 'Unequal size costs precision; unequal composition biases the estimate', correct: true },
+          { key: 'a', label: 'It does not — both are symptoms of the same problem' },
+          { key: 'b', label: 'Because 73% is further from 50% than 122 is from 145' },
+          { key: 'd', label: 'Because platform is the only attribute recorded on users' },
+        ],
+        why: 'A smaller arm gives you a wider interval around the right answer. A differently composed arm gives you a narrow interval around the wrong one.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'Treatment beats control on web (66.7 v 55.7) and on mobile (24.7 v 17.0), but loses overall (36.1 v 45.0). What is this?',
+        options: [
+          { key: 'a', label: "Simpson's paradox — the pooled average is weighted by a different mix in each arm", correct: true },
+          { key: 'b', label: 'An arithmetic error in one of the two calculations' },
+          { key: 'c', label: 'Evidence that the effect is real only within segments' },
+          { key: 'd', label: 'A sign that the sample is too small to be stable' },
+        ],
+        why: 'Both calculations are correct. The pooled figure is partly a comparison of the platform mixes rather than of the onboarding.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Would a much larger sample have prevented this reversal?',
+        options: [
+          { key: 'd', label: 'No — it would have reproduced the same skew more precisely', correct: true },
+          { key: 'a', label: 'Yes, imbalances average out as n grows' },
+          { key: 'b', label: 'Yes, if the assignment were still random' },
+          { key: 'c', label: 'Only if the segments were also balanced by size' },
+        ],
+        why: 'Sample size cures noise, not systematic assignment bias. Bucketing on device would produce the same 73/28 split at any n.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'How do you standardise the two arms to a common platform mix?',
+        options: [
+          { key: 'b', label: "Apply each arm's within-segment rates to the pooled population's segment weights", correct: true },
+          { key: 'a', label: 'Take the simple average of each arm\'s two segment rates' },
+          { key: 'c', label: 'Drop users from the larger arm until the arms match' },
+          { key: 'd', label: 'Report only the segment with the larger sample' },
+        ],
+        why: 'A simple average weights a 33-user cell equally with an 89-user one. Standardising uses the real mix, so both arms are scored against the same population.',
+      },
+      {
+        id: 'q6', topic: 'statistics',
+        q: 'After standardising, treatment is +9.5 points. What have you established?',
+        options: [
+          { key: 'c', label: 'An adjusted observational estimate — the confounder you measured is removed, others may remain', correct: true },
+          { key: 'a', label: 'A causal effect of 9.5 points' },
+          { key: 'b', label: 'Nothing, because the assignment was not random' },
+          { key: 'd', label: 'That the true effect lies between 7.7 and 11.0 points' },
+        ],
+        why: 'Randomisation protects against confounders you never measured. Standardising protects only against platform, and the assignment was bucketed on device — so anything else travelling with device travels with the arms.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'Partner-sourced users show control 66.7% against treatment 33.3%, on 27 and 15 users. What is it?',
+        options: [
+          { key: 'd', label: 'An underpowered post-hoc subgroup — expected to appear somewhere across sixteen splits', correct: true },
+          { key: 'a', label: 'Evidence the change harms partner-sourced users' },
+          { key: 'b', label: 'A second instance of the same composition problem' },
+          { key: 'c', label: 'A reason to exclude partner users from the rollout' },
+        ],
+        why: 'On 15 users one person is 6.7 points. Across five channels, three plans and two invite paths, two or three extremes will appear even if the treatment does nothing at all.',
+      },
+      {
+        id: 'q8', topic: 'business-sense',
+        q: 'What makes the platform split legitimate evidence when the channel split is not?',
+        options: [
+          { key: 'a', label: 'The assignment mechanism forced it — you had no choice but to look at it', correct: true },
+          { key: 'b', label: 'Platform has larger cells' },
+          { key: 'c', label: 'Platform is a stronger predictor of activation' },
+          { key: 'd', label: 'Platform was recorded before the experiment started' },
+        ],
+        why: 'A split you were compelled into by the broken randomisation is evidence. A split you chose after seeing the answer is a hypothesis, however large the gap looks.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'Priya will be asked in a leadership meeting how much better it is. What should she say?',
+        options: [
+          { key: 'b', label: '"About nine points better on activation, once we compare like with like"', correct: true },
+          { key: 'a', label: '"47.1% against 37.6%"' },
+          { key: 'c', label: '"Roughly a quarter better"' },
+          { key: 'd', label: '"The original number was wrong"' },
+        ],
+        why: 'On 291 users the decimal is fiction and will be repeated for a year. The ratio framing inflates a rate difference. And the original figure was correctly computed — it answered a different question.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You discover on Monday that the arms are imbalanced. The corrected result will not be ready until Wednesday. When do you tell Priya, who has already briefed people?',
+        options: [
+          { key: 'a', label: 'Monday — that the comparison is broken, even without knowing which way it goes', correct: true },
+          { key: 'b', label: 'Wednesday, with the corrected result, so she is only disturbed once' },
+          { key: 'c', label: 'Only if the result actually reverses' },
+          { key: 'd', label: 'Friday, in the readout' },
+        ],
+        why: 'She is briefing people today. Every day of silence is another room that heard the old number, and a day-four reversal is an ambush where a day-one warning is a collaboration.',
+      },
+    ],
+  },
   'activation-review': {
     key: 'cq-activation', title: 'Activation & Onboarding Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

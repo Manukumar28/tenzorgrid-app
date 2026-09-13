@@ -354,6 +354,36 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 2,
     },
+    {
+      key: 'experiment-readout',
+      title: 'Onboarding Experiment Readout',
+      description: 'The new onboarding appears to have lost. Product wants a rollback note; the assignment was not random.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      datasetKey: 'product_events',
+      taskKeys: [
+        // Day 1 — check the randomisation before reading the result. It is broken.
+        'ex-101', 'ex-102', 'ex-103', 'ex-104', 'ex-105', 'ex-106',
+        // Day 2 — reproduce the headline, then rule out the boring explanations.
+        'ex-110', 'ex-112', 'ex-113', 'ex-111', 'ex-114', 'ex-115',
+        // Day 3 — the wobble, and the whole point: it wins in both segments.
+        'ex-120', 'ex-121', 'ex-122', 'ex-123', 'ex-124', 'ex-125',
+        // Day 4 — handed the means to manufacture any finding, and having to not.
+        'ex-130', 'ex-131', 'ex-132', 'ex-133', 'ex-134', 'ex-135',
+        // Day 5 — the readout that reverses what the business was told on Monday.
+        'ex-140', 'ex-141', 'ex-142', 'ex-143', 'ex-144', 'ex-145',
+      ],
+      skillFocus: ['sql', 'python', 'statistics', 'communication'],
+      impactValue: 38000,
+      contributors: [
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Owns the rollout decision', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Senior Data Analyst', does: 'The experiment readout', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Carries the result to the business', day: 5 },
+      ],
+      unlockAfter: 3,
+    },
   ],
 };
 
@@ -4235,6 +4265,10 @@ const TASKS = {
     brief: "Activation is not the only measure of a good channel. Write ONE SQL SELECT over CUSTOMERS ONLY who signed up in or before April, returning per channel: the number of users and the percentage who had a session between 28 and 35 days after their signup date, rounded to one place. Best retaining channel first.",
     referenceSql: "SELECT u.channel, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) >= 28 AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) < 35) THEN 1.0 ELSE 0.0 END) * 100, 1) AS wk4 FROM users u WHERE u.email_domain <> 'meridiansystems.com' AND substr(u.signup_at, 1, 7) <= '2026-04' GROUP BY u.channel ORDER BY wk4 DESC",
     datasetKey: 'product_events', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    // Deliberately flagged for rework: Asha accepts the ranking and then asks whether it
+    // holds once the censored cohorts come out, which is the same query with a tighter
+    // window. Being asked for the same thing twice, slightly differently, is the job.
+    rework: true,
   },
 
   'ac-142': {
@@ -4304,6 +4338,494 @@ const TASKS = {
       skills: { communication: 100, businessLogic: 100, statistics: 90 },
     },
     estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Senior 4 · Onboarding Experiment Readout (product_events) -------------------
+  // One finding, arrived at four times. Monday the randomisation is broken. Tuesday the
+  // naive readout says the new onboarding lost. Wednesday it wins in every segment and
+  // the overall number was composition all along. Thursday the learner is handed the
+  // means to manufacture any finding they like, and has to not. Friday they write the
+  // readout that says the opposite of what the room was told on Tuesday.
+
+  'ex-101': {
+    title: 'What you need before reading any result',
+    hint: "You have been handed a conclusion. Work out what would have to be true for it to be one.",
+    brief: "Priya has the experiment result and wants it written up. Before you compute anything, establish what an experiment readout actually requires.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Priya Menon', subject: 'onboarding_v2 — write it up please',
+        body: "We ran the new onboarding from 1 March to 15 May. I have had the headline from the growth channel: treatment activates at 36% against control's 45%.\n\nSo it lost, and fairly clearly. I need a short readout I can circulate saying we are rolling it back, and ideally why it failed.\n\nCan you have it by Wednesday?",
+      },
+      prompt: 'Tick everything you should establish before writing a word of that readout.',
+      options: [
+        { key: 'balance', correct: true, label: 'Whether the two arms are actually comparable', why: 'A difference between arms only measures the change if the arms differ in nothing else. That is the assumption the whole method rests on and it is checkable in one query.' },
+        { key: 'window', correct: true, label: 'Whether every assigned user has been observed long enough to activate', why: 'A treatment arm assigned later than control would lose on measurement alone. Cheap to rule out, expensive to miss.' },
+        { key: 'who', correct: true, label: 'Who is in the assignment table, including whether staff are', why: 'Same population question as every other week. Eight staff in each arm is balanced, which is luck rather than design.' },
+        { key: 'why', correct: false, label: 'Why the new onboarding failed', why: 'She has asked for the cause of a thing you have not yet confirmed happened. Answering that question as framed is how you end up defending a conclusion you never tested.' },
+        { key: 'accept', correct: false, label: 'Nothing — the numbers are already computed and they are unambiguous', why: '36 against 45 is unambiguous only about what the raw averages are. It says nothing yet about what caused the difference.' },
+        { key: 'rerun', correct: false, label: 'Ask for the experiment to be re-run before commenting', why: 'Ten weeks of data already exist. Read it properly first; a re-run is a recommendation you might reach, not a way to avoid reading.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ex-102': {
+    title: 'What was actually run',
+    hint: "Start with the assignment table on its own. You are establishing the shape of the experiment, not its result.",
+    brief: "Write ONE SQL SELECT over the assignment table returning, per experiment: how many users were assigned, and the first and last assignment dates. Label them assigned, first_assigned and last_assigned.",
+    referenceSql: "SELECT experiment, COUNT(*) AS assigned, MIN(substr(assigned_at, 1, 10)) AS first_assigned, MAX(substr(assigned_at, 1, 10)) AS last_assigned FROM experiment_assignments GROUP BY experiment",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ex-103': {
+    title: 'The two arms',
+    hint: "Customers only, same exclusion as every other week. A 50/50 split is what you are checking for.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: the number of users assigned, and each arm's share of the assigned population as a percentage rounded to one place.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS users, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM experiment_assignments a2 JOIN users u2 ON u2.id = a2.user_id WHERE u2.email_domain <> 'meridiansystems.com'), 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ex-104': {
+    title: 'What each arm is made of',
+    hint: "Compare the arms on the one attribute you already know predicts activation. Report each platform as a share OF ITS OWN ARM.",
+    brief: "An unequal split is a warning, not a diagnosis. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant and platform group (web against mobile): the number of users and that group's percentage of its own arm, rounded to one place.",
+    referenceSql: "SELECT a.variant, CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY a.variant), 1) AS pct_of_arm FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant, grp ORDER BY a.variant, grp",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-105': {
+    title: 'This was not a randomised experiment',
+    hint: "You know from last week what platform does to activation. Now look at how it is distributed between the arms.",
+    brief: "Control is 27.8% mobile. Treatment is 73.0% mobile. Work out what that does to any comparison between them.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'broken', correct: true, label: 'The arms are not comparable, so the headline difference is uninterpretable as it stands', why: 'Treatment is loaded with the platform that activates at a third of web\'s rate. Any gap between the arms is that loading plus whatever the change did, and the raw number cannot separate them.' },
+        { key: 'device', correct: true, label: 'The assignment was probably bucketed on something device-related', why: 'A 73/27 split against a 28/72 one is not chance. Something in the rollout mechanism was correlated with the device, and that is worth writing down as the likely cause.' },
+        { key: 'salvage', correct: true, label: 'It can still be analysed, but only within platform', why: 'Comparing like with like inside each segment is valid. What is not valid is the pooled average, and the distinction is the whole readout.' },
+        { key: 'size', correct: false, label: 'The unequal arm sizes — 169 against 122 — are the main problem', why: 'Unequal sizes cost you precision and nothing else. It is the unequal COMPOSITION that biases the result, and the two are easy to confuse.' },
+        { key: 'bin', correct: false, label: 'The experiment is worthless and should be discarded', why: 'Ten weeks of data with a known, measurable confounder is recoverable. Discarding it would throw away a real finding to avoid doing the arithmetic.' },
+        { key: 'noise', correct: false, label: 'With nearly 300 users the imbalance will average out', why: 'Sample size fixes noise. It does nothing at all to systematic assignment bias — a larger sample would reproduce this skew more precisely.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-106': {
+    title: 'Tell Priya on day one',
+    hint: "She asked for a rollback note by Wednesday. She needs to know today that the question changed.",
+    brief: "You have not computed the result yet and you already know the readout she asked for cannot be written. Say so now, without overclaiming what you will find. Under 150 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — the arms are not comparable', maxWords: 150,
+      prompt: 'What you found in the assignment, why it blocks the readout she asked for, and what you will do instead.',
+      rubric: [
+        { key: 'skew', label: 'The composition problem, with the numbers', markers: ['73|27|mobile|platform|composition|skew|imbalance|made up of'], why: 'One specific pair of percentages is more persuasive than any amount of methodological language.' },
+        { key: 'why', label: 'Why it invalidates the pooled comparison', markers: ['activat|third|lower|worse|confound|not comparable|like for like|apples'], why: 'She needs the mechanism, not just the word "confounded".' },
+        { key: 'hold', label: 'That the rollback note should wait', markers: ['hold|wait|not yet|before|pause|premature|would not|don.t circulate'], why: 'The concrete ask. Without it she may circulate the original number anyway.' },
+        { key: 'plan', label: 'What you will do instead, and by when', markers: ['segment|within|by platform|split|standardis|weight|wednesday|thursday|instead'], why: 'A problem reported with no path forward reads as obstruction rather than analysis.' },
+        { key: 'honest', label: 'That you do not yet know which way it will go', markers: ['may|might|could|not yet|do not know|don.t know|either|possible|until'], why: 'You genuinely do not know on Monday. Implying you do would be the same error she made, pointed the other way.' },
+      ],
+      skills: { communication: 100, statistics: 90 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-110': {
+    title: 'The number everyone has seen',
+    hint: "Reproduce it exactly, customers only. You cannot correct a figure you have not first matched.",
+    brief: "Compute the headline. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: users, how many activated, and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY pct DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'ex-112': {
+    title: 'Rule out the boring explanations',
+    hint: "If treatment users were assigned later they would have had less time to activate. Check it rather than assume it.",
+    brief: "Before blaming composition, eliminate measurement. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: the earliest and latest signup date in the arm, and the fewest days any member of it has been observed for as at 12 June 2026. Label them first_signup, last_signup and min_days_observed.",
+    referenceSql: "SELECT a.variant, MIN(substr(u.signup_at, 1, 10)) AS first_signup, MAX(substr(u.signup_at, 1, 10)) AS last_signup, MIN(CAST(julianday('2026-06-12') - julianday(substr(u.signup_at, 1, 10)) AS INTEGER)) AS min_days_observed FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-113': {
+    title: 'Staff in the arms',
+    hint: "You exclude them anyway. This is about whether their presence was ALSO lopsided.",
+    brief: "Write ONE SQL SELECT over STAFF ONLY returning, per variant, how many were assigned. Label the column staff_assigned.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS staff_assigned FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain = 'meridiansystems.com' GROUP BY a.variant ORDER BY a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ex-111': {
+    title: 'What the headline does and does not say',
+    hint: "Two of these are ruled out by queries you have just run. One is not ruled out by anything yet.",
+    brief: "You have reproduced 45.0% against 36.1% and checked the obvious alternatives. Say precisely where that leaves you.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true right now.',
+      options: [
+        { key: 'reproduced', correct: true, label: 'The headline reproduces exactly on customers only: 45.0 against 36.1', why: 'Matching the number you are about to correct is what stops the conversation becoming an argument about whose query is right.' },
+        { key: 'nowindow', correct: true, label: 'It is not a measurement-window artefact — every assigned user has at least 28 days', why: 'Both arms span 1 March to 15 May and the youngest has been observed 28 days. A whole class of explanation is now closed.' },
+        { key: 'nostaff', correct: true, label: 'It is not staff contamination — eight in each arm, and they are excluded anyway', why: 'Balanced by luck, not design. Worth one line in the readout precisely because nobody planned it.' },
+        { key: 'lost', correct: false, label: 'The new onboarding performed worse', why: 'This is the claim under test, and the composition problem from yesterday is untouched by anything you did today.' },
+        { key: 'nothing', correct: false, label: 'Nothing can be concluded from this experiment', why: 'Too strong, and it is the counsel of despair. A confounder you can measure is a confounder you can adjust for.' },
+        { key: 'sig', correct: false, label: 'The gap is too large to be chance, so it is real', why: 'Ruling out chance does not rule out bias. A systematic imbalance produces large, stable, entirely spurious gaps.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-114': {
+    title: 'The growth channel wants to post it',
+    hint: "They are not asking permission. Decide what you would need them to add.",
+    brief: "Someone is about to broadcast the rollback. Decide what to do about it today.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: '#growth',
+        body: "Posting this to the channel now: \"onboarding_v2 result is in — treatment 36% vs control 45%. We're rolling back. Good news is we caught it in ten weeks.\"\n\nShout if that's wrong.",
+      },
+      prompt: 'Tick everything you should do.',
+      options: [
+        { key: 'stop', correct: true, label: 'Ask him to hold it today, before it is posted', why: 'A number in a channel is repeated for months. The cost of asking him to wait a day is far below the cost of a public correction on Thursday.' },
+        { key: 'reason', correct: true, label: 'Give him the reason in one line, not a request to trust you', why: '"The arms are 73% and 28% mobile" takes six seconds to read and is impossible to argue with. "I have concerns" invites a debate you will lose to a deadline.' },
+        { key: 'when', correct: true, label: 'Tell him when he will have something he can post', why: 'He has a channel to feed. Holding without a date is asking him to choose between you and his job.' },
+        { key: 'let', correct: false, label: 'Let it go — he said shout if it is wrong, and you have not finished', why: 'You have finished enough to know the number is not interpretable. That is exactly the shout he asked for.' },
+        { key: 'correct', correct: false, label: 'Post the correction in the channel yourself', why: 'Correcting a colleague in public before he has had the chance to correct himself buys one accurate message and costs every future one.' },
+        { key: 'escalate', correct: false, label: 'Raise it with Asha before replying to him', why: 'It is a one-line message to someone who explicitly invited it. Escalating a thing you can simply say is how a team stops talking to each other.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-115': {
+    title: 'Hold the line with Vikram',
+    hint: "One line of evidence, one commitment, no methodology lecture.",
+    brief: "Reply to Vikram in the channel. He is about to post the rollback and asked to be told if it is wrong. Under 100 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Hold the onboarding_v2 post', maxWords: 100,
+      prompt: 'The ask, the one-line reason, and when he gets something postable.',
+      rubric: [
+        { key: 'hold', label: 'A clear ask to hold', markers: ['hold|wait|don.t post|do not post|pause|before you|hang on|give me'], why: 'Lead with it. Everything after is the justification.' },
+        { key: 'evidence', label: 'The composition figure', markers: ['73|27|28|mobile|platform|made up|composition|skew'], why: 'The specific pair of numbers is what makes this unarguable in a channel.' },
+        { key: 'notyet', label: 'That the direction is genuinely not settled', markers: ['not yet|may|might|could|do not know|don.t know|either way|reverse|change'], why: 'Do not tell him it is wrong. Tell him it is not yet readable, which is what is true on Tuesday.' },
+        { key: 'date', label: 'When he gets a number he can post', markers: ['tomorrow|thursday|wednesday|end of|by|day|24 hour'], why: 'Without a date this reads as an indefinite block on his work.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ex-120': {
+    title: 'Compare like with like',
+    hint: "Two segments, two arms, four cells. This is the query the whole week has been building to.",
+    brief: "Now the comparison that is actually valid. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per platform group and variant: users, how many activated, and the activation rate as a percentage rounded to one place. Group first, then variant.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp, a.variant ORDER BY grp, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 3, day: 3, difficulty: 'hard',
+    // Deliberately flagged for rework: Priya accepts the four-cell table and then asks
+    // for it variant-first rather than segment-first, because that is the order she has
+    // to speak it in. A presentation request, not a correction.
+    rework: true,
+  },
+
+  'ex-121': {
+    title: 'It wins in both segments and loses overall',
+    hint: "Check the direction inside each segment, then the direction of the pooled number. They disagree.",
+    brief: "Mobile: 17.0 against 24.7. Web: 55.7 against 66.7. Pooled: 45.0 against 36.1. Say what you are looking at.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'simpson', correct: true, label: 'A reversal caused by composition — treatment beats control in every segment', why: "Simpson's paradox. It is not a contradiction and not an error: the pooled average is a weighted average, and the weights differ between the arms." },
+        { key: 'both', correct: true, label: 'Treatment is ahead by 7.7 points on mobile and 11.0 on web', why: 'Both segments, same direction, and neither margin is small. That consistency is what makes the reversal a composition story rather than a fluke.' },
+        { key: 'weights', correct: true, label: 'The pooled figure is measuring the platform mix, not the onboarding', why: 'Treatment is three-quarters mobile, and mobile activates at a third of web\'s rate. Pooling hands the arm with the worse mix a penalty that has nothing to do with the change.' },
+        { key: 'error', correct: false, label: 'One of the two calculations must be wrong', why: 'Both are arithmetically correct. That is precisely what makes the paradox worth understanding rather than debugging.' },
+        { key: 'pooled', correct: false, label: 'The pooled number is the real one — it is what users actually experienced', why: 'What users experienced is real. It is not an estimate of what the CHANGE did, which is the only question an experiment is run to answer.' },
+        { key: 'mobileonly', correct: false, label: 'The new onboarding only helps mobile users', why: 'It helps web users more, in percentage points. The mobile-heavy treatment arm is why the pooled figure falls, not where the benefit is.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-122': {
+    title: 'One number for the readout',
+    hint: "Apply each arm's within-segment rates to the SAME platform mix — the pooled one — so the arms differ only in the thing you are testing.",
+    brief: "Priya needs a single figure per arm, not a four-cell table. Standardise them. In the notebook, over CUSTOMERS ONLY, compute each variant's activation rate re-weighted to the platform mix of the whole assigned population. Assign a list of dicts with keys variant and standardised_pct, rounded to one decimal place, sorted by variant, to `result`.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const users = new Map(tables.users.map((u) => [u.id, u]));
+      const activated = new Set(tables.events.filter((e) => e.name === 'first_report_run').map((e) => e.user_id));
+      const cells = new Map();
+      const groupTotals = new Map();
+      for (const a of tables.experiment_assignments) {
+        const u = users.get(a.user_id);
+        if (!u || u.email_domain === 'meridiansystems.com') continue;
+        const grp = u.primary_platform === 'web' ? 'web' : 'mobile';
+        const key = a.variant + '|' + grp;
+        if (!cells.has(key)) cells.set(key, { n: 0, act: 0 });
+        const c = cells.get(key);
+        c.n += 1;
+        if (activated.has(u.id)) c.act += 1;
+        groupTotals.set(grp, (groupTotals.get(grp) || 0) + 1);
+      }
+      const total = [...groupTotals.values()].reduce((s, n) => s + n, 0);
+      const variants = [...new Set([...cells.keys()].map((k) => k.split('|')[0]))].sort();
+      return variants.map((variant) => {
+        let acc = 0;
+        for (const [grp, weight] of groupTotals) {
+          const c = cells.get(variant + '|' + grp);
+          if (c && c.n) acc += (c.act / c.n) * weight;
+        }
+        return { variant, standardised_pct: Math.round((acc / total) * 1000) / 10 };
+      });
+    },
+  },
+
+  'ex-123': {
+    title: 'Check the mechanism',
+    hint: "Users who signed up outside the experiment window were never assigned. They are your untouched baseline.",
+    brief: "Confirm that mobile really is the weaker platform, independently of the experiment. Write ONE SQL SELECT over CUSTOMERS ONLY who have NO row in the assignment table, returning per platform group: users and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM users u WHERE u.email_domain <> 'meridiansystems.com' AND NOT EXISTS (SELECT 1 FROM experiment_assignments a WHERE a.user_id = u.id) GROUP BY grp ORDER BY pct DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-124': {
+    title: 'Which number goes in the readout',
+    hint: "You now have three candidates. Only one of them answers the question the experiment was run to answer.",
+    brief: "You have the pooled figure, the four-cell table and the standardised pair. Decide what Priya gets.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that belongs in the readout.',
+      options: [
+        { key: 'standard', correct: true, label: 'The standardised pair: 37.6 control against 47.1 treatment', why: 'Both arms evaluated against the same platform mix, so the only remaining difference is the onboarding. This is the estimate of the effect.' },
+        { key: 'segments', correct: true, label: 'The per-segment table underneath it', why: 'The standardised number is a summary of those four cells. Showing them is what lets someone check your weighting rather than take it on faith.' },
+        { key: 'original', correct: true, label: 'The original 45.0 against 36.1, labelled as the confounded figure', why: 'It is already circulating. A readout that silently replaces it leaves two numbers loose with no explanation of which to believe.' },
+        { key: 'baseline', correct: true, label: 'The unassigned baseline — mobile 16.0, web 48.4 — as corroboration', why: 'It shows the platform gap exists outside the experiment entirely, which is what turns "I reweighted it" from a manoeuvre into a documented fact.' },
+        { key: 'onlybest', correct: false, label: 'Only the segment where treatment did best, since that is the clearest result', why: 'Reporting the strongest cell and omitting the other is how you would have manufactured the opposite conclusion on Tuesday.' },
+        { key: 'avgpct', correct: false, label: 'The simple average of the two segment rates: (24.7 + 66.7) / 2', why: 'That weights a 33-user segment equally with an 89-user one. Standardising uses the real population mix, which is the point.' },
+      ],
+      skills: { statistics: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-125': {
+    title: 'Tell Priya it reversed',
+    hint: "She told the business it lost. Give her the corrected result and the sentence she can use to explain the change.",
+    brief: "Write to Priya. The conclusion she circulated on Monday is the opposite of the corrected one. Make that easy for her to carry. Under 180 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — the result reverses once the arms are matched',
+      maxWords: 180,
+      prompt: 'The corrected result, why it moved, and what you are recommending now.',
+      rubric: [
+        { key: 'result', label: 'The corrected figures', markers: ['37\\.6|47\\.1|standardis|weight|adjust|matched|nine|9\\.5'], why: 'Lead with the answer. The method is the second paragraph.' },
+        { key: 'why', label: 'Why the raw number said the opposite', markers: ['mobile|73|composition|mix|confound|weighted|more of'], why: 'Without the mechanism this reads as an analyst producing whichever answer was asked for.' },
+        { key: 'segments', label: 'That treatment won in both segments', markers: ['both|each|every|web and mobile|17|24\\.7|55\\.7|66\\.7'], why: 'Consistency across segments is what makes the corrected direction believable rather than an artefact of the correction.' },
+        { key: 'rec', label: 'A recommendation, not just a correction', markers: ['roll|ship|keep|not roll back|recommend|adopt|launch|do not'], why: 'She asked for a rollback note. The obligation is to replace it with a decision, not to leave her with a methodology note.' },
+        { key: 'caveat', label: 'The limits — non-random assignment, small web treatment arm', markers: ['not random|non.random|assign|33|small|caveat|cannot|limit|confiden|re.run'], why: 'This is an adjusted observational comparison, not a clean experiment. Saying so is what keeps it defensible when somebody checks.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-130': {
+    title: 'The result by channel',
+    hint: "Same four-cell shape, different splitter. Watch the sample sizes in each cell.",
+    brief: "Somebody will ask whether the effect holds everywhere. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per channel and variant: users and activation rate as a percentage rounded to one place. Channel, then variant.",
+    referenceSql: "SELECT u.channel, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.channel, a.variant ORDER BY u.channel, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-131': {
+    title: 'The result by plan',
+    hint: "Same again. Note how few users are in some of these cells before reading anything into them.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, per plan and variant: users and activation rate as a percentage rounded to one place. Plan, then variant.",
+    referenceSql: "SELECT u.plan, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.plan, a.variant ORDER BY u.plan, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-132': {
+    title: 'Two segments that disagree with everything',
+    hint: "Look at the cell sizes behind the two biggest swings before deciding they are findings.",
+    brief: "Partner has control at 66.7% against treatment's 33.3%. Business plan has 55.6% against 29.4%. Both point the opposite way to the result. Decide what they are.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'small', correct: true, label: 'Both sit on cells of 15 to 27 users, where a handful of people moves the rate 10 points', why: 'On 15 users one person is 6.7 percentage points. These cells cannot distinguish a real reversal from five coin flips.' },
+        { key: 'expected', correct: true, label: 'With five channels and three plans, extreme cells are expected even if nothing is happening', why: 'Sixteen subgroup comparisons will throw up two or three that look striking by chance alone. That is arithmetic, not bad luck.' },
+        { key: 'notprespec', correct: true, label: 'Neither split was specified before the result was known', why: 'The platform split was forced on you by the assignment mechanism. These two you went looking for after seeing the answer, which is a different kind of evidence.' },
+        { key: 'partner', correct: false, label: 'The new onboarding actively harms partner-sourced users', why: 'On 27 against 15 users, that claim needs far more evidence than a percentage gap. It is the single most quotable wrong sentence available this week.' },
+        { key: 'both', correct: false, label: 'Report both alongside the platform finding, for completeness', why: 'Completeness is not the goal — a reader cannot weigh a 15-user cell against a 122-user one, and putting them side by side implies they are comparable.' },
+        { key: 'hide', correct: false, label: 'Do not mention subgroup results at all', why: 'Somebody will run these splits. Better that the readout says you looked, they were underpowered, and here is what would settle them.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ex-133': {
+    title: 'The result by invite path',
+    hint: "One more splitter, and this one has a real reason to differ. Report it either way.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, for self_serve and invited users and each variant: users and activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.invited_by_user_id IS NULL THEN 'self_serve' ELSE 'invited' END AS kind, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY kind, a.variant ORDER BY kind, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-134': {
+    title: 'Vikram found the partner number',
+    hint: "He is not wrong that it is in the data. Decide what you owe him, and what you do not.",
+    brief: "He has run his own split and wants to use it. Answer him.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: '#growth',
+        body: "Ran your query with a channel breakdown. Partner users do WAY worse on treatment — 33% vs 67% on control.\n\nThat's a real segment for us. Can we ship the new onboarding to everyone except partner-sourced signups? Best of both.",
+      },
+      prompt: 'Tick everything that should be in your reply.',
+      options: [
+        { key: 'n', correct: true, label: 'The cell sizes: 27 control and 15 treatment', why: 'He has not seen the denominator. Almost nobody reads a subgroup result and checks it, which is why quoting it is the most useful thing you can do.' },
+        { key: 'multiple', correct: true, label: 'That sixteen subgroup splits will always produce a couple of extremes', why: 'The general principle, once, so he can apply it himself next time rather than bringing you each new slice.' },
+        { key: 'test', correct: true, label: 'What would actually settle it — a pre-specified split in the re-run', why: 'It turns a refusal into a plan, and if partner really is different the re-run will show it.' },
+        { key: 'ship', correct: false, label: 'Agree — carving out one segment is a cheap hedge', why: 'It is not cheap. It splits the product into two onboarding paths permanently, on the evidence of 15 users.' },
+        { key: 'dismiss', correct: false, label: 'Tell him subgroup analysis is not valid and leave it there', why: 'Subgroup analysis is valid when pre-specified and powered. A flat dismissal is both wrong and guarantees he stops bringing you what he finds.' },
+        { key: 'rerun', correct: false, label: 'Offer to re-run the numbers to check', why: 'The numbers are right. Re-running them concedes that the problem was arithmetic, and he will come back with the same figure and more confidence.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ex-135': {
+    title: 'Answer him in the channel',
+    hint: "Short. Give him the denominator, the principle, and the way to settle it.",
+    brief: "Reply to Vikram about the partner carve-out, in public, without making him look careless. Under 120 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Re: partner segment', maxWords: 120,
+      prompt: 'The denominator, why extreme subgroups are expected, and what would settle it.',
+      rubric: [
+        { key: 'n', label: 'The cell sizes', markers: ['15|27|small|sample|handful|few|denominat'], why: 'The single fact that changes his reading of his own number.' },
+        { key: 'why', label: 'That extreme subgroups are expected across many splits', markers: ['sixteen|16|many|several|split|chance|expect|random|multiple'], why: 'The principle, so the next slice does not come back to you.' },
+        { key: 'settle', label: 'What would settle it', markers: ['pre.specif|re.run|next|design|power|larger|test it'], why: 'Refusal plus a path is a collaboration. Refusal alone is a blocker.' },
+        { key: 'respect', label: 'Written so he keeps bringing you things', markers: ['good|fair|worth|glad|thanks|right to|useful|keep'], why: 'He did the right thing by checking. If answering costs him face he will stop checking, and the next wrong number will go out unexamined.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-140': {
+    title: 'The readout table',
+    hint: "One row per arm per segment, plus the users behind each. This is the table that goes under the headline.",
+    brief: "Assemble what Priya circulates. Write ONE SQL SELECT over CUSTOMERS ONLY returning one row per platform group and variant: the group, the variant, users, activated, and the rate as a percentage rounded to one place — ordered so web comes before mobile and control before treatment within each.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp, a.variant ORDER BY CASE WHEN grp = 'web' THEN 0 ELSE 1 END, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-141': {
+    title: 'The chart for the readout',
+    hint: "Four bars, one per arm per segment, and the axis has to start at zero or the reversal looks bigger than it is.",
+    brief: "Build the visual. Activation rate for each arm within each platform segment, so the consistency across segments is the thing a reader sees first. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'product_events',
+    chart: {
+      sourceSql: "SELECT (CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END) || ' · ' || a.variant AS segment, AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100 AS activation FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY segment ORDER BY activation DESC",
+      prompt: 'Activation by arm within platform segment, for the experiment readout.',
+      answer: { type: 'bar', x: 'segment', y: 'activation', sort: 'desc', baselineZero: true },
+      why: 'Four named categories compared on one measure is a bar chart. Sorted descending the two web bars sit together and the two mobile bars sit together, so the reader sees the within-segment ordering before the between-segment gap. A zero baseline is non-negotiable on a percentage — truncating it here would make a 7.7 point difference look like a doubling.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'ex-142': {
+    title: 'What this experiment can and cannot support',
+    hint: "You corrected a confounder you could see. That is not the same as having run a clean experiment.",
+    brief: "Before you write the recommendation, be precise about the strength of what you have.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true of your corrected result.',
+      options: [
+        { key: 'adjusted', correct: true, label: 'It is an adjusted observational comparison, not a randomised result', why: 'Randomisation protects against confounders you did not think of. Standardising protects only against the one you measured, and that difference has to be in the readout.' },
+        { key: 'direction', correct: true, label: 'The direction is well supported — both segments agree and the margins are wide', why: 'Consistency across independent segments is the strongest thing you have. It is what makes the reversal a finding rather than an artefact of the adjustment.' },
+        { key: 'magnitude', correct: true, label: 'The size of the effect is much less certain than its direction', why: 'The web treatment cell has 33 users. The +9.5 point standardised gap is an estimate with a wide interval around it, and quoting it to one decimal implies a precision you do not have.' },
+        { key: 'unknown', correct: true, label: 'Anything correlated with device that you have not measured is still uncontrolled', why: 'The assignment was device-bucketed. Whatever else travels with device — country, plan, how people found us — travels with the arms too.' },
+        { key: 'proven', correct: false, label: 'It proves the new onboarding is better', why: 'It supports that conclusion. Proof is not a thing an adjusted comparison on 291 users delivers, and the word is what gets quoted back at you.' },
+        { key: 'nothing', correct: false, label: 'Non-random assignment means nothing can be concluded', why: 'Then you would have spent a week to arrive back where Monday started. A measured confounder is exactly the case where adjustment is legitimate.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-143': {
+    title: 'Design the re-run',
+    hint: "Every item here is a fix for something that actually went wrong this week.",
+    brief: "You are recommending the change ship, and a proper test alongside it. Specify what the re-run has to do differently.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the re-run must include.',
+      options: [
+        { key: 'bucket', correct: true, label: 'Assignment bucketed on user identifier, not device', why: 'The single cause of everything that went wrong here. Bucketing on device guarantees the arms differ on the strongest predictor you have.' },
+        { key: 'checkbalance', correct: true, label: 'A balance check on platform, channel and plan before anyone looks at the outcome', why: 'It takes one query and it would have caught this in week one instead of week ten.' },
+        { key: 'prespec', correct: true, label: 'The subgroups written down before the result is known', why: 'The difference between a subgroup finding and a story is whether you named the split first. Partner is the obvious candidate to pre-specify.' },
+        { key: 'power', correct: true, label: 'A minimum cell size, so no segment is read off 15 users', why: 'Set it in advance and the question of whether to report a tiny cell never becomes a negotiation.' },
+        { key: 'longer', correct: false, label: 'A longer window — ten weeks was not enough', why: 'Ten weeks gave every user at least 28 days to activate. Duration was the one thing that was fine.' },
+        { key: 'bigger', correct: false, label: 'A larger sample, which would have avoided the reversal', why: 'More users would have reproduced the same skew more precisely. Sample size does not fix biased assignment, and believing it does is how this recurs.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-144': {
+    title: 'The number Priya will be asked in the room',
+    hint: "She needs one sentence with one number in it. Work out which number survives being quoted without its table.",
+    brief: "Someone in the leadership meeting will ask 'so how much better is it?'. Decide what Priya should say.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick the answers Priya can safely give.',
+      options: [
+        { key: 'ppt', correct: true, label: '"About nine points better on activation, once we compare like with like"', why: 'Gives the magnitude, flags the adjustment, and the hedge is built into the sentence rather than living in a footnote nobody reads.' },
+        { key: 'segments', correct: true, label: '"Better on both web and mobile — the earlier number was a mix effect"', why: 'The most defensible form, because it does not depend on trusting the weighting at all.' },
+        { key: 'exact', correct: false, label: '"47.1% against 37.6%"', why: 'Quoted to one decimal on 291 users, and it will be repeated to one decimal for a year. The precision is fictional.' },
+        { key: 'double', correct: false, label: '"Roughly a quarter better" (47.1 divided by 37.6)', why: 'Relative framing on a rate this size inflates the perception of the effect. Percentage points are what a product decision is made in.' },
+        { key: 'rawflip', correct: false, label: '"The original number was wrong"', why: 'It was arithmetically right and answered a different question. Calling a colleague\'s work wrong when it was misinterpreted is both inaccurate and expensive.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-145': {
+    title: 'The readout',
+    hint: "Result, method, limits, decision, and what the re-run changes. In that order, and nothing else.",
+    brief: "Write the readout Priya circulates. It has to replace a conclusion the business has already heard, survive being forwarded without you in the thread, and end in a decision. Under 260 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — readout and recommendation', maxWords: 260,
+      prompt: 'The corrected result, how it was reached, what it cannot support, and what you recommend.',
+      rubric: [
+        { key: 'result', label: 'The corrected result up front', markers: ['better|improv|higher|47|37\\.6|nine|9\\.5|both segment|win'], why: 'A readout that opens with method loses the reader before the answer.' },
+        { key: 'why', label: 'Why the circulated figure said the opposite', markers: ['mobile|73|composition|mix|confound|weight|made up'], why: 'The business heard a number on Monday. Not explaining the reversal leaves two live figures and no way to choose.' },
+        { key: 'method', label: 'What you did to correct it', markers: ['standardis|weight|same mix|adjust|within|segment|like with like|matched'], why: 'Reproducible in one sentence, or it is not a readout — it is an assertion.' },
+        { key: 'limits', label: 'That assignment was not random, so this is adjusted not randomised', markers: ['not random|non.random|device|bucket|observational|adjust|cannot rule|caveat|limit'], why: 'The honest boundary. Without it the number gets treated as experimental evidence, which it is not.' },
+        { key: 'subgroup', label: 'That subgroup splits were checked and were underpowered', markers: ['subgroup|partner|plan|channel|small|15|underpower|not read|chance'], why: 'Somebody will run them. The readout should already have said what they are worth.' },
+        { key: 'decide', label: 'A decision and a re-run design', markers: ['recommend|ship|roll out|adopt|keep|re.run|bucket|user id|balance check|pre.specif'], why: 'Two weeks of work has to end in what happens next, not in a summary of what was found.' },
+      ],
+      skills: { communication: 100, statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
 };
