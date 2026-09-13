@@ -24,6 +24,228 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'range-review': [
+    {
+      key: 'tca-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Start from the population',
+      title: 'Read: the rows that are not there',
+      body: `Karthik. One habit, and it is the single most common source of silently wrong analysis.
+
+When you ask "which products underperform", the instinct is to query sales and rank ascending. That query can only return products that have a sales row. A product that never sold has none, so it cannot be at the bottom of your list — it is not on the list at all.
+
+The general form: whenever the question is about a POPULATION, start the query from the table that defines the population, and LEFT JOIN the activity onto it. Products, then sales. Employees, then payroll. Customers, then orders. Never the other way round.
+
+The tell is that your row count matches the activity table rather than the population table. Sixty-one products in a range review of sixty-eight is a bug, and it looks exactly like a correct answer.
+
+This is why zero and NULL are different things, and why COALESCE belongs in nearly every one of these queries. A zero is a measurement. A missing row is a silence, and silence is what you were asked to find.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You rank products by sales ascending and get 61 rows. The products table has 68. What is happening?',
+        options: [
+          { key: 'missing', correct: true, label: 'Seven products have no sales rows and the join deleted them' },
+          { key: 'filter', correct: false, label: 'A filter somewhere is excluding seven products' },
+          { key: 'dupes', correct: false, label: 'Seven products are duplicated and have been collapsed' },
+          { key: 'fine', correct: false, label: 'Nothing — 61 is the number of products that trade' },
+        ],
+        why: 'The last one is the dangerous answer, because it is nearly true and it ends the investigation. The seven that do not trade are precisely what a range review is for.',
+      },
+    },
+    {
+      key: 'tca-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Delists and the arithmetic of a saving',
+      title: 'Read: a cut is a cost with a saving attached',
+      body: `Asha. You will be asked what a delist saves, and the honest answer has a shape worth learning once.
+
+Removing a line loses its margin. That number is exact and you can compute it today.
+
+It saves shelf space, buying attention and working capital. Those are real and none of them is in a sales table. Somebody can price them — a space planner, a buyer, finance — but not you, and not from this data.
+
+And the net depends on substitution: what a customer buys when the thing they came for is gone. That is the single largest term in the equation and it is unmeasurable from till data.
+
+So the structure of your answer is always: here is the cost, exactly; here is what the saving is made of and who can price it; here is the unknown that decides the sign. Never a single net figure, because you would have invented two thirds of it.
+
+Watch for the framing flip. Papers ask "what does the delist save", which presumes the answer. Say the cost first.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Asked what a delist saves, what is the first number in your reply?',
+        options: [
+          { key: 'cost', correct: true, label: 'The margin it removes' },
+          { key: 'net', correct: false, label: 'A net figure combining margin lost and space released' },
+          { key: 'space', correct: false, label: 'The shelf space freed, since that is what was asked' },
+          { key: 'none', correct: false, label: 'None — the question cannot be answered from this data' },
+        ],
+        why: 'Half of it can be answered exactly, and leading with that half is what stops the paper opening on an invented saving.',
+      },
+    },
+    {
+      key: 'tca-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Just cut the bottom 20',
+      title: 'Vikram wants a simple cut',
+      body: `Bottom twenty lines are 8.6% of margin. Cut them, keep 91% of the money with a third fewer products. That is obviously right.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['lose|cost|not save|8\\.6|18 lakh|substitut|space|not quantif|which saving|trade'],
+        why: '8.6% is what you LOSE. The saving is in space and attention, which nobody has costed, and substitution decides the net. "Keep 91%" is the same number told as though the other 8.6% were free.',
+      },
+    },
+    {
+      key: 'tca-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 7,
+      subject: 'Delist decisions and supplier relationships',
+      title: 'Neha: delists are commercial conversations',
+      body: `A note as you produce delist candidates.
+
+A delist list is commercially sensitive in a specific way: it tells a supplier which of their lines we are about to drop, before we have negotiated. That changes the negotiation, and not in our favour.
+
+Two rules. Candidate lists do not leave the buying and analytics teams until buying say so. And never confirm or deny a specific line to anybody outside that group, including in casual conversation — "I can't discuss the range review" is a complete answer and is what everyone else uses.
+
+If a supplier or an agency asks you directly, it goes to Sneha.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A supplier contact asks whether their line is on the candidate list. What do you say?',
+        options: [
+          { key: 'refer', correct: true, label: 'That you cannot discuss the range review, and refer them to Sneha' },
+          { key: 'deny', correct: false, label: 'That it is not on the list, if it genuinely is not' },
+          { key: 'vague', correct: false, label: 'That no decisions have been made yet' },
+          { key: 'ignore', correct: false, label: 'Nothing, and report the approach to Sneha afterwards' },
+        ],
+        why: 'Denying for lines that are safe means silence identifies the ones that are not. "No decisions yet" is the same problem in softer words. And a question you will not answer still needs an answer given.',
+      },
+    },
+    {
+      key: 'tca-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'When output is suspiciously tidy',
+      title: 'Read: a measure that cannot be measuring anything',
+      body: `You are about to compute stock cover, and it will produce a number for every product. Before you publish it, look at the spread.
+
+Cover for sixty-one products lands between 0.43 and 1.09 months, clustered around 0.7. Every product in the range holds roughly twenty units, whether it sells 234 a year or 482.
+
+That is not a finding about our stock policy. No replenishment system in the world holds the same quantity of a fast line and a slow one. When a measure comes out nearly uniform across a population you know to be varied, the measure is broken, not the population.
+
+Two causes here and both are fatal. The counts do not respond to demand at all, so they are not describing stock policy. And four snapshots a year cannot characterise a position that turns over monthly — a point-in-time reading on one day in January says nothing about the other eighty-nine.
+
+The discipline: before publishing a derived measure, look at its DISTRIBUTION, not just its values. A number you can compute is not the same as a number that means something, and a tidy distribution is a warning rather than a comfort.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A derived measure comes out almost identical across a population you know varies a lot. What does that suggest?',
+        options: [
+          { key: 'broken', correct: true, label: 'The measure is not capturing what it claims to' },
+          { key: 'stable', correct: false, label: 'The underlying process is well controlled' },
+          { key: 'sample', correct: false, label: 'The sample is too small to show variation' },
+          { key: 'good', correct: false, label: 'Nothing — uniformity is a neutral result' },
+        ],
+        why: 'Well-controlled processes still vary with demand. Uniformity where you expect variation means the inputs are not carrying the information you assumed.',
+      },
+    },
+    {
+      key: 'tca-06', day: 3, type: 'pressure', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can you just give me the cover number anyway?',
+      title: 'Vikram wants it with a caveat',
+      body: `I hear you on the stock counts. But the paper has a section for it and an empty section looks worse than a caveated number.
+
+Give me the figure and I will footnote it as indicative.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you do?',
+        options: [
+          { key: 'no', correct: true, label: 'Decline, and offer wording explaining why the section is empty' },
+          { key: 'give', correct: false, label: 'Supply it with the caveat he has offered' },
+          { key: 'range', correct: false, label: 'Supply a range rather than a point figure' },
+          { key: 'other', correct: false, label: 'Substitute a different stock measure without telling him' },
+        ],
+        why: 'A footnote never travels with the number. A range implies the uncertainty is statistical when the measure is simply not measuring stock. And swapping in something else silently is worse than either.',
+      },
+    },
+    {
+      key: 'tca-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
+      subject: 'Distribution is not performance',
+      title: 'Read: the two reasons a line looks weak',
+      body: `Diya. A line at the bottom of your margin table is there for one of two reasons and they need opposite responses.
+
+Nobody wants it. It is in twelve stores, customers walk past it, it earns little. Delist.
+
+Almost nobody stocks it. It is in seven stores, sells perfectly well in those seven, and looks small only because it is nowhere. That is a distribution decision somebody already made, and delisting it confirms a judgement rather than testing one.
+
+Total margin cannot tell these apart. Margin per carrying store can, and the two rankings will disagree — which is the useful part, because a candidate that fails BOTH tests is robust and a candidate that fails only one needs a conversation.
+
+The trap on the other side: a low-distribution line performing well per store looks like an obvious rollout candidate. It usually is not, because the stores carrying it are rarely a random sample. If it is only in flagships, its per-store performance tells you about flagship customers, not about the product.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A line is in seven stores, earns little in total and performs well per store. What is it?',
+        options: [
+          { key: 'unclear', correct: true, label: 'Ambiguous — its total is low because of distribution, and where it is stocked is not random' },
+          { key: 'delist', correct: false, label: 'A delist candidate, since total margin is what the business earns' },
+          { key: 'rollout', correct: false, label: 'A rollout candidate, since it performs where it is stocked' },
+          { key: 'fine', correct: false, label: 'Performing as intended — nothing to do' },
+        ],
+        why: 'Both confident answers are available and neither is supported. Which stores carry it decides everything, and this data cannot say whether they chose it or it chose them.',
+      },
+    },
+    {
+      key: 'tca-08', day: 4, type: 'judgement', via: 'email', from: 'engineering_manager', minutes: 8,
+      subject: 'Should we build a range dashboard?',
+      title: 'Arjun offers to automate the range review',
+      body: `This looks like it should be a dashboard rather than a week of somebody's time every season.
+
+I can build one. What should be on it, and is there anything that should deliberately NOT be?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the most important thing to tell him?',
+        options: [
+          { key: 'population', correct: true, label: 'It must start from products, or it will silently omit lines that never sold' },
+          { key: 'cover', correct: false, label: 'Leave stock cover off until the counts improve' },
+          { key: 'margin', correct: false, label: 'Use margin on the cost that applied, not current cost' },
+          { key: 'all', correct: false, label: 'All of these matter equally' },
+        ],
+        why: 'All three belong in the spec. But the other two produce visibly wrong numbers somebody can challenge; the population error produces a dashboard that looks perfect and is missing the worst lines in the range, every season, forever.',
+      },
+    },
+    {
+      key: 'tca-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 10,
+      subject: 'Sign-off means the sentences',
+      title: 'Read: what comes back in after you take it out',
+      body: `You told buying on Wednesday that stock cover cannot be computed from these counts. It will be in their draft on Friday.
+
+This is not bad faith. A paper has a section for stock, somebody needs to fill it, and your email is in a different thread from the document. Things you remove in conversation come back in writing unless you remove them in writing too.
+
+Two habits that prevent most of it.
+
+Put the refusal in the document, not only in the reply. One line — "stock cover is not included; the counts do not vary with demand and cannot support it" — is far harder to delete than an absence.
+
+And when you sign off, read the draft as though you had never seen the analysis. Every sentence is a claim. Ask of each one: which table did this come from? "Confirms the range is over-extended" came from nowhere, and it is sitting on top of your name.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You told a stakeholder verbally that a measure cannot be used. How do you stop it reappearing?',
+        options: [
+          { key: 'document', correct: true, label: 'Put the exclusion and its reason into the document itself' },
+          { key: 'repeat', correct: false, label: 'Repeat it at sign-off' },
+          { key: 'email', correct: false, label: 'Send a written summary of the conversation' },
+          { key: 'escalate', correct: false, label: 'Raise it with their manager' },
+        ],
+        why: 'A separate email lives in a separate thread. Repeating at sign-off relies on you seeing every draft. The absence has to be visible in the artefact or somebody will fill it in good faith.',
+      },
+    },
+    {
+      key: 'tca-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Three reviews, three of the same thing',
+      title: 'Asha: notice the pattern across your three projects',
+      body: `Step back across the three reviews you have led.
+
+Trading: a number that was right and a claim on top of it that was not. Margin: a column that meant something other than its name. Range: a measure that computed cleanly and described nothing.
+
+Different data, same failure — the number was never the problem. Every time, it was the gap between what the number was and what somebody believed it was.
+
+Which suggests where your attention goes at this level. Not on computing more carefully. On establishing, before anything else, what a quantity actually is: as of when, over what population, counting what.
+
+One question. Of the three, which would you have been least likely to catch if nobody had pointed you at it?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer honestly, and say what would have made you catch it.',
+        markers: ['cover|stock|uniform|distribution|margin|cost|basis|claim|slide|population|never sold|left join|spread|check'],
+        why: 'The stock one is the usual answer, because it produces a plausible number rather than an odd one. The habit that catches it is looking at the spread of a derived measure before publishing its values.',
+      },
+    },
+  ],
   'margin-review': [
     {
       key: 'tba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
@@ -2127,6 +2349,113 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'range-review': [
+    {
+      key: 'tcs-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'How wide is this review?',
+      body: `Range review or full space review? The second one means bringing in the planogram system and that is a fortnight, not a week.
+
+What do you want to take on?`,
+      needsReply: true,
+      expect: ['pick a scope', 'say what the narrower one cannot answer'],
+      markers: ['range|week|not space|planogram|cannot|space|saving|scope|delist|narrower|without'],
+      ifIgnored: 'Vikram assumes a full space review, and the paper arrives expecting a saving figure the range data cannot produce.',
+      note: 'Scoping to the range is the right call for a week. Say what it means you will not be able to answer — which is the saving side of the delist.',
+    },
+    {
+      key: 'tcs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Spring reset dates confirmed',
+      body: `Store reset dates for the spring range change have been confirmed and published to the operations calendar.
+
+Store teams have been briefed directly. No action for support functions.`,
+      expect: ['archive it'],
+      note: 'Useful context, no action.',
+    },
+    {
+      key: 'tcs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Bottom twenty, this afternoon',
+      body: `Can you send me the bottom twenty lines by margin? Putting a slide together for the buying meeting.`,
+      needsReply: true,
+      expect: ['send it with the cost framing', 'name what is missing'],
+      markers: ['8\\.6|lose|cost|not save|substitut|space|seven|never sold|separate|context'],
+      ifIgnored: 'A bottom-twenty list goes into a buying meeting framed as a saving, with none of the seven never-sold lines on it.',
+      note: 'The list is fine to send. What it must not go out as is a saving, and it should not exclude the seven that never sold.',
+    },
+    {
+      key: 'tcs-04', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Scheduling a range-completeness check',
+      body: `The seven never-ranged lines would be caught by a one-line check, so I am scheduling it monthly and pointing the alert at buying rather than us — they are the ones who can act on it.
+
+Live from next month. Nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has decided and told you. Useful to know, nothing to answer.',
+    },
+    {
+      key: 'tcs-05', day: 3, type: 'judgement', via: 'email', from: 'finance_analyst',
+      subject: 'Stock cover for the working capital paper',
+      body: `I am writing the working capital paper and I was told you have stock cover by product now.
+
+Can you send it? I need it by Thursday.`,
+      needsReply: true,
+      expect: ['decline', 'explain why and what would fix it'],
+      markers: ['cannot|not|uniform|same|twenty|20|regardless|quarterly|snapshot|counts|movement|weekly|do not'],
+      ifIgnored: 'The cover figure ends up in a working capital paper, where a wrong number has a direct financial consequence.',
+      note: 'This is the second team asking for it. Declining in writing, with the reason, is what stops it circulating.',
+    },
+    {
+      key: 'tcs-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: stock count file received',
+      body: `The quarterly stock count file for the current period has been received and loaded.
+
+Records processed: 613. No errors. No action required.`,
+      expect: ['archive it'],
+      note: 'Automated and successful — and quietly the reason the cover calculation cannot work. Nothing to reply to.',
+    },
+    {
+      key: 'tcs-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Supplier has heard about the review',
+      body: `One of our coffee suppliers has heard there is a range review and asked me directly whether their lines are affected.
+
+You have the list. What do I tell them?`,
+      needsReply: true,
+      expect: ['do not confirm or deny', 'route it to buying'],
+      markers: ['sneha|buying|cannot|not discuss|refer|route|negotiat|commercial|no comment|them'],
+      ifIgnored: 'Vikram answers on instinct, and the supplier enters the next cost negotiation knowing which of their lines we were about to drop.',
+      note: 'Not yours to answer, and a denial for safe lines makes silence identify the unsafe ones. It goes to Sneha.',
+    },
+    {
+      key: 'tcs-08', day: 4, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'Is the candidate list defensible?',
+      body: `Before this goes to buying — if Sneha challenges a specific line, can you say why it is on the list?`,
+      needsReply: true,
+      expect: ['yes, and say on what basis'],
+      markers: ['never sold|margin|120|threshold|which test|both|per store|rule|stated|each'],
+      ifIgnored: 'The list goes over with no stated basis, and the first challenged line collapses the whole paper.',
+      note: 'Each candidate fails a named test: never sold, or under the margin floor. Being able to say which is what makes it survive a meeting.',
+    },
+    {
+      key: 'tcs-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'Buying team and the never-ranged lines',
+      body: `The seven lines that were never ranged were signed off by a buyer who still works here.
+
+Your note frames it as a process gap, which I think is right. But it will be read by her manager. Anything you want to change before it goes wider?`,
+      needsReply: true,
+      expect: ['keep the process framing', 'say what makes it not an individual failure'],
+      markers: ['process|system|not|individual|nobody|no check|invisible|gap|anyone|would have|blameless'],
+      ifIgnored: 'A process finding becomes a performance conversation about one buyer, and the process stays unfixed.',
+      note: 'Nobody could see them — every review used a query that deletes them. That is the sentence that keeps it about the process.',
+    },
+    {
+      key: 'tcs-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the buying meeting agenda',
+      body: `Buying meet Monday. One line from you on the agenda.`,
+      needsReply: true,
+      expect: ['one thing', 'the one that changes the decision'],
+      markers: ['seven|never|cost|not saving|6\\.8|cover|cannot|framing|lose'],
+      ifIgnored: 'Asha writes it from the paper\'s first paragraph, which is the methodology note.',
+      note: 'Either the seven invisible lines or the fact that the delist is a cost rather than a saving. Both change what happens in the room.',
+    },
+  ],
   'margin-review': [
     {
       key: 'tbs-01', day: 1, type: 'scope', via: 'email', from: 'finance_analyst',
@@ -3247,6 +3576,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'range-review': {
+    key: 'tcq-range', title: 'Range & Space Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'sql',
+        q: 'You rank products by sales ascending to find the weakest lines. What does that query structurally miss?',
+        options: [
+          { key: 'b', label: 'Products with no sales rows — they are absent, not bottom-ranked', correct: true },
+          { key: 'a', label: 'Products sold in only one store' },
+          { key: 'c', label: 'Products whose sales are all returns' },
+          { key: 'd', label: 'Nothing, if the join is written correctly' },
+        ],
+        why: 'Seven of sixty-eight lines have never sold. They have no row to rank, so every previous range review was blind to the worst lines in the book.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'What is the general rule for a question about a population?',
+        options: [
+          { key: 'c', label: 'Start from the table that defines the population and LEFT JOIN the activity onto it', correct: true },
+          { key: 'a', label: 'Start from the largest table for performance' },
+          { key: 'b', label: 'Start from the activity table and filter' },
+          { key: 'd', label: 'Use a FULL OUTER JOIN so nothing is lost' },
+        ],
+        why: 'Products then sales; employees then payroll; customers then orders. The tell that you got it backwards is a row count matching the activity table rather than the population.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'The bottom twenty lines carry 8.6% of margin. What does delisting them do?',
+        options: [
+          { key: 'a', label: 'Loses 8.6% of margin, against a saving in space and capital that is not in this data', correct: true },
+          { key: 'b', label: 'Saves 8.6% of margin' },
+          { key: 'c', label: 'Is broadly neutral, since the lines barely contribute' },
+          { key: 'd', label: 'Cannot be assessed at all' },
+        ],
+        why: 'The margin is exactly computable and it is a cost. The saving is real and lives in space, buying time and working capital — none of which a sales table holds.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Stock cover comes out between 0.43 and 1.09 months for all 61 products, while annual sales run 234 to 482 units. What does that tell you?',
+        options: [
+          { key: 'd', label: 'The measure is not capturing stock policy — holdings do not vary with demand', correct: true },
+          { key: 'a', label: 'Replenishment is unusually well controlled' },
+          { key: 'b', label: 'The range is running dangerously low on cover' },
+          { key: 'c', label: 'The stock counts need weighting by store' },
+        ],
+        why: 'Every product holds about twenty units whether it sells 234 a year or 482. No replenishment system behaves that way, and no weighting recovers information that was never recorded.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'A stakeholder asks for the cover figure anyway, offering to footnote it as indicative. What do you do?',
+        options: [
+          { key: 'b', label: 'Decline, and give him wording explaining why the section is empty', correct: true },
+          { key: 'a', label: 'Supply it with his caveat' },
+          { key: 'c', label: 'Supply a range instead of a point figure' },
+          { key: 'd', label: 'Substitute a different stock measure' },
+        ],
+        why: 'A footnote does not travel with the number. A range implies statistical uncertainty when the measure is simply not measuring stock. Substituting silently is worse than either.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why does a delist rule expressed as "under 1.5% of category margin" fail?',
+        options: [
+          { key: 'a', label: 'It cannot see the never-sold lines, and run twice it delists the whole range', correct: true },
+          { key: 'b', label: 'The threshold is arbitrary' },
+          { key: 'c', label: 'It should be based on revenue, not margin' },
+          { key: 'd', label: 'It ignores stock cover' },
+        ],
+        why: 'Every threshold is chosen, so arbitrariness is not the objection. A share-based rule leaves nothing to be a share of for a line that never sold, and after each cut the survivors re-share 100% and a new bottom appears.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'A line is in seven stores, earns little in total and performs well per store. What is it?',
+        options: [
+          { key: 'c', label: 'Ambiguous — its total is low because of distribution, and the stores carrying it are not a random sample', correct: true },
+          { key: 'a', label: 'A delist candidate' },
+          { key: 'b', label: 'A rollout candidate' },
+          { key: 'd', label: 'Performing as intended' },
+        ],
+        why: 'Total margin and margin per carrying store measure different things. If it is only in flagships, its per-store figure describes flagship customers rather than the product.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A paper says "stock cover analysis confirms the range is over-extended", after you told them the measure does not work. What went wrong?',
+        options: [
+          { key: 'b', label: 'The refusal lived in an email rather than in the document', correct: true },
+          { key: 'a', label: 'Bad faith by the author' },
+          { key: 'c', label: 'You should have escalated to their manager' },
+          { key: 'd', label: 'Nothing — sign-off is the point at which to catch it' },
+        ],
+        why: 'A paper has a section, somebody fills it, and your reply is in a different thread. An absence with a stated reason in the document itself is much harder to overwrite than a silence.',
+      },
+      {
+        id: 'q9', topic: 'data-ethics',
+        q: 'A supplier asks whether their line is on the delist candidate list. What do you say?',
+        options: [
+          { key: 'd', label: 'That you cannot discuss the range review, and refer them to buying', correct: true },
+          { key: 'a', label: 'That it is not on the list, if that is true' },
+          { key: 'b', label: 'That no decisions have been made' },
+          { key: 'c', label: 'Nothing, and report it afterwards' },
+        ],
+        why: 'Denying for safe lines means silence identifies the unsafe ones. "No decisions yet" has the same problem in softer words, and an unanswered question still needs an answer given.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'Seven lines were listed and never ranged. How should that be written up?',
+        options: [
+          { key: 'a', label: 'As a process gap — no report could show them, so nobody could have seen them', correct: true },
+          { key: 'b', label: 'As a buying error by whoever signed them off' },
+          { key: 'c', label: 'Not at all, since the delist resolves it' },
+          { key: 'd', label: 'As a data quality problem in the products table' },
+        ],
+        why: 'The data is correct — the lines genuinely exist and genuinely never sold. What failed is that every report used a query that deletes them, and a monthly completeness check fixes that permanently.',
+      },
+    ],
+  },
   'margin-review': {
     key: 'tbq-margin', title: 'Margin & Promotion Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

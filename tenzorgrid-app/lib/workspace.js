@@ -451,6 +451,38 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 1,
     },
+    {
+      key: 'range-review',
+      title: 'Range & Space Review',
+      description: 'Buying want a delist list. Seven lines in the range have never been stocked anywhere, and the stock table cannot answer the question they asked.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — seven products no store has ever carried, invisible to an inner join.
+        'tc-101', 'tc-102', 'tc-103', 'tc-104', 'tc-105', 'tc-106',
+        // Day 2 — ten of sixty-one lines carry 55% of the margin, and a delist rule that
+        // cannot see the worst lines in the book.
+        'tc-110', 'tc-111', 'tc-112', 'tc-113', 'tc-114', 'tc-115',
+        // Day 3 — the wobble. Stock cover is computable and meaningless: every product
+        // holds about twenty units whether it sells 234 a year or 482.
+        'tc-120', 'tc-121', 'tc-122', 'tc-123', 'tc-124', 'tc-125',
+        // Day 4 — distribution against performance, and what a delist actually saves.
+        'tc-130', 'tc-131', 'tc-132', 'tc-133', 'tc-134', 'tc-135',
+        // Day 5 — the paper, the sign-off, and what would make the next one answerable.
+        'tc-140', 'tc-141', 'tc-142', 'tc-143', 'tc-144', 'tc-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 44000,
+      contributors: [
+        { name: 'Sneha Joshi', role: 'Buying Manager', does: 'Owns the range and the delist decision', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Team Lead', does: 'The range and space analysis', day: 1, throughDay: 5 },
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Proposes the delist rule', day: 2 },
+      ],
+      unlockAfter: 2,
+    },
   ],
 };
 
@@ -5842,6 +5874,469 @@ const TASKS = {
         { key: 'repeat', label: 'Whether discounted customers come back', markers: ['repeat|return|again|retention|subsequent|later|next month|cohort'], why: 'The single biggest unknown in this week\'s answer, and the one that decides whether the trade was good.' },
         { key: 'stock', label: 'What the promotion was FOR', markers: ['stock|clear|objective|aim|purpose|why|goal|intent'], why: 'Clearing old stock and buying market share are different objectives that would be judged on different numbers.' },
         { key: 'basis', label: 'The cost basis agreed in advance', markers: ['cost basis|time of sale|current|view|standard|agree'], why: 'Half of this week went on establishing which cost to use. That is a decision that can be made once.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 3 · Range & Space Review (retail_sales) -------------------------------
+  // The delist week. Monday the range has seven products in it that no store has ever
+  // stocked, and an inner join makes them invisible. Tuesday the money is concentrated in
+  // ten of sixty-one lines. Wednesday the stock table offers a cover calculation that
+  // looks computable and is not — every product holds about twenty units regardless of
+  // how fast it sells. Thursday the express stores carry a third of the range. Friday a
+  // delist list that has to survive somebody asking what each removal is worth.
+
+  'tc-101': {
+    title: 'Count the range',
+    hint: "The number in the products table and the number anybody has ever sold are different numbers.",
+    brief: "Buying want a delist list. Start by establishing what is actually in the range. Write ONE SQL SELECT returning one row per measure, with columns measure and value, in this order: in_range, ever_sold, never_sold.",
+    referenceSql: "SELECT 'in_range' AS measure, COUNT(*) AS value FROM products UNION ALL SELECT 'ever_sold', COUNT(DISTINCT product_id) FROM sales UNION ALL SELECT 'never_sold', (SELECT COUNT(*) FROM products) - (SELECT COUNT(DISTINCT product_id) FROM sales)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tc-102': {
+    title: 'The seven nobody has seen',
+    hint: "An inner join to sales deletes them. You need a LEFT JOIN or a NOT EXISTS.",
+    brief: "Seven products are in the range and have never sold a single unit. Write ONE SQL SELECT listing them: name, category, subcategory, list_price and unit_cost. Most expensive first.",
+    referenceSql: "SELECT p.name, p.category, p.subcategory, p.list_price, p.unit_cost FROM products p WHERE NOT EXISTS (SELECT 1 FROM sales s WHERE s.product_id = p.id) ORDER BY p.list_price DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tc-103': {
+    title: 'Why the usual query would have missed them',
+    hint: "Think about what happens to a product with no matching rows when you JOIN rather than LEFT JOIN.",
+    brief: "Every previous range review ranked products by sales and took the bottom of the list. Work out what that misses.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'invisible', correct: true, label: 'An inner join makes a product with no sales invisible, not bottom-ranked', why: 'There is no row to rank. The seven worst-performing products in the range have never appeared in a single performance report.' },
+        { key: 'worst', correct: true, label: 'They are unambiguously the worst lines in the book', why: 'Zero units, zero margin, and they still occupy a slot in the range plan and somebody\'s buying time.' },
+        { key: 'why', correct: true, label: 'The interesting question is why they were listed and never ranged', why: 'Buying signed them off and nobody put them on a planogram. That is a process failure worth more than the seven delists.' },
+        { key: 'zero', correct: false, label: 'They would appear with zero units in any correctly written query', why: 'Only with a LEFT JOIN or NOT EXISTS. The phrase "correctly written" is doing the work — the point is that the obvious query is the wrong one.' },
+        { key: 'new', correct: false, label: 'They are probably new lines that have not launched yet', why: 'Nothing in the data says when a product was listed, so that is a guess. It is also checkable by asking buying, which is the right next step rather than an assumption.' },
+        { key: 'delete', correct: false, label: 'They should be deleted from the products table', why: 'Delisting is a commercial decision and the table is not yours. Flagging them is the job.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tc-104': {
+    title: 'Range and performance in one table',
+    hint: "LEFT JOIN from products, and COALESCE the aggregates so a never-sold line reads zero rather than NULL.",
+    brief: "Build the working table for the review. Write ONE SQL SELECT returning, for EVERY product: name, category, units sold on positive lines, net revenue, margin on the cost that applied, and how many stores have ever sold it. Zeros for products that never sold. Weakest margin first.",
+    referenceSql: "SELECT p.name, p.category, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, COALESCE(SUM(s.quantity * s.unit_price), 0) AS net_revenue, ROUND(COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0)) AS margin, COUNT(DISTINCT s.store_id) AS stores FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id ORDER BY margin ASC, units ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tc-105': {
+    title: 'Range gaps by category',
+    hint: "Count products in the range and products that sold, per category. The gap is not evenly spread.",
+    brief: "Write ONE SQL SELECT returning, per category: products in the range, products that have ever sold, and the number that never have. Biggest gap first.",
+    referenceSql: "SELECT p.category, COUNT(DISTINCT p.id) AS in_range, COUNT(DISTINCT s.product_id) AS ever_sold, COUNT(DISTINCT p.id) - COUNT(DISTINCT s.product_id) AS never_sold FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.category ORDER BY never_sold DESC, in_range DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tc-106': {
+    title: 'Tell buying what you found',
+    hint: "Seven delists is the small news. The process that listed them is the big news.",
+    brief: "Write to Sneha in buying. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Seven lines in the range that no store has ever stocked', maxWords: 150,
+      prompt: 'What you found, why nobody had seen it, and the question you need her to answer.',
+      rubric: [
+        { key: 'seven', label: 'The seven products, named or counted', markers: ['seven|7|never sold|no store|zero|not ranged'], why: 'Specific and checkable in one line.' },
+        { key: 'why', label: 'Why previous reviews missed them', markers: ['join|no row|invisible|not appear|rank|bottom|left join|absent'], why: 'Without this it looks like nobody was paying attention, rather than that the standard query cannot see them.' },
+        { key: 'ask', label: 'The question only buying can answer', markers: ['were they|why|intended|planogram|launch|discontinued|deliberate|should they'], why: 'They may be deliberate — a launch that slipped, a supplier commitment. You cannot tell and she can.' },
+        { key: 'process', label: 'That the listing process is the larger finding', markers: ['process|how|listed|sign.?off|planogram|gap between|system|again'], why: 'Seven delists is worth very little. A range that can carry lines nobody stocks is worth fixing.' },
+        { key: 'concrete', label: 'A next step', markers: ['confirm|tell me|let me know|come back|check|review|by'], why: 'A finding with no next step gets acknowledged and filed.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tc-110': {
+    title: 'Where the margin actually sits',
+    hint: "Rank products by margin, then ask how much of the total the top few carry.",
+    brief: "Establish the concentration. Write ONE SQL SELECT over products that sold, returning one row per band with columns band and pct_of_margin — the share of total margin, to one place — for top_10, top_20 and bottom_20, in that order.",
+    referenceSql: "WITH m AS (SELECT p.id, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS marg FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT 'top_10' AS band, ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg DESC LIMIT 10)) * 100.0 / (SELECT SUM(marg) FROM m), 1) AS pct_of_margin UNION ALL SELECT 'top_20', ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg DESC LIMIT 20)) * 100.0 / (SELECT SUM(marg) FROM m), 1) UNION ALL SELECT 'bottom_20', ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg ASC LIMIT 20)) * 100.0 / (SELECT SUM(marg) FROM m), 1)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'tc-111': {
+    title: 'Ten lines, half the money',
+    hint: "Work out what delisting the bottom twenty would actually save, and what it would cost.",
+    brief: "Ten of sixty-one products carry 55.3% of margin. The bottom twenty carry 8.6%. Read that before anybody proposes a cut.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'concentrated', correct: true, label: 'The range is heavily concentrated — a third of the lines carry nearly three quarters of the margin', why: 'Twenty of sixty-one products at 72.5%. That is the shape of nearly every retail range and it is the reason delisting feels easy.' },
+        { key: 'notfree', correct: true, label: 'Delisting the bottom twenty does not save 8.6% of margin — it loses it', why: 'The saving is in space, buying time and working capital, none of which is in this data. The margin is a straightforward loss and it is the only number here you can actually quantify.' },
+        { key: 'substitution', correct: true, label: 'Some of that lost margin would move to remaining products, and nothing here says how much', why: 'A customer who came for a delisted tea may buy another tea or may leave. Substitution is the whole economics of a delist and this data cannot see it.' },
+        { key: 'cut', correct: false, label: 'The bottom twenty should be delisted — 8.6% of margin is not worth the complexity', why: 'You have not costed the complexity. Trading a quantified ₹18 lakh against an unquantified saving is exactly the decision that needs both numbers.' },
+        { key: 'top', correct: false, label: 'Buying effort should concentrate on the top ten', why: 'They are already working. Where the money sits tells you what to protect, not where attention is most productive.' },
+        { key: 'tail', correct: false, label: 'A long tail of low-margin lines is a sign of poor range management', why: 'It is the normal shape of a range. Whether it is too long is a question about space and attention, neither of which this data holds.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-112': {
+    title: 'The tail, costed',
+    hint: "Rank by margin ascending, take the bottom twenty, and total what they actually contribute.",
+    brief: "Put names against the proposal. Write ONE SQL SELECT listing the twenty lowest-margin products that sold: name, category, units on positive lines, margin on the cost that applied, and that product's share of total margin to two places. Weakest first.",
+    referenceSql: "WITH m AS (SELECT p.id, p.name, p.category, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS marg FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT name, category, units, ROUND(marg) AS margin, ROUND(marg * 100.0 / (SELECT SUM(marg) FROM m), 2) AS pct_of_margin FROM m ORDER BY marg ASC LIMIT 20",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-113': {
+    title: 'The concentration chart',
+    hint: "Categories, one measure, sorted. The same chart you would draw for any contribution question.",
+    brief: "Build the visual for the range review: margin contribution by subcategory, so buying can see which parts of the range carry the money. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT p.category || ' · ' || p.subcategory AS subcategory, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS margin FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.category, p.subcategory ORDER BY margin DESC",
+      prompt: 'Margin contribution by subcategory, for the range review.',
+      answer: { type: 'bar', x: 'subcategory', y: 'margin', sort: 'desc', baselineZero: true },
+      why: 'Named categories compared on one quantity, sorted so the contribution order is what the reader takes away. Margin in rupees rather than rate, because a delist decision is about what a slot earns — and a zero baseline because the smallest subcategories would otherwise look like they contribute nothing at all.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tc-114': {
+    title: 'Ravi proposes a rule',
+    hint: "Apply his rule to the table you already have and see which lines it would remove.",
+    brief: "Ravi has a delist rule. Work out what it would actually do.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Ravi Menon', subject: '#retail-analytics',
+        body: "Proposing a simple delist rule for the range review: any product contributing under 1.5% of category margin goes.\n\nObjective, repeatable, no arguing about individual lines. Good?",
+      },
+      prompt: 'Tick every problem with the rule as written.',
+      options: [
+        { key: 'invisible', correct: true, label: 'It cannot see the seven products that never sold', why: 'They have no category margin to be a percentage of, so a rule expressed as a share of category never reaches them. The worst lines in the range are immune to it.' },
+        { key: 'relative', correct: true, label: 'A percentage of category means small categories lose lines that large ones would keep', why: '1.5% of Bakery is a fraction of 1.5% of Equipment. The same rupee contribution survives in one category and is cut in another.' },
+        { key: 'ratchet', correct: true, label: 'Applied repeatedly it never stops — every cut creates a new bottom', why: 'Once the tail is removed the remaining lines re-share 100%, and a fresh set falls under 1.5%. A rule with no floor delists the whole range eventually.' },
+        { key: 'role', correct: true, label: 'It takes no account of what a line is for', why: 'An opening price point or a line that brings people in can carry very little margin of its own and still be the reason a basket exists.' },
+        { key: 'objective', correct: false, label: 'It is not objective, because the threshold was chosen arbitrarily', why: 'Every threshold is chosen. Arbitrariness is not the problem — the problems are what it cannot see and what it does when you run it twice.' },
+        { key: 'margin', correct: false, label: 'It should use revenue rather than margin', why: 'Margin is the better measure of what a slot earns. Changing it to revenue fixes nothing and loses the one thing the rule gets right.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-115': {
+    title: 'Give Ravi a better rule',
+    hint: "Keep what works about his — objective and repeatable — and fix the four things it does wrong.",
+    brief: "Reply in the channel. He asked for thoughts on a rule, in public, and the instinct is right. Under 130 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: delist rule', maxWords: 130,
+      prompt: 'What the rule misses, and a version that survives being run twice.',
+      rubric: [
+        { key: 'never', label: 'That it cannot reach the never-sold lines', markers: ['never sold|seven|7|zero|no margin|invisible|cannot see|immune'], why: 'The most concrete failure and the easiest to demonstrate.' },
+        { key: 'absolute', label: 'An absolute floor rather than a share of category', markers: ['absolute|rupee|floor|fixed|lakh|per slot|not percent|share'], why: 'The fix for both the small-category problem and the ratchet.' },
+        { key: 'ratchet', label: 'That a share-based rule never terminates', markers: ['again|repeat|twice|ratchet|re.?share|next year|keeps|eventually|never stop'], why: 'The failure nobody notices until the second review.' },
+        { key: 'role', label: 'That some lines earn their slot in other ways', markers: ['role|entry|opening|price point|traffic|basket|footfall|why it is there'], why: 'A rule with no exception process becomes a rule people work around.' },
+        { key: 'support', label: 'Support for the idea of having a rule', markers: ['good|agree|right|worth|like|yes|sensible|keep'], why: 'Objective and repeatable are the right instincts. Replying with only objections is how people stop proposing things in the open.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tc-120': {
+    title: 'Stock cover, as requested',
+    hint: "Average units on hand over average monthly sales. Compute it before deciding whether it means anything.",
+    brief: "Buying have asked for months of stock cover per product, to support the delist. Write ONE SQL SELECT over products that sold, returning: name, category, average monthly units sold to one place, average units on hand to one place, and months of cover to two places. Highest cover first.",
+    referenceSql: "WITH u AS (SELECT p.id, p.name, p.category, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) / 12.0 AS monthly_units FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id), k AS (SELECT product_id, AVG(units_on_hand) AS stock FROM stock_counts GROUP BY product_id) SELECT u.name, u.category, ROUND(u.monthly_units, 1) AS monthly_units, ROUND(k.stock, 1) AS avg_stock, ROUND(k.stock / u.monthly_units, 2) AS months_cover FROM u JOIN k ON k.product_id = u.id ORDER BY months_cover DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.85, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'tc-121': {
+    title: 'Every product holds about twenty units',
+    hint: "Look at the spread of avg_stock across sixty-one products, then at the spread of monthly sales. They do not match.",
+    brief: "Your cover figures run from 0.43 to 1.09 months and cluster around 0.7. Decide whether that is a finding or a warning.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'flat', correct: true, label: 'Average stock is 14.8 to 24.0 units for every product, while sales run 234 to 482 a year', why: 'A product selling twice as fast holds the same stock as one selling half as fast. That is not how replenishment works anywhere.' },
+        { key: 'implausible', correct: true, label: 'A cover figure that is nearly uniform across the whole range cannot be describing stock policy', why: 'The output is suspiciously tidy, which is the signal. Real cover varies enormously between a fast coffee and a slow grinder.' },
+        { key: 'refuse', correct: true, label: 'The right answer to buying is that this table cannot support the question', why: 'You can compute the number. Publishing it would give a delist decision a spurious input, and it would be your input.' },
+        { key: 'quarterly', correct: true, label: 'Four snapshots a year cannot capture a stock position that turns over monthly', why: 'Even if the counts were demand-linked, a quarterly point-in-time reading says almost nothing about a line selling twenty units a month.' },
+        { key: 'lowcover', correct: false, label: 'The range is running at under a month of cover and is at risk of stockouts', why: 'It is the conclusion the number invites and it rests entirely on a measure you have just shown is not measuring anything.' },
+        { key: 'fix', correct: false, label: 'Weight the stock counts by store to correct the distortion', why: 'There is nothing to correct. The counts do not vary with demand, and no weighting recovers information that was never recorded.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-122': {
+    title: 'Prove it properly',
+    hint: "Band the products by how fast they sell and show average stock in each band. If stock responded to demand the bands would differ.",
+    brief: "Do not assert it — demonstrate it. Write ONE SQL SELECT banding products that sold into low (under 300 units), mid (300 to 399) and high (400 or more), returning per band: the number of products, average annual units, and average units on hand to one place.",
+    referenceSql: "WITH u AS (SELECT p.id, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id), k AS (SELECT product_id, AVG(units_on_hand) AS stock FROM stock_counts GROUP BY product_id) SELECT CASE WHEN u.units < 300 THEN 'low' WHEN u.units < 400 THEN 'mid' ELSE 'high' END AS band, COUNT(*) AS products, ROUND(AVG(u.units)) AS avg_units, ROUND(AVG(k.stock), 1) AS avg_stock FROM u JOIN k ON k.product_id = u.id GROUP BY band ORDER BY avg_units",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-123': {
+    title: 'Tell buying the measure does not work',
+    hint: "They asked for a number. You are declining to give it and you need them to understand why, not to think you could not do it.",
+    brief: "Write to Sneha. She asked for stock cover to support the delist and you are not going to supply it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Stock cover — the counts will not support it', maxWords: 160,
+      prompt: 'What you found, the evidence, why you will not publish the figure, and what would fix it.',
+      rubric: [
+        { key: 'flat', label: 'That stock does not vary with sales rate', markers: ['same|flat|uniform|20|twenty|regardless|no relation|independent|does not vary'], why: 'The observation, stated so she can check it herself.' },
+        { key: 'evidence', label: 'The banded evidence', markers: ['band|low|high|fast|slow|19|20|234|482|twice'], why: 'Fast-selling and slow-selling lines hold the same stock. That comparison is the proof.' },
+        { key: 'refuse', label: 'That you will not publish a cover figure', markers: ['not|won.t|will not|cannot|decline|hold|rather not|no cover'], why: 'Be explicit. A caveated number gets used without its caveat.' },
+        { key: 'notability', label: 'That this is about the data, not about difficulty', markers: ['can compute|easy|not hard|the data|counts|quarterly|four|snapshot|record'], why: 'Otherwise she hears "the analyst could not do it" and asks someone else who will.' },
+        { key: 'fix', label: 'What would make it answerable', markers: ['daily|weekly|movement|receipt|delivery|more frequent|per store|system|epos'], why: 'Turns a refusal into a request, and it is a request somebody can actually action.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-124': {
+    title: 'The measures that survive',
+    hint: "Three of these you have computed this week and can defend. Three you cannot.",
+    brief: "Buying still need a delist basis. Decide what you can actually give them.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every measure this data supports.',
+      options: [
+        { key: 'margin', correct: true, label: 'Margin contribution per product, on the cost that applied', why: 'Directly computed, defensible, and the closest thing to what a slot earns.' },
+        { key: 'breadth', correct: true, label: 'How many stores carry each line', why: 'A line in two stores and a line in twelve are different propositions, and the sales table says which is which.' },
+        { key: 'never', correct: true, label: 'Whether a line has ever sold at all', why: 'The cleanest signal in the dataset and the one the standard query cannot see.' },
+        { key: 'cover', correct: false, label: 'Months of stock cover', why: 'You have just spent a day establishing that it is not measuring anything.' },
+        { key: 'velocity', correct: false, label: 'Rate of sale per store per week', why: 'Computable and misleading here — a line carried only by flagships will look fast because of where it is stocked, not because of what it is.' },
+        { key: 'substitution', correct: false, label: 'What customers would buy instead if a line went', why: 'The single most important number for a delist decision and it is nowhere in these four tables.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-125': {
+    title: 'The delist candidates, defensible version',
+    hint: "One pass over sales, one over products, and a rule you can state in a sentence.",
+    brief: "Build the candidate list on measures that survive. In the notebook, return every product that either never sold, or contributed under ₹120,000 of margin on the cost that applied. Assign a list of dicts with keys name, category, units, margin and stores — margin rounded to whole rupees — sorted ascending by margin then by name, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const acc = new Map();
+      for (const p of tables.products) acc.set(p.id, { name: p.name, category: p.category, units: 0, margin: 0, stores: new Set() });
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const cost = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        const row = acc.get(p.id);
+        if (s.quantity > 0) row.units += s.quantity;
+        row.margin += s.quantity * (s.unit_price - cost);
+        row.stores.add(s.store_id);
+      }
+      return [...acc.values()]
+        .map((r) => ({ name: r.name, category: r.category, units: r.units, margin: Math.round(r.margin), stores: r.stores.size }))
+        .filter((r) => r.stores === 0 || r.margin < 120000)
+        .sort((a, b) => a.margin - b.margin || (a.name < b.name ? -1 : 1));
+    },
+  },
+
+  'tc-130': {
+    title: 'Range breadth by store',
+    hint: "Count distinct products sold per store. Format explains almost all of it.",
+    brief: "Buying will ask whether the range fits the estate. Write ONE SQL SELECT returning, per store: format, the number of distinct products it has sold, and that as a percentage of the full range to one place. Widest range first.",
+    referenceSql: "SELECT st.name, st.format, COUNT(DISTINCT s.product_id) AS products_sold, ROUND(COUNT(DISTINCT s.product_id) * 100.0 / (SELECT COUNT(*) FROM products), 1) AS pct_of_range FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY products_sold DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tc-131': {
+    title: 'How many stores carry each line',
+    hint: "Count distinct stores per product and then count how many products sit at each level.",
+    brief: "Write ONE SQL SELECT returning, for each number of stores carrying a line, how many products are at that level. Fewest stores first, and include the products carried by none.",
+    referenceSql: "SELECT stores_carried, COUNT(*) AS products FROM (SELECT p.id, COUNT(DISTINCT s.store_id) AS stores_carried FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id) GROUP BY stores_carried ORDER BY stores_carried",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tc-132': {
+    title: 'The express stores carry a third of the range',
+    hint: "Compare the flagship number with the express numbers and ask what that does to a national delist.",
+    brief: "Flagships sell 61 of 68 lines. The express stores sell between 22 and 32. Work out what that means for a single delist list.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'notnational', correct: true, label: 'A single national delist list applies a decision to stores that never carried the line', why: 'Removing something from Sector 29 that Sector 29 never stocked achieves nothing and makes the list look bigger than it is.' },
+        { key: 'weak', correct: true, label: 'A line carried by few stores looks weak on total margin whether or not it sells well', why: 'Distribution and performance are different things, and total margin confuses them. Two of the candidates are in seven stores.' },
+        { key: 'perstore', correct: true, label: 'Margin per store carrying the line is the fairer comparison', why: 'It separates "nobody wants this" from "almost nobody stocks this", which are opposite problems with opposite answers.' },
+        { key: 'format', correct: true, label: 'The delist question is really a range-by-format question', why: 'An express store with a third of the range has already made most of these decisions. The real question is what the full range should be and what each format takes from it.' },
+        { key: 'expand', correct: false, label: 'The express stores should carry more of the range', why: 'They have a third of the space. Nothing in this data says what would fit, and adding lines to a small store is how you get the tail problem you are trying to fix.' },
+        { key: 'drop', correct: false, label: 'Lines carried by fewer than nine stores should be delisted on that basis alone', why: 'That is the mistake this whole task is about. Low distribution may mean nobody ranged it, which is a buying decision rather than a customer verdict.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-133': {
+    title: 'Margin per store carrying the line',
+    hint: "Divide the line's margin by the number of stores that actually sell it, not by thirteen.",
+    brief: "Correct for distribution. Write ONE SQL SELECT over products that sold, returning: name, category, the number of stores carrying it, total margin on the cost that applied, and margin per carrying store rounded to the nearest rupee. Weakest per store first.",
+    referenceSql: "SELECT p.name, p.category, COUNT(DISTINCT s.store_id) AS stores, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) / COUNT(DISTINCT s.store_id)) AS margin_per_store FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id ORDER BY margin_per_store ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Sneha accepts the list and then wants it split by
+    // format, because an express store and a flagship do not take the same decision.
+    rework: true,
+  },
+
+  'tc-134': {
+    title: 'The list changes',
+    hint: "Compare the bottom of the total-margin list with the bottom of the per-store list. Some lines move a long way.",
+    brief: "Correcting for distribution changes which lines look weakest. Say what that means for the recommendation.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'moves', correct: true, label: 'Lines carried by few stores move up the list once distribution is accounted for', why: 'They were near the bottom on total margin because of where they are stocked. On a per-store basis they are unremarkable.' },
+        { key: 'stay', correct: true, label: 'Lines that are weak in twelve stores stay weak on either measure', why: 'The most useful result of the correction: it tells you which candidates are robust to how you measure them.' },
+        { key: 'both', correct: true, label: 'The recommendation should name which measure each candidate fails on', why: 'A line that fails on both is a different case from one that fails on total margin alone, and buying will want to know which they are looking at.' },
+        { key: 'either', correct: false, label: 'Per-store margin should replace total margin as the delist measure', why: 'Total margin is what the business loses. Per-store margin is what the shelf earns. A delist needs both, and substituting one for the other just moves the blind spot.' },
+        { key: 'noone', correct: false, label: 'Since the list changes, neither measure can be trusted', why: 'Both are correct measures of different things. Disagreement between two right answers is information, not a reason to abandon both.' },
+        { key: 'expand2', correct: false, label: 'Low-distribution lines that perform well per store should be rolled out wider', why: 'It is the interesting hypothesis and this data cannot test it — you do not know whether they sell well because they are good or because flagship customers buy differently.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-135': {
+    title: 'Sneha wants a number for the saving',
+    hint: "Work out which part of the saving you can compute and which part you cannot.",
+    brief: "Sneha wants a rupee figure for what the delist saves, to put in the range review paper. Half of that question is computable and half is not. Answer her. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'What the delist is worth', maxWords: 150,
+      prompt: 'The half you can compute, the half you cannot, and how the figure should be framed in the paper.',
+      rubric: [
+        { key: 'loses', label: 'The margin the delist costs, with a figure', markers: ['lose|cost|at risk|6\\.8|14 lakh|1,?4|margin of|forego'], why: 'The only directly measured number in the decision, and it points the opposite way to the one she asked for.' },
+        { key: 'saving', label: 'What the saving is made of, and that it is not in this data', markers: ['space|buying|working capital|shelf|slot|not in|outside|cannot|do not have'], why: 'Naming the three components tells her who can price them, which beats a refusal.' },
+        { key: 'substitution', label: 'Substitution as the unknown that decides it', markers: ['substitut|instead|switch|buy another|move to|half|net'], why: 'If customers buy something else the loss shrinks. Till data cannot see it.' },
+        { key: 'frame', label: 'That it should be framed as a cost to justify, not a saving to bank', markers: ['cost|justif|frame|not a saving|against|trade|rather than'], why: 'A paper that opens with an uncomputed saving is how a range gets cut on a number that was never true.' },
+        { key: 'noestimate', label: 'That you will not supply an industry estimate', markers: ['not estimate|won.t|will not|no benchmark|industry|made up|invent|our data'], why: 'She will quote the number, not the source.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-140': {
+    title: 'What the candidates are worth',
+    hint: "Same rule as the notebook, summed. This is the number that goes in the paper.",
+    brief: "Cost the recommendation. Write ONE SQL SELECT returning one row for every product that either never sold or contributed under ₹120,000 of margin: how many there are, their combined units, revenue and margin, and their share of total margin to one place. Label them candidates, units, revenue, margin and pct_of_margin.",
+    referenceSql: "WITH m AS (SELECT p.id, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, COALESCE(SUM(s.quantity * s.unit_price), 0) AS revenue, COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0) AS marg, COUNT(DISTINCT s.store_id) AS stores FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT COUNT(*) AS candidates, SUM(units) AS units, ROUND(SUM(revenue)) AS revenue, ROUND(SUM(marg)) AS margin, ROUND(SUM(marg) * 100.0 / (SELECT SUM(marg) FROM m), 1) AS pct_of_margin FROM m WHERE stores = 0 OR marg < 120000",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-141': {
+    title: 'The candidates, with both measures',
+    hint: "Each candidate needs to say which test it failed, so buying can argue with the right one.",
+    brief: "Assemble the paper's appendix. Write ONE SQL SELECT over the delist candidates returning: name, category, stores carrying it, units, total margin, and margin per carrying store — zero where nothing sold. Weakest total margin first.",
+    referenceSql: "SELECT p.name, p.category, COUNT(DISTINCT s.store_id) AS stores, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, ROUND(COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0)) AS margin, CASE WHEN COUNT(DISTINCT s.store_id) = 0 THEN 0 ELSE ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) / COUNT(DISTINCT s.store_id)) END AS margin_per_store FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id HAVING COUNT(DISTINCT s.store_id) = 0 OR SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) < 120000 ORDER BY margin ASC, p.name",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-142': {
+    title: 'What the paper says',
+    hint: "Two things you established, two things you refused, and one thing you do not know.",
+    brief: "Decide what goes in the range review paper.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'never', correct: true, label: 'The seven never-ranged lines, and the process question behind them', why: 'The cleanest finding of the week and the one with a fix that outlives the review.' },
+        { key: 'cost', correct: true, label: 'The margin the candidate list would cost, stated as a cost', why: 'It is the only quantified figure in the decision and it points the opposite way to the framing the paper was requested in.' },
+        { key: 'nocover', correct: true, label: 'That stock cover was requested, computed and rejected, with the reason', why: 'Somebody else will compute it. The paper should already say why it was not used, or the omission looks like an oversight.' },
+        { key: 'twomeasures', correct: true, label: 'Which test each candidate fails — total margin, distribution, or both', why: 'A line weak in twelve stores and a line barely stocked are different cases, and buying will argue them differently.' },
+        { key: 'saving', correct: false, label: 'An estimated saving from the delist', why: 'Space, buying time and working capital are real and none of them is in these four tables. An estimate here would be the most-quoted number in the paper.' },
+        { key: 'rule', correct: false, label: 'A standing rule to delist anything under 1.5% of category margin', why: 'You argued against exactly this on Tuesday, and it still cannot see the seven lines that never sold.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-143': {
+    title: 'Sign off the range paper',
+    hint: "Read what the sentences claim on top of your numbers. Three of the four go further than the analysis does.",
+    brief: "Sneha has drafted the paper using your work. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Sneha Joshi', subject: 'Range paper — sign off?',
+        body: "\"Analytics have identified a tail of underperforming lines representing under 9% of margin. Delisting them releases shelf space and working capital at minimal commercial risk. Stock cover analysis confirms the range is over-extended. We recommend removing all candidates at the spring reset.\"\n\nGood to go?",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'cover', correct: true, label: '"Stock cover analysis confirms" — you told her that analysis does not work', why: 'It is the sentence you spent Wednesday and a whole email preventing, and it has come back in as supporting evidence.' },
+        { key: 'risk', correct: true, label: '"Minimal commercial risk" is an assessment nobody has made', why: 'Substitution is unmeasured. The risk could be near zero or it could be most of the margin, and the paper asserts the first.' },
+        { key: 'releases', correct: true, label: '"Releases shelf space and working capital" states a saving that was never quantified', why: 'Both are real and both are outside this data. Stating them as achieved outcomes is how a cost becomes a saving on paper.' },
+        { key: 'all', correct: true, label: '"Removing all candidates" ignores that they fail different tests', why: 'Seven never sold at all. Others are weak only on total margin because they are barely stocked. Treating them as one list removes the distinction you built.' },
+        { key: 'nine', correct: false, label: 'The "under 9% of margin" figure is wrong', why: 'It is your figure and it is right. As usual the arithmetic survives and the sentences do not.' },
+        { key: 'spring', correct: false, label: 'The spring reset is the wrong time to do it', why: 'Nothing in this data speaks to timing, and objecting to it would be exactly the kind of unevidenced claim the rest of this list is about.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-144': {
+    title: 'Rewrite the paper\'s summary',
+    hint: "Same candidates, none of the four claims, and the cost stated as a cost.",
+    brief: "Send Sneha replacement wording for the summary paragraph. Under 140 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Range paper — suggested summary', maxWords: 140,
+      prompt: 'The candidates split by the test they fail, the margin at risk stated as a cost, and the saving named as unquantified.',
+      rubric: [
+        { key: 'split', label: 'Candidates split by which test they fail', markers: ['never|seven|7|distribution|stores|total margin|two group|separately|different'], why: 'The distinction the paper flattened and the one buying will argue on.' },
+        { key: 'cost', label: 'The margin stated as a cost, not a saving', markers: ['cost|lose|loses|at risk|forego|give up|margin of'], why: 'The framing reversal is the whole point of the rewrite.' },
+        { key: 'unquantified', label: 'That space and working capital are real but unquantified here', markers: ['space|working capital|not quantif|cannot|outside|do not have|no data|elsewhere'], why: 'Names the missing half without pretending it does not exist.' },
+        { key: 'nocover', label: 'No stock cover claim', markers: ['cover|stock|not used|excluded|counts|cannot support|removed'], why: 'Either drop the sentence or say why it is not there. Silence lets somebody re-add it.' },
+        { key: 'substitution', label: 'Substitution named as the open question', markers: ['substitut|instead|switch|buy another|move to|unknown|risk'], why: 'The single largest determinant of whether the delist is a good idea.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-145': {
+    title: 'What you would put in place',
+    hint: "Two failures this week were data that does not exist. One was a query pattern. All three have a fix.",
+    brief: "Asha wants your view as the lead. What changes so the next range review is not another week of this? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Range review — what I would change', maxWords: 200,
+      prompt: 'The changes that would make the next review answerable, and what each unlocks.',
+      rubric: [
+        { key: 'leftjoin', label: 'That range reporting must start from products, not sales', markers: ['left join|from products|not sales|never sold|zero|every product|start'], why: 'One query pattern, and it is the reason seven lines were invisible for as long as anybody has been reviewing the range.' },
+        { key: 'stock', label: 'Stock movement rather than quarterly snapshots', markers: ['stock|movement|daily|weekly|receipt|deliver|snapshot|quarterly|more frequent'], why: 'Without it, cover and stockouts stay unanswerable every single review.' },
+        { key: 'space', label: 'Space or slot data, so a delist has two sides', markers: ['space|slot|planogram|shelf|facing|capacity|cost of'], why: 'The saving half of the trade is currently unmeasurable, which is why delist papers keep asserting it.' },
+        { key: 'listing', label: 'A check that listed lines are actually ranged', markers: ['listed|ranged|planogram|process|sign.?off|gap|report|flag|monitor'], why: 'The seven lines were a process failure, and the fix costs one scheduled query.' },
+        { key: 'own', label: 'Written as decisions, not suggestions', markers: ['I would|we will|I will|propose|put in place|add|introduce|ask for'], why: 'A lead asked what changes is being asked to decide, not to list options.' },
       ],
       skills: { communication: 100, businessLogic: 100 },
     },

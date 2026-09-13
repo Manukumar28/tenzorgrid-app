@@ -435,6 +435,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'retail_sales',
   },
+
+  'range-review': {
+    projectTitle: 'Range & Space Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Start from the population, not from the rows that happen to exist.',
+      'Refuse a measure that produces suspiciously tidy output, and say why in writing.',
+      'State a delist as a cost to be justified, never as a saving nobody computed.',
+    ],
+    scenario:
+      'Buying want a delist list for the spring reset and have asked for stock cover to support it. Seven of the sixty-eight lines in the range have never sold a unit anywhere, and no previous review has seen them. The stock counts will produce a cover figure, and it will not mean anything.',
+    estimatedMinutes: 125,
+    difficulty: 'Hard',
+    primaryObjective: 'A delist candidate list built only on measures this data can defend, costed honestly.',
+    constraints: [
+      { label: 'Population', value: 'Range reporting starts from products. A product with no sales has no row in sales, and an inner join deletes it.' },
+      { label: 'Cost basis', value: 'Margin uses the cost that applied on the day of sale.' },
+      { label: 'Framing', value: 'The margin a delist removes is computable. The space and capital it frees is not, and must not be estimated.' },
+    ],
+    deliverables: [
+      { text: 'A range table covering every product, including those that never sold.', via: 'sql-terminal' },
+      { text: 'A delist candidate list with the test each line fails.', via: 'python-notebook' },
+      { text: 'A written refusal of the stock cover measure, with the evidence.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Seven lines have no sales rows at all. Every previous review ranked products by sales and never saw them.',
+      'Average stock is 14.8 to 24.0 units for every product while annual sales run 234 to 482. Stock does not respond to demand here, so cover is not measuring anything.',
+      'A delist rule expressed as a share of category margin never terminates — every cut creates a new bottom.',
+      'Total margin and margin per carrying store rank the candidates differently. Both are correct measures of different things.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no
