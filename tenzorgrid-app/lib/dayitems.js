@@ -2553,6 +2553,240 @@ The people who get good at this are the ones who can say what changed.`,
       },
     },
   ],
+  'capacity-review': [
+    {
+      key: 'maa-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Your first week with the team as the subject',
+      title: 'Asha: what changes when the data is about people you manage',
+      body: `Congratulations on the job. Here is the part nobody puts in the handover note.
+
+Every review you have run so far was about something — a market, a product, a payroll. This one is about thirteen people who report to you, and that changes what a wrong answer costs. A misread retail figure produces a bad range decision and somebody notices in a month. A misread capacity figure produces a performance conversation with a named person, and that lands on them the same afternoon.
+
+So two rules, and they are not optional at this level.
+
+First: no measure leaves your desk attached to a person's name unless you would defend it in a room with them in it. Not "unless it is accurate" — accurate is not the bar. Defensible in front of the person.
+
+Second: when somebody asks you to rank the team, the honest answer is usually that ranking them is your job and not the data's. You are the instrument. That is uncomfortable and it is what you are paid for.
+
+You will get asked for the table this week. Everybody does.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the bar for publishing a measure with somebody\'s name against it?',
+        options: [
+          { key: 'defend', correct: true, label: 'You would defend it in a room with that person present' },
+          { key: 'accurate', correct: false, label: 'It is arithmetically accurate' },
+          { key: 'caveat', correct: false, label: 'It carries a caveat about what it does and does not show' },
+          { key: 'asked', correct: false, label: 'Somebody senior has asked for it twice' },
+        ],
+        why: 'Accuracy is cheap — the hours table is accurate. A caveat does not travel with the document. And being asked twice is pressure, not evidence.',
+      },
+    },
+    {
+      key: 'maa-02', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'How a budget round actually reads numbers',
+      title: 'Diya: a rate is a weapon, not a fact',
+      body: `You are about to hand figures into a budget round for the first time. A short warning about what happens to them in there.
+
+A budget round does not read your analysis. It reads one number per cost line and compares it to the other cost lines. Whatever you send, the thing that survives is the rate — cost per something, per head, per output. It gets lifted out of your email, put on a slide, and repeated in rooms you are not in.
+
+So the question to ask before you publish a rate is not "is this correct". It is: what will this number be used to argue, by someone who has read nothing else?
+
+A cost per analysis that is eight times too high will be used to argue that analytics is expensive. It will not be used to argue that the timesheets are incomplete, however clearly you say so, because the sentence about timesheets does not fit on the slide and the rate does.
+
+If a rate cannot survive being quoted alone, do not produce it. Give them the thing that can.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What question should you ask before publishing a rate?',
+        markers: ['argue|used|quoted|alone|without|context|slide|read nothing|survive|on its own'],
+        why: 'Correctness is the easy test and it is not the binding one. The binding test is what the number does once it is separated from everything you wrote around it.',
+      },
+    },
+    {
+      key: 'maa-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Why the timesheets look like that',
+      title: 'Rahul: self-reported data measures the reporting, not the thing',
+      body: `Before you draw conclusions from the time logs, some history on where they come from.
+
+Nobody is required to fill them in. There is no approval step, no reminder, and no consequence for an empty week. They exist because a tool we bought in 2023 had the feature switched on by default.
+
+That gives you a classic self-reported dataset, and self-reported datasets have one property worth memorising: the variation between people is mostly variation in reporting behaviour, not in the underlying thing. When response is voluntary and unenforced, whoever answers is whoever finds answering easy.
+
+Two practical consequences.
+
+Proportions survive better than totals. If somebody logs half their time, the SHAPE of what they logged is probably roughly right even though the level is badly wrong. What people work on is more recoverable than how much.
+
+And comparisons between people do not survive at all. A total that is uniformly short can be scaled by a factor you estimate. A comparison between a diligent logger and a lax one cannot be rescued by any factor, because you would need a different factor for each of them and the data cannot tell you either.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which use of a voluntary, unenforced timesheet is least damaged by its coverage?',
+        options: [
+          { key: 'mix', correct: true, label: 'The mix — what proportion of effort went to each requesting function' },
+          { key: 'rate', correct: false, label: 'Cost per hour, scaled up to allow for the missing time' },
+          { key: 'rank', correct: false, label: 'Ranking analysts by hours, with people present less than a year excluded' },
+          { key: 'total', correct: false, label: 'Total hours worked by the team this year' },
+        ],
+        why: 'Scaling needs a factor you do not have. Ranking needs a different factor per person. The total is simply eight times short. The mix is the one thing a partial sample can still carry.',
+      },
+    },
+    {
+      key: 'maa-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 9,
+      subject: 'Before you use timesheet data about individuals',
+      title: 'Neha: the rules on individual performance data',
+      body: `Flagging this now because you have pulled the time logs and the budget round is coming.
+
+The policy is short. Data collected for one purpose is not automatically available for another. The time logs were switched on to attribute effort to projects. Using them to assess individual performance is a different purpose, and it needs the people concerned to know it is happening.
+
+That is not a bureaucratic point. If thirteen people learn in a budget round that their timesheets were used to rank them, two things follow: the ones who look bad are being assessed on an administrative habit, and everybody starts logging strategically from the following Monday. You lose the data and the trust in one move.
+
+If you do intend to use it that way, tell the team first, in writing, before it leaves your desk. If you do not intend to, tell them that too — they will hear that analytics timesheets came up in a budget round either way, and the version they hear from you is better than the version they hear from somebody else.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are using team timesheet data in a budget conversation. What does the team need from you?',
+        options: [
+          { key: 'before', correct: true, label: 'To hear it from you, in writing, before it leaves your desk' },
+          { key: 'after', correct: false, label: 'A summary afterwards of what was said and decided' },
+          { key: 'nothing', correct: false, label: 'Nothing, as long as no individual is named' },
+          { key: 'consent', correct: false, label: 'Individual sign-off from each of the thirteen' },
+        ],
+        why: 'Afterwards is too late to be a choice. Aggregation helps but the team still hears their timesheets came up. Individual consent turns a management decision into a negotiation.',
+      },
+    },
+    {
+      key: 'maa-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 15,
+      subject: 'Denominators',
+      title: 'Asha: the same cost, divided two ways',
+      body: `You have found the coverage problem. Now the harder half: what to do with two numbers that are both arithmetically correct and eight times apart.
+
+The team costs roughly ₹3.09 crore a year. Divide by the 3,193 hours anyone bothered to log and you get about ₹9,664 an hour. Divide by the hours the company actually paid for — days present, working days, eight hours a day — and you get about ₹1,241.
+
+Neither is a mistake. They answer different questions. The first answers "what does an hour of recorded analyst time cost", which is a question about the timesheet. The second answers "what does an hour of analyst capacity cost", which is a question about the business.
+
+The instinct is to publish the second and call the first wrong. Do not do that. Publish the second and SHOW the first, because somebody else will compute the first within a week and you want them to find your version of it rather than discover it themselves and wonder what else you left out.
+
+The general rule: when a figure has a defensible alternative, the alternative goes on the same page. A number that only survives because nobody else has done the arithmetic is not a number you own.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why show the naive rate rather than only the defensible one?',
+        markers: ['somebody|someone|else|will|compute|find|discover|own|transparen|same page|credib|trust|later|themselves'],
+        why: 'Because the arithmetic is two lines and someone will do it. A figure you did not mention, found by someone else, costs more than the figure itself ever could.',
+      },
+    },
+    {
+      key: 'maa-06', day: 3, type: 'learning', via: 'chat', from: 'stakeholder', minutes: 8,
+      subject: 'What I actually do with your numbers',
+      title: 'Vikram: how a rate gets used once it leaves you',
+      body: `Since we are going to disagree this week, here is my side, so you know what you are arguing with.
+
+I am not trying to catch anybody out. I sit in a room with six cost lines and I have to say something about each of them. For most of them I have a rate. Cost per order, cost per ticket, cost per hire. When analytics has no rate, the room does not conclude that analytics is unmeasurable. It concludes that analytics has not done the work, and the cut lands there rather than somewhere else.
+
+So when I push you for a number, that is what I am pushing for. Something I can put next to the other five lines.
+
+What actually helps me is a rate you will defend, plus one sentence on what it does not mean. What does not help me is being told the question is wrong, because I still have to say something in that room.
+
+Give me something I can carry.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the strongest response to "I need a rate for the room"?',
+        options: [
+          { key: 'defensible', correct: true, label: 'Give the capacity-hour rate, with the naive one shown beside it and one line on the difference' },
+          { key: 'refuse', correct: false, label: 'Explain that no rate is defensible until timesheet coverage improves' },
+          { key: 'naive', correct: false, label: 'Give the logged-hour rate with a clear health warning attached' },
+          { key: 'defer', correct: false, label: 'Ask for the budget conversation to be deferred to the next round' },
+        ],
+        why: 'Refusing leaves him with nothing and the cut lands on analytics anyway. The naive rate with a warning is the rate without the warning by the second retelling. The answer is a rate you will stand behind.',
+      },
+    },
+    {
+      key: 'maa-07', day: 4, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Headcount, capacity and the word establishment',
+      title: 'Neha: fourteen people is not fourteen people',
+      body: `You are being asked whether fourteen is the right number, so it is worth being precise about what fourteen means.
+
+Establishment is the number of posts. Headcount is the number of humans in them on a given day. Capacity is what those humans were actually present to do over a period, and it is the only one of the three that belongs in the denominator of anything.
+
+This year they are all different. Somebody left at the end of January and somebody joined in March. Thirteen people below manager level bought you 11.92 person-years — a whole person short of what the headcount suggests, from ordinary joining and leaving nobody did anything wrong in.
+
+That gap is also why "we are at fourteen and still behind" is not the argument it sounds like. Some of the shortfall is not a shortfall in establishment at all; it is the six weeks a post sat empty and the three months before a March joiner was useful. Hiring does not fix that. Faster replacement does, and it is cheaper.
+
+The sentence worth having ready: a post is not a person, and a person is not a person-year.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Thirteen people below manager level, 11.92 person-years present. What does that gap chiefly show?',
+        options: [
+          { key: 'churn', correct: true, label: 'Ordinary joining and leaving, which hiring more posts does not fix' },
+          { key: 'absence', correct: false, label: 'Unrecorded absence that should be investigated' },
+          { key: 'under', correct: false, label: 'That the team is under-established by about one post' },
+          { key: 'error', correct: false, label: 'A data problem in the start and leave dates' },
+        ],
+        why: 'A leaver in January and a joiner in March account for it exactly. Reading it as under-establishment turns a replacement-speed problem into a hiring request.',
+      },
+    },
+    {
+      key: 'maa-08', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 10,
+      subject: 'Cancelled work in a budget conversation',
+      title: 'Diya: the cheapest capacity in the building',
+      body: `You have found 485 hours logged against work that was later cancelled — about 15% of everything recorded. A word on how to use that, because it is the most useful thing in your whole review and the easiest to waste.
+
+Do not present it as waste. The moment it is called waste, the conversation becomes about who cancelled what, and the requesting functions become defensive, and nothing changes.
+
+Present it as available capacity. Fifteen per cent of effort went to work the business stopped wanting. Recovering even half of that is worth more than a hire, costs nothing, and is in the gift of the people in the room rather than the people in your team.
+
+That reframes the whole establishment question. "Do we need more analysts" becomes "do we want to keep paying for work we cancel", and the second question is one an exec can act on this quarter.
+
+One caution. The 15% is a floor, not an estimate. It is 15% of LOGGED hours, and logged hours are an eighth of the real ones. The proportion is the reliable part.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why present cancelled effort as available capacity rather than as waste?',
+        markers: ['defensive|blame|who|actionable|act|capacity|hire|cheaper|reframe|room|their gift|change|argument'],
+        why: 'Waste is an accusation and produces a search for the guilty. Available capacity is an offer, and it turns a hiring request into a decision the room can actually take.',
+      },
+    },
+    {
+      key: 'maa-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'Writing for a budget round',
+      title: 'Asha: what a slide does to a sentence',
+      body: `Last thing before this goes in. A note on the medium, because the budget pack is not an email and will not behave like one.
+
+A slide is read for four seconds by someone who is thinking about the next slide. Whatever is largest and most quotable is what survives; everything else is decoration. That is not a failure of the audience, it is what packs are for.
+
+So: whatever you most need to be true about how your figures are read has to be the biggest thing on the page, not a qualifier under it. If the coverage caveat matters more than the rate — and here it does — then the coverage is the line and the rate is the supporting detail, not the other way round.
+
+And be specific about the failure you are preventing. "Utilisation is low at 13%, suggesting spare capacity" is a sentence somebody will write with no bad intent at all. It reads as an observation. It is actually a recommendation to cut, dressed as arithmetic, and it will be read as one.
+
+Your job on a slide is not to be accurate. It is to make the wrong reading harder than the right one.`,
+      check: {
+        kind: 'choice',
+        prompt: 'The slide says "utilisation is low at 13%, suggesting spare capacity". What is wrong with it?',
+        options: [
+          { key: 'recommend', correct: true, label: 'It reads as an observation but functions as a recommendation to cut' },
+          { key: 'rounding', correct: false, label: 'The figure should be 12.8% rather than 13%' },
+          { key: 'vague', correct: false, label: 'It does not say what period the utilisation covers' },
+          { key: 'jargon', correct: false, label: 'Utilisation is a term the board will not know' },
+        ],
+        why: 'The rounding is the least of it. The number is not utilisation at all — it is timesheet coverage — and the second clause converts a measurement error into a resourcing decision.',
+      },
+    },
+    {
+      key: 'maa-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'End of your first review as manager',
+      title: 'Asha: what you refused',
+      body: `Week done. One reflection rather than a debrief.
+
+The technical work this week was not hard. Coverage, a denominator, a couple of group-bys. Any of your team could have written the queries.
+
+What you did that they could not was refuse the table. Vikram asked twice, politely, with a good reason, and offered to read it sensibly. Saying no to that costs something — he is senior, he is not being unreasonable, and the refusal makes you look obstructive for about a day.
+
+That is most of the job now. Not finding the number. Deciding which numbers are allowed to exist with names attached to them, and carrying the cost of the ones you withhold.
+
+Have a think over the weekend about what else in the team's reporting would not survive the test you applied this week.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What was the hardest part of this week, and why?',
+        markers: ['refus|no|decline|table|withhold|say no|vikram|cost|obstruct|unpopular|judgement|stand'],
+        why: 'The queries were routine. Declining a reasonable request from a senior person, twice, with no data to hide behind, is the part that is new at this level.',
+      },
+    },
+  ],
 };
 
 // ---- Situations ---------------------------------------------------------------------
@@ -3886,6 +4120,118 @@ Friday lunch is moved to 1pm because of the all-hands.
 Nominations for the quarterly shout-outs close next Friday.`,
       needsReply: false,
       ifIgnored: 'Nothing. It is a newsletter.',
+    },
+  ],
+  'capacity-review': [
+    {
+      key: 'mas-01', day: 1, type: 'scope', via: 'email', from: 'line_manager',
+      subject: 'How much of this do you want to take on?',
+      body: `Vikram has asked you three questions and only one of them is a data question.
+
+You can answer the cost question and leave the establishment case to me, or you can own the whole thing into the budget round. If you own it, you present it.
+
+Tell me which by tonight.`,
+      needsReply: true,
+      expect: ['choose', 'say what owning it requires'],
+      markers: ['own|whole|all three|establishment|present|both|yes|scope|round|carry|coverage|condition'],
+      ifIgnored: 'Asha takes the narrow scope, and the establishment case goes into the round built on a cost per analysis nobody has checked.',
+      note: 'Owning it is right, and it has a condition: the coverage problem goes in first, or the rate you produce gets used without it.',
+    },
+    {
+      key: 'mas-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Budget round — submission window and templates',
+      body: `The FY27 budget submission window opens on the 6th and closes on the 24th.
+
+Cost centre owners will receive their templates directly from Finance. No action is required from anyone else at this stage.`,
+      expect: ['archive it'],
+      note: 'Cost centre owners get their templates directly. Nothing here for you yet.',
+    },
+    {
+      key: 'mas-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Quick one — who is your strongest?',
+      body: `Informal, not for anything official. Out of your thirteen, who would you say is carrying the most?
+
+I am putting a cross-functional group together and I want your best person on it.`,
+      needsReply: true,
+      expect: ['answer from your own judgement', 'not from the hours table'],
+      markers: ['my view|I think|judge|assess|not the|hours|timesheet|log|would not|based on|know them|work|delivered'],
+      ifIgnored: 'He picks from the hours table he has already seen, and the best administrator in the team gets volunteered for a project they did not ask for.',
+      note: 'A perfectly reasonable question, and the answer is yours rather than the data\'s. Naming somebody is fine; naming them because they logged 444 hours is not.',
+    },
+    {
+      key: 'mas-04', day: 2, type: 'noise', via: 'chat', from: 'it_ops',
+      subject: 'Time logging tool — maintenance window',
+      body: `The time logging tool will be unavailable between 22:00 and 01:00 on Saturday for a scheduled upgrade.
+
+Entries submitted before the window are unaffected.`,
+      expect: ['archive it'],
+      note: 'A maintenance notice on a Saturday night for a tool nobody uses at the weekend.',
+    },
+    {
+      key: 'mas-05', day: 3, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'The ₹9,664 figure',
+      body: `You sent me a cost per hour on Monday and now you are telling me it is out by a factor of eight.
+
+I have already used it once, in passing, with Finance. What do I tell them?`,
+      needsReply: true,
+      expect: ['give him the correction and the sentence to use', 'own the Monday figure'],
+      markers: ['my|mine|I sent|apolog|correct|1,?241|1241|capacity|coverage|12\\.8|denominator|both|same cost|tell them|say'],
+      ifIgnored: 'The ₹9,664 rate circulates in Finance uncorrected and comes back in the budget pack, where it is far harder to withdraw.',
+      note: 'He needs a sentence he can send, not an explanation of your method. Own the Monday figure, give him the capacity rate, and say the difference is the denominator rather than the cost.',
+    },
+    {
+      key: 'mas-06', day: 3, type: 'pressure', via: 'chat', from: 'people_partner',
+      subject: 'One of the team has asked me something',
+      body: `Somebody in your team has asked me, off the record, whether their timesheet is being looked at for the budget round. They are worried.
+
+I have not said anything. But you should know the question is being asked.`,
+      needsReply: true,
+      expect: ['tell the team directly rather than answering through Neha'],
+      markers: ['tell|write|team|all|everyone|directly|today|note|before|myself|not through|transparen|will not|ranking'],
+      ifIgnored: 'The question spreads as a rumour for three days before your note arrives, and the note then reads as a response to the rumour rather than as the plan.',
+      note: 'Answering Neha answers one person. The other twelve are having the same thought, and the note you owe them is due today rather than Friday.',
+    },
+    {
+      key: 'mas-07', day: 4, type: 'scope', via: 'email', from: 'engineering_manager',
+      subject: 'Can I borrow your capacity method?',
+      body: `I hear you are doing days-present rather than headcount for the analytics capacity number.
+
+Engineering has the same problem and I would like to use the same method so the two are comparable in the round. Can you send me how you did it?`,
+      needsReply: true,
+      expect: ['yes, with the caveat about his own time data'],
+      markers: ['yes|happy|send|method|days present|working days|caveat|your|timesheet|coverage|capacity|denominator|comparab'],
+      ifIgnored: 'Engineering submits a headcount-based capacity figure, analytics submits a presence-based one, and the two cost lines are compared as though they were computed the same way.',
+      note: 'Worth saying yes to — two cost lines computed the same way is worth more than either one being slightly better. The capacity method is portable; anything built on his time logs is not.',
+    },
+    {
+      key: 'mas-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Desk moves — analytics floor',
+      body: `The analytics team will move from the fourth floor to the sixth on the weekend of the 18th.
+
+Crates will be delivered on the 16th. Personal items only; monitors and docks stay with the desks.`,
+      expect: ['archive it'],
+      note: 'A desk move in three weeks. Nothing that needs you this week.',
+    },
+    {
+      key: 'mas-09', day: 5, type: 'pressure', via: 'chat', from: 'finance_analyst',
+      subject: 'Slide deadline is 4pm',
+      body: `I need the analytics slide signed off by four. If I do not hear from you I will send the version I drafted.
+
+It is one slide. Is it really worth another round?`,
+      needsReply: true,
+      expect: ['yes', 'send the replacement wording rather than a list of objections'],
+      markers: ['yes|worth|replac|wording|here is|rewrite|send|instead|13%|utilisation|coverage|9,?664|cut|misread'],
+      ifIgnored: 'Her draft goes in: ₹9,664 an hour, utilisation at 13%, headcount above requirement, and a recommendation to review individual performance.',
+      note: 'She is not being difficult — she has a deadline and a draft. Objections cost her time she does not have; replacement wording costs her nothing.',
+    },
+    {
+      key: 'mas-10', day: 5, type: 'noise', via: 'email', from: 'comms',
+      subject: 'Internal newsletter — analytics mention',
+      body: `We are running a short piece on the analytics team in next month's internal newsletter, focused on the dashboard work for Support.
+
+Copy has been agreed with Sneha and nothing further is needed from you.`,
+      expect: ['archive it'],
+      note: 'Already agreed with the person who owns it. Nothing to add.',
     },
   ],
 };
@@ -5289,6 +5635,122 @@ const QUIZZES = {
           { key: 'd', label: 'Neither — you should average the two figures' },
         ],
         why: 'Finance is measuring spend; you are measuring what we pay people now. Both are defensible and they are not interchangeable — the job is to name the difference and get one chosen before the meeting, not to win it. Averaging two different questions produces a number that answers neither.',
+      },
+    ],
+  },
+  'capacity-review': {
+    key: 'maq-capacity', title: 'Demand & Capacity Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'An exec asks what an analysis costs, who is most productive, and whether all fourteen people are needed. What kind of request is that?',
+        options: [
+          { key: 'b', label: 'A resourcing question asked in the shape of a productivity question', correct: true },
+          { key: 'a', label: 'Three separate questions that happen to share an email' },
+          { key: 'c', label: 'A performance question with a cost question attached to it' },
+          { key: 'd', label: 'A straightforward reporting request on data you already hold' },
+        ],
+        why: 'The decision behind all three is whether to fund the team at its current size. Answering the productivity question on its own terms is how you spend a week being responsive and useless.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'The team logged 3,193 hours against 24,857 hours of paid capacity. What does that 12.8% most directly invalidate?',
+        options: [
+          { key: 'c', label: 'Any rate with logged hours in the denominator', correct: true },
+          { key: 'a', label: 'The record of which requests people worked on' },
+          { key: 'b', label: 'The proportion of effort going to each requesting function' },
+          { key: 'd', label: 'The count of delivered requests' },
+        ],
+        why: 'A missing eighth of the denominator multiplies every rate built on it by about eight. What people worked on survives far better than how much.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'Why does every capacity query in this review carry WHERE level <> \'manager\'?',
+        options: [
+          { key: 'a', label: 'The manager does not deliver requests, so including her adds cost and capacity that produce no output', correct: true },
+          { key: 'b', label: 'Manager-level time logs are recorded in a different system' },
+          { key: 'c', label: 'Her day rate is high enough to distort any average' },
+          { key: 'd', label: 'Data about your own line manager should not appear in a budget pack' },
+        ],
+        why: 'She is real cost and real capacity, but not delivery capacity. Leaving her in makes every per-person figure quietly worse in a way nobody reading the output would spot.',
+      },
+      {
+        id: 'q4', topic: 'data-ethics',
+        q: 'A senior stakeholder asks twice for per-person logged hours, promising to read it sensibly. What do you do?',
+        options: [
+          { key: 'd', label: 'Decline that table, and offer delivered work per person-year by level instead', correct: true },
+          { key: 'a', label: 'Send it with a written health warning at the top' },
+          { key: 'b', label: 'Send it with the two part-year people removed' },
+          { key: 'c', label: 'Send it to his manager instead so the request is on the record' },
+        ],
+        why: 'He probably would read it sensibly. The document outlives the conversation, and the next reader will not have been in it. The health warning does not travel; the ranking does.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'Logged-day coverage across the team runs from 19.2% to 49.1%. What does a ranking of analysts by hours logged mostly measure?',
+        options: [
+          { key: 'b', label: 'How diligently each person fills in a timesheet', correct: true },
+          { key: 'a', label: 'How much work each person was assigned' },
+          { key: 'c', label: 'How much each person actually worked' },
+          { key: 'd', label: 'How long each person has been with the team' },
+        ],
+        why: 'Assignment and time present are in there too, and both are outside the person\'s control. Actual work done is not in the top three.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Thirteen people below manager level. 11.92 person-years present. What follows?',
+        options: [
+          { key: 'c', label: 'Ordinary joining and leaving cost about a person-year, which faster replacement fixes and hiring does not', correct: true },
+          { key: 'a', label: 'The team is under-established by roughly one post' },
+          { key: 'b', label: 'There is about a person-year of unexplained absence to investigate' },
+          { key: 'd', label: 'Headcount should be reported as twelve rather than thirteen' },
+        ],
+        why: 'A January leaver and a March joiner account for it exactly. Reading it as under-establishment converts a replacement-speed problem into a hiring request.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: '485 hours — 15% of all logged effort — went to requests later cancelled. How should that enter a budget conversation?',
+        options: [
+          { key: 'a', label: 'As capacity available without hiring, and as a floor rather than an estimate', correct: true },
+          { key: 'b', label: 'As waste, quantified by requesting function' },
+          { key: 'c', label: 'As a reason to exclude cancelled work from every cost figure' },
+          { key: 'd', label: 'As evidence that intake needs an approval step' },
+        ],
+        why: 'Called waste it produces a search for the guilty. Called available capacity it is an offer the room can accept this quarter. And it is 15% of logged hours, so the real figure is larger.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A budget slide reads: "Utilisation across the team is low at 13%, suggesting spare capacity." What is the most serious problem with it?',
+        options: [
+          { key: 'd', label: 'The 13% is timesheet coverage, not utilisation, and the second clause turns a measurement gap into a case for cutting', correct: true },
+          { key: 'a', label: 'It should say 12.8% rather than rounding to 13%' },
+          { key: 'b', label: 'It does not state the period the figure covers' },
+          { key: 'c', label: 'Utilisation is a term the audience will not recognise' },
+        ],
+        why: 'Every option is a real flaw and only one of them cuts the team. The sentence reads as an observation and functions as a recommendation.',
+      },
+      {
+        id: 'q9', topic: 'data-ethics',
+        q: 'You are about to use the team\'s timesheet data in a budget conversation. When do they hear about it?',
+        options: [
+          { key: 'b', label: 'Before it leaves your desk, in writing, from you', correct: true },
+          { key: 'a', label: 'Afterwards, with a summary of what was said' },
+          { key: 'c', label: 'Only if an individual is named in what you send' },
+          { key: 'd', label: 'Not at all, since it is aggregated' },
+        ],
+        why: 'Data gathered to attribute effort to projects is being used for something else. Afterwards is too late to be a choice, and they will hear it came up either way.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'The same annual cost gives ₹9,664 per logged hour and about ₹1,241 per capacity hour. What do you publish?',
+        options: [
+          { key: 'c', label: 'The capacity rate, with the naive one shown beside it and one line on why they differ', correct: true },
+          { key: 'a', label: 'The capacity rate only, since the other is built on a broken denominator' },
+          { key: 'b', label: 'The naive rate only, since it is the one derived from real recorded work' },
+          { key: 'd', label: 'Neither, until timesheet coverage is good enough to support a rate' },
+        ],
+        why: 'The naive figure is two lines of arithmetic away and somebody will find it. Far better they find your version of it than discover it themselves and wonder what else was left out. Publishing nothing leaves the room with no analytics rate at all, and the cut lands there.',
       },
     ],
   },

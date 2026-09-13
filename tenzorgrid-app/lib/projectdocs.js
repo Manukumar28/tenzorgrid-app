@@ -505,6 +505,42 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'retail_sales',
   },
+
+  'capacity-review': {
+    projectTitle: 'Demand & Capacity Review',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function itself — fourteen people, the work the business asks of them, and what it costs. This time the subject of the analysis is your own team.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Answer the establishment question honestly, including the part of it that the data cannot answer.',
+      'Refuse measures that rank people on something other than their work, and say why in one checkable sentence.',
+      'Judge the team yourself. That is what the job is, and it is not something a table can be asked to do for you.',
+    ],
+    scenario:
+      'The budget round opens in three weeks and analytics is one of the larger cost lines. A business stakeholder has asked three questions in one email — what an analysis costs, who is most productive, and whether all fourteen people are needed — and pointed at the timesheets as the place to find out. The timesheets account for 12.8% of the hours the company pays for.',
+    estimatedMinutes: 150,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible answer on cost and demand, an honest answer on establishment, and no per-person ranking built on a measure that cannot carry one.',
+    constraints: [
+      { label: 'Coverage first', value: 'The 12.8% has to be stated before any rate is, or the rate gets quoted without it.' },
+      { label: 'No individual ranking', value: 'Hours logged ranks timesheet discipline. It does not leave your desk attached to names.' },
+      { label: 'Capacity, not headcount', value: 'One person left in January and one joined in March. Thirteen people bought 11.92 person-years.' },
+    ],
+    deliverables: [
+      { text: 'Coverage, cost and demand from the timesheets, with the coverage on the same page as the cost.', via: 'sql-terminal' },
+      { text: 'The rate both ways — against logged hours and against capacity hours.', via: 'python-notebook' },
+      { text: 'An answer to the exec, a correction to the budget slide, and a note to the team.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Hours per person ranks people by how diligently they fill in a timesheet. Nobody in the team logs even half their working days.',
+      'Cost per logged hour comes out at \u20b99,664. Against capacity hours it is about \u20b91,241. The same cost, two denominators, and only one of them describes anything real.',
+      'Cancelled work carries real logged time — 15% of all effort. Filtering to delivered work hides it, which is the opposite of what a budget conversation needs.',
+      'Finance submits many small requests and Product submits few large ones. Ranked by count Finance leads; ranked by hours Product does. Neither ranking is the answer on its own.',
+      'The question you were asked is about resourcing. Answering the productivity question instead is the easy way to look responsive and be useless.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

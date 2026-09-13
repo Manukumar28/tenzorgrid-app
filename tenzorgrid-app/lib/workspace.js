@@ -515,6 +515,40 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 3,
     },
+    {
+      key: 'capacity-review',
+      title: 'Demand & Capacity Review',
+      description: 'The budget round wants a cost per analysis and a view on whether fourteen people is right. The timesheets cover an eighth of the paid time.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — the intake. A resourcing question arrives dressed as a productivity one.
+        'ma-101', 'ma-102', 'ma-103', 'ma-104', 'ma-105', 'ma-106',
+        // Day 2 — who looks busy, which turns out to rank people by timesheet discipline.
+        'ma-110', 'ma-111', 'ma-112', 'ma-113', 'ma-114', 'ma-115',
+        // Day 3 — the wobble. Coverage is 12.8%, so every rate built on logged hours is
+        // out by a factor of eight, including the one already sent.
+        'ma-120', 'ma-121', 'ma-122', 'ma-123', 'ma-124', 'ma-125',
+        // Day 4 — capacity from presence rather than headcount, and the cost of work
+        // nobody ended up wanting.
+        'ma-130', 'ma-131', 'ma-132', 'ma-133', 'ma-134', 'ma-135',
+        // Day 5 — what the exec is told, what the budget pack may say, and what gets
+        // instrumented so the next budget round is not this one again.
+        'ma-140', 'ma-141', 'ma-142', 'ma-143', 'ma-144', 'ma-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 61000,
+      contributors: [
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Asks the budget-round question', day: 1, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns the answer and the team it is about', day: 1, throughDay: 5 },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Drafts the analytics slide for the budget pack', day: 5, needsYou: true },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Takes the establishment case into the round', day: 5 },
+      ],
+      unlockAfter: 0,
+    },
   ],
 };
 
@@ -6919,6 +6953,485 @@ const TASKS = {
       skills: { communication: 100, businessLogic: 100 },
     },
     estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Manager 1 · Demand & Capacity Review (analytics_ops) -----------------------
+  // First project at Manager, and the subject changes: the thing being analysed is the
+  // team. Monday the intake. Tuesday who looks busy, which turns out to rank people by
+  // how well they fill in a timesheet. Wednesday the wobble — the timesheets account for
+  // an eighth of the paid time, so every rate built on them is out by a factor of eight.
+  // Thursday capacity from presence rather than headcount, and the hours spent on work
+  // nobody wanted. Friday what the exec is told, and what gets instrumented.
+
+  'ma-101': {
+    title: 'What the exec is asking for',
+    hint: "He has asked a resourcing question in the form of a productivity question. Notice which one you are being handed.",
+    brief: "Read the request before you touch the data. Decide what is actually being asked and what would be needed to answer it.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Analytics headcount — before budget round',
+        body: "Budget round is in three weeks and analytics is one of the larger cost lines.\n\nI want to understand what we get for it. How much does an analysis cost us, who in the team is most productive, and do we need all fourteen people?\n\nYou have the timesheets. Should be straightforward.",
+      },
+      prompt: 'Tick everything that is true about the request as framed.',
+      options: [
+        { key: 'three', correct: true, label: 'It is three different questions, and only one of them is about cost', why: 'Cost per analysis, individual productivity, and establishment size. They need different data and only the first is close to answerable.' },
+        { key: 'individual', correct: true, label: '"Who is most productive" is the question to push back on hardest', why: 'Any answer becomes a performance conversation with a named person. It needs to be right, and the data almost certainly cannot make it right.' },
+        { key: 'timesheets', correct: true, label: 'Whether the timesheets can carry any of it is the first thing to establish', why: 'He has assumed they are a record of how time was spent. That assumption is testable before anything is built on it.' },
+        { key: 'need', correct: true, label: '"Do we need all fourteen" cannot be answered from utilisation alone', why: 'It depends on what would not get done, and the backlog and cancelled work speak to that far better than a headcount figure does.' },
+        { key: 'straightforward', correct: false, label: 'It is straightforward — the timesheets hold hours per person and per request', why: 'They hold logged hours, which is a different thing from hours worked, and the gap between those two is the whole of this week.' },
+        { key: 'refuse', correct: false, label: 'Decline the individual productivity question outright', why: 'He is entitled to ask what his money buys. Refusing the question is not the same as refusing to answer it with a measure that cannot bear the weight.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ma-102': {
+    title: 'What came in and what happened to it',
+    hint: "Status is the first cut. Note how much sits in states that are neither done nor being worked on.",
+    brief: "Establish the intake. Write ONE SQL SELECT returning, per request status: the number of requests and that as a percentage of all requests to one place. Most common first.",
+    referenceSql: "SELECT status, COUNT(*) AS requests, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct FROM requests GROUP BY status ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ma-103': {
+    title: 'Who asks, and for how much',
+    hint: "Count requests and sum hours in the same query. The two orderings will not match.",
+    brief: "Write ONE SQL SELECT returning, per requesting function: the number of requests, total logged hours to one place, and hours per request to one place. Most requests first.",
+    referenceSql: "SELECT r.requested_by, COUNT(DISTINCT r.id) AS requests, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) / COUNT(DISTINCT r.id), 1) AS hours_per_request FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.requested_by ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ma-104': {
+    title: 'Finance asks most and takes least',
+    hint: "Compare the two orderings. One function is at opposite ends of them.",
+    brief: "Finance submitted 136 requests and consumed 574 logged hours. Product submitted 34 and consumed 945. Read what that means.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'shape', correct: true, label: 'The two functions ask in completely different shapes', why: 'Finance at 4.2 hours a request, Product at 27.8. One is a stream of small things and the other is a handful of substantial pieces.' },
+        { key: 'ranking', correct: true, label: 'Ranking requesters by count and by hours gives nearly opposite answers', why: 'Finance is first by count and fourth by hours. Any prioritisation built on one measure will be argued with using the other.' },
+        { key: 'both', correct: true, label: 'A demand picture needs both numbers side by side', why: 'Count tells you where the interruptions come from; hours tell you where the capacity goes. They are different management problems.' },
+        { key: 'neither', correct: false, label: 'Finance is over-using the team and should be rationed', why: 'A hundred and thirty-six small requests may be exactly the right relationship with Finance. Volume is not the same as burden, which is what the hours column is for.' },
+        { key: 'product', correct: false, label: 'Product is the most valuable requester, since it consumes the most', why: 'Consumption is not value. Nothing in this data says what any of the work was worth.' },
+        { key: 'small', correct: false, label: 'The small Finance requests should be automated away', why: 'Plausible, and it is a recommendation rather than a finding. You do not yet know whether they repeat or are each different.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ma-105': {
+    title: 'The backlog',
+    hint: "Queued work has never been picked up. Measure how long it has been waiting, not how much there is.",
+    brief: "Write ONE SQL SELECT over requests that are still queued, returning: requested_by, the number queued, and the average days since they were requested as at 30 June 2026, to one place. Longest waiting first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS queued, ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) AS avg_days_waiting FROM requests WHERE status = 'queued' GROUP BY requested_by ORDER BY avg_days_waiting DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ma-106': {
+    title: 'Reply to Vikram on day one',
+    hint: "Three questions, and you can already say which ones are answerable and what the third one needs.",
+    brief: "Write back before you build anything. Separate his three questions, say which you will answer and how, and flag the one that needs care. Under 170 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Analytics cost — three questions, not one', maxWords: 170,
+      prompt: 'The three questions separated, what you will produce, and the one you are going to handle differently.',
+      rubric: [
+        { key: 'three', label: 'That it is three questions', markers: ['three|separate|different|cost|productiv|headcount|establish|not one'], why: 'Answering a compound question as though it were one is how the wrong thing gets measured.' },
+        { key: 'individual', label: 'That individual productivity needs handling carefully', markers: ['individual|person|name|performance|careful|not|measure|per analyst|attribut'], why: 'Flag it on day one. Raising it after you have the numbers looks like you are protecting the team from a result.' },
+        { key: 'timesheet', label: 'That you will check what the timesheets actually cover first', markers: ['timesheet|logged|coverage|check|whether|hold up|self.report|record'], why: 'The load-bearing assumption in his request, and it is testable in a day.' },
+        { key: 'will', label: 'What you will produce and by when', markers: ['will|demand|capacity|backlog|by|friday|next week|produce|send'], why: 'Pushing back without a deliverable reads as avoidance.' },
+        { key: 'legit', label: 'That the underlying question is fair', markers: ['fair|reasonable|right to|entitled|good question|should|understand'], why: 'He is asking what a large cost line buys. That is his job, and the reply should not read as defensive.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ma-110': {
+    title: 'Hours per analyst',
+    hint: "Exclude the manager — she does not deliver requests and a zero would drag every average down.",
+    brief: "The obvious cut. Write ONE SQL SELECT over analysts below manager level, returning: name, level, total logged hours to one place, and the number of distinct requests they logged against. Most hours first.",
+    referenceSql: "SELECT a.name, a.level, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, COUNT(DISTINCT t.request_id) AS requests FROM analysts a LEFT JOIN time_logs t ON t.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ma-111': {
+    title: 'The table you should not send',
+    hint: "Ask what a person at the bottom of this list would have to do to move up it.",
+    brief: "You now have a ranked list of people by hours logged. Decide what it is measuring.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of this table.',
+      options: [
+        { key: 'logging', correct: true, label: 'A person can move up it by logging more diligently, without doing more work', why: 'That is the definition of a measure that cannot support a performance conversation. It rewards the behaviour it records rather than the behaviour it is meant to proxy.' },
+        { key: 'assignment', correct: true, label: 'It also reflects how much work each person was assigned', why: 'Which is a management decision, not an individual one. Two of the three things this table varies on are outside the person\'s control.' },
+        { key: 'presence', correct: true, label: 'Two people were not here for the whole year and appear near the bottom', why: 'A March joiner and a January leaver. Ranking them against a full year on absolute hours is arithmetic, not performance.' },
+        { key: 'named', correct: true, label: 'Sent as it stands, it would become a performance conversation about named people', why: 'Which is the reason to be certain before it leaves your desk. A wrong retail number costs money; a wrong version of this costs somebody their standing.' },
+        { key: 'useful', correct: false, label: 'It is a reasonable first approximation of individual output', why: 'It is an approximation of logging discipline, assignment volume and time present, in that order. Output is not in the top three.' },
+        { key: 'normalise', correct: false, label: 'Dividing by days present would make it a fair comparison', why: 'It would fix the presence problem and leave the other two untouched, which is worse — a normalised number looks careful.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-112': {
+    title: 'How many days anybody logs at all',
+    hint: "Count distinct days with any entry, against the working days that person was here.",
+    brief: "Test the assumption underneath everything. Write ONE SQL SELECT over analysts below manager level, returning: name, working days present in the window (calendar days times five sevenths, rounded), distinct days with any log, and days logged as a percentage of working days to one place. Best coverage first.",
+    referenceSql: "SELECT a.name, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) AS working_days, COUNT(DISTINCT t.logged_on) AS days_logged, ROUND(COUNT(DISTINCT t.logged_on) * 100.0 / (CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7), 1) AS pct FROM analysts a LEFT JOIN time_logs t ON t.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.95, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-113': {
+    title: 'Nobody logs more than half their days',
+    hint: "Look at the best coverage in the team, not the worst.",
+    brief: "Coverage runs from 19.2% to 49.1%. Work out what that does to every figure derived from the timesheets.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'best', correct: true, label: 'Even the most diligent person accounts for under half their working days', why: '49.1% is the ceiling. This is not a few people being lax — it is a system nobody uses fully, which is a different problem with a different fix.' },
+        { key: 'spread', correct: true, label: 'The spread between best and worst is about two and a half times', why: 'Which is larger than any plausible difference in actual output, so the variation in the hours table is mostly variation in admin.' },
+        { key: 'relative', correct: true, label: 'It invalidates comparisons between people more than it invalidates totals', why: 'A total that is uniformly short can be scaled. A comparison between a 49% logger and a 19% logger cannot be rescued at all.' },
+        { key: 'cost', correct: true, label: 'Any cost-per-hour or cost-per-request built on logged hours will be badly overstated', why: 'The denominator is missing most of the time that was actually spent, so every rupee of cost is divided across a fraction of the hours.' },
+        { key: 'lazy', correct: false, label: 'The people at the bottom should be asked to log more carefully', why: 'It is the first instinct and it treats a system problem as thirteen individual ones. Nobody is above half.' },
+        { key: 'useless', correct: false, label: 'The timesheets are useless and should be discarded', why: 'They are a reasonable sample of WHAT people work on even if they are a poor record of HOW MUCH. Proportions survive better than totals.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-114': {
+    title: 'Tell the team before you tell the exec',
+    hint: "Thirteen people are about to have their timesheets discussed in a budget round. They should hear it from you first.",
+    brief: "Write to the team. You are about to use their logged hours in an exec conversation and the coverage is 12.8%. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'Timesheets, and what I am and am not going to do with them', maxWords: 160,
+      prompt: 'What you found, what you will not use it for, and what you are asking of them.',
+      rubric: [
+        { key: 'finding', label: 'The coverage figure', markers: ['12|13|eighth|coverage|half|49|most|nobody'], why: 'State it plainly. They will assume it is worse than it is otherwise.' },
+        { key: 'notperf', label: 'That it will not be used to compare individuals', why: 'The single thing every one of them will be worried about, and it has to be the clearest sentence in the note.', markers: ['not|won.t|will not|individual|compare|performance|rank|between people|nobody'] },
+        { key: 'system', label: 'That this is a system problem, not thirteen personal ones', markers: ['system|nobody|everyone|all of us|not you|design|tool|process|my'], why: 'If the note reads as a telling-off, coverage goes up for a month and the data gets worse, not better.' },
+        { key: 'use', label: 'What you WILL use it for', markers: ['proportion|where|shape|mix|what we work on|demand|categor|relative'], why: 'Proportions survive poor coverage far better than totals. Saying so keeps the data worth collecting.' },
+        { key: 'ask', label: 'A specific and proportionate ask', markers: ['ask|please|would|two week|trial|for now|going forward|change'], why: '"Log everything from now on" is not proportionate and will not happen. Something small and time-boxed might.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-115': {
+    title: 'What survives poor coverage',
+    hint: "Sort these by whether they need the level of the hours or only their relative shape.",
+    brief: "Coverage is 12.8%. Decide which of the questions you were asked can still be answered.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick every question the timesheets can still support.',
+      options: [
+        { key: 'mix', correct: true, label: 'Roughly what proportion of effort goes to each requesting function', why: 'A proportion survives an incomplete sample far better than a total, provided the incompleteness is not correlated with the requester — which is worth stating as an assumption.' },
+        { key: 'shape', correct: true, label: 'Which categories of work are large and which are small', why: 'Same argument. The shape of the distribution is much more robust than its scale.' },
+        { key: 'cancelled', correct: true, label: 'That a material amount of effort goes on work that is later cancelled', why: 'A finding about the existence and rough size of something, which does not need the hours to be complete to be alarming.' },
+        { key: 'cost', correct: false, label: 'The cost of an average analysis', why: 'Needs the hours to be right in level, not just in shape. Computed naively it comes out around eight times too high.' },
+        { key: 'person', correct: false, label: 'Which analyst delivers most per day', why: 'The comparison the coverage differences destroy most completely.' },
+        { key: 'capacity', correct: false, label: 'How much spare capacity the team has', why: 'Spare capacity is total hours available minus hours used, and the timesheets cannot see most of the second term.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-120': {
+    title: 'The number the budget round wants',
+    hint: "Compute it the way it would be computed if nobody had checked the coverage.",
+    brief: "Produce the naive answer first, so you can show what it is. Write ONE SQL SELECT returning three rows, one per measure, with columns measure and value: total logged hours to one place, the team's annual cost from day rates and days present, and cost per logged hour rounded to the nearest rupee. Label the rows logged_hours, annual_cost and cost_per_logged_hour, in that order.",
+    referenceSql: "WITH cost AS (SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) AS annual_cost FROM analysts a), logged AS (SELECT SUM(hours) AS h FROM time_logs) SELECT 'logged_hours' AS measure, ROUND(h, 1) AS value FROM logged UNION ALL SELECT 'annual_cost', ROUND(annual_cost) FROM cost UNION ALL SELECT 'cost_per_logged_hour', ROUND(annual_cost / h) FROM cost, logged",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-121': {
+    title: 'Capacity in hours, properly',
+    hint: "Days present, not headcount. Working days, not calendar days. And the manager is not delivery capacity.",
+    brief: "Compute the denominator that should have been used. Write ONE SQL SELECT over analysts below manager level returning one row: total calendar days present in the window, those as working days rounded, capacity hours at eight a day rounded, logged hours to one place, and logged hours as a percentage of capacity to one place.",
+    referenceSql: "SELECT SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) AS calendar_days, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7) AS working_days, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7 * 8) AS capacity_hours, (SELECT ROUND(SUM(hours), 1) FROM time_logs) AS logged_hours, ROUND((SELECT SUM(hours) FROM time_logs) * 100.0 / (SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7 * 8), 1) AS coverage_pct FROM analysts a WHERE a.level <> 'manager'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-122': {
+    title: 'Eight times wrong',
+    hint: "Compare the cost per logged hour with the cost per capacity hour. The ratio is the finding.",
+    brief: "The naive figure is ₹9,664 an hour. Against capacity hours it is about ₹1,241. Say what that means for the budget conversation.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'ratio', correct: true, label: 'The naive rate is roughly eight times the rate against capacity, because the denominator is 12.8% complete', why: 'The two numbers are the same cost divided by two very different hour counts. Neither is wrong arithmetically and only one describes anything real.' },
+        { key: 'neither', correct: true, label: 'Neither figure is a defensible cost per hour of useful work', why: 'The naive one divides by a fraction of the time; the capacity one assumes every paid hour is chargeable, which no team achieves. The truth is between them and this data cannot locate it.' },
+        { key: 'danger', correct: true, label: 'The naive figure is the more dangerous of the two because it flatters nobody', why: '₹9,664 an hour sounds like a rate that needs explaining, and the explanation would be about the people rather than about the timesheet.' },
+        { key: 'range', correct: true, label: 'The honest output is a range with the assumption named, not a point', why: 'Bounded above by the naive figure and below by the capacity figure, with a sentence saying why the truth is inside it.' },
+        { key: 'scale', correct: false, label: 'Scale the logged hours up by the coverage rate to get the true figure', why: 'That assumes unlogged time is spent in the same proportions as logged time, which is exactly the thing you have no evidence for.' },
+        { key: 'capacity', correct: false, label: 'Use the capacity figure — it is the conservative one', why: 'It is the flattering one, and it assumes a hundred percent utilisation. Conservative would be the other end.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-123': {
+    title: 'Where the effort goes, in proportions',
+    hint: "Proportions survive an incomplete sample. Use them rather than the hours themselves.",
+    brief: "Salvage what the timesheets can carry. Write ONE SQL SELECT returning, per work category: logged hours to one place and that as a percentage of all logged hours to one place. Biggest share first.",
+    referenceSql: "SELECT r.category, ROUND(SUM(t.hours), 1) AS hours, ROUND(SUM(t.hours) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_effort FROM time_logs t JOIN requests r ON r.id = t.request_id GROUP BY r.category ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'ma-124': {
+    title: 'Effort against outcome',
+    hint: "One pass over the logs, grouped by what happened to the request they belong to.",
+    brief: "Find out how much of the year went on work that produced nothing. In the notebook, compute for each request status: the number of requests, total logged hours, and hours as a percentage of all logged hours. Round hours to one decimal place and percentages to one. Assign a list of dicts with keys status, requests, hours and pct_of_hours, sorted by hours descending, to `result`.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    estHours: 0.9, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const byRequest = new Map();
+      for (const t of tables.time_logs) byRequest.set(t.request_id, (byRequest.get(t.request_id) || 0) + t.hours);
+      const acc = new Map();
+      for (const r of tables.requests) {
+        if (!acc.has(r.status)) acc.set(r.status, { status: r.status, requests: 0, hours: 0 });
+        const row = acc.get(r.status);
+        row.requests += 1;
+        row.hours += byRequest.get(r.id) || 0;
+      }
+      const total = [...acc.values()].reduce((s, r) => s + r.hours, 0);
+      const r1 = (n) => Math.round(n * 10) / 10;
+      return [...acc.values()]
+        .map((r) => ({ status: r.status, requests: r.requests, hours: r1(r.hours), pct_of_hours: r1((r.hours / total) * 100) }))
+        .sort((a, b) => b.hours - a.hours);
+    },
+  },
+
+  'ma-125': {
+    title: 'Four hundred and eighty-five hours on cancelled work',
+    hint: "Work out what that is as a share of effort, and what it would be worth fixing.",
+    brief: "Forty-six requests were cancelled after work had started on them. Decide what that is.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'share', correct: true, label: 'It is about 15% of all logged effort, and that is a floor rather than an estimate', why: 'Logged hours are 12.8% of time, so the true hours on cancelled work are larger. The proportion is the reliable part, the level is not.' },
+        { key: 'intake', correct: true, label: 'It points at the intake process rather than at the analysts', why: 'Work that gets started and then withdrawn was accepted before it was needed. That is a decision made before any analysis began.' },
+        { key: 'actionable', correct: true, label: 'Unlike most of this week, it is directly actionable', why: 'A clarifying question at intake costs minutes. Nothing else you have found this week has that ratio.' },
+        { key: 'notwaste', correct: true, label: 'Not all of it is waste — some cancellations are the right outcome', why: 'A request cancelled because the analysis showed it was the wrong question is a success. The data cannot tell those apart, and saying so keeps the finding honest.' },
+        { key: 'blame', correct: false, label: 'The functions that cancel most should be charged for it', why: 'Cross-charging inside a company converts a process problem into an argument, and it would discourage exactly the early cancellations that are healthy.' },
+        { key: 'refuse', correct: false, label: 'Requests should not be started until they are confirmed twice', why: 'A process that slows everything to reduce a 15% loss. The fix should be proportionate to the problem.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-130': {
+    title: 'Capacity by level',
+    hint: "Days present by level, so the shape of the team is visible rather than just its size.",
+    brief: "Write ONE SQL SELECT over analysts below manager level returning, per level: headcount, total calendar days present in the window, that as person-years to two places, and annual cost from day rates. Most costly level first.",
+    referenceSql: "SELECT a.level, COUNT(*) AS headcount, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) AS days_present, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0, 2) AS person_years, ROUND(SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7)) AS annual_cost FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level ORDER BY annual_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-131': {
+    title: 'Headcount is not capacity',
+    hint: "One person left in January and one joined in March. Everybody else reads 100%, and that is what makes the two that do not worth seeing.",
+    brief: "Vikram asked whether we need all fourteen people. Establish what the thirteen below manager level actually bought. Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, calendar days present inside the window, that as person-years to two places, and days present as a percentage of the full year to one place. Shortest first, then by name.",
+    referenceSql: "SELECT a.name, a.level, CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) AS days_present, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) / 365.0, 2) AS person_years, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 100.0 / 365.0, 1) AS pct_of_year FROM analysts a WHERE a.level <> 'manager' ORDER BY pct_of_year ASC, a.name",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-132': {
+    title: 'The demand chart',
+    hint: "Named categories, one measure, sorted. The same chart you would draw for any contribution question.",
+    brief: "Build the visual for the budget conversation: share of logged effort by requesting function, so the exec sees where the team's time goes. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT r.requested_by AS requester, SUM(t.hours) * 100.0 / (SELECT SUM(hours) FROM time_logs) AS pct_of_effort FROM time_logs t JOIN requests r ON r.id = t.request_id GROUP BY r.requested_by ORDER BY pct_of_effort DESC",
+      prompt: 'Share of logged effort by requesting function.',
+      answer: { type: 'bar', x: 'requester', y: 'pct_of_effort', sort: 'desc', baselineZero: true },
+      why: 'Six named functions compared on one measure is a bar chart, sorted so the order of demand is what the reader takes away. A share rather than raw hours, because the hours are 12.8% complete and the proportion is the part that survives — and a zero baseline, because the smallest requester would otherwise appear to consume nothing.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ma-133': {
+    title: 'Answering "do we need fourteen"',
+    hint: "Utilisation cannot answer it. Work out what can.",
+    brief: "Decide how to answer the establishment question honestly.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the answer.',
+      options: [
+        { key: 'notutil', correct: true, label: 'That utilisation cannot answer it, because the timesheets cover an eighth of the time', why: 'The most important sentence, and it has to come before any number or the number will be used instead.' },
+        { key: 'backlog', correct: true, label: 'The queued backlog and how long it has been waiting', why: 'Work nobody has picked up is the closest thing in this data to evidence about whether there are enough people.' },
+        { key: 'cancelled', correct: true, label: 'That 15% of effort goes on work later cancelled, which is capacity available without hiring', why: 'It reframes the question from "more people" to "less waste", which is the answer an exec in a budget round can actually use.' },
+        { key: 'demand', correct: true, label: 'The shape of demand — who asks, in what volume, at what size', why: 'Establishment questions are really questions about what the team is for, and the demand mix is the best available evidence on that.' },
+        { key: 'number', correct: false, label: 'A recommended headcount number', why: 'You have no basis for one. Producing it because the question was asked in that shape is how an unevidenced figure gets into a budget.' },
+        { key: 'busy', correct: false, label: 'That the team is busy, evidenced by hours logged', why: 'The one claim this data most clearly cannot support, and the one most tempting to make.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-134': {
+    title: 'Delivered work per person-year',
+    hint: "Delivered requests over person-years present, by level. Not a productivity measure, and worth computing anyway — it is the coarsest thing here that the coverage problem cannot break.",
+    brief: "Write ONE SQL SELECT returning, per level below manager: delivered requests owned by analysts at that level, person-years present at that level to two places, and delivered requests per person-year to one place. Highest rate first. Label them level, delivered, person_years and per_person_year.",
+    referenceSql: "WITH present AS (SELECT a.level, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 AS person_years FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level), done AS (SELECT a.level, COUNT(*) AS delivered FROM requests r JOIN analysts a ON a.id = r.analyst_id WHERE r.status = 'delivered' AND a.level <> 'manager' GROUP BY a.level) SELECT p.level, COALESCE(d.delivered, 0) AS delivered, ROUND(p.person_years, 2) AS person_years, ROUND(COALESCE(d.delivered, 0) / p.person_years, 1) AS per_person_year FROM present p LEFT JOIN done d ON d.level = p.level ORDER BY per_person_year DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the split by level is accepted and then comes back
+    // asked for per person, which is the one cut this whole day exists to refuse.
+    rework: true,
+  },
+
+  'ma-135': {
+    title: 'Vikram wants the per-person table anyway',
+    hint: "He is not asking for something unreasonable. Work out what you can give him that is not the thing he asked for.",
+    brief: "Answer him.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: 'Direct message',
+        body: "I understand the coverage problem. But I still need to know whether everyone in that team is pulling their weight, and you are the only person who can tell me.\n\nGive me the per-person hours with a health warning on it. I will read it sensibly.",
+      },
+      prompt: 'Tick everything that belongs in your response.',
+      options: [
+        { key: 'no', correct: true, label: 'Decline the per-person hours table specifically', why: 'A health warning does not travel with a table into a budget conversation, and the table ranks admin discipline.' },
+        { key: 'own', correct: true, label: 'Say that judging the team is your job and you are accountable for it', why: 'He is asking because he has no other route. Offering your own assessment is a better answer than a number, and it is the one a manager is actually for.' },
+        { key: 'offer', correct: true, label: 'Offer something you can defend — delivered work per person-year, by level', why: 'You already have it from this morning. Coarser, robust to the coverage problem, and it answers the shape of his question without ranking individuals on a broken measure.' },
+        { key: 'why', correct: true, label: 'Explain that it would rank the two best administrators at the top', why: 'One concrete sentence beats any amount of methodological caution. It is checkable and it ends the argument.' },
+        { key: 'give', correct: false, label: 'Give it to him with the warning, since he has asked twice and will read it sensibly', why: 'He may well read it sensibly. The document outlives the conversation and the next reader will not have been in it.' },
+        { key: 'escalate', correct: false, label: 'Escalate to his manager rather than refuse directly', why: 'It is a disagreement you can have with him, and going around him over it would cost more than the table ever could.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-140': {
+    title: 'The demand picture, in one table',
+    hint: "Everything the budget conversation needs about demand, from one query, so no two figures can drift.",
+    brief: "Assemble it. Write ONE SQL SELECT returning, per requesting function: requests, delivered, cancelled, still queued, logged hours to one place, and share of logged effort to one place. Biggest share of effort first.",
+    referenceSql: "SELECT r.requested_by, COUNT(DISTINCT r.id) AS requests, COUNT(DISTINCT CASE WHEN r.status = 'delivered' THEN r.id END) AS delivered, COUNT(DISTINCT CASE WHEN r.status = 'cancelled' THEN r.id END) AS cancelled, COUNT(DISTINCT CASE WHEN r.status = 'queued' THEN r.id END) AS queued, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_effort FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.requested_by ORDER BY pct_of_effort DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-141': {
+    title: 'What goes to the budget round',
+    hint: "Two things you established, two you refused, and one thing that is genuinely actionable.",
+    brief: "Decide what the exec hears.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'coverage', correct: true, label: 'That timesheets cover 12.8% of paid time, so no rate can be built on them', why: 'It has to be first. Every number he was expecting depends on it, and hearing it later sounds like an excuse for the numbers.' },
+        { key: 'demand', correct: true, label: 'The demand shape — who asks, how often, and how large', why: 'Robust to the coverage problem and directly relevant to what the team is for.' },
+        { key: 'cancelled', correct: true, label: 'That about 15% of effort goes on work later cancelled, with a proposed fix at intake', why: 'The only genuinely actionable finding of the week, and it answers the capacity question without hiring anybody.' },
+        { key: 'backlog', correct: true, label: 'The queued backlog, as the available evidence on whether the team is large enough', why: 'Not proof, and the closest thing to it that exists. Presenting it as evidence rather than as an answer is the honest framing.' },
+        { key: 'rate', correct: false, label: 'A cost per analysis, with a caveat about the coverage', why: 'The caveat does not travel. It will be quoted as ₹9,664 an hour in a room you are not in.' },
+        { key: 'people', correct: false, label: 'A per-person productivity ranking, for his eyes only', why: '"For his eyes only" is not a property a table has once it is in an email.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-142': {
+    title: 'The budget note',
+    hint: "He asked three questions. Answer all three, including the one where the answer is no.",
+    brief: "Write the note that goes into the budget round. It will be read by people who were not in any of this week's conversations. Under 230 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Analytics — demand, capacity and what the timesheets can carry', maxWords: 230,
+      prompt: 'What the timesheets can and cannot support, the demand picture, the cancelled-work finding, and an honest answer on establishment.',
+      rubric: [
+        { key: 'coverage', label: 'The coverage finding, up front', markers: ['12|13|eighth|coverage|logged|cannot|rate|8 times|eight times'], why: 'Everything else in the note depends on it, so it cannot be a caveat at the end.' },
+        { key: 'demand', label: 'The demand shape, with the two extremes named', markers: ['finance|product|136|34|4\\.2|27\\.8|small|large|shape'], why: 'One function asks constantly in small pieces and another rarely in large ones. That is the useful sentence about what the team does.' },
+        { key: 'cancelled', label: 'The cancelled-effort finding and what to do about it', markers: ['cancel|15|485|46|intake|confirm|withdraw|before'], why: 'The one place this week where a small process change recovers real capacity.' },
+        { key: 'establishment', label: 'An honest answer on whether fourteen is right', markers: ['cannot|backlog|queue|evidence|not able|would need|utilisation|capacity'], why: 'Say what the data can and cannot establish, and give him the backlog as the best available evidence.' },
+        { key: 'norate', label: 'That you are not supplying a cost per analysis, and why', markers: ['not|won.t|will not|no rate|cost per|9,?664|misleading|decline'], why: 'He asked for it directly. Leaving it out without saying so reads as an oversight and he will ask again.' },
+        { key: 'fix', label: 'What you are changing so next year is answerable', markers: ['next|change|instrument|going forward|will|improve|record|fix'], why: 'A manager reporting a measurement failure without owning the fix has described their own gap.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-143': {
+    title: 'Sign off the budget slide',
+    hint: "Four sentences, and three of them claim something the week established was unavailable.",
+    brief: "Finance have drafted the analytics slide for the budget pack. Tick every problem.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Analytics slide for the budget pack',
+        body: "\"Analytics delivered 263 pieces of work at an average cost of ₹9,664 per hour. Utilisation across the team is low at 13%, suggesting spare capacity. Headcount of 14 is above requirement. Recommend holding establishment flat and reviewing individual performance.\"",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'rate', correct: true, label: 'The ₹9,664 rate is the naive figure and will be read as a real cost', why: 'It divides the full cost by an eighth of the hours. Quoted in a budget pack it makes the team look eight times more expensive than it is.' },
+        { key: 'util', correct: true, label: '"Utilisation is low at 13%" restates a measurement failure as a finding about the team', why: 'The single most damaging sentence available. 13% is what the timesheet records, not what people did, and it is about to become evidence of idleness.' },
+        { key: 'spare', correct: true, label: '"Suggesting spare capacity" and "headcount above requirement" follow from that error', why: 'Two conclusions stacked on a number that measures admin. They would survive into a headcount decision long after anybody remembered where they came from.' },
+        { key: 'perf', correct: true, label: '"Reviewing individual performance" is the one recommendation you explicitly refused to support', why: 'It has arrived in the pack anyway, which is exactly what happened to the stock-cover claim in the range review. Refusals have to be written into the document.' },
+        { key: 'count', correct: false, label: 'The 263 delivered figure is wrong', why: 'It is right. As in every pack this year, the arithmetic survives and the sentences do not.' },
+        { key: 'flat', correct: false, label: 'Holding establishment flat is the wrong recommendation', why: 'It may well be the right call. The problem is the reasoning underneath it, not the conclusion.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-144': {
+    title: 'Rewrite the slide',
+    hint: "Same numbers where they are sound, none of the four claims, and the cancelled-work finding in place of the utilisation one.",
+    brief: "Send Diya replacement wording. It has to survive a budget round with you not in the room. Under 130 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Analytics slide — suggested wording', maxWords: 130,
+      prompt: 'Delivered work, the demand shape, the cancelled-effort finding, and a plain statement that no cost rate is available.',
+      rubric: [
+        { key: 'norate', label: 'That no defensible cost per hour exists', markers: ['no|not|cannot|unavailable|rate|cost per|timesheet|coverage'], why: 'Say it as a fact about the instrumentation, not as a hedge about the number.' },
+        { key: 'notutil', label: 'No utilisation claim', markers: ['13|utilis|not a measure|coverage|record|logged|admin|spare'], why: 'Either remove it or state what 13% actually measures. Leaving it uncorrected is how it becomes evidence.' },
+        { key: 'delivered', label: 'What was delivered, and to whom', markers: ['263|deliver|finance|product|request|function'], why: 'The solid ground: counts of work and who asked for it survive the coverage problem entirely.' },
+        { key: 'cancelled', label: 'The cancelled-effort finding as the capacity story', markers: ['cancel|15|485|intake|withdraw|recover|without hiring'], why: 'It replaces a false capacity claim with a true one, which is why the slide does not end up shorter.' },
+        { key: 'noperf', label: 'No individual performance recommendation', markers: ['individual|performance|remove|not|my|manager|accountab'], why: 'Refused twice this week and still in the draft. It has to come out in writing.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-145': {
+    title: 'What you would instrument',
+    hint: "Every question you could not answer this week was a measurement that does not exist. Pick the ones worth building.",
+    brief: "You are the manager and the measurement gap is yours. Say what changes before the next budget round, and what each thing would let you answer. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'What I am changing about how we measure ourselves', maxWords: 220,
+      prompt: 'The instrumentation changes, each tied to a question you could not answer this week.',
+      rubric: [
+        { key: 'time', label: 'Something about time recording that is proportionate', markers: ['time|log|record|day|week|allocat|sample|simpler|percentage|rather than'], why: 'Demanding complete timesheets will not work — nobody exceeds half today. A coarser instrument that people actually use beats a precise one they do not.' },
+        { key: 'intake', label: 'A change at intake, to catch work that would be cancelled', markers: ['intake|confirm|clarify|before|accept|triage|question|sponsor'], why: 'The one finding with a fix cheaper than the problem.' },
+        { key: 'outcome', label: 'Something about whether delivered work was used', markers: ['used|outcome|value|follow.?up|after|impact|decision|was it'], why: 'The question nobody in the company can currently answer, and the one that would change what the team prioritises.' },
+        { key: 'capacity', label: 'Capacity measured from presence, as a standing figure', markers: ['presence|days|person.year|capacity|not headcount|joiner|leaver'], why: 'Headcount overstated capacity by about a person-year this year and will again.' },
+        { key: 'own', label: 'Written as decisions, not proposals', markers: ['I will|I am|we will|from|changing|introduce|put in place|next'], why: 'A manager describing a measurement gap without owning the fix has described their own failure twice.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
 };
