@@ -263,20 +263,32 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
             because "you were not promoted" is a sentence that has to come with the
             arithmetic behind it — a single bar would hide which half is short. */}
         {promotion && (
-          <BentoCard index={5} className={promotion.awarded ? 'border-emerald-200 bg-emerald-50/40' : ''}>
+          <BentoCard index={5} className={promotion.atTheTop ? 'border-emerald-200 bg-emerald-50/40' : ''}>
             <div className="flex items-center gap-2.5 mb-1.5">
-              <TrendingUp size={22} className={promotion.awarded ? 'text-emerald-600' : 'text-indigo-500'} />
+              <TrendingUp size={22} className={promotion.atTheTop ? 'text-emerald-600' : 'text-indigo-500'} />
               <h3 className="text-base font-bold">
-                {promotion.awarded ? 'Promoted' : 'Promotion track'}
+                {promotion.atTheTop ? 'Top of the ladder'
+                  : promotion.negotiation?.open ? 'Promotion conversation open'
+                  : 'Promotion track'}
               </h3>
             </div>
             <p className="text-sm text-gray-500 mb-3.5">
-              {promotion.awarded ? (
-                <>You are now <span className="font-semibold text-gray-800">{promotion.toTitle}</span></>
+              {promotion.atTheTop ? (
+                <>You are <span className="font-semibold text-gray-800">{promotion.toTitle}</span> — there is no rung above this one.</>
               ) : (
                 <>Next level: <span className="font-semibold text-gray-700">{promotion.toTitle}</span></>
               )}
             </p>
+            {/* Once the conversation is open the learner knows the number and which
+                project decides it, so the card says both. Before that it is deliberately
+                quiet — a target you cannot yet act on is pressure, not information. */}
+            {promotion.negotiation?.open && !promotion.atTheTop && (
+              <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-2 mb-3.5 leading-relaxed">
+                {promotion.negotiation.projectsLeft > 0
+                  ? `Asha has opened your review. It is decided when project ${promotion.negotiation.decidesAfter} is signed off — ${promotion.negotiation.projectsLeft} to go.`
+                  : 'Asha has opened your review. Every task from here counts toward the decision.'}
+              </p>
+            )}
             <div className="space-y-3">
               {promotion.criteria.map((c) => (
                 <div key={c.key} className="flex items-start gap-2.5">
@@ -292,7 +304,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                 </div>
               ))}
             </div>
-            {!promotion.awarded && promotion.shortfall !== null && (
+            {!promotion.atTheTop && promotion.shortfall !== null && (
               <p className="text-xs text-gray-500 mt-3.5 leading-relaxed">
                 {promotion.shortfall} points short on average score. Every task you deliver moves it.
               </p>

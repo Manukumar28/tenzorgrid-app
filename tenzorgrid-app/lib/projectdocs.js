@@ -295,6 +295,76 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat', 'crm'],
     datasetKey: 'saas_ops',
   },
+
+  'activation-review': {
+    projectTitle: 'Activation & Onboarding Review',
+    companyName: 'Meridian Systems',
+    companyBlurb: 'Your own employer. This week the product under analysis is the one Meridian sells.',
+    yourRole: 'Senior Data Analyst, embedded with Product',
+    roleResponsibilities: [
+      'Establish what the data covers before you compute anything from it.',
+      'Define the population deliberately. Who is in the table is a decision, not a given.',
+      'Report the thing that is true, including when it is the opposite of what you were asked to confirm.',
+    ],
+    scenario:
+      'Product has two questions and one of them is wrong. Maya believes June signups collapsed. Priya wants to know why signups are not becoming users, and has next quarter of engineering time riding on the answer. Somewhere in between, the numbers on the dashboard everyone already trusts turn out to have been inflated for five weeks.',
+    estimatedMinutes: 100,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible activation picture — correct population, correct funnel shape, correct observation window — and one recommendation Priya can act on.',
+    constraints: [
+      { label: 'Data scope', value: 'The export ends on 12 June 2026. Nothing after that exists, and the last cohorts are incomplete rather than bad.' },
+      { label: 'Population', value: 'Meridian staff use the product too. Decide whether they belong in a customer metric, and say so either way.' },
+      { label: 'Counting rule', value: 'Count users, not rows. There is a reason, and you will find it on Wednesday.' },
+    ],
+    deliverables: [
+      { text: 'A funnel that is monotonic, over a population that makes sense.', via: 'sql-terminal' },
+      { text: 'A scoped bug report for the mobile team.', via: 'email-client' },
+      { text: 'One recommendation to the Head of Product, with its limits stated.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'A third of users were invited into a workspace that already existed. They never create one, which is why a naive funnel step converts above 100%.',
+      'Every funnel event is duplicated in one mobile build. COUNT(*) and COUNT(DISTINCT user_id) disagree, and only one of them is right.',
+      'The newest cohorts have not been observed long enough to have a week-four retention figure. An empty cell is not a zero.',
+      'Zero-duration sessions are twice as common on mobile. Leave them in and mobile looks less engaging; take them out and the finding reverses.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'email-client', 'team-chat'],
+    datasetKey: 'product_events',
+  },
+
+  'experiment-readout': {
+    projectTitle: 'Onboarding Experiment Readout',
+    companyName: 'Meridian Systems',
+    companyBlurb: 'Your own employer. The experiment under review is one the product team ran on Meridian customers.',
+    yourRole: 'Senior Data Analyst, embedded with Product',
+    roleResponsibilities: [
+      'Check whether a comparison is valid before reporting what it says.',
+      'Correct a number the business has already been told, without making the person who told them look careless.',
+      'Report the effect you can defend, at the precision you can defend it to.',
+    ],
+    scenario:
+      'onboarding_v2 ran for ten weeks and the headline says it lost: 36% activation against control\'s 45%. Priya wants a rollback note by Wednesday and the growth channel is about to post the result. The assignment, it turns out, was bucketed on device — so the treatment arm is three-quarters mobile and the control arm is three-quarters web, on a product where mobile activates at a third of web\'s rate.',
+    estimatedMinutes: 110,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible readout of what onboarding_v2 actually did, and a decision Priya can act on.',
+    constraints: [
+      { label: 'Data scope', value: 'Customers only. Eight Meridian staff sit in each arm.' },
+      { label: 'Comparison rule', value: 'Two arms can only be compared on the thing being tested if they match on everything else. Establish that before reading any result.' },
+      { label: 'Reporting rule', value: 'A subgroup result you went looking for after seeing the answer is a hypothesis, not a finding.' },
+    ],
+    deliverables: [
+      { text: 'A balance check on the two arms, before any outcome is computed.', via: 'sql-terminal' },
+      { text: 'A standardised comparison that holds the platform mix constant.', via: 'python-notebook' },
+      { text: 'A readout that replaces the circulated figure and ends in a decision.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The arms are 169 and 122 — but the unequal SIZE costs precision, while the unequal COMPOSITION is what biases the result. They are different problems.',
+      'Treatment wins on web and wins on mobile, and loses overall. Both calculations are correct.',
+      'Sixteen subgroup splits will always produce two or three extremes. Two of them here point the opposite way to the result, on cells of fifteen users.',
+      'A larger sample would have reproduced this skew more precisely, not fixed it. Sample size does not cure biased assignment.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'product_events',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

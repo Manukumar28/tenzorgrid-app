@@ -31,7 +31,15 @@ const PEOPLE_PARTNER_NAME = 'Neha Kulkarni';
 const LEVELS = [
   { key: 'junior', label: 'Junior Data Analyst' },
   { key: 'senior', label: 'Senior Data Analyst' },
+  { key: 'lead', label: 'Data Analytics Team Lead' },
+  { key: 'manager', label: 'Data Analytics Manager' },
 ];
+
+const LEVEL_ORDER = LEVELS.map((l) => l.key);
+function levelLabel(key) {
+  const found = LEVELS.find((l) => l.key === (key || 'junior'));
+  return found ? found.label : 'Data Analyst';
+}
 
 const ROLE_CATALOG = {
   data_analyst: { label: 'Data Analyst', skin: 'Data & Analytics' },
@@ -195,7 +203,21 @@ const PROJECT_CATALOG = {
       kind: 'analysis',
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
-      taskKeys: ['da-004'],
+      taskKeys: [
+        // Day 1 — what "affected" means. Billing-sync hit two clients; the quarter hit
+        // fourteen. The brief says one and the meeting means the other.
+        'ph-101', 'ph-102', 'ph-103', 'ph-104', 'da-004', 'ph-105',
+        // Day 2 — quantify it. Harborview took 492k rows; Dunmore, the biggest account in
+        // the book, lost seven thousand.
+        'ph-110', 'ph-111', 'ph-112', 'ph-115', 'ph-113', 'ph-114',
+        // Day 3 — the wobble. Lattice has already churned, and severity turns out not to
+        // track damage at all.
+        'ph-120', 'ph-121', 'ph-122', 'ph-123', 'ph-124', 'ph-125',
+        // Day 4 — a second signal. The loudest client is the smallest one.
+        'ph-130', 'ph-131', 'ph-132', 'ph-133', 'ph-134', 'ph-135',
+        // Day 5 — the recommendation, against a budget that covers four accounts.
+        'ph-140', 'ph-141', 'ph-142', 'ph-143', 'ph-144', 'ph-145',
+      ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 21000,
       contributors: [
@@ -204,7 +226,7 @@ const PROJECT_CATALOG = {
         { name: null, role: 'Data Analyst', does: 'The impact and revenue-at-risk analysis', day: 1, throughDay: 5 },
         { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes compensation offers to the clients', day: 5, needsYou: true },
       ],
-      unlockAfter: 3,
+      unlockAfter: 2,
     },
     {
       key: 'pay-equity-audit',
@@ -213,7 +235,19 @@ const PROJECT_CATALOG = {
       kind: 'audit',
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
-      taskKeys: ['da-003', 'da-005'],
+      taskKeys: [
+        // Day 1 — what equity means here, and how small our role populations are.
+        'pe-101', 'pe-102', 'pe-103', 'pe-104', 'pe-105', 'pe-106',
+        // Day 2 — spread within role, and whether tenure explains it.
+        'pe-110', 'pe-111', 'pe-112', 'pe-113', 'pe-114', 'pe-115',
+        // Day 3 — the wobble: nobody is outside their band, so the headline deliverable
+        // comes back empty and has to be reported as the assurance it is.
+        'pe-120', 'pe-121', 'pe-122', 'pe-123', 'pe-124', 'pe-125',
+        // Day 4 — compression. Every Staff Engineer out-earns every Engineering Manager.
+        'pe-130', 'pe-131', 'pe-132', 'pe-133', 'pe-134', 'pe-135',
+        // Day 5 — the report, under pressure to have found something.
+        'pe-140', 'pe-141', 'pe-142', 'pe-143', 'pe-144', 'pe-145',
+      ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 15000,
       contributors: [
@@ -221,7 +255,7 @@ const PROJECT_CATALOG = {
         { name: null, role: 'Data Analyst', does: 'The role-by-role pay analysis', day: 1, throughDay: 5 },
         { name: 'Aarav Bose', role: 'Finance Manager', does: 'Costs the remediation from your findings', day: 5, needsYou: true },
       ],
-      unlockAfter: 2,
+      unlockAfter: 3,
     },
 
     // ---- Senior track -------------------------------------------------------------
@@ -240,7 +274,16 @@ const PROJECT_CATALOG = {
       taskKeys: [
         // Day 1 — same six-slot shape as the junior week, senior questions.
         'sa-010', 'sa-011', 'sa-001', 'sa-012', 'sa-013', 'sa-014',
-        'sa-003',
+        // Day 2 — three measures of "worst service" that name three different services.
+        'sa-020', 'sa-021', 'sa-022', 'sa-023', 'sa-024', 'sa-025',
+        // Day 3 — the wobble. The fastest-looking service is fastest because its hard
+        // incidents never closed, and MTTR is biased the same way everywhere.
+        'sa-030', 'sa-031', 'sa-032', 'sa-033', 'sa-034', 'sa-003',
+        // Day 4 — blast radius and backlog. The biggest backlog belongs to a client with
+        // no incidents at all.
+        'sa-040', 'sa-041', 'sa-042', 'sa-043', 'sa-044', 'sa-045',
+        // Day 5 — where a quarter of engineering effort goes, which the data will not say.
+        'sa-050', 'sa-051', 'sa-052', 'sa-053', 'sa-054', 'sa-055',
       ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 28000,
@@ -259,7 +302,19 @@ const PROJECT_CATALOG = {
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
       level: 'senior',
-      taskKeys: ['sa-002', 'sa-004'],
+      taskKeys: [
+        // Day 1 — there is no cost column, so build a proxy and say it is one.
+        'sb-101', 'sb-102', 'sb-103', 'sa-002', 'sb-104', 'sb-105',
+        // Day 2 — flat support load against thirteenfold revenue variation.
+        'sb-110', 'sb-111', 'sb-112', 'sb-113', 'sb-114', 'sb-115',
+        // Day 3 — the wobble. SUM(DISTINCT mrr), the fix taught last week, silently loses
+        // a client because two Starter accounts bill the same amount.
+        'sb-120', 'sb-121', 'sb-122', 'sa-004', 'sb-123', 'sb-124',
+        // Day 4 — concentration, and a CSM analysis that turns out to be a non-finding.
+        'sb-130', 'sb-131', 'sb-132', 'sb-133', 'sb-134', 'sb-135',
+        // Day 5 — the Starter recommendation, under pressure to just kill the tier.
+        'sb-140', 'sb-141', 'sb-142', 'sb-143', 'sb-144', 'sb-145',
+      ],
       skillFocus: ['sql', 'python', 'businessLogic'],
       impactValue: 34000,
       contributors: [
@@ -268,6 +323,66 @@ const PROJECT_CATALOG = {
         { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes the pricing case to the board', day: 5, needsYou: true },
       ],
       unlockAfter: 1,
+    },
+    {
+      key: 'activation-review',
+      title: 'Activation & Onboarding Review',
+      description: 'Product wants to know why signups are not turning into users, and whether June really was as bad as it looks.',
+      kind: 'analysis',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      datasetKey: 'product_events',
+      taskKeys: [
+        // Day 1 — the window. June looks like a collapse and is twelve days of data.
+        'ac-101', 'ac-102', 'ac-103', 'ac-104', 'ac-105', 'ac-106',
+        // Day 2 — the funnel that is not a funnel: a step converts at 114%.
+        'ac-110', 'ac-111', 'ac-112', 'ac-113', 'ac-114', 'ac-115',
+        // Day 3 — the wobble. An event fires twice, and only on one mobile build.
+        'ac-120', 'ac-121', 'ac-122', 'ac-123', 'ac-124', 'ac-125',
+        // Day 4 — who is in the table, and what a session with no duration means.
+        'ac-130', 'ac-131', 'ac-132', 'ac-133', 'ac-134', 'ac-135',
+        // Day 5 — activation and retention rank the channels differently. Pick one.
+        'ac-140', 'ac-141', 'ac-142', 'ac-143', 'ac-144', 'ac-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'statistics'],
+      impactValue: 31000,
+      contributors: [
+        { name: 'Rohan Desai', role: 'Mobile Engineer', does: 'Owns the client that fires the events', day: 3 },
+        { name: null, role: 'Senior Data Analyst', does: 'The activation and retention analysis', day: 1, throughDay: 5 },
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Sets next quarter from your recommendation', day: 5, needsYou: true },
+      ],
+      unlockAfter: 2,
+    },
+    {
+      key: 'experiment-readout',
+      title: 'Onboarding Experiment Readout',
+      description: 'The new onboarding appears to have lost. Product wants a rollback note; the assignment was not random.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'senior',
+      datasetKey: 'product_events',
+      taskKeys: [
+        // Day 1 — check the randomisation before reading the result. It is broken.
+        'ex-101', 'ex-102', 'ex-103', 'ex-104', 'ex-105', 'ex-106',
+        // Day 2 — reproduce the headline, then rule out the boring explanations.
+        'ex-110', 'ex-112', 'ex-113', 'ex-111', 'ex-114', 'ex-115',
+        // Day 3 — the wobble, and the whole point: it wins in both segments.
+        'ex-120', 'ex-121', 'ex-122', 'ex-123', 'ex-124', 'ex-125',
+        // Day 4 — handed the means to manufacture any finding, and having to not.
+        'ex-130', 'ex-131', 'ex-132', 'ex-133', 'ex-134', 'ex-135',
+        // Day 5 — the readout that reverses what the business was told on Monday.
+        'ex-140', 'ex-141', 'ex-142', 'ex-143', 'ex-144', 'ex-145',
+      ],
+      skillFocus: ['sql', 'python', 'statistics', 'communication'],
+      impactValue: 38000,
+      contributors: [
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Owns the rollout decision', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Senior Data Analyst', does: 'The experiment readout', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Carries the result to the business', day: 5 },
+      ],
+      unlockAfter: 3,
     },
   ],
 };
@@ -280,7 +395,7 @@ const PROJECT_CATALOG = {
 // which is the whole thing they are meant to walk into an interview with.
 function catalogFor(role, level, touchedKeys) {
   const all = PROJECT_CATALOG[role] || [];
-  const want = level === 'senior' ? 'senior' : 'junior';
+  const want = LEVEL_ORDER.includes(level) ? level : 'junior';
   const touched = touchedKeys instanceof Set ? touchedKeys : new Set(touchedKeys || []);
   return all.filter((p) => (p.level || 'junior') === want || touched.has(p.key));
 }
@@ -303,113 +418,196 @@ function touchedProjectKeys(role, tasks) {
 // out of four is not a body of work. The two criteria are reported separately with real
 // numbers, because "you were not promoted" is a sentence that has to come with the
 // arithmetic behind it.
-const PROMOTION = {
-  from: 'junior',
-  to: 'senior',
-  // One month of the programme: four projects at five working days each.
-  projectsRequired: 4,
-  // A grade average, not a productivity blend. Timeliness and check-in consistency are
-  // real signals but they are not competence, and a promotion is about competence.
-  minAverage: 70,
-  title: 'Senior Data Analyst',
-};
+// Three rungs, because there are four levels. Each names the average a learner has to be
+// carrying to climb it. The bar rises with the rung: the same score means something
+// different when the work is "answer this question" than when it is "decide what the
+// question should be and defend the answer to a board".
+const PROMOTION_LADDER = [
+  { from: 'junior', to: 'senior', title: 'Senior Data Analyst', minAverage: 75 },
+  { from: 'senior', to: 'lead', title: 'Data Analytics Team Lead', minAverage: 80 },
+  { from: 'lead', to: 'manager', title: 'Data Analytics Manager', minAverage: 85 },
+];
+
+// One month of the programme: four projects at five working days each.
+const PROMOTION_PROJECTS_REQUIRED = 4;
+
+// The conversation opens a project BEFORE the decision, which is the user's rule and is
+// also how it works in a real company: nobody finds out the bar existed on the day they
+// are measured against it. At the third project Asha opens the negotiation and names the
+// number; at the fourth she runs the review against it. That gap is one whole project of
+// knowing exactly what you are playing for — which is the only thing that makes the
+// target actionable rather than a verdict.
+const PROMOTION_OPENS_AFTER = 3;
+const PROMOTION_DECIDES_AFTER = 4;
+
+function promotionRung(level) {
+  return PROMOTION_LADDER.find((r) => r.from === (level || 'junior')) || null;
+}
 
 function getPromotion(enrollment, projects, gradedTasks, tasks) {
-  if ((enrollment.level || 'junior') !== PROMOTION.from && !enrollment.promoted_at) return null;
+  const level = enrollment.level || 'junior';
+  const rung = promotionRung(level);
 
-  const juniorKeys = new Set(
+  // Top of the ladder. There is nothing left to negotiate, and saying that plainly beats
+  // rendering an empty progress card that looks like a bug.
+  if (!rung) {
+    return {
+      awarded: true,
+      atTheTop: true,
+      atLevel: level,
+      toTitle: levelLabel(level),
+      criteria: [],
+      shortfall: null,
+      negotiation: null,
+      eligible: false,
+      atTheEnd: false,
+      parked: [],
+    };
+  }
+
+  const levelKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => (p.level || 'junior') === PROMOTION.from)
+      .filter((p) => (p.level || 'junior') === level)
       .map((p) => p.key),
   );
   // Only projects that are finished being WRITTEN can be finished by a learner, so the
   // bar is the number of them that exist. Without this, shipping the ladder before the
   // content makes promotion permanently unreachable — the learner clears everything in
   // front of them and is told they are two projects short of something that is not there.
-  const readyJuniorKeys = new Set(
+  const readyKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => juniorKeys.has(p.key) && projectReadiness(p).ready)
+      .filter((p) => levelKeys.has(p.key) && projectReadiness(p).ready)
       .map((p) => p.key),
   );
-  const required = Math.min(PROMOTION.projectsRequired, Math.max(1, readyJuniorKeys.size));
-  const completed = projects.filter((p) => juniorKeys.has(p.key) && p.status === 'completed').length;
+  const decideAfter = Math.min(PROMOTION_DECIDES_AFTER, Math.max(1, readyKeys.size));
+  // The conversation still has to come before the decision even on a short level, so it
+  // never lands after the thing it was meant to prepare the learner for.
+  const opensAfter = Math.max(1, Math.min(PROMOTION_OPENS_AFTER, decideAfter - 1));
+
+  const completed = projects.filter((p) => levelKeys.has(p.key) && p.status === 'completed').length;
   const average = gradedTasks.length
     ? Math.round(gradedTasks.reduce((s, t) => s + (t.score || 0), 0) / gradedTasks.length)
     : null;
 
-  const trainingDone = completed >= required;
-  const performanceMet = average !== null && average >= PROMOTION.minAverage;
+  const trainingDone = completed >= decideAfter;
+  const performanceMet = average !== null && average >= rung.minAverage;
 
   // A parked task keeps its project out of `completed`, so a learner who reached the end
   // of the track with parked work would sit in silence forever, never told why the
   // review never came. `atTheEnd` is what actually triggers the conversation: every
-  // junior project started, and every task in them resolved one way or the other.
-  const juniorTaskKeys = new Set(
+  // project at this level started, and every task in them resolved one way or the other.
+  const levelTaskKeys = new Set(
     (PROJECT_CATALOG[enrollment.role] || [])
-      .filter((p) => juniorKeys.has(p.key))
+      .filter((p) => levelKeys.has(p.key))
       .flatMap((p) => p.taskKeys),
   );
-  const mine = (tasks || []).filter((t) => juniorTaskKeys.has(t.task_key));
-  const startedProjects = projects.filter((p) => juniorKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
+  const mine = (tasks || []).filter((t) => levelTaskKeys.has(t.task_key));
+  const startedProjects = projects.filter((p) => levelKeys.has(p.key) && (p.status === 'active' || p.status === 'completed')).length;
   const parked = mine.filter((t) => t.status === 'parked');
-  const atTheEnd = startedProjects >= required
+  const atTheEnd = startedProjects >= decideAfter
     && mine.length > 0
     && mine.every((t) => t.status === 'graded' || t.status === 'parked');
 
   return {
-    awarded: Boolean(enrollment.promoted_at),
-    awardedAt: enrollment.promoted_at || null,
-    toTitle: PROMOTION.title,
+    awarded: false,
+    atTheTop: false,
+    atLevel: level,
+    toTitle: rung.title,
     eligible: trainingDone && performanceMet,
     criteria: [
       {
         key: 'training',
-        label: `Complete all ${required} junior project${required === 1 ? '' : 's'}`,
+        label: `Complete all ${decideAfter} ${levelLabel(level).toLowerCase()} project${decideAfter === 1 ? '' : 's'}`,
         met: trainingDone,
         value: completed,
-        target: required,
-        detail: `${completed} of ${required} delivered`,
+        target: decideAfter,
+        detail: `${completed} of ${decideAfter} delivered`,
       },
       {
         key: 'performance',
-        label: `Average score of ${PROMOTION.minAverage} or above`,
+        label: `Average score of ${rung.minAverage} or above`,
         met: performanceMet,
         value: average,
-        target: PROMOTION.minAverage,
+        target: rung.minAverage,
         detail: average === null
           ? 'No graded work yet'
           : `${average} across ${gradedTasks.length} graded task${gradedTasks.length === 1 ? '' : 's'}`,
       },
     ],
+    // What the learner is told once the conversation is open: the number to beat, how
+    // far off they are today, and which project decides it.
+    negotiation: {
+      opensAfter,
+      decidesAfter: decideAfter,
+      open: completed >= opensAfter,
+      opened: Boolean(enrollment.promotion_opened_at),
+      openedAt: enrollment.promotion_opened_at || null,
+      target: rung.minAverage,
+      current: average,
+      projectsLeft: Math.max(0, decideAfter - completed),
+    },
     // Only meaningful while short on score: work they could genuinely lift.
-    shortfall: !performanceMet && average !== null ? PROMOTION.minAverage - average : null,
+    shortfall: !performanceMet && average !== null ? rung.minAverage - average : null,
     // Internal: whether the review is due, and what is holding it up.
     atTheEnd,
     parked: parked.map((t) => ({ id: t.id, title: t.title })),
   };
 }
 
-// Runs the review at read time. Promotion is announced to you in a real job — you do not
-// click a button to claim it — so this fires by itself once both criteria hold.
+// Runs at read time, in two phases a project apart.
+//
+// Phase one opens the negotiation when the third project lands: Asha says the promotion
+// conversation has started, names the number, and says which project it will be decided
+// on. Phase two runs the review when the fourth lands.
+//
+// Promotion is announced to you in a real job — you do not click a button to claim it —
+// so both phases fire by themselves.
 function runPromotionReview(enrollment, promotion, tasks) {
-  if (!promotion || promotion.awarded) return false;
+  if (!promotion || promotion.awarded || promotion.atTheTop) return false;
+  const rung = promotionRung(enrollment.level || 'junior');
+  if (!rung) return false;
+  const neg = promotion.negotiation;
 
+  // ---- Phase one: open the conversation, once, at the third project ----------------
+  if (neg && neg.open && !neg.opened && !promotion.eligible) {
+    const standing = neg.current === null
+      ? 'You have nothing graded yet, so there is no number I can quote you — which is its own answer: the next two weeks are the whole case.'
+      : neg.current >= rung.minAverage
+        ? `You're carrying ${neg.current} right now, so you're above it. Staying above it is the job — one weak project pulls an average down faster than a strong one pushes it up.`
+        : `You're carrying ${neg.current} right now, which is ${rung.minAverage - neg.current} short. That's not a verdict, it's a gap with one project left to close it.`;
+    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+      `I'm opening your promotion conversation now rather than after the fact, because you should know what you're playing for while you can still do something about it.\n\n`
+      + `The role is ${rung.title}. There are two conditions and both have to hold — one strong project doesn't cover a weak one.\n\n`
+      + `1. All ${neg.decidesAfter} projects at this level delivered. You are on ${neg.decidesAfter - neg.projectsLeft}.\n`
+      + `2. An average of ${rung.minAverage} or above across everything I have graded.\n\n`
+      + `${standing}\n\n`
+      + `I'll run the review the moment your ${ordinalWord(neg.decidesAfter)} project is signed off. Nothing is decided before then, and nothing is deferred after it.`,
+      null, `Promotion conversation — ${rung.title}`);
+    db.prepare('UPDATE sim_enrollments SET promotion_opened_at = ? WHERE id = ?').run(now(), enrollment.id);
+    return false;
+  }
+
+  // ---- Phase two: the decision -----------------------------------------------------
   if (promotion.eligible) {
     const at = now();
-    db.prepare('UPDATE sim_enrollments SET level = ?, promoted_at = ? WHERE id = ?')
-      .run(PROMOTION.to, at, enrollment.id);
+    db.prepare('UPDATE sim_enrollments SET level = ?, promoted_at = ?, promotion_told_at = NULL, promotion_opened_at = NULL WHERE id = ?')
+      .run(rung.to, at, enrollment.id);
     const perf = promotion.criteria.find((c) => c.key === 'performance');
+    const train = promotion.criteria.find((c) => c.key === 'training');
     addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
-      `I've put you forward for ${PROMOTION.title} and it's gone through.\n\nFour projects delivered and an average of ${perf.value} across them — that's the bar, and you cleared it on both counts rather than scraping one. What changes: you'll get different work, not the same work with less hand-holding. It's less "answer this question" and more "decide what the question should be", and I'll be reviewing your judgement as much as your SQL.\n\nYour first senior project is on your board now.`,
-      null, `Promotion — ${PROMOTION.title}`);
+      `I've put you forward for ${rung.title} and it's gone through.\n\n`
+      + `${train.value} projects delivered and an average of ${perf.value} against a bar of ${rung.minAverage} — you cleared both, which is exactly what I told you the conditions were. `
+      + `What changes is the work, not the amount of hand-holding: ${LEVEL_STEP_UP[rung.to] || "you'll be judged on judgement as much as on execution"}.\n\n`
+      + `Your first ${levelLabel(rung.to).toLowerCase()} project is on your board now.`,
+      null, `Promotion — ${rung.title}`);
     addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
-      `Congratulations — your promotion to ${PROMOTION.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
+      `Congratulations — your promotion to ${rung.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
       null, 'Promotion confirmed');
     return true;
   }
 
   // Not eligible. Say so ONCE, with the arithmetic — but only once they are actually at
-  // the end of the track. Telling someone mid-project that they are short is just noise,
+  // the end of the level. Telling someone mid-project that they are short is just noise,
   // and leaving someone who HAS reached the end in silence is worse: they would never
   // learn why the review did not come.
   const training = promotion.criteria.find((c) => c.key === 'training');
@@ -422,13 +620,25 @@ function runPromotionReview(enrollment, promotion, tasks) {
   let body;
   if (promotion.parked.length) {
     const n = promotion.parked.length;
-    body = `We've reached the end of the junior track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
+    body = `We've reached the end of the ${levelLabel(enrollment.level || 'junior').toLowerCase()} track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
   } else {
-    body = `We've done the promotion round and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training half done. The other half is an average of ${PROMOTION.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
+    body = `We've run the review we opened a project ago, and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training condition met. The other one was an average of ${rung.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
   }
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, body, null, 'Promotion round — where you stand');
   db.prepare('UPDATE sim_enrollments SET promotion_told_at = ? WHERE id = ?').run(now(), enrollment.id);
   return false;
+}
+
+// What actually changes at each rung, in Asha's voice. Kept beside the ladder rather than
+// inline in the message so a new level cannot ship without someone deciding what it means.
+const LEVEL_STEP_UP = {
+  senior: 'it stops being "answer this question" and becomes "decide what the question should be", and I\'ll review your judgement as much as your SQL',
+  lead: "you'll be reviewing other people's analysis as well as producing your own, and you own what leaves the team whether or not you wrote it",
+  manager: 'you own the portfolio and the people in it — what gets worked on, what gets dropped, and what you are prepared to defend upward',
+};
+
+function ordinalWord(n) {
+  return ({ 1: 'first', 2: 'second', 3: 'third', 4: 'fourth', 5: 'fifth' })[n] || `${n}th`;
 }
 
 // A graded task scores 0-100 on each skill axis it exercises. Skill *points* are that
@@ -1799,11 +2009,1319 @@ const TASKS = {
     estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
+
+  // ---- Project 3: Project Phoenix — Outage Impact & Client Recovery -----------------
+  //
+  // Customer Success has a compensation budget and has to decide who gets it. The week's
+  // spine, and every figure in it measured against the generated dataset:
+  //
+  //   Monday    what "affected" means — billing-sync hit two clients, everything hit
+  //             fourteen, and the brief says one while the meeting means the other
+  //   Tuesday   quantify the damage — Harborview took 492k rows, and Dunmore, the biggest
+  //             client in the book, lost seven thousand
+  //   Wednesday the wobble — Lattice already churned, and severity does not track damage
+  //   Thursday  a second signal from tickets: the loudest client is the smallest one
+  //   Friday    the recommendation, with a budget that does not cover everyone
+  //
+  // The trap running through it: every instinct here (compensate the biggest, compensate
+  // the loudest, compensate by severity) is contradicted by the data.
+
+  'ph-101': {
+    title: 'What does "affected" actually mean',
+    hint: "Read the brief and the meeting note side by side. They are not asking the same question.",
+    brief: "Priya in Customer Success has asked you to size the damage from the billing-sync outage. Before you write any SQL, work out what is actually being asked — because the brief and the conversation behind it do not match.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Compensation for the outage — need this by Friday',
+        body: "We have a goodwill budget and the board wants it spent well. Customer Success needs to know which clients were hurt badly enough to warrant something.\n\nIt started with the billing-sync problem but honestly the whole quarter has been rough for some accounts. Use your judgement on scope — you will see the data before I do.",
+      },
+      prompt: 'Tick everything that follows from what he has actually asked for.',
+      options: [
+        { key: 'scope', correct: true, label: 'Scope is a decision you have to make and state, not one you have been given', why: '"Use your judgement on scope" is a real instruction. The analyst who silently picks one and never says which has not done the job.' },
+        { key: 'both', correct: true, label: 'Both readings are worth measuring before choosing', why: 'Billing-sync only and any-incident give very different client lists. Knowing the size of that difference is what makes the choice defensible.' },
+        { key: 'active', correct: true, label: 'Only clients we still have can be compensated', why: 'A goodwill payment to an account that has already left is not goodwill, it is an accounting error. This matters later than you think.' },
+        { key: 'literal', correct: false, label: 'Answer the billing-sync question exactly as written and nothing more', why: 'He told you the quarter was rough for some accounts. Answering the narrow question when you have been handed the wider one is technically compliant and useless.' },
+        { key: 'ask', correct: false, label: 'Go back and ask him to define "affected" precisely', why: 'He has explicitly delegated it. Bouncing it back is how an analyst becomes a ticket queue rather than someone whose judgement is wanted.' },
+        { key: 'all', correct: false, label: 'Recommend compensating everyone who had any incident at all', why: 'Fourteen of sixteen clients had an incident. A recommendation that covers almost everybody is not a recommendation, it is a refusal to prioritise.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ph-102': {
+    title: 'The size of the book',
+    hint: "One row. A CASE inside a SUM counts a condition without throwing the other rows away.",
+    brief: "Start with the denominator — you cannot say anyone was badly hit without knowing what the book looks like. Write ONE SQL SELECT returning, in a single row: how many clients we have, how many are still active, and the total monthly recurring revenue across all of them.",
+    referenceSql: "SELECT COUNT(*) AS clients, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active, SUM(mrr) AS total_mrr FROM clients",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.25, priority: 'medium', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'ph-103': {
+    title: 'Billing-sync, exactly as asked',
+    hint: "Filter on the service. Notice how short the answer is before you decide what it means.",
+    brief: "Answer the narrow question first, so you know what it is worth. Write ONE SQL SELECT returning every client hit by a BILLING-SYNC incident, with their tier, monthly revenue, how many billing-sync incidents they had and the total rows corrupted. Biggest client first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE i.service = 'billing-sync' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-104': {
+    title: 'How much of the quarter was billing-sync',
+    hint: "COUNT counts rows. COUNT(DISTINCT ...) counts things. You need both here and they are very different numbers.",
+    brief: "Put the billing-sync answer in context. Write ONE SQL SELECT returning, for each service, how many incidents it had and how many DISTINCT clients it hit, most incidents first.",
+    referenceSql: 'SELECT service, COUNT(*) AS incidents, COUNT(DISTINCT client_id) AS clients_hit FROM incidents GROUP BY service ORDER BY incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-105': {
+    title: 'Tell Vikram what you are going to measure',
+    hint: "The scope decision is the whole note. Give him the two numbers that make it obvious, then say which you are taking.",
+    brief: "Write back with the scope decision. He handed you the judgement call, which means he needs to see you make it — and to be able to stop you if he disagrees, today rather than on Friday. Under 140 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Outage compensation — how I am scoping it', maxWords: 140,
+      prompt: 'The scope decision, with the evidence that makes it the right one.',
+      rubric: [
+        { key: 'narrow', label: 'How small the billing-sync answer is', markers: ['two|2 client|three incident|3 incident|billing.sync|only'], why: 'Two clients out of sixteen. If he pictured a big number, he needs correcting now.' },
+        { key: 'wide', label: 'How big the any-incident answer is', markers: ['fourteen|14|most|nearly all|all but two'], why: 'Fourteen of sixteen. The other extreme is just as unusable, and saying so proves you looked.' },
+        { key: 'choice', label: 'Which scope you are taking', markers: ['I will|I am|taking|going with|propose|recommend|suggest'], why: 'Name it. A note that lays out both and picks neither has handed the decision back.' },
+        { key: 'why', label: 'Why that scope', markers: ['because|since|damage|severity|rows|material|meaningful|rank'], why: 'The reason is what lets him overrule you intelligently instead of just deferring.' },
+        { key: 'when', label: 'When it lands', markers: ['friday|by|end of|day|thursday'], why: 'He told you Friday. Confirming it is how he stops chasing.' },
+      ],
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-110': {
+    title: 'Everyone who was hit, and how hard',
+    hint: "Rows corrupted is the damage. Order by it, not by who pays us the most — that comparison is the point.",
+    brief: "Now the wide version. Write ONE SQL SELECT returning every client with at least one incident: company, tier, monthly revenue, status, how many incidents and total rows corrupted. Worst damage first.",
+    referenceSql: 'SELECT c.company, c.tier, c.mrr, c.status, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company, c.tier, c.mrr, c.status ORDER BY rows_corrupted DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ph-111': {
+    title: 'What that table says, and does not',
+    hint: "Compare the top of the damage list with the top of the revenue list. They are not the same clients.",
+    brief: "You have the damage table. Before anyone sees it, work out what it actually supports — because the obvious reading of it is wrong in two separate ways.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'harbor', correct: true, label: 'Harborview Bank took by far the worst damage, and is not our biggest client', why: 'Nearly half a million rows across two incidents — roughly three times the next worst — on a Growth account, not an Enterprise one.' },
+        { key: 'dunmore', correct: true, label: 'Our largest client by revenue was barely touched', why: 'Dunmore Legal pays the most and lost about seven thousand rows. Any scheme that pays out by account size would send the money exactly where the damage was not.' },
+        { key: 'rank', correct: true, label: 'Damage and revenue rank clients in different orders', why: 'That difference IS the finding. If they agreed, nobody would need this analysis.' },
+        { key: 'size', correct: false, label: 'Bigger clients were hit harder', why: 'Your own top row contradicts it. This is the assumption everyone walks in with, which is exactly why it has to be killed early.' },
+        { key: 'count', correct: false, label: 'The client with the most incidents took the most damage', why: 'Harborview had two. Others had four. Incident count and damage are different measures and they disagree here.' },
+        { key: 'everyone', correct: false, label: 'Fourteen of sixteen were affected, so effectively everyone was', why: 'True and useless. The spread between them is enormous — treating it as uniform throws away the only thing that can direct a budget.' },
+      ],
+      skills: { businessLogic: 100, dataViz: 40 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-112': {
+    title: 'Who was not touched at all',
+    hint: "NOT EXISTS with a correlated subquery. A LEFT JOIN with an IS NULL check works too, if you prefer it.",
+    brief: "The clean accounts matter as much as the damaged ones — they are revenue that does not belong anywhere in this analysis. Write ONE SQL SELECT returning every client with NO incidents at all, and their monthly revenue, biggest first.",
+    referenceSql: 'SELECT c.company, c.mrr FROM clients c WHERE NOT EXISTS (SELECT 1 FROM incidents i WHERE i.client_id = c.id) ORDER BY c.mrr DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-113': {
+    title: 'Chart the damage',
+    hint: "These categories have no order of their own, so give them one that helps the reader rank them.",
+    brief: "Put rows corrupted per client on a slide for the Customer Success meeting. Clients are categories, not a sequence — which decides both the chart type and what you do about ordering.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Rows corrupted per client.',
+      sourceSql: 'SELECT c.company, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company ORDER BY rows_corrupted DESC',
+      columns: ['company', 'rows_corrupted'],
+      correct: { type: 'bar', x: 'company', y: 'rows_corrupted', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted biggest first so the ranking reads at a glance.',
+      why: {
+        type: 'Companies are categories, not a sequence. A line between Harborview and Dunmore would imply a path that does not exist.',
+        x: 'The client is the category being compared.',
+        y: 'Rows corrupted is the damage being measured.',
+        sort: 'Nothing orders these for you, so sorting by size does the reader\'s work for them — and here the ranking IS the finding.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ph-114': {
+    title: 'Send the damage table to Priya',
+    hint: "Lead with the client nobody expects. The second sentence is the one that stops the money going to the wrong place.",
+    brief: "Priya in Customer Success is drafting the compensation list. Send her what you have found so far. The hard part is that her working assumption — look after the big accounts — is the one your data contradicts. Under 150 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair', subject: 'Outage damage — who was actually hit', maxWords: 150,
+      prompt: 'The damage picture, with the assumption it overturns named explicitly.',
+      rubric: [
+        { key: 'worst', label: 'Who took the worst damage', markers: ['harborview|bank'], why: 'Name them. This is the sentence she needs.' },
+        { key: 'scale', label: 'How much worse they are than the rest', markers: ['three|3x|times|nearly half|492|most|far'], why: 'A ranking without a gap does not tell her whether the top one is special or just first.' },
+        { key: 'biggest', label: 'That the biggest account was barely touched', markers: ['dunmore|largest|biggest|enterprise'], why: 'The whole point. Left unsaid, the budget goes to the loudest and largest by default.' },
+        { key: 'clean', label: 'That two clients had no incidents at all', markers: ['two|2 |none|no incident|untouched|clean|not affected'], why: 'Half a million in revenue that belongs nowhere near this. It also shows you checked.' },
+        { key: 'next', label: 'What you are doing next', markers: ['next|then|tomorrow|will|working|severity|ticket'], why: 'She is drafting now. Tell her when the rest lands so she does not guess.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+
+  'ph-115': {
+    title: 'Broad damage or deep damage',
+    hint: "COUNT(DISTINCT service) says how many different things broke. MAX says how bad the worst single one was. They rank clients differently.",
+    brief: "Two clients with four incidents each can have had very different quarters. Write ONE SQL SELECT returning, per client with incidents: how many incidents, how many DISTINCT services were involved, and the worst single incident by rows corrupted. Most services affected first.",
+    referenceSql: 'SELECT c.company, COUNT(i.id) AS incidents, COUNT(DISTINCT i.service) AS services_hit, MAX(i.rows_corrupted) AS worst_single FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company ORDER BY services_hit DESC, incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-120': {
+    title: 'Only the clients we still have',
+    hint: "One of the names on yesterday's list is not a client any more. Find the filter that removes them.",
+    brief: "A goodwill payment can only go to somebody who is still with us. Write ONE SQL SELECT returning every ACTIVE client with at least one incident: company, tier, revenue, status and incident count, biggest client first. Then compare the row count against yesterday's.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, c.status, COUNT(i.id) AS incidents FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr, c.status ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'ph-121': {
+    title: 'The client who already left',
+    hint: "They churned. Ask what that means for a compensation list, and what it means for the analysis.",
+    brief: "One of the damaged accounts is Lattice Education, and they have already churned. Priya's draft list has them on it. Decide what to do.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'remove', correct: true, label: 'Take them off the compensation list — you cannot retain a client who has gone', why: 'Goodwill spend is meant to keep accounts. Spending it on one that has left is money with no possible return.' },
+        { key: 'flag', correct: true, label: 'But say you removed them, and why', why: 'A name quietly vanishing between two drafts is how a reviewer stops trusting the whole list. An exclusion you explain costs nothing.' },
+        { key: 'signal', correct: true, label: 'They are still worth reporting as a warning sign', why: 'A damaged account that then churned is the closest thing here to evidence that outages cost retention. That belongs in the write-up even though they get no payment.' },
+        { key: 'keep', correct: false, label: 'Leave them in — they were damaged like everyone else', why: 'They were. They are also not a customer. The table measures damage; the list allocates budget, and those are different jobs.' },
+        { key: 'winback', correct: false, label: 'Recommend a win-back offer funded from the goodwill budget', why: 'A different decision, made by different people, from a different budget. Quietly repurposing this one would be noticed.' },
+        { key: 'silent', correct: false, label: 'Drop them without comment to keep the note short', why: 'This is the one genuinely dishonest option on the list. Shortness is not worth it.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-122': {
+    title: 'How long incidents take to resolve',
+    hint: "An incident with no resolved_at cannot contribute to an average of resolution times. Decide what that means for your COUNT as well.",
+    brief: "Priya wants to rank by severity, so check whether severity behaves the way everyone assumes. Write ONE SQL SELECT returning, per severity: how many incidents you counted and the average hours from start to resolution. Some incidents are still open — an incident with no resolution time cannot be part of an average of resolution times, and your count has to reflect whatever you decide.",
+    referenceSql: 'SELECT severity, COUNT(*) AS closed, AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-123': {
+    title: 'What is still open',
+    hint: "The mirror of the last filter. Three of these are the worst kind.",
+    brief: "The incidents you just excluded are not nothing — they are the ones still hurting. Write ONE SQL SELECT returning, per severity, how many incidents are still unresolved.",
+    referenceSql: 'SELECT severity, COUNT(*) AS still_open FROM incidents WHERE resolved_at IS NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.25, priority: 'high', dueInDays: 4, day: 3, difficulty: 'easy',
+  },
+
+  'ph-124': {
+    title: 'Severity is not damage',
+    hint: "Put your two results side by side. The order they imply is not the order anyone expects.",
+    brief: "You have resolution times by severity and the open count. Priya wants to pay out by severity because it is simple. Decide what you can actually tell her.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'inverted', correct: true, label: 'SEV3 incidents take longer to resolve on average than SEV2', why: 'About 35 hours against 28. Severity is set when an incident opens and reflects urgency, not how long it drags on — this is the evidence.' },
+        { key: 'open', correct: true, label: 'The averages exclude seven unresolved incidents, three of them SEV1', why: 'The worst ones are disproportionately still open, which pulls the SEV1 average DOWN. The number flatters us.' },
+        { key: 'proxy', correct: true, label: 'Severity is a weak proxy for damage and rows corrupted is a better one', why: 'You have both measures and they disagree. Saying which you trust, and why, is the actual analysis.' },
+        { key: 'sev1', correct: false, label: 'SEV1 incidents are resolved fastest, so the process works', why: 'Read again: SEV1 is the SLOWEST of the three at 44 hours, on only four closed incidents. This is what happens when you skim a table for the answer you expected.' },
+        { key: 'four', correct: false, label: 'The SEV1 average is reliable — it is the most serious category', why: 'Four closed incidents. Seriousness does not make a small sample large.' },
+        { key: 'payout', correct: false, label: 'Paying out by severity is the fairest approach', why: 'It is the simplest. Your own data says it would rank clients in roughly the wrong order.' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-125': {
+    title: 'Tell Priya severity will not work',
+    hint: "You are taking away her simple method. Do not do that without handing her a better one in the same note.",
+    brief: "Priya's draft ranks clients by worst severity because it is easy to explain to the board. You are about to tell her that will send the money to the wrong accounts. Say it in a way she can use. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair', subject: 'Severity as a ranking — why it will not hold', maxWords: 160,
+      prompt: 'The objection, with the replacement attached to it.',
+      rubric: [
+        { key: 'finding', label: 'That severity does not track resolution time', markers: ['sev3|sev 3|longer|slower|28|35|invert|not track|does not'], why: 'The concrete fact. Without it this is just an opinion about methodology.' },
+        { key: 'open', label: 'That unresolved incidents are missing from the averages', markers: ['open|unresolved|seven|7 |exclud|still'], why: 'Three SEV1s still open flatter the SEV1 number. She will be asked about this.' },
+        { key: 'better', label: 'What to rank by instead', markers: ['rows|corrupted|damage|volume|impact'], why: 'Never take away the simple method without offering one. She has a board meeting either way.' },
+        { key: 'churn', label: 'That Lattice is off the list, and why', markers: ['lattice|churn|left|no longer|former'], why: 'Flagging the removal now stops it being discovered later as a silent edit.' },
+        { key: 'usable', label: 'Something she can act on today', markers: ['recommend|suggest|use|rank|list|propose|I would'], why: 'She is drafting now. A note that ends in a problem rather than a next step costs her a day.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-130': {
+    title: 'Who has been complaining',
+    hint: "Tickets are a different signal from incidents. Count both the total and the loud ones.",
+    brief: "Damage is one signal; how much noise an account is making is another, and they are not the same. Write ONE SQL SELECT returning, per client, how many support tickets they have raised and how many of those are urgent or high priority. Loudest first.",
+    referenceSql: "SELECT c.company, COUNT(t.id) AS tickets, SUM(CASE WHEN t.priority IN ('urgent','high') THEN 1 ELSE 0 END) AS urgent_high FROM clients c JOIN tickets t ON t.client_id = c.id GROUP BY c.company ORDER BY urgent_high DESC, tickets DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'ph-131': {
+    title: 'Revenue by tier, current clients only',
+    hint: "This one IS a today question, so the active filter belongs on it.",
+    brief: "The board thinks in tiers, so give them the shape of the book. Write ONE SQL SELECT returning, per tier, how many ACTIVE clients there are and their total monthly revenue, biggest revenue first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS mrr FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.3, priority: 'medium', dueInDays: 4, day: 4, difficulty: 'easy',
+  },
+
+  'ph-132': {
+    title: 'The loudest client is the smallest one',
+    hint: "Cross-reference your ticket table against the damage table and the revenue table. Three orderings, three different answers.",
+    brief: "Orchid Pharma has raised more urgent tickets than anyone. They are also one of our smallest accounts and took middling damage. Decide what that means for the compensation list.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Sneha Joshi',
+        body: "Heads up before you finalise anything — Orchid Pharma have been on the phone to me every other day. Their CSM is getting hammered. I am not saying they deserve more than anyone else, I am saying you should know they are the ones making noise.",
+      },
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'separate', correct: true, label: 'Ticket volume measures how much an account complains, not how much it was harmed', why: 'They are genuinely different signals. Conflating them is how budgets end up allocated by whoever shouts.' },
+        { key: 'report', correct: true, label: 'Report it as its own column rather than folding it into the damage ranking', why: 'Priya needs to know who is angry — that is real information for a CSM. It just should not silently reorder a damage list.' },
+        { key: 'both', correct: true, label: 'An account that is both damaged AND complaining is the strongest case of all', why: 'Where the two signals agree, the case is unarguable. That is worth surfacing explicitly.' },
+        { key: 'top', correct: false, label: 'Put Orchid top of the list — they are clearly the most upset', why: 'Fifteen thousand a month and middling damage. This is exactly the decision the analysis exists to prevent.' },
+        { key: 'ignore', correct: false, label: 'Ignore tickets entirely — only measured damage counts', why: 'Equally wrong in the other direction. Sneha has told you something true about an account and throwing it away is not rigour.' },
+        { key: 'quiet', correct: false, label: 'Assume the quiet clients are fine', why: 'Harborview took the worst damage in the book. Silence is not evidence of satisfaction, and it is often evidence of an account already halfway out the door.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-133': {
+    title: 'What is still broken, for everyone',
+    hint: "Priya needs a row per client, including the ones with nothing open — so the unresolved condition belongs in the JOIN, not the WHERE. Put it in the WHERE and the clean accounts vanish.",
+    brief: "Priya is building the outreach list and needs a line for every account, not just the damaged ones — a CSM with nothing open still has to know that. Write ONE SQL SELECT returning EVERY ACTIVE client with their revenue and how many UNRESOLVED incidents they have, including clients with zero. Most open first, then biggest.",
+    referenceSql: "SELECT c.company, c.mrr, COUNT(i.id) AS open_incidents FROM clients c LEFT JOIN incidents i ON i.client_id = c.id AND i.resolved_at IS NULL WHERE c.status = 'active' GROUP BY c.company, c.mrr ORDER BY open_incidents DESC, c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-134': {
+    title: 'What Meera is about to send out',
+    hint: "She has written four sentences from your tables. Two of them are not in your tables.",
+    brief: "Meera in Comms has drafted the summary that goes to the account teams, using your numbers. It goes out under Data & Analytics, which means it goes out as yours. Read it properly.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Draft note to the account teams — quick check',
+        body: "Ready to send unless you shout:\n\n\"Analysis of the quarter's incidents shows our Enterprise accounts bore the brunt of the disruption. Harborview Bank was the single worst affected, with almost half a million records corrupted. Orchid Pharma raised the most urgent tickets and should be prioritised for outreach. Two clients came through the quarter with no incidents at all.\"",
+      },
+      prompt: 'Tick every sentence you would tell her to change or cut.',
+      options: [
+        { key: 'enterprise', correct: true, label: 'The "Enterprise accounts bore the brunt" sentence', why: 'The worst-hit account is Growth tier, and the largest Enterprise account was barely scratched. This is the assumption your whole week disproved, about to go out in your name.' },
+        { key: 'orchid', correct: true, label: 'The "Orchid should be prioritised" sentence', why: 'It converts ticket volume into priority for compensation, which is the exact conflation you have just spent a day separating.' },
+        { key: 'harborview', correct: false, label: 'The Harborview sentence', why: 'Straight out of your own query, and the strongest true finding in the note. Challenging a correct sentence spends the credibility you need for the two that are wrong.' },
+        { key: 'clean', correct: false, label: 'The "two clients had no incidents" sentence', why: 'Also correct, and worth keeping — it tells account teams which conversations they do not need to have.' },
+        { key: 'all', correct: false, label: 'Ask her to pull the whole note until Friday', why: 'Two sentences are wrong, not the note. Blocking a communication you could fix in one reply makes you the bottleneck rather than the check.' },
+        { key: 'numbers', correct: false, label: 'Ask her to remove the specific figures and keep it qualitative', why: 'The figures are the only part that is checkable. Vagueness is not safer, it just moves the error somewhere nobody can see it.' },
+      ],
+      skills: { communication: 100, businessLogic: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-135': {
+    title: 'Chart what is still open',
+    hint: "Severity has a natural order — SEV1, SEV2, SEV3. Ask whether that order is worth preserving here.",
+    brief: "One slide for the operations review: how many incidents remain unresolved at each severity. These categories do have an inherent order, which changes the sorting decision from the last chart you built.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Unresolved incidents by severity.',
+      sourceSql: 'SELECT severity, COUNT(*) AS still_open FROM incidents WHERE resolved_at IS NULL GROUP BY severity ORDER BY severity',
+      columns: ['severity', 'still_open'],
+      correct: { type: 'bar', x: 'severity', y: 'still_open', sort: 'none' },
+      whyRight: 'Severity is an ordered scale, so keep its own order — but the values are counts of separate categories, so bars rather than a line.',
+      why: {
+        type: 'Bars. SEV1 to SEV3 is a scale, not a time series — there is no trend between them to trace, just three counts to compare.',
+        x: 'Severity is the category.',
+        y: 'The number still unresolved.',
+        sort: 'Do not sort by value. SEV1, SEV2, SEV3 is the order the reader already has in their head, and reordering it by count makes the chart harder to read, not easier.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+
+  'ph-140': {
+    title: 'Damage against what they pay us',
+    hint: "A ratio needs both numbers in the same row. Divide, and remember integer division will give you zeros.",
+    brief: "Two clients can lose the same number of rows and it means very different things depending on what they pay. Write ONE SQL SELECT returning, for each ACTIVE client with incidents: company, tier, revenue, total rows corrupted, and rows corrupted per rupee of monthly revenue. Biggest client first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(i.rows_corrupted) AS rows_corrupted, ROUND(SUM(i.rows_corrupted) * 1.0 / c.mrr, 2) AS rows_per_rupee FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-141': {
+    title: 'Cost of the outage per client, in Python',
+    // Deliberately flagged for rework: Priya accepts it and then wants it a different way.
+    rework: true,
+    hint: "Group the incidents by client yourself, then take the middle value as well as the mean — they will not agree and that is the point.",
+    brief: "Priya wants a single headline figure for the damage per affected client. The mean is dragged around by one enormous account. In the notebook, compute across ACTIVE clients that had incidents: the mean rows corrupted, the median rows corrupted, and how many clients that covers. Assign a dict with keys mean_rows, median_rows and clients to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const active = new Set(tables.clients.filter((c) => c.status === 'active').map((c) => c.id));
+      const by = new Map();
+      for (const i of tables.incidents) {
+        if (!active.has(i.client_id)) continue;
+        by.set(i.client_id, (by.get(i.client_id) || 0) + i.rows_corrupted);
+      }
+      const totals = [...by.values()].sort((a, b) => a - b);
+      const m = Math.floor(totals.length / 2);
+      const median = totals.length % 2 ? totals[m] : (totals[m - 1] + totals[m]) / 2;
+      const mean = totals.reduce((a, b) => a + b, 0) / totals.length;
+      return { mean_rows: Math.round(mean), median_rows: median, clients: totals.length };
+    },
+  },
+
+  'ph-142': {
+    title: 'The budget does not cover everyone',
+    hint: "Thirteen damaged accounts, a budget that stretches to a handful. Decide what principle you are allocating on, and be able to say it in one sentence.",
+    brief: "Vikram confirms the goodwill budget will cover about four or five accounts meaningfully, not thirteen. Decide how you would allocate it.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Budget reality',
+        body: "The number I have got signed off will do something meaningful for four, maybe five accounts. Spread across thirteen it is a gesture nobody will notice.\n\nSo it is a prioritisation, not a distribution. Tell me who and tell me why, and make the why something I can repeat in a board meeting.",
+      },
+      prompt: 'Tick every basis you could defend in that room.',
+      options: [
+        { key: 'damage', correct: true, label: 'Rank by measured damage, and fund the top of that list', why: 'It is the measure most directly connected to the thing being compensated, and it is checkable by anyone who asks.' },
+        { key: 'risk', correct: true, label: 'Weight toward accounts where damage is large relative to what they pay', why: 'A hundred thousand rows matters more to a fifteen-thousand-a-month account than to a four-hundred-thousand one. This is the ratio you just computed, doing real work.' },
+        { key: 'open', correct: true, label: 'Prioritise accounts still living with an unresolved incident', why: 'Compensation for a problem that is fixed is an apology. For one that is ongoing it is a retention move, which is what the budget is actually for.' },
+        { key: 'equal', correct: false, label: 'Split it evenly across all thirteen affected accounts', why: 'Vikram has just told you that produces a gesture nobody notices. Even-handedness that achieves nothing is not fairness.' },
+        { key: 'mrr', correct: false, label: 'Allocate in proportion to what each account pays us', why: 'That sends the most money to Dunmore, who lost seven thousand rows. Your own table says it is the wrong answer.' },
+        { key: 'loud', correct: false, label: 'Start with the accounts raising the most tickets', why: 'It rewards volume of complaint. It is also indefensible in the room the moment somebody asks how the list was built.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-143': {
+    title: 'The damage by tier',
+    hint: "SUM(DISTINCT mrr) avoids counting an account's revenue once per incident. Check your total against the book.",
+    brief: "The board reads by tier, so give them that cut. Write ONE SQL SELECT returning, per tier: how many distinct ACTIVE clients were hit, the total rows corrupted, and the total monthly revenue of those clients. Most revenue at risk first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients_hit, SUM(i.rows_corrupted) AS rows_corrupted, SUM(DISTINCT c.mrr) AS mrr_at_risk FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY mrr_at_risk DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-144': {
+    title: 'Vikram pushes back in the corridor',
+    hint: "He is not asking you to change the ranking. He is asking you to say something about the future that you have not measured.",
+    brief: "Ten minutes before the meeting, Vikram asks the question he will be asked. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair',
+        body: "One thing and then I will leave you alone. If we do nothing for these accounts, how many of them churn? The board will ask me that number and I would rather not invent one.",
+      },
+      prompt: 'Which responses are honest and useful to him?',
+      options: [
+        { key: 'cannot', correct: true, label: '"I cannot give you a churn number — we have one churned account in the whole book"', why: 'One data point. Any churn model built on it would be a guess wearing a percentage sign, and he would repeat it as fact.' },
+        { key: 'lattice', correct: true, label: '"What I can tell you is that the one account we did lose had three incidents"', why: 'True, specific, and the strongest thing the data will carry on this question. It is suggestive without pretending to be predictive.' },
+        { key: 'offer', correct: true, label: '"If you want a churn number, that needs history we do not hold — I can scope what it would take"', why: 'Turns a no into a next step, which is what a stakeholder can actually use in a meeting.' },
+        { key: 'guess', correct: false, label: '"Probably two or three."', why: 'Invented. He specifically said he did not want to invent one, and a number from you carries far more weight than a number from him.' },
+        { key: 'pct', correct: false, label: '"About 8% — that is one in thirteen, based on our churn rate"', why: 'A rate computed from a single event, presented to three significant figures. This is the most dangerous option here because it sounds the most rigorous.' },
+        { key: 'all', correct: false, label: '"All of them are at risk if we do nothing."', why: 'Unmeasured, unfalsifiable, and it would win you the budget by scaring people. That works exactly once.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 60 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-145': {
+    title: 'The recommendation, to Customer Success',
+    hint: "Who, why, and what you are not claiming. In that order, and the third part is what makes the first two believable.",
+    brief: "The deliverable the week has been for. Priya will take this list into the budget conversation and be asked to defend it without you in the room.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair and Vikram Nair', subject: 'Outage compensation — who, and why', maxWords: 200,
+      prompt: 'The recommendation. A short list, the principle behind it, and the limits of it.',
+      rubric: [
+        { key: 'who', label: 'Named accounts, not a method', markers: ['harborview|ionic|cobalt|keystone|orchid|juniper|pinehill|ferrous'], why: 'She needs a list. A note that describes how to build one has left her the job.' },
+        { key: 'basis', label: 'The principle you ranked on', markers: ['rows|corrupted|damage|relative|per rupee|proportion|open|unresolved'], why: 'This is the sentence Vikram repeats in the board meeting. It has to survive being said out loud.' },
+        { key: 'not', label: 'That it is deliberately not ranked by account size', markers: ['not|rather than|instead of|mrr|revenue|biggest|largest|size'], why: 'Saying what you did NOT rank on is what stops someone quietly re-sorting the list afterwards.' },
+        { key: 'excluded', label: 'That the churned account was removed', markers: ['lattice|churn|left|former|excluded|removed'], why: 'An exclusion you explain is diligence; one that is discovered is a credibility problem.' },
+        { key: 'limit', label: 'One thing this does not tell them', markers: ['churn|cannot|can\'t|does not|doesn\'t|predict|severity|no data|one account'], why: 'Volunteering the limit before the board finds it is what makes the rest credible.' },
+        { key: 'scope', label: 'Which incidents are in scope', markers: ['all incident|quarter|billing.sync|any|scope|whole'], why: 'You made a scope decision on Monday. The reader has to know which question this answers.' },
+      ],
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Project 4: Pay Equity Audit --------------------------------------------------
+  //
+  // An audit where the headline finding is that there is nothing to find, which almost no
+  // training material ever covers and every auditor meets in their first year. The week:
+  //
+  //   Monday    what equity means here, and how small our role populations are
+  //   Tuesday   spread within role — and eleven of eighteen roles are big enough to look at
+  //   Wednesday the wobble: nobody is outside their band. The deliverable is empty.
+  //   Thursday  compression — every Staff Engineer out-earns every Engineering Manager
+  //   Friday    the report, under pressure to have found something
+  //
+  // Every figure measured against the dataset. The pressure running through it is the one
+  // an auditor actually feels: an empty finding reads as a wasted week unless you can say
+  // precisely what you looked for and did not find.
+
+  'pe-101': {
+    title: 'What are we actually auditing for',
+    hint: "Three different things get called pay equity. Neha's note tells you which one she means if you read it carefully.",
+    brief: "Neha has asked for a pay equity audit. That phrase means at least three different things, and doing the wrong one carefully is worse than doing the right one roughly.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'Pay equity audit — before the comp cycle',
+        body: "We are going into the comp cycle in six weeks and I would rather find problems now than have them found for us.\n\nWhat I want to know is whether people doing the same job here are paid consistently, and whether anyone has drifted somewhere they should not be. I am not asking about market rates — we do not have that data and I know it.\n\nWhatever you find, I need to be able to defend the method.",
+      },
+      prompt: 'Tick everything that follows from what she has asked.',
+      options: [
+        { key: 'internal', correct: true, label: 'This is internal consistency — same job, same pay — not market benchmarking', why: 'She has explicitly ruled market rates out and told you why. Doing it anyway would answer a question nobody asked with data we do not have.' },
+        { key: 'bands', correct: true, label: 'Drift outside the agreed salary bands is in scope', why: '"Drifted somewhere they should not be" is the band question. We hold band_low and band_high, so it is answerable.' },
+        { key: 'method', correct: true, label: 'The method matters as much as the finding', why: 'She has to defend it in a comp cycle. An audit whose method cannot be explained is worth nothing regardless of what it found.' },
+        { key: 'gender', correct: false, label: 'Break the analysis down by gender and ethnicity', why: 'That is a legitimate and important audit, and this dataset holds neither field. Producing it would mean inventing the inputs.' },
+        { key: 'market', correct: false, label: 'Compare our salaries against industry benchmarks', why: 'She ruled it out in the second paragraph. Ignoring an explicit exclusion is how an analyst gets a reputation for not reading the brief.' },
+        { key: 'perf', correct: false, label: 'Adjust for individual performance before comparing', why: 'We hold no performance data. Adjusting for something you cannot measure is a way of making any result you like.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'pe-102': {
+    title: 'How many roles are we comparing within',
+    hint: "Two counts in one row. COUNT(DISTINCT role) is the one that decides how much this audit can say.",
+    brief: "An audit that compares within roles is limited by how many people share a role. Write ONE SQL SELECT returning, in a single row: how many distinct roles there are among CURRENT staff, and how many current staff there are.",
+    referenceSql: 'SELECT COUNT(DISTINCT role) AS roles, COUNT(*) AS people FROM employees WHERE exit_year IS NULL',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'pe-103': {
+    title: 'How many people share each role',
+    hint: "Look at the bottom of this list before you plan the rest of the week.",
+    brief: "Now the distribution. Write ONE SQL SELECT returning each role held by CURRENT staff and how many people hold it, most people first. The shape of this result decides what the audit can and cannot conclude.",
+    referenceSql: 'SELECT role, COUNT(*) AS people FROM employees WHERE exit_year IS NULL GROUP BY role ORDER BY people DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'pe-104': {
+    title: 'Which roles can be audited at all',
+    hint: "HAVING filters groups after they are formed. Pick a floor and be ready to defend it.",
+    brief: "You cannot say anything about consistency within a role held by one person. Write ONE SQL SELECT returning each role with AT LEAST THREE current holders: the role, how many people, the lowest and highest salary, and the gap between them. Widest gap first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, MIN(salary) AS lowest, MAX(salary) AS highest, MAX(salary) - MIN(salary) AS spread FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'pe-105': {
+    title: 'What the coverage means for the audit',
+    hint: "Count how many roles survived the floor, and how many people those roles cover. Both numbers matter and they say different things.",
+    brief: "You have eighteen roles and a floor of three holders. Work out what your audit can actually claim before you spend four more days on it.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'eleven', correct: true, label: 'Eleven of the eighteen roles have enough holders to compare within', why: 'Seven do not. Any statement about those roles is a statement about one or two individuals.' },
+        { key: 'most', correct: true, label: 'Those eleven roles still cover most of the company', why: 'The excluded roles are small by definition, so excluding them costs far less coverage than the count of roles suggests. Worth saying — it is what makes the audit useful rather than partial.' },
+        { key: 'declare', correct: true, label: 'The floor has to be stated in the report', why: 'A threshold you chose and did not disclose is the first thing a reviewer finds and the last time they trust the rest.' },
+        { key: 'nothing', correct: false, label: 'With seven roles excluded the audit cannot conclude anything', why: 'Too pessimistic and it abandons the job. Partial coverage, clearly stated, is a normal audit outcome.' },
+        { key: 'lower', correct: false, label: 'Lower the floor to two so more roles are covered', why: 'A "spread" between two people is the difference between two individuals. Widening coverage by weakening the meaning of the finding is not a trade worth making.' },
+        { key: 'dept', correct: false, label: 'Compare across departments instead, since roles are too small', why: 'Different question. A Support Agent and a Staff Engineer are not doing the same job, so a departmental comparison cannot answer "same job, same pay".' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'pe-106': {
+    title: 'Tell Neha what the audit will cover',
+    hint: "She has to defend the method. Give her the floor, the coverage it buys, and what falls outside it.",
+    brief: "Write back at the end of day one with the scope. She said she needs to defend the method — this note is that method, in the form she will quote it. Under 140 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Pay equity audit — scope and method', maxWords: 140,
+      prompt: 'The method, stated so she can defend it without you.',
+      rubric: [
+        { key: 'question', label: 'What you are auditing for', markers: ['same role|within role|consisten|internal|band|drift'], why: 'Name the question. Three things are called pay equity and she needs the report to say which one this is.' },
+        { key: 'floor', label: 'The minimum role size you are using', markers: ['three|3 |floor|threshold|at least|minimum'], why: 'The number she will be asked about. Volunteering it is what makes it a method rather than a choice you hid.' },
+        { key: 'coverage', label: 'How many roles that covers', markers: ['eleven|11|seven|7 |eighteen|18|most|majority'], why: 'Coverage turns a threshold from an exclusion into a stated limit.' },
+        { key: 'out', label: 'What is explicitly out of scope', markers: ['market|benchmark|gender|performance|not|outside|cannot'], why: 'She ruled market data out; saying so back confirms you read it and stops it being raised later.' },
+        { key: 'when', label: 'When it lands', markers: ['friday|by|end of|day'], why: 'Six weeks to the comp cycle. A date stops her chasing.' },
+      ],
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'pe-110': {
+    title: 'The widest gap in the company',
+    hint: "You already have the spread. Now express it as a share, because a gap in rupees means nothing without the salary it sits on.",
+    brief: "A gap of two lakh means something different on a nine-lakh salary than on a twenty-six-lakh one. Write ONE SQL SELECT returning, for roles with at least three current holders: the role, the count, the lowest salary, and the gap as a PERCENTAGE of the lowest. Widest percentage first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, MIN(salary) AS lowest, ROUND((MAX(salary) - MIN(salary)) * 100.0 / MIN(salary), 1) AS spread_pct FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread_pct DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'pe-111': {
+    title: 'Is a twelve percent spread a problem',
+    hint: "There is no threshold in the data. Whatever you decide, the report has to say who decided it and on what basis.",
+    brief: "Your widest role spread is about twelve percent. Neha will ask whether that is acceptable. Decide what you can honestly say.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'nothreshold', correct: true, label: 'The data contains no standard for what an acceptable spread is', why: 'Nothing in the dataset says twelve percent is fine or alarming. Pretending otherwise would be inventing a benchmark and attributing it to the analysis.' },
+        { key: 'explain', correct: true, label: 'Tenure and hiring year are plausible explanations you can actually check', why: 'Both are in the table. An unexplained spread and a spread explained by time served are very different findings.' },
+        { key: 'report', correct: true, label: 'Report the number and let People Ops set the threshold', why: 'Where the line sits is a policy decision owned by Neha. Measuring is yours; deciding is hers, and being clear about that boundary is most of what makes an audit trusted.' },
+        { key: 'fine', correct: false, label: 'Twelve percent is normal, so report no issue', why: '"Normal" according to what? You would be importing a standard from outside the analysis and presenting it as a finding.' },
+        { key: 'alarm', correct: false, label: 'Twelve percent is a serious inequity and should be flagged as such', why: 'Equally unfounded in the other direction, and far more expensive — it starts a remediation conversation on the strength of an adjective.' },
+        { key: 'hide', correct: false, label: 'Leave the number out and describe the spread qualitatively', why: 'The number is the only checkable thing you have. Replacing it with a word makes the report shorter and useless.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'pe-112': {
+    title: 'Does tenure explain the spread',
+    hint: "Group by role AND hire year. Look at the cell counts before you read anything into the averages.",
+    brief: "If the people paid more have been here longer, the spread has an innocent explanation. Write ONE SQL SELECT returning, for CURRENT staff in roles with at least three holders: the role, the hire year, how many people, and the average salary. Role, then year.",
+    referenceSql: 'SELECT role, hire_year, COUNT(*) AS people, AVG(salary) AS avg_salary FROM employees WHERE exit_year IS NULL AND role IN (SELECT role FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3) GROUP BY role, hire_year ORDER BY role, hire_year',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'pe-113': {
+    title: 'Chart the spread by role',
+    hint: "Roles have no order of their own. Give them one that lets the reader rank them.",
+    brief: "One slide showing the pay spread as a percentage, per role, for the roles big enough to audit. Roles are categories rather than a sequence, which decides the chart type and the ordering.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Pay spread as a percentage of the lowest salary, by role.',
+      sourceSql: 'SELECT role, ROUND((MAX(salary) - MIN(salary)) * 100.0 / MIN(salary), 1) AS spread_pct FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY spread_pct DESC',
+      columns: ['role', 'spread_pct'],
+      correct: { type: 'bar', x: 'role', y: 'spread_pct', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted widest first so the roles needing attention are at the top.',
+      why: {
+        type: 'Roles are categories, not a sequence. A line between Senior Engineer and Recruiter would imply a progression that does not exist.',
+        x: 'The role is the category being compared.',
+        y: 'Spread as a percentage is the measured value.',
+        sort: 'Nothing orders roles for you, so sorting by size puts the ones that need a conversation where the reader looks first.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'pe-114': {
+    title: 'The roles you cannot audit',
+    hint: "The mirror of Monday's filter. Name them, because a reader will ask which ones fell out.",
+    brief: "Your report has to say what it did not cover. Write ONE SQL SELECT returning each role with FEWER THAN THREE current holders and how many people hold it, smallest first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) < 3 ORDER BY people ASC, role',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.3, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'pe-115': {
+    title: 'Send Neha the spread picture',
+    hint: "Give her the widest role, the number, and the fact that you have not yet found anyone out of band.",
+    brief: "Mid-week note. She is planning the comp cycle and wants to know whether to expect a big remediation bill. Under 150 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Spread within roles — where we are', maxWords: 150,
+      prompt: 'The spread picture, with the threshold question handed back to her.',
+      rubric: [
+        { key: 'widest', label: 'The widest spread and which role it is in', markers: ['senior engineer|software engineer|widest|twelve|12|11|%'], why: 'The concrete headline. Everything else is context for it.' },
+        { key: 'pct', label: 'Expressed as a share, not just rupees', markers: ['%|percent|per cent|share|relative|of the'], why: 'Two lakh on nine lakh and two lakh on twenty-six lakh are different findings.' },
+        { key: 'threshold', label: 'That where the acceptable line sits is her call', markers: ['your|you|policy|people ops|decide|threshold|standard|not for me|no standard'], why: 'Measuring is yours, deciding is hers. Being explicit about that boundary is what makes an audit trusted rather than resented.' },
+        { key: 'tenure', label: 'Whether tenure explains it', markers: ['tenure|hire year|year|longer|time|explain|cell|few'], why: 'The obvious innocent explanation, and the cells are too thin to lean on. Say so before she assumes it.' },
+        { key: 'coverage', label: 'The roles outside the audit', markers: ['seven|7 |fewer|small|excluded|not covered|one or two'], why: 'Repeating the limit mid-week stops it being a surprise on Friday.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+
+  'pe-120': {
+    title: 'Anyone paid outside their band',
+    // Deliberately returns nothing. An empty result is a finding, and an auditor who
+    // cannot report one convincingly will eventually invent something instead.
+    expectEmpty: true,
+    hint: "Run it and trust the result. If it comes back empty, that is an answer — check your query once, then believe it.",
+    brief: "The headline check of the whole audit. Write ONE SQL SELECT returning every CURRENT employee whose salary falls OUTSIDE their department's agreed band — below band_low or above band_high — with their name, department, role, salary and both band edges. Highest salary first.",
+    referenceSql: 'SELECT e.name, d.name AS department, e.role, e.salary, d.band_low, d.band_high FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary < d.band_low OR e.salary > d.band_high) ORDER BY e.salary DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'pe-121': {
+    title: 'Your audit found nothing',
+    hint: "An empty result is not a failed query. Work out what it entitles you to say, and what it does not.",
+    brief: "The band check came back with no rows at all. Nobody in the company is paid outside their band. Neha is expecting findings and you have an empty table. Decide what that actually means.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'finding', correct: true, label: 'An empty result IS the finding, and a good one', why: 'Nobody outside band is exactly what an audit hopes to establish. Reporting it as a result rather than as an absence of results is the whole skill here.' },
+        { key: 'verify', correct: true, label: 'Verify it before reporting — run a query you know returns rows', why: 'An empty result and a broken query look identical. Proving the join and the filter work on a case you can predict is ten minutes that protects the entire report.' },
+        { key: 'limits', correct: true, label: 'Say what "within band" does and does not guarantee', why: 'Our bands are wide. Sitting inside one says nothing about where in it you sit, which is the finding that IS there.' },
+        { key: 'wider', correct: false, label: 'Widen the test until something fails, so there is something to report', why: 'Choosing a threshold because it produces findings is the definition of a rigged audit. It is also very easy to spot afterwards.' },
+        { key: 'nothing', correct: false, label: 'Report that the audit found nothing of note', why: '"Nothing of note" throws away a positive assurance that took a week to earn, and invites the question of why anyone bothered.' },
+        { key: 'broken', correct: false, label: 'Assume the query is wrong and keep rewriting it', why: 'Reasonable for ten minutes, corrosive after an hour. At some point you have to accept a result that disagrees with what you expected.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-122': {
+    title: 'Prove the check actually works',
+    hint: "Same join, same band arithmetic, a threshold you know will catch people. If this returns rows, the empty result was real.",
+    brief: "Before you report an empty finding, prove the machinery works. Write ONE SQL SELECT returning every CURRENT employee sitting in the BOTTOM QUARTER of their department's band: name, department, role, salary, both band edges, and their position in the band as a percentage. Lowest position first.",
+    referenceSql: 'SELECT e.name, d.name AS department, e.role, e.salary, d.band_low, d.band_high, ROUND((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low)) AS band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low) < 25 ORDER BY band_pct',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-123': {
+    title: 'Where each department sits in its band',
+    hint: "Average the position, not the salary. A department can be entirely in band and still sit at the bottom of it.",
+    brief: "The real finding is not who is outside the band but where inside it people sit. Write ONE SQL SELECT returning, per department: how many current staff, and their average position within the band as a percentage. Lowest first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS people, ROUND(AVG((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low))) AS avg_band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_band_pct',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-124': {
+    title: 'What the band positions tell you',
+    hint: "Compare the bottom two departments against the rest, and check how many people each one is.",
+    brief: "You have every department's average position in its band. This is the finding the empty band check could not give you. Decide what it supports.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'spread', correct: true, label: 'Departments sit at very different heights within their own bands', why: 'Thirty-seven percent at the bottom against sixty-six at the top. Everyone is compliant and the experience of being paid here is not remotely uniform.' },
+        { key: 'compliant', correct: true, label: 'Every one of those departments is fully within band', why: 'Which is precisely why the band check found nothing. The two results together are the story: compliant, and unequal.' },
+        { key: 'sizes', correct: true, label: 'The two lowest cover nineteen people between them, so this is not a rounding artefact', why: 'Nine and ten. Large enough that the gap is about how those functions are paid, not about one or two individuals.' },
+        { key: 'breach', correct: false, label: 'Marketing being at thirty-seven percent is a band breach', why: 'It is the bottom third of a band they are entirely inside. Calling compliance a breach would be the single fastest way to lose the room.' },
+        { key: 'underpaid', correct: false, label: 'Those departments are underpaid relative to the market', why: 'You have no market data — Neha ruled it out on Monday. Against our own bands is the only claim available.' },
+        { key: 'fix', correct: false, label: 'Recommend lifting everyone to the band midpoint', why: 'A costed recommendation nobody asked for, on a policy decision that is not yours. Measure, then let People Ops decide where the line goes.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-125': {
+    title: 'Report an empty finding without sounding empty-handed',
+    hint: "Lead with the assurance, not with the absence. Then give her the thing you did find.",
+    brief: "Tell Neha that nobody is out of band. This is the hardest note of the week: a true, valuable, week-long result that reads like you found nothing unless you write it properly. Under 160 words.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni', subject: 'Band compliance — the result', maxWords: 160,
+      prompt: 'The empty finding, framed as the assurance it is, with the real finding attached.',
+      rubric: [
+        { key: 'assurance', label: 'Nobody is outside their band — stated as a result', markers: ['no one|nobody|none|every|all|within band|inside|compliant|zero'], why: 'Lead with it. Written as an absence it reads as a wasted week; written as an assurance it is the thing she wanted to be able to say.' },
+        { key: 'verified', label: 'That you verified the check rather than trusting an empty table',
+          markers: ['verif|check|confirm|tested|proved|sense.check|ran|bottom quarter|control'],
+          why: 'An empty result and a broken query look identical. Saying you proved the machinery works is what turns "no rows" into "no exceptions".' },
+        { key: 'position', label: 'The real finding — where departments sit inside their bands', markers: ['37|thirty.seven|66|sixty.six|marketing|support|bottom|position|within|lower'], why: 'Compliant and unequal. This is the finding the band check could not produce and it is the one worth acting on.' },
+        { key: 'limit', label: 'What being in band does not guarantee', markers: ['wide|does not|doesn.t|not mean|only|still|says nothing|guarantee'], why: 'Our bands are wide enough to contain the whole disparity. Saying so stops "all compliant" being read as "all fine".' },
+        { key: 'hers', label: 'That the threshold decision is hers', markers: ['your|you|policy|decide|people ops|not for me|judgement'], why: 'Measuring is yours; setting the acceptable line is hers. Keeping that boundary clean is what makes the audit usable.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'pe-130': {
+    title: 'Managers against their own people',
+    hint: "Two conditional MAXes in one pass. LIKE '%Manager%' is crude and it is enough here.",
+    brief: "Pay compression is when the people below start catching the people above. Write ONE SQL SELECT returning, per department: the highest-paid manager's salary and the highest-paid non-manager's salary among CURRENT staff. Department order.",
+    referenceSql: "SELECT d.name AS department, MAX(CASE WHEN e.role LIKE '%Manager%' THEN e.salary END) AS top_manager, MAX(CASE WHEN e.role NOT LIKE '%Manager%' THEN e.salary END) AS top_ic FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY d.name",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'pe-131': {
+    title: 'The Engineering ladder, rung by rung',
+    hint: "One department, grouped by role. Read the top two rows carefully.",
+    brief: "One department stands out. Write ONE SQL SELECT returning, for CURRENT Engineering staff only: each role, how many hold it, and the lowest and highest salary in it. Highest-paid role first.",
+    referenceSql: "SELECT e.role, COUNT(*) AS people, MIN(e.salary) AS lowest, MAX(e.salary) AS highest FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND d.name = 'Engineering' GROUP BY e.role ORDER BY highest DESC",
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'pe-132': {
+    title: 'Is compression a problem',
+    hint: "Check whether it is one person or the whole rung. That difference decides whether it is an anomaly or a structure.",
+    brief: "Every Staff Engineer out-earns every Engineering Manager. Decide what to say about it — and notice this is a case where the obvious alarmed reaction is wrong.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'structural', correct: true, label: 'It is the whole rung, not one individual — so it is a structure, not an anomaly', why: 'Both Staff Engineers sit above all three Engineering Managers. A single overlap is a case; a clean separation is a design.' },
+        { key: 'deliberate', correct: true, label: 'It may well be deliberate, and the data cannot tell you', why: 'Plenty of engineering organisations pay senior ICs above line managers on purpose. Reporting it as a fault would assume an intention nobody has stated.' },
+        { key: 'report', correct: true, label: 'Report it as an observation and ask whether it is intended', why: 'The right register for a finding you cannot interpret. It gets the fact in front of the person who knows the answer.' },
+        { key: 'error', correct: false, label: 'Flag it as a pay error requiring correction', why: 'You do not know that. Recommending someone\'s pay be corrected on the strength of a role title comparison is a serious thing to be wrong about.' },
+        { key: 'ignore', correct: false, label: 'Leave it out — managers and ICs are different jobs, so the comparison is meaningless', why: 'The comparison is standard and Neha would expect it. Omitting an awkward finding because it is hard to interpret is the failure mode this whole audit exists to avoid.' },
+        { key: 'title', correct: false, label: 'Recommend renaming the Staff Engineer role to resolve it', why: 'Changing a label to make a number look different is the worst option on the list, and somebody will suggest it.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'pe-133': {
+    title: 'Chart where departments sit in band',
+    hint: "Departments are categories. Sorting them by value is what lets a reader see the gap at a glance.",
+    brief: "One slide for the comp cycle: average band position per department. This is the finding the audit actually has, so the chart has to make the gap obvious without a caption.",
+    tool: 'chart', datasetKey: 'hr_core',
+    chart: {
+      prompt: 'Average position within the salary band, by department.',
+      sourceSql: 'SELECT d.name AS department, ROUND(AVG((e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low))) AS avg_band_pct FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL GROUP BY d.name ORDER BY avg_band_pct',
+      columns: ['department', 'avg_band_pct'],
+      correct: { type: 'bar', x: 'department', y: 'avg_band_pct', sort: 'asc' },
+      whyRight: 'Categories compared by size, sorted so the departments sitting lowest — the ones the comp cycle has to decide about — come first.',
+      why: {
+        type: 'Departments are categories, not a sequence, so bars rather than a line.',
+        x: 'The department is the category.',
+        y: 'Average position in band, as a percentage.',
+        sort: 'Ascending, because the finding is who sits at the BOTTOM. Sorting descending would bury the point under the departments that are fine.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'pe-134': {
+    title: 'What it would cost to lift the bottom',
+    hint: "The cost per person is the target minus what they earn now. Sum it per department.",
+    brief: "Neha will ask what remediation costs before she asks whether to do it. Write ONE SQL SELECT returning, per department: how many CURRENT staff sit below a quarter of the way up their band, and what it would cost in total to lift each of them to that quarter mark. Most expensive first.",
+    referenceSql: 'SELECT d.name AS department, COUNT(*) AS people, SUM(d.band_low + (d.band_high - d.band_low) * 0.25 - e.salary) AS cost_to_lift FROM employees e JOIN departments d ON d.id = e.department_id WHERE e.exit_year IS NULL AND (e.salary - d.band_low) * 100.0 / (d.band_high - d.band_low) < 25 GROUP BY d.name ORDER BY cost_to_lift DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'pe-135': {
+    title: 'What Meera has written about your audit',
+    hint: "Three sentences. One is the opposite of what you found.",
+    brief: "Meera is drafting the People Ops newsletter item about the audit. It goes out under your analysis. Read it properly.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Newsletter item on the pay audit — OK to send?',
+        body: "Short piece for the People Ops update:\n\n\"An independent review of pay across the company found no employees paid outside their agreed salary bands. The review did identify that some departments sit lower within their bands than others, and People Ops will consider this in the coming compensation cycle. No pay inequities were found.\"",
+      },
+      prompt: 'Tick every sentence you would change or cut.',
+      options: [
+        { key: 'noineq', correct: true, label: 'The "no pay inequities were found" sentence', why: 'It contradicts the sentence before it. Thirty-seven percent against sixty-six is a disparity — compliant with the bands and not equitable, which is the entire point of the audit.' },
+        { key: 'independent', correct: true, label: 'Calling it an "independent review"', why: 'It was done in-house by an analyst reporting to the person commissioning it. That is fine and normal; calling it independent is a claim that would not survive scrutiny.' },
+        { key: 'noout', correct: false, label: 'The "no employees outside their bands" sentence', why: 'True, verified, and the assurance the audit exists to provide. Keep it.' },
+        { key: 'consider', correct: false, label: 'The "People Ops will consider this" sentence', why: 'Accurate about who owns the decision, which is exactly the boundary you have kept all week.' },
+        { key: 'numbers', correct: false, label: 'Ask her to add the specific percentages', why: 'A staff newsletter naming which department is paid lowest would land badly with the people in it. The detail belongs in the report, not the broadcast.' },
+        { key: 'pull', correct: false, label: 'Ask her to hold the whole item until after the comp cycle', why: 'Two sentences need fixing. Blocking a communication you could correct in one reply makes you the obstacle rather than the check.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+
+  'pe-140': {
+    title: 'How far the average sits below the top',
+    hint: "MAX minus AVG, per role. It answers a different question from MAX minus MIN and Neha will want both.",
+    brief: "A spread tells you the range; this tells you whether most people sit near the top or are dragged along behind one high earner. Write ONE SQL SELECT returning, for roles with at least three CURRENT holders: the role, the count, the average salary, and the gap between the highest and the average. Biggest gap first.",
+    referenceSql: 'SELECT role, COUNT(*) AS people, AVG(salary) AS avg_salary, MAX(salary) - AVG(salary) AS gap_to_top FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3 ORDER BY gap_to_top DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-141': {
+    title: 'Median against mean, by role, in Python',
+    // Flagged for rework: Neha accepts it and then wants it a different way.
+    rework: true,
+    hint: "SQLite has no median. Group the salaries by role yourself, sort each group, take the middle — and handle the even-length case.",
+    brief: "Every figure in this audit so far has been a mean, and a mean on seven people moves when one of them is unusual. In the notebook, compute for each role with at least three CURRENT holders: the mean salary, the median salary, and the headcount. Sort by the difference between mean and median, largest first. Assign a list of dicts with keys role, mean_salary, median_salary and people to `result`.",
+    tool: 'python', datasetKey: 'hr_core',
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const e of tables.employees) {
+        if (e.exit_year != null) continue;
+        if (!by.has(e.role)) by.set(e.role, []);
+        by.get(e.role).push(e.salary);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .filter(([, v]) => v.length >= 3)
+        .map(([role, v]) => ({
+          role,
+          mean_salary: v.reduce((a, b) => a + b, 0) / v.length,
+          median_salary: median(v),
+          people: v.length,
+        }))
+        .sort((a, b) => Math.abs(b.mean_salary - b.median_salary) - Math.abs(a.mean_salary - a.median_salary));
+    },
+  },
+
+  'pe-142': {
+    title: 'What the audit is entitled to conclude',
+    hint: "Separate the things you measured from the things you would like to be true.",
+    brief: "Before you write the report, fix exactly what this week established. Neha will quote whatever you write, so the boundary between measured and inferred has to be exact.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      prompt: 'Tick everything the audit can actually claim.',
+      options: [
+        { key: 'inband', correct: true, label: 'No current employee is paid outside their department\'s agreed band', why: 'Measured, verified against a control query, and the assurance the audit was commissioned to provide.' },
+        { key: 'position', correct: true, label: 'Departments sit at materially different heights within their bands', why: 'Thirty-seven percent against sixty-six, on nine and sixteen people. Measured and large.' },
+        { key: 'compression', correct: true, label: 'In Engineering, every Staff Engineer out-earns every Engineering Manager', why: 'A clean structural separation, not a single overlap. Reportable as an observation without claiming it is wrong.' },
+        { key: 'fair', correct: false, label: 'Pay at this company is fair', why: 'Fairness is a judgement about whether the differences are justified. You measured the differences; nothing in the data speaks to whether they are deserved.' },
+        { key: 'nogap', correct: false, label: 'There are no pay inequities', why: 'Contradicted by your own band-position finding. This is the exact sentence in Meera\'s draft that you asked her to cut.' },
+        { key: 'market', correct: false, label: 'Our salaries are competitive', why: 'Requires market data that was ruled out on Monday. It is also the claim people most want the audit to make, which is why it has to be refused explicitly.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-143': {
+    title: 'Who is furthest below their own role average',
+    hint: "A correlated subquery gets each person's role average onto their own row.",
+    brief: "The last piece: individuals, not departments. Write ONE SQL SELECT returning each CURRENT employee whose salary is BELOW the average for their own role — name, role, salary, the role average, and the gap. Biggest gap first. Restrict to roles with at least three holders.",
+    referenceSql: 'SELECT e.name, e.role, e.salary, (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) AS role_avg, (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) - e.salary AS below_by FROM employees e WHERE e.exit_year IS NULL AND e.role IN (SELECT role FROM employees WHERE exit_year IS NULL GROUP BY role HAVING COUNT(*) >= 3) AND e.salary < (SELECT AVG(x.salary) FROM employees x WHERE x.role = e.role AND x.exit_year IS NULL) ORDER BY below_by DESC',
+    datasetKey: 'hr_core', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-144': {
+    title: 'Neha wants a headline',
+    hint: "She is not asking you to soften the finding. She is asking for a sentence, and the honest one has two halves.",
+    brief: "An hour before her comp-cycle prep, Neha asks for the line. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'hr_core',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Neha Kulkarni', subject: 'One line for the comp cycle',
+        body: "I have the full report and I have read it. What I need now is the sentence I open with.\n\nIf the honest answer is that we are fine, say that — I will take good news. If it is not, I would rather know today than in the meeting.",
+      },
+      prompt: 'Which openings are honest and useful?',
+      options: [
+        { key: 'both', correct: true, label: '"Everyone is inside their band, and two departments sit near the bottom of theirs"', why: 'Both halves, in one sentence. The assurance she can give, and the thing she has to decide about.' },
+        { key: 'compliant', correct: true, label: '"No band breaches — the question for the comp cycle is where inside the bands people sit"', why: 'Same content, framed as the decision she actually owns. Hands her the agenda rather than a verdict.' },
+        { key: 'cost', correct: true, label: '"Nobody is out of band; lifting the fifteen lowest to a quarter of band would cost about eight lakh"', why: 'Assurance plus a costed option. She is going into a budget conversation and this is the number she will be asked for.' },
+        { key: 'fine', correct: false, label: '"We are fine — no issues found."', why: 'She offered to take good news, which is exactly when it is tempting. Your own band-position finding contradicts it, and she would be repeating it in a room where somebody has the same data.' },
+        { key: 'serious', correct: false, label: '"We have a serious pay equity problem."', why: 'Unfounded in the other direction. Everyone is compliant; "serious problem" is an adjective the data does not support and would start an expensive conversation.' },
+        { key: 'more', correct: false, label: '"I would need market data before I could say anything."', why: 'You measured plenty without it. Refusing to summarise a week of real findings because one dimension was out of scope wastes the work.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'pe-145': {
+    title: 'The audit report',
+    hint: "Assurance first, then the finding, then the cost, then the limits. The limits are what make the rest believable.",
+    brief: "The deliverable. It goes into the comp cycle pack and Neha will defend the method without you in the room, so the method has to be in the document.",
+    tool: 'writeup', datasetKey: 'hr_core',
+    writeup: {
+      to: 'Neha Kulkarni and the compensation review', subject: 'Pay equity audit — findings', maxWords: 220,
+      prompt: 'The report. What you checked, what you found, what it would cost, and what you did not look at.',
+      rubric: [
+        { key: 'assurance', label: 'Nobody is outside their band', markers: ['no one|nobody|none|all|every|within|inside|compliant|zero|no breach'], why: 'The assurance the audit was commissioned for. It leads.' },
+        { key: 'finding', label: 'The band-position disparity', markers: ['37|thirty.seven|66|sixty.six|marketing|support|bottom|position|lower|within their band'], why: 'Compliant and unequal. The finding the band check could not produce.' },
+        { key: 'method', label: 'The method — the role-size floor and the coverage it gives', markers: ['three|3 |floor|threshold|eleven|11|seven|7 |minimum|at least'], why: 'She has to defend this. A threshold that appears only in your head is the first thing a reviewer finds.' },
+        { key: 'compression', label: 'The Engineering compression, as an observation not a fault', markers: ['staff engineer|compression|manager|out.earn|above|engineering'], why: 'Raise it, do not rule on it. You cannot tell from the data whether it is deliberate.' },
+        { key: 'cost', label: 'What remediation would cost', markers: ['cost|lakh|\\d|lift|remediat|eight|805|quarter'], why: 'She is going into a budget conversation. A finding without a price is a problem rather than a decision.' },
+        { key: 'limits', label: 'What the audit did NOT cover', markers: ['market|benchmark|gender|performance|not|outside|did not|cannot'], why: 'Volunteering the boundary before someone finds it is what makes everything inside it credible.' },
+      ],
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
   // ---- Senior track -----------------------------------------------------------------
   // The user was explicit that junior and senior differ by PROJECT, not by the same
   // brief written vaguer. So these are different questions, not harder wording: they
   // ask for a rate rather than a total, make the learner decide what to exclude, and
   // end with a recommendation the data does not hand them.
+  'sb-130': {
+    title: 'What each signing year is worth now',
+    hint: "Group by the year they signed. Watch the client counts — some years are one account.",
+    brief: "If small accounts grow into large ones, the Starter question answers itself. Write ONE SQL SELECT returning, per signing year across ACTIVE clients: how many clients, their total revenue, and the average. Oldest year first.",
+    referenceSql: "SELECT c.signed_year, COUNT(*) AS clients, SUM(c.mrr) AS mrr, ROUND(AVG(c.mrr)) AS avg_mrr FROM clients c WHERE c.status = 'active' GROUP BY c.signed_year ORDER BY c.signed_year",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'sb-131': {
+    title: 'How the CSM load is distributed',
+    hint: "Group by the CSM. Read the result and then decide whether there is anything to report.",
+    brief: "Customer Success wants to know whether any CSM is carrying an unfair share. Write ONE SQL SELECT returning, per CSM across ACTIVE clients: how many accounts they hold and the total revenue on them. Most accounts first, then most revenue.",
+    referenceSql: "SELECT csm_name, COUNT(*) AS accounts, SUM(mrr) AS mrr FROM clients WHERE status = 'active' GROUP BY csm_name ORDER BY accounts DESC, mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'medium', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'sb-132': {
+    title: 'Reporting that there is nothing to report',
+    hint: "Fifteen CSMs, fifteen accounts. Count how many accounts each one holds before deciding what to say.",
+    brief: "The CSM load query came back with every CSM holding exactly one account. Priya is expecting a finding about workload balance. Decide what to tell her.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'uniform', correct: true, label: 'Account load is perfectly uniform — one each — so there is no imbalance to find', why: 'A real answer to the question asked. It is not a failed analysis, it is a negative result and it took one query to establish.' },
+        { key: 'revenue', correct: true, label: 'Revenue per CSM is not uniform, and that is the question worth asking instead', why: 'One account at 386,000 and one at 15,000 are very different jobs. The count hides a spread the question was really reaching for.' },
+        { key: 'quick', correct: true, label: 'Say it in one line and move on', why: 'A non-finding deserves a sentence, not a section. Spending a page proving nothing is happening is how a report loses the reader before the real findings.' },
+        { key: 'fail', correct: false, label: 'Report that the analysis was inconclusive', why: 'It was entirely conclusive. "Inconclusive" describes a failure to establish something, not a clean finding of no difference.' },
+        { key: 'drop', correct: false, label: 'Leave it out — nothing interesting came back', why: 'She asked. Silently dropping a question a stakeholder raised means she asks again, or assumes you found something awkward.' },
+        { key: 'stretch', correct: false, label: 'Break it down by tier and tenure until a difference appears', why: 'Slicing until something looks significant is how false findings are manufactured, and with fifteen accounts every slice is one or two people.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.3, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sb-133': {
+    title: 'Chart the concentration',
+    hint: "Fifteen accounts, one measure. Sorted, so the reader can see how fast it falls away.",
+    brief: "One slide showing each active account's share of total revenue. The point is how quickly it drops after the top few, so the ordering does all the work.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Each active account as a share of total revenue.',
+      sourceSql: "SELECT company, ROUND(mrr * 100.0 / (SELECT SUM(mrr) FROM clients WHERE status = 'active'), 1) AS pct_of_book FROM clients WHERE status = 'active' ORDER BY pct_of_book DESC",
+      columns: ['company', 'pct_of_book'],
+      correct: { type: 'bar', x: 'company', y: 'pct_of_book', sort: 'desc' },
+      whyRight: 'Categories compared by size, sorted descending so the concentration in the top few accounts is visible without reading a single label.',
+      why: {
+        type: 'Companies are categories. Bars compare them; a line would suggest a sequence between unrelated accounts.',
+        x: 'The company is the category.',
+        y: 'Share of total revenue, as a percentage.',
+        sort: 'Descending. The shape of the fall-off IS the finding — unsorted, the concentration is invisible.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sb-134': {
+    title: 'The Starter tier, account by account',
+    hint: "Five rows. Look at how much of the tier's load sits on one of them.",
+    brief: "Your recommendation is about a tier, so look at the accounts inside it individually. Write ONE SQL SELECT returning each ACTIVE Starter client: company, revenue, ticket count, incident count, and tickets per hundred thousand of revenue. Heaviest load per rupee first.",
+    referenceSql: "SELECT c.company, c.mrr, (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) AS tickets, (SELECT COUNT(*) FROM incidents i WHERE i.client_id = c.id) AS incidents, ROUND((SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c WHERE c.status = 'active' AND c.tier = 'Starter' ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sb-135': {
+    title: 'What Finance has written from your numbers',
+    hint: "Three sentences. One converts your proxy into rupees, which you never did.",
+    brief: "Diya has drafted the summary for the pricing review using your analysis. It carries your name as the source. Read it properly.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Draft for the pricing review — check before I circulate',
+        body: "Here is what I have:\n\n\"Analysis shows Starter accounts generate a support burden comparable to Enterprise accounts while contributing 5% of revenue. At an estimated 4,000 per ticket, the Starter tier costs us roughly 92,000 a month to serve against 114,000 of revenue. Support load per account is flat across all three tiers. We recommend closing the Starter tier at renewal.\"",
+      },
+      prompt: 'Tick every sentence you would change or cut.',
+      options: [
+        { key: 'cost', correct: true, label: 'The "estimated 4,000 per ticket" costing', why: 'That number is hers, not yours, and it converts a relative proxy into an absolute rupee claim — the exact thing you said on Monday the analysis could not do.' },
+        { key: 'recommend', correct: true, label: 'The recommendation to close the tier', why: 'Five accounts, no view of what they grow into, and no churn or win-back cost. Your analysis supports a pricing question, not a closure decision.' },
+        { key: 'five', correct: true, label: 'The "5% of revenue" figure', why: 'Starter is 114,000 of 2,073,000 — about 5.5%, and it was 99,000 in the version you first sent. Worth checking which number she used before it is circulated.' },
+        { key: 'flat', correct: false, label: 'The "support load per account is flat" sentence', why: 'Measured, correct, and the strongest finding in the week. Keep it.' },
+        { key: 'burden', correct: false, label: 'The "comparable support burden" sentence', why: 'Also supported — 4.6 tickets against 5.0. It is the sentence the whole review turns on.' },
+        { key: 'all', correct: false, label: 'Ask her to remove all the figures and describe it qualitatively', why: 'The figures are the only checkable part. Two claims need fixing, not the existence of numbers.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sb-140': {
+    title: 'What the book looks like without Starter',
+    hint: "Compare the totals with and without the tier, in one row.",
+    brief: "Before recommending anything, size what would actually be lost. Write ONE SQL SELECT returning, in a single row: total active revenue, total active clients, revenue excluding Starter, clients excluding Starter, and the percentage of revenue Starter represents.",
+    referenceSql: "SELECT SUM(mrr) AS total_mrr, COUNT(*) AS total_clients, SUM(CASE WHEN tier != 'Starter' THEN mrr ELSE 0 END) AS mrr_without_starter, SUM(CASE WHEN tier != 'Starter' THEN 1 ELSE 0 END) AS clients_without_starter, ROUND(SUM(CASE WHEN tier = 'Starter' THEN mrr ELSE 0 END) * 100.0 / SUM(mrr), 1) AS starter_pct FROM clients WHERE status = 'active'",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-141': {
+    title: 'Load per account, mean against median, in Python',
+    // Flagged for rework: Diya accepts it and then wants it a different way.
+    rework: true,
+    hint: "Group the ticket counts by tier yourself, then take both the mean and the middle value. One tier will disagree with itself.",
+    brief: "Every tier figure this week has been a mean over four to six accounts, and one Starter account is twice as heavy as any other. In the notebook, compute for each tier across ACTIVE clients: the mean tickets per account, the median tickets per account, and the number of accounts. Sort by median descending. Assign a list of dicts with keys tier, mean_tickets, median_tickets and clients to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const active = tables.clients.filter((c) => c.status === 'active');
+      const counts = new Map();
+      for (const t of tables.tickets) counts.set(t.client_id, (counts.get(t.client_id) || 0) + 1);
+      const by = new Map();
+      for (const c of active) {
+        if (!by.has(c.tier)) by.set(c.tier, []);
+        by.get(c.tier).push(counts.get(c.id) || 0);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([tier, v]) => ({
+          tier,
+          mean_tickets: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 100) / 100,
+          median_tickets: median(v),
+          clients: v.length,
+        }))
+        .sort((a, b) => b.median_tickets - a.median_tickets);
+    },
+  },
+
+  'sb-142': {
+    title: 'What to actually recommend about Starter',
+    hint: "Closing a tier and repricing a tier are different decisions with different evidence requirements. Work out which one you have evidence for.",
+    brief: "Diya wants a recommendation. Decide what your week actually supports — and notice that the dramatic option is the one it does not.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick every recommendation you could defend.',
+      options: [
+        { key: 'reprice', correct: true, label: 'Reprice the tier — the ratio is defensible evidence about price, not about existence', why: 'You have measured load against revenue. That is directly a pricing input, and repricing is reversible in a way that closure is not.' },
+        { key: 'selfserve', correct: true, label: 'Reduce the support entitlement at Starter rather than the account count', why: 'It acts on the side you actually measured. If the cost is contact volume, changing what Starter includes addresses it without losing the accounts.' },
+        { key: 'watch', correct: true, label: 'Name the one heavy account and handle it separately from the tier', why: 'Orchid Pharma is roughly double the next per rupee. A single-account problem does not need a tier-wide policy.' },
+        { key: 'close', correct: false, label: 'Close the tier at renewal', why: 'Five accounts, no data on what they grow into, no churn or acquisition cost, and it is irreversible. The evidence is about pricing and the decision would be about strategy.' },
+        { key: 'nothing', correct: false, label: 'Recommend nothing — the sample is too small to act on', why: 'A thirteenfold revenue gap against flat support load is a real signal. Refusing to recommend anything wastes a genuine finding.' },
+        { key: 'raise', correct: false, label: 'Raise Starter prices to match the Enterprise revenue-per-ticket ratio', why: 'That would be roughly a fourteenfold increase. Following a ratio to its arithmetic conclusion without asking whether anyone would pay it is not a recommendation.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-143': {
+    title: 'Which accounts would a price rise reach',
+    hint: "Starter accounts with above-median load. Five rows in, fewer out.",
+    brief: "A repricing lands on specific customers, so name them. Write ONE SQL SELECT returning each ACTIVE Starter client whose tickets per hundred thousand of revenue is ABOVE the Starter average, with their revenue, tickets and that ratio. Heaviest first.",
+    referenceSql: "SELECT c.company, c.mrr, (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) AS tickets, ROUND((SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c WHERE c.status = 'active' AND c.tier = 'Starter' AND (SELECT COUNT(*) FROM tickets t WHERE t.client_id = c.id) * 100000.0 / c.mrr > (SELECT AVG((SELECT COUNT(*) FROM tickets t2 WHERE t2.client_id = x.id) * 100000.0 / x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = 'Starter') ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.85, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-144': {
+    title: 'Diya wants the closure recommendation',
+    hint: "She is asking you to sign off a strategic decision on pricing evidence. Work out what you can give her instead.",
+    brief: "An hour before the pricing review, Diya pushes for the stronger version. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Can we just say close it?',
+        body: "The numbers are stark and everybody in that room already believes Starter is a drag. If your analysis says close it, we close it and we save ourselves a year of arguing.\n\nDoes it say that?",
+      },
+      prompt: 'Which responses are honest and useful?',
+      options: [
+        { key: 'no', correct: true, label: '"It says the pricing is wrong. It does not say the tier should not exist."', why: 'Precise about what was measured. One sentence, and it draws the line exactly where the evidence does.' },
+        { key: 'missing', correct: true, label: '"Closure needs what Starter accounts become — and I have no data on that"', why: 'Names the specific gap rather than being vague about rigour. If Starter accounts become Growth accounts, closure destroys the pipeline.' },
+        { key: 'offer', correct: true, label: '"I can give you a repricing case today that is fully supported"', why: 'Turns a refusal into a deliverable. She gets something for the room and nobody has overstated anything.' },
+        { key: 'yes', correct: false, label: '"Yes — the ratio is overwhelming."', why: 'A fourteenfold ratio is overwhelming evidence about price. It is not evidence about strategy, and the room will not preserve that distinction once you have blurred it.' },
+        { key: 'room', correct: false, label: '"If the room already believes it, my analysis supports the direction."', why: 'Analysis that agrees with the prevailing view because it is the prevailing view is worth nothing — and this is the exact moment that happens.' },
+        { key: 'silent', correct: false, label: 'Give her the numbers and let her draw the conclusion', why: 'She will draw the one she already has, and it will be attributed to you. Declining to interpret your own work is not neutrality here.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sb-145': {
+    title: 'The account economics review',
+    hint: "The proxy first, then the finding, then what you are and are not recommending.",
+    brief: "The deliverable. It goes into the pricing review and Diya will defend the method without you, so the proxy and its limits have to be in the document rather than in your head.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra and the pricing review', subject: 'Account economics — findings and recommendation', maxWords: 220,
+      prompt: 'The proxy, the finding, the recommendation, and the decision you are explicitly not making.',
+      rubric: [
+        { key: 'proxy', label: 'That cost is proxied by support volume', markers: ['proxy|ticket|incident|volume|no cost|not a cost|stand.in'], why: 'The load-bearing assumption. It goes first, not in a footnote, because everything after it depends on it.' },
+        { key: 'finding', label: 'Flat support load against thirteenfold revenue variation', markers: ['flat|similar|same|4\\.6|5|per account', 'thirteen|13|14|310|23|times|gap'], why: 'The finding of the week, and the sentence that shapes the pricing decision.' },
+        { key: 'recommend', label: 'A recommendation about pricing', markers: ['repric|price|entitlement|support|tier|recommend|propose|adjust'], why: 'She needs something to take into the room. A finding with no recommendation gets one supplied by somebody else.' },
+        { key: 'not', label: 'That you are NOT recommending closure, and why', markers: ['not|closure|close|do not|cannot|strategy|grow|become|churn|pipeline'], why: 'The distinction the whole week turns on. Left out, it is the conclusion the room will reach anyway.' },
+        { key: 'sample', label: 'That the tier is five accounts and one is unusually heavy', markers: ['five|5 |orchid|one account|single|outlier|heavier|double'], why: 'A tier-wide recommendation resting on five accounts has to say so before somebody else notices.' },
+        { key: 'correction', label: 'The corrected Starter revenue figure', markers: ['114|correct'], why: 'You sent a wrong number on Tuesday. The final document is where the right one has to appear.' },
+      ],
+    },
+    estHours: 0.85, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Senior project 1: Platform Reliability Review, days 2-5 ----------------------
+  //
+  // Senior questions, not harder junior ones: rates rather than totals, the learner
+  // decides what to exclude, and the recommendation is not in the data. The spine:
+  //
+  //   Tuesday   three measures of "worst service" that name three different services
+  //   Wednesday the wobble: the fastest-looking service is fastest because its hard
+  //             incidents are still open. MTTR on closed incidents is survivorship bias.
+  //   Thursday  blast radius and backlog -- and the client with the biggest backlog had
+  //             no incidents at all
+  //   Friday    where a quarter of engineering effort should go, which the data will not
+  //             tell you
+  //
+  // Every figure measured. api-gateway costs 326 hours; billing-sync's 62-hour average is
+  // one closed incident; auth-service has three of seven still open.
+
+  'sa-020': {
+    title: 'What the outages actually cost in engineering time',
+    hint: "SUM and AVG over the same group answer different questions. One is a budget, the other is an experience.",
+    brief: "Arjun plans engineering effort in weeks, not incidents. Write ONE SQL SELECT returning, per service: how many CLOSED incidents, the total hours spent on them, and the average hours per incident. Most total hours first. Open incidents have no resolution time, so they cannot be part of either figure.",
+    referenceSql: 'SELECT service, COUNT(*) AS closed, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours, ROUND(AVG((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY total_hours DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'sa-021': {
+    title: 'Three measures, three different answers',
+    hint: "Line up frequency, average duration and total hours. Then check how many incidents each average is built on.",
+    brief: "You now have three ways to say which service is worst, and they name three different services. Work out what that means before anyone sees a ranking.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'differ', correct: true, label: 'Frequency, average duration and total time each name a different service', why: 'report-builder breaks most often, billing-sync takes longest per incident, api-gateway consumes the most engineering time overall. The disagreement is the finding.' },
+        { key: 'sample', correct: true, label: "billing-sync's average rests on a single closed incident", why: 'Three incidents, two still open, one closed. A 62-hour average from one data point is a fact about that incident, not about the service.' },
+        { key: 'question', correct: true, label: 'Which measure is right depends on the decision being made', why: 'Reducing customer disruption points at frequency. Freeing engineering capacity points at total hours. Nobody can pick for you without knowing which one Arjun is buying.' },
+        { key: 'worst', correct: false, label: 'One service is objectively the worst', why: 'Three measures, three answers. Asserting one ranking as the truth hides the choice you quietly made to get there.' },
+        { key: 'avg', correct: false, label: 'Average hours per incident is the fairest measure', why: 'It is the one most distorted by small samples here, and it is the measure that makes the service with two unresolved incidents look worst on the strength of one.' },
+        { key: 'combine', correct: false, label: 'Combine the three into a single reliability score', why: 'A composite whose weights you chose, presented as one number, is the fastest way to make an arbitrary decision look objective.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-022': {
+    title: 'How much of each service is unfinished',
+    hint: "Count open and closed in the same pass. The service with the fewest incidents has the worst ratio.",
+    brief: "An average of closed incidents says nothing about the ones still running. Write ONE SQL SELECT returning, per service: total incidents, how many are still open, and how many are closed. Most still open first.",
+    referenceSql: 'SELECT service, COUNT(*) AS incidents, SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS still_open, COUNT(*) - SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS closed FROM incidents GROUP BY service ORDER BY still_open DESC, incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sa-023': {
+    title: 'The share still open, by service',
+    hint: "A count of open incidents favours the service with most incidents. A share does not.",
+    brief: "Two open incidents out of three is a different problem from two out of twenty. Write ONE SQL SELECT returning, per service, the PERCENTAGE of its incidents still unresolved and how many incidents that is over. Worst share first.",
+    referenceSql: 'SELECT service, ROUND(SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS pct_open, COUNT(*) AS incidents FROM incidents GROUP BY service ORDER BY pct_open DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-024': {
+    title: 'Chart the engineering cost',
+    hint: "Services are categories. Sort them so the reader can see where the time goes without reading the labels.",
+    brief: "One slide for the engineering planning session: total hours spent per service. Services have no natural order, which decides the chart type and the sorting.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Total engineering hours spent per service.',
+      sourceSql: 'SELECT service, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY total_hours DESC',
+      columns: ['service', 'total_hours'],
+      correct: { type: 'bar', x: 'service', y: 'total_hours', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted so the service consuming the most engineering time is first.',
+      why: {
+        type: 'Services are categories, not a sequence. A line between api-gateway and auth-service would imply a progression that does not exist.',
+        x: 'The service is the category.',
+        y: 'Total hours is the cost being compared.',
+        sort: 'Nothing orders services for you, so sort by size — and here the ranking is the entire point of the slide.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sa-025': {
+    title: 'Tell Arjun which measure you are using',
+    hint: "He is planning capacity. Say which service costs him the most time, and name the measure that makes it so.",
+    brief: "Arjun is allocating next quarter's reliability work. Send him the picture. The difficult part is that the three measures disagree and he needs one answer with the reasoning visible. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao', subject: 'Reliability — which service actually costs us', maxWords: 160,
+      prompt: 'One ranking, the measure behind it, and the two it disagrees with.',
+      rubric: [
+        { key: 'answer', label: 'Which service consumes the most engineering time', markers: ['api.gateway|api gateway|326|gateway'], why: 'The number he is buying with. Lead with it.' },
+        { key: 'measure', label: 'Which measure that is', markers: ['total|sum|hours|cumulative|overall|aggregate'], why: 'Total hours, not frequency and not average. He has to know which question you answered.' },
+        { key: 'disagree', label: 'That the other measures name other services', markers: ['report.builder|billing.sync|most often|frequen|average|longest|different'], why: 'Volunteering the disagreement is what stops somebody arriving with a different ranking and treating yours as wrong.' },
+        { key: 'small', label: "That billing-sync's average is one incident", markers: ['one|1 |single|two open|small|sample'], why: 'Otherwise the slowest-looking service gets funded on the strength of a single data point.' },
+        { key: 'open', label: 'That these figures cover closed incidents only', markers: ['closed|open|unresolved|exclud|seven|7 '], why: 'A number that silently excludes the unfinished work is the one he will be caught by.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-030': {
+    title: 'What is still running, oldest first',
+    hint: "No aggregate. Just the open ones, in the order they started, and read the top row carefully.",
+    brief: "Before trusting any average, look at what it left out. Write ONE SQL SELECT listing every UNRESOLVED incident with its service, severity, start time and rows corrupted, oldest first.",
+    referenceSql: 'SELECT service, severity, started_at, rows_corrupted FROM incidents WHERE resolved_at IS NULL ORDER BY started_at',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 4, day: 3, difficulty: 'easy',
+  },
+
+  'sa-031': {
+    title: 'Why the fastest service is not the fastest',
+    hint: "Look at auth-service in two tables at once: its average, and how many of its incidents never closed.",
+    brief: "auth-service has the lowest average resolution time of any service. It also has three of its seven incidents still open. Work out what that combination means.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'survivor', correct: true, label: 'Its average only contains the incidents that finished — the hard ones are still running', why: 'Survivorship bias, exactly. The incidents that would have raised the average are the ones excluded from it, because they have not ended yet.' },
+        { key: 'systematic', correct: true, label: 'This biases every service with open incidents in the same direction', why: 'Not a quirk of auth-service. Any MTTR computed on closed incidents flatters whoever has the most unfinished work, which is the opposite of what a reliability metric should do.' },
+        { key: 'report', correct: true, label: 'The open count has to sit beside the average wherever it is published', why: 'The two numbers are only meaningful together. An MTTR with no open count next to it is an invitation to be misread.' },
+        { key: 'good', correct: false, label: 'auth-service is our most reliable service', why: 'It has the worst unresolved ratio after billing-sync. The measure that makes it look best is the one distorted by that fact.' },
+        { key: 'exclude', correct: false, label: 'Exclude services with open incidents from the comparison', why: 'That removes four of five services. A method that discards most of your data to stay clean has stopped answering the question.' },
+        { key: 'guess', correct: false, label: 'Estimate resolution times for the open incidents so they can be included', why: 'Inventing the values that would change your conclusion is the most dangerous option on this list, and it is the one that sounds most diligent.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-032': {
+    title: 'Does severity predict duration at all',
+    hint: "Min and max per severity. Compare the ranges rather than the averages.",
+    brief: "Engineering triages by severity, so it is worth knowing whether severity says anything about how long something will take. Write ONE SQL SELECT returning, per severity across CLOSED incidents: how many, the fastest resolution in hours and the slowest. Severity order.",
+    referenceSql: 'SELECT severity, COUNT(*) AS closed, ROUND(MIN((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS fastest, ROUND(MAX((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS slowest FROM incidents WHERE resolved_at IS NOT NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-033': {
+    title: 'The SEV1 that has been open since May',
+    hint: "You have the list. Decide what you are entitled to conclude from one row, and what you would need to ask.",
+    brief: "The oldest unresolved incident is a billing-sync SEV1 that started in May. Nobody has mentioned it. Decide how to handle it.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'raise', correct: true, label: 'Raise it directly with Arjun and Sneha rather than only putting it in the report', why: 'A SEV1 open for months is either a live problem nobody owns or a record that was never closed. Both need a person, and a line in a Friday deck is not a person.' },
+        { key: 'ask', correct: true, label: 'Ask whether it is genuinely open or was simply never closed off', why: 'The data cannot distinguish those and they mean completely different things. This is a question, not a finding, until somebody answers it.' },
+        { key: 'flag', correct: true, label: 'Note that stale records would distort every open-incident figure you have produced', why: 'If records go unclosed, your unresolved percentages measure record-keeping rather than reliability — and that caveat belongs in the report either way.' },
+        { key: 'assume', correct: false, label: 'Report it as a four-month SEV1 outage', why: 'You do not know that. A SEV1 genuinely unresolved for four months would be a company-wide emergency, which is itself evidence the record is probably stale.' },
+        { key: 'ignore', correct: false, label: 'Leave it out — one row is not a pattern', why: 'It is a SEV1. Severity exists precisely so single rows get attention, and this is the one thing on your screen that might need action today.' },
+        { key: 'close', correct: false, label: 'Treat it as closed for the purposes of the analysis', why: 'Editing an inconvenient record to make the numbers behave is the point at which an analysis stops being trustworthy.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-034': {
+    title: 'Tell Arjun the MTTR is flattering him',
+    hint: "You are undermining a metric his team reports upward. Give him the replacement in the same breath.",
+    brief: "Engineering reports mean time to resolve as a headline metric. You have just established it is biased in favour of whoever has the most unfinished work. Tell Arjun. Under 170 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao', subject: 'MTTR — a problem with how we are computing it', maxWords: 170,
+      prompt: 'The bias, why it matters, and what to report instead.',
+      rubric: [
+        { key: 'bias', label: 'That MTTR excludes unresolved incidents', markers: ['open|unresolved|exclud|closed only|still running|seven|7 '], why: 'The mechanism. Without it this is an assertion about a metric he trusts.' },
+        { key: 'direction', label: 'Which way the bias runs', markers: ['flatter|better|lower|down|understate|favour|improve'], why: 'It makes things look better, not worse. That is what makes it dangerous rather than merely imprecise.' },
+        { key: 'example', label: 'auth-service as the concrete case', markers: ['auth|fastest|lowest|three|3 of|42'], why: 'The service that looks best on MTTR has the second-worst unresolved ratio. One example beats a paragraph of theory.' },
+        { key: 'fix', label: 'What to report alongside it', markers: ['open|unresolved|count|share|percent|beside|alongside|both'], why: 'Never take away a metric without offering the pair that makes it honest. He has to report something on Monday.' },
+        { key: 'tone', label: 'Framed as a measurement problem, not a team failing', markers: ['we|our|metric|comput|method|standard|common|not|nobody'], why: 'Almost every company computes MTTR this way. Saying so is both true and the difference between being heard and being resented.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
   'sa-001': {
     title: 'Time to resolve, by service',
     // What a colleague who knows you would point at — the trap, never the answer.
@@ -1818,6 +3336,450 @@ const TASKS = {
     day: 1,
     difficulty: 'hard',
   },
+  'sa-040': {
+    title: 'Blast radius per service',
+    hint: "COUNT(DISTINCT client_id) is how many were touched. The ratio tells you whether it hits everyone once or a few repeatedly.",
+    brief: "Two services with nine incidents each are different problems if one hit seven clients and the other hit two. Write ONE SQL SELECT returning, per service: how many distinct clients were affected, how many incidents, and incidents per affected client. Most clients first.",
+    referenceSql: 'SELECT service, COUNT(DISTINCT client_id) AS clients_hit, COUNT(*) AS incidents, ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT client_id), 2) AS incidents_per_client FROM incidents GROUP BY service ORDER BY clients_hit DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'sa-041': {
+    title: 'Revenue exposed to each service',
+    hint: "SUM(DISTINCT mrr) across a join, or the join multiplies each client's revenue by their incident count.",
+    brief: "Arjun is arguing for headcount and revenue is the language that works. Write ONE SQL SELECT returning, per service: how many distinct ACTIVE clients it has affected and the total monthly revenue of those clients. Most revenue first. Watch the join.",
+    referenceSql: "SELECT i.service, COUNT(DISTINCT i.client_id) AS clients, SUM(DISTINCT c.mrr) AS mrr_touched FROM incidents i JOIN clients c ON c.id = i.client_id WHERE c.status = 'active' GROUP BY i.service ORDER BY mrr_touched DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-042': {
+    title: 'The support backlog, by priority',
+    hint: "Three conditional counts in one pass. Compare where the volume is against where the urgency is.",
+    brief: "Incidents are our view of reliability; tickets are the clients' view. Write ONE SQL SELECT returning, per ticket priority: how many are open, how many pending and how many resolved. Most open first.",
+    referenceSql: "SELECT t.priority, SUM(CASE WHEN t.status = 'open' THEN 1 ELSE 0 END) AS open_now, SUM(CASE WHEN t.status = 'pending' THEN 1 ELSE 0 END) AS pending, SUM(CASE WHEN t.status = 'resolved' THEN 1 ELSE 0 END) AS resolved FROM tickets t GROUP BY t.priority ORDER BY open_now DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sa-043': {
+    title: 'Who is carrying the backlog',
+    hint: "Open and pending are both unfinished. One of the names at the top will surprise you if you remember the incident list.",
+    brief: "Write ONE SQL SELECT returning each ACTIVE client with unfinished tickets — open or pending — with their tier, revenue and how many. Biggest backlog first, then biggest client. Then compare the top rows against who actually had incidents.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS backlog FROM clients c JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr HAVING backlog > 0 ORDER BY backlog DESC, c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-044': {
+    title: 'The client with a backlog and no incidents',
+    hint: "Berylline Retail is joint top of the backlog and appears nowhere in the incident list. Work out what that can mean.",
+    brief: "Our largest Enterprise account by revenue has the joint-largest support backlog and has not had a single incident all quarter. Decide what that tells you.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'different', correct: true, label: 'Tickets and incidents measure different things and do not have to agree', why: 'An incident is something we broke. A ticket is a client asking for something. An account can be full of questions, requests and confusion without anything having failed.' },
+        { key: 'usage', correct: true, label: 'A big backlog with no incidents may mean heavy usage, or a product they find hard', why: 'Both are plausible, neither is in this data, and both are worth putting to their CSM as a question.' },
+        { key: 'reliability', correct: true, label: 'A reliability programme would do nothing for this account', why: 'The single most useful sentence here. It stops reliability investment being justified by a backlog that reliability cannot touch.' },
+        { key: 'fine', correct: false, label: 'No incidents means the account is healthy', why: 'They have the joint-largest backlog in the book. Zero incidents and zero problems are not the same measurement.' },
+        { key: 'merge', correct: false, label: 'Combine tickets and incidents into one "client pain" score', why: 'It would put an account with five questions alongside one with half a million corrupted rows and lose the distinction that makes either actionable.' },
+        { key: 'ignore', correct: false, label: 'Leave tickets out — this is a reliability review', why: 'The backlog is the clients\' experience of the platform, and Arjun will be asked about it. Scoping it out because it complicates the story is the wrong reason.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-045': {
+    title: 'Chart the unresolved share',
+    hint: "Services are categories, and the finding is who is worst — so put worst first.",
+    brief: "One slide: the percentage of each service's incidents still unresolved. This is the measure the MTTR hides, so the chart has to make it obvious.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Share of incidents still unresolved, by service.',
+      sourceSql: 'SELECT service, ROUND(SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS pct_open FROM incidents GROUP BY service ORDER BY pct_open DESC',
+      columns: ['service', 'pct_open'],
+      correct: { type: 'bar', x: 'service', y: 'pct_open', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size, sorted worst first because the point of the slide is which services are not finishing their work.',
+      why: {
+        type: 'Services are categories. Bars compare them; a line would invent a progression between them.',
+        x: 'The service is the category.',
+        y: 'The share unresolved, as a percentage.',
+        sort: 'Descending. The reader is looking for the problem, and it should be the first thing under their eye.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sa-050': {
+    title: 'Hours per affected client',
+    hint: "Total hours over distinct clients. It answers a question neither of the previous rankings did.",
+    brief: "One more angle before the recommendation. Write ONE SQL SELECT returning, per service across CLOSED incidents: total hours, distinct clients affected, and hours per affected client. Highest hours per client first.",
+    referenceSql: 'SELECT service, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours, COUNT(DISTINCT client_id) AS clients, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24) / COUNT(DISTINCT client_id), 1) AS hours_per_client FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY hours_per_client DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-051': {
+    title: 'Median resolution time, in Python',
+    // Flagged for rework: Arjun accepts it and then wants it split a different way.
+    rework: true,
+    hint: "SQLite has no median. Build the list of durations per service, sort, take the middle, and handle the even-length case.",
+    brief: "Every duration figure this week has been a mean, and one 66-hour incident moves a mean built on six. In the notebook, compute for each service across CLOSED incidents: the mean hours, the median hours, and how many incidents. Sort by median descending. Assign a list of dicts with keys service, mean_hours, median_hours and closed to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const i of tables.incidents) {
+        if (!i.resolved_at) continue;
+        const hours = (Date.parse(i.resolved_at) - Date.parse(i.started_at)) / 3600000;
+        if (!by.has(i.service)) by.set(i.service, []);
+        by.get(i.service).push(hours);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([service, v]) => ({
+          service,
+          mean_hours: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10,
+          median_hours: Math.round(median(v) * 10) / 10,
+          closed: v.length,
+        }))
+        .sort((a, b) => b.median_hours - a.median_hours);
+    },
+  },
+
+  'sa-052': {
+    title: 'Where a quarter of engineering effort should go',
+    hint: "The data ranks services four different ways. Picking one is a judgement, and the report has to show it being made.",
+    brief: "Arjun has roughly a quarter of one team to spend on reliability next quarter. Decide what you would recommend — and notice that the data does not contain the answer.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Arjun Rao', subject: 'What do I point them at?',
+        body: "I have about a quarter of a team for three months. Not enough to fix everything, plenty to fix one thing properly.\n\nI do not want a dashboard. I want you to tell me where to point them and why, and I want the why to be something I can say to my skip-level without him picking it apart.",
+      },
+      prompt: 'Tick every recommendation you could defend.',
+      options: [
+        { key: 'gateway', correct: true, label: 'api-gateway, because it consumes the most engineering time of any service', why: 'A quarter of a team is a capacity decision, and 326 hours is the largest capacity drain on the board. Directly connected to what he is spending.' },
+        { key: 'auth', correct: true, label: 'auth-service, because its unresolved backlog is growing and its MTTR hides it', why: 'Three of seven still open, including a SEV1 from May. The case is that the problem is not being finished, which no average will show him.' },
+        { key: 'state', correct: true, label: 'Either — provided the report says which measure drove the choice', why: 'Both are defensible; what is not defensible is a recommendation whose basis is invisible. The skip-level will ask exactly that question.' },
+        { key: 'billing', correct: false, label: 'billing-sync, because it has the worst average resolution time', why: 'One closed incident. Pointing a quarter of a team at a service on the strength of a single data point is the failure this week was built to prevent.' },
+        { key: 'all', correct: false, label: 'Spread the effort proportionally across all five services', why: 'He told you it is enough to fix one thing properly. Proportional allocation is how a reliability programme produces five half-fixes and no measurable change.' },
+        { key: 'dashboard', correct: false, label: 'Give him the full ranking and let him choose', why: 'He explicitly said he does not want a dashboard. Declining to recommend when you have the evidence is not neutrality, it is leaving the judgement to somebody with less information.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-053': {
+    title: 'What reliability work would not touch',
+    hint: "Clients with a backlog and no incidents. Their problem is real and it is not this programme's problem.",
+    brief: "A recommendation is partly a statement about what will NOT improve. Write ONE SQL SELECT returning each ACTIVE client that has unfinished tickets but NO incidents at all, with their tier, revenue and backlog size. Biggest backlog first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS backlog FROM clients c JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' AND NOT EXISTS (SELECT 1 FROM incidents i WHERE i.client_id = c.id) GROUP BY c.company, c.tier, c.mrr HAVING backlog > 0 ORDER BY backlog DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-054': {
+    title: 'The skip-level picks it apart',
+    hint: "He is asking for a guarantee. Work out which part of it you can actually give.",
+    brief: "Your recommendation reaches Arjun's skip-level and comes back with a question. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Before I sign off the reliability quarter',
+        body: "Arjun wants a quarter of a team on this and he is quoting your analysis.\n\nSimple question: if we do it, how much does our incident count drop? I need a number to put against the cost, otherwise I am approving effort against a hope.",
+      },
+      prompt: 'Which responses are honest and useful?',
+      options: [
+        { key: 'cannot', correct: true, label: '"I cannot forecast the reduction — we have one quarter of data and no comparable fix to learn from"', why: 'Naming why, not just refusing. One quarter with no prior intervention gives nothing to base a projection on.' },
+        { key: 'measure', correct: true, label: '"What I can give you is the current cost, so you can measure the change afterwards"', why: '326 hours is a baseline. Turning an unanswerable forecast into a measurable before-and-after is the move that gets the decision made.' },
+        { key: 'target', correct: true, label: '"Set it up as a target rather than a prediction — and agree now how we will check"', why: 'It puts the number where it belongs, as a commitment owned by engineering rather than a forecast owned by the analyst.' },
+        { key: 'thirty', correct: false, label: '"Around thirty percent."', why: 'Invented. It will be repeated as your estimate, it will appear in a budget document, and it will be the number you are measured against.' },
+        { key: 'industry', correct: false, label: '"Industry benchmarks suggest a forty percent reduction is typical."', why: 'You have no benchmark data and no reason to think another company\'s api-gateway resembles ours. It sounds far more rigorous than the invented number and is the same thing.' },
+        { key: 'refuse', correct: false, label: '"That is an engineering question, not an analytics one."', why: 'True and unhelpful. You have the baseline he needs, and pushing the whole question away wastes the leverage the analysis actually has.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-055': {
+    title: 'The reliability recommendation',
+    hint: "One service, the measure that chose it, what it will not fix, and how you will both know whether it worked.",
+    brief: "The deliverable. Arjun will take this to a funding conversation and defend it without you, so everything he needs to defend it has to be in the document.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao and Vikram Nair', subject: 'Reliability — where to spend the quarter', maxWords: 220,
+      prompt: 'The recommendation: one service, the basis, the limits, and the baseline to measure against.',
+      rubric: [
+        { key: 'pick', label: 'One named service', markers: ['api.gateway|api gateway|auth.service|auth service|gateway|auth'], why: 'He asked where to point a team. A ranking is not an answer to that question.' },
+        { key: 'basis', label: 'The measure that chose it', markers: ['total hours|326|engineering time|capacity|unresolved|open|backlog|share'], why: 'The sentence his skip-level will probe. It has to be one measure, named.' },
+        { key: 'rejected', label: 'Why not the service that looks worst on average duration', markers: ['billing.sync|one|single|1 |sample|average|misleading'], why: 'Somebody will arrive with that ranking. Pre-empting it is cheaper than defending against it.' },
+        { key: 'mttr', label: 'That MTTR understates services with open work', markers: ['mttr|average|closed|exclud|open|flatter|bias|survivor'], why: 'The methodological finding of the week, and the reason his current metric did not surface this.' },
+        { key: 'wont', label: 'What this will NOT improve', markers: ['backlog|ticket|berylline|no incident|not|will not|won.t|unaffected'], why: 'Naming what stays broken is what stops the programme being judged against problems it was never aimed at.' },
+        { key: 'baseline', label: 'A baseline to measure the change against', markers: ['baseline|measure|before|after|compare|326|hours|track|re.run'], why: 'Vikram is approving effort against a hope unless you give him something to check it by.' },
+      ],
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Senior project 2: Account Economics Review -----------------------------------
+  //
+  // Which accounts cost more to serve than they return -- with no cost column anywhere in
+  // the data, so the week begins by building a proxy and saying out loud that it is one.
+  //
+  //   Monday    there is no cost column. Build a defensible proxy or answer nothing.
+  //   Tuesday   the finding: support load per account is flat across tiers while revenue
+  //             per account varies thirteenfold.
+  //   Wednesday the wobble. SUM(DISTINCT mrr) -- the fix taught last week -- silently
+  //             loses a client, because two Starter accounts bill the same amount.
+  //   Thursday  concentration. Four accounts are sixty percent of the book, and the CSM
+  //             load analysis turns out to be a non-finding.
+  //   Friday    the Starter tier recommendation, under pressure to just kill it.
+  //
+  // Measured: Enterprise 5.0 tickets per account, Growth 4.83, Starter 4.6 -- against
+  // 310k, 120k and 23k of revenue per account. Starter raises more tickets than
+  // Enterprise for nine percent of the revenue.
+
+  'sb-101': {
+    title: 'There is no cost column',
+    hint: "Look at what the tables actually contain before deciding what can be answered. Then decide what a defensible proxy looks like.",
+    brief: "Diya has asked which accounts cost more to serve than they return. Before writing anything, establish what you can actually measure — because the central quantity in that question is not in the data.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Cost to serve — for the pricing review',
+        body: "We are reviewing tier pricing next month and the question I keep being asked is whether the smaller accounts actually pay for themselves.\n\nI do not have a cost-to-serve figure and I do not think anyone does. You have the support and incident data — can you get me close enough to make a pricing decision, or should I stop asking?",
+      },
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'proxy', correct: true, label: 'A proxy has to be built — nothing in the data is a cost', why: 'Tickets and incidents are volume, not money. The analysis is possible only if you construct something and are explicit that it is constructed.' },
+        { key: 'name', correct: true, label: 'The proxy has to be named and defended in the output', why: 'A pricing decision made on an undisclosed proxy is a pricing decision nobody can audit. Saying "tickets as a proxy for support cost" in the first line is the difference.' },
+        { key: 'relative', correct: true, label: 'It can support relative comparisons between tiers, not absolute costs', why: 'You can say Starter costs more per rupee than Enterprise. You cannot say it costs four lakh, and the distinction has to survive into the summary.' },
+        { key: 'stop', correct: false, label: 'Tell her to stop asking until Finance produces a cost model', why: 'She offered you that exit and it would be the wrong one. The relative answer is genuinely useful for a pricing decision and it is available today.' },
+        { key: 'invent', correct: false, label: 'Estimate a cost per ticket and multiply through', why: 'That converts a defensible relative finding into an invented absolute one. The moment a rupee figure exists it gets quoted without its assumption.' },
+        { key: 'mrr', correct: false, label: 'Use revenue alone — low-revenue accounts are the unprofitable ones', why: 'That assumes what the analysis is meant to establish. A small account that never contacts us may be the most profitable thing in the book.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'sb-102': {
+    title: 'What each tier is worth',
+    hint: "No join here, so a plain SUM is correct. Remember that for Wednesday.",
+    brief: "Start with the revenue side. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, the total monthly revenue, and the average revenue per client. Biggest tier by revenue first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS mrr, ROUND(AVG(mrr)) AS mrr_per_client FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'sb-103': {
+    title: 'What each tier costs to support',
+    hint: "LEFT JOIN so a client with no tickets still counts in the denominator. Compare the answer against the revenue table.",
+    brief: "Now the cost proxy. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, how many tickets in total, and tickets per client. Heaviest support load per client first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, COUNT(t.id) AS tickets, ROUND(COUNT(t.id) * 1.0 / COUNT(DISTINCT c.id), 2) AS tickets_per_client FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY tickets_per_client DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-104': {
+    title: 'What the two tables say together',
+    hint: "Put revenue per client beside tickets per client. The ratio between the tiers is the finding.",
+    brief: "You have revenue per account and support load per account. Read them together before anyone else does.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'flat', correct: true, label: 'Support load per account is almost identical across the three tiers', why: 'Five, 4.8 and 4.6 tickets. Whatever drives a client to contact us, it is not what they pay.' },
+        { key: 'revenue', correct: true, label: 'Revenue per account varies by more than thirteen times', why: 'About 310,000 against about 23,000. Flat cost against steeply varying revenue is the entire economics of this book.' },
+        { key: 'starter', correct: true, label: 'Starter accounts raise more tickets in total than Enterprise ones do', why: 'Twenty-three against twenty, for nine percent of the revenue. The sentence a pricing review needs.' },
+        { key: 'ent', correct: false, label: 'Enterprise accounts are the most expensive to support', why: 'They have the highest tickets per account by a rounding margin and by far the most revenue behind each one. Reading the raw ticket count as cost ignores the denominator.' },
+        { key: 'more', correct: false, label: 'Bigger accounts demand more support', why: 'Your own table says they demand about the same. This is the assumption the analysis exists to test, and it does not survive.' },
+        { key: 'kill', correct: false, label: 'The Starter tier should be discontinued', why: 'Five accounts, and you have not looked at what they become. That is Friday\'s decision and it needs more than one ratio.' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-105': {
+    title: 'Tell Diya what you can and cannot give her',
+    hint: "She asked whether to stop asking. Answer that directly, then say what the proxy is.",
+    brief: "Write back on day one. She offered you a way out of the question and you are not taking it, so say what you will produce and what it will not be. Under 150 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Cost to serve — what I can build', maxWords: 150,
+      prompt: 'The proxy, its limits, and the answer to the question she actually asked.',
+      rubric: [
+        { key: 'yes', label: 'That the question can be answered, at least relatively', markers: ['can|yes|will|able|worth|keep asking|do not stop'], why: 'She asked whether to stop asking. Answer that before anything else.' },
+        { key: 'proxy', label: 'What the proxy is', markers: ['ticket|incident|support|volume|proxy|stand.in|substitute'], why: 'Name it in the note, not in a footnote. It is the load-bearing assumption of everything that follows.' },
+        { key: 'nocost', label: 'That no cost figure exists in the data', markers: ['no cost|not have|do not have|don.t have|absent|missing|nothing'], why: 'Stating the gap yourself is what stops somebody later treating your ratio as rupees.' },
+        { key: 'relative', label: 'That the output is comparative, not absolute', markers: ['relative|compar|between|rank|not absolute|cannot say|per rupee|order'], why: 'The one sentence that prevents your work becoming a cost model somebody budgets against.' },
+        { key: 'early', label: 'Something concrete she can already use', markers: ['flat|similar|same|tier|per account|starter|enterprise|thirteen|13'], why: 'The flat-load finding is available on day one and it is the thing that will shape her pricing review.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'sb-110': {
+    title: 'Incidents per tier',
+    hint: "COUNT(DISTINCT i.id) once you have joined, or the count multiplies. The ordering will surprise you.",
+    brief: "Tickets are what clients ask us; incidents are what we broke. Write ONE SQL SELECT returning, per tier across ACTIVE clients: how many clients, how many incidents, and incidents per client. Most incidents per client first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, COUNT(DISTINCT i.id) AS incidents, ROUND(COUNT(DISTINCT i.id) * 1.0 / COUNT(DISTINCT c.id), 2) AS incidents_per_client FROM clients c LEFT JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY incidents_per_client DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'sb-111': {
+    title: 'The tier that breaks most is the one that pays least',
+    hint: "Three tiers, three measures, and the ordering is the same every time except for revenue.",
+    brief: "Starter accounts have three incidents each; Enterprise accounts have one. Decide what that adds to the economics picture, and be careful about what it does not establish.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'compound', correct: true, label: 'Starter accounts cost more on both proxies while paying least', why: 'Similar tickets, three times the incidents, a fourteenth of the revenue. Two independent measures pointing the same way is much stronger than either alone.' },
+        { key: 'why', correct: true, label: 'Nothing here explains why smaller accounts have more incidents', why: 'Could be product surface, could be self-service, could be which services they use. The data supports the observation and none of the explanations.' },
+        { key: 'ask', correct: true, label: 'It is worth asking Engineering before publishing', why: 'Arjun will know in thirty seconds whether Starter accounts sit on a different part of the platform. That converts an odd finding into an explained one.' },
+        { key: 'cause', correct: false, label: 'Starter accounts are less technically capable, which causes more incidents', why: 'An incident is something WE broke. Reading client capability into our own failure rate is both unfounded and the sort of sentence that should never leave a building.' },
+        { key: 'proof', correct: false, label: 'This proves the Starter tier is unprofitable', why: 'It is strong evidence on the cost side of a ratio whose other side you have proxied. "Proves" is doing work the data cannot.' },
+        { key: 'drop', correct: false, label: 'Starter incidents should be deprioritised to reduce cost', why: 'A recommendation about incident response dressed as an economics finding — and one that would make the retention problem worse.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-112': {
+    title: 'How concentrated is the book',
+    hint: "A scalar subquery in the SELECT gives you each client's share of the whole.",
+    brief: "Before recommending anything about small accounts, find out how much the big ones carry. Write ONE SQL SELECT returning every ACTIVE client with their revenue and their percentage share of total active revenue, biggest first.",
+    referenceSql: "SELECT company, mrr, ROUND(mrr * 100.0 / (SELECT SUM(mrr) FROM clients WHERE status = 'active'), 1) AS pct_of_book FROM clients WHERE status = 'active' ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-113': {
+    title: 'Chart the tier economics',
+    hint: "Three tiers and one measure. Tiers have a natural order — decide whether to keep it.",
+    brief: "One slide for the pricing review: revenue per account by tier. Tiers are ordered by size, which makes the sorting decision different from a chart of unordered categories.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Average monthly revenue per account, by tier.',
+      sourceSql: "SELECT tier, ROUND(AVG(mrr)) AS mrr_per_client FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr_per_client DESC",
+      columns: ['tier', 'mrr_per_client'],
+      correct: { type: 'bar', x: 'tier', y: 'mrr_per_client', sort: 'desc' },
+      whyRight: 'Bars for three categories compared by size. Sorting by value happens to match the tier order here, which makes the gap read cleanly.',
+      why: {
+        type: 'Three categories compared by magnitude. A line would imply Starter, Growth and Enterprise are points on a continuum a reader could interpolate.',
+        x: 'The tier is the category.',
+        y: 'Revenue per account is the value.',
+        sort: 'By value, descending. It agrees with the natural tier order, so the chart reads correctly either way — and the thirteenfold drop is the whole message.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sb-114': {
+    title: 'Revenue per ticket, by tier',
+    hint: "Aggregate the revenue with a subquery rather than across the join, or the ticket rows will multiply it.",
+    brief: "One number that combines both sides. Write ONE SQL SELECT returning, per tier across ACTIVE clients: the client count, total revenue, total tickets, and revenue per ticket. Most revenue per ticket first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients, (SELECT SUM(x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = c.tier) AS mrr, COUNT(t.id) AS tickets, ROUND((SELECT SUM(x.mrr) FROM clients x WHERE x.status = 'active' AND x.tier = c.tier) * 1.0 / COUNT(t.id)) AS mrr_per_ticket FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY mrr_per_ticket DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-115': {
+    title: 'Send Diya the tier picture',
+    hint: "One ratio, three tiers, and the caveat that it is a proxy — in that order.",
+    brief: "Mid-week. She is building the pricing review and this is the number that will shape it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Tier economics — revenue against support load', maxWords: 160,
+      prompt: 'The headline ratio, both measures behind it, and the proxy caveat carried forward.',
+      rubric: [
+        { key: 'ratio', label: 'The revenue-per-ticket gap between tiers', markers: ['62|24|4|thousand|per ticket|fourteen|14|times|gap'], why: 'The single number the pricing review turns on.' },
+        { key: 'flat', label: 'That support load per account is flat', markers: ['flat|similar|same|4\\.|5|per account|tickets per'], why: 'The finding that makes the ratio meaningful rather than obvious.' },
+        { key: 'incidents', label: 'That incidents point the same way', markers: ['incident|three|3 |1 |broke|second measure|also'], why: 'Two independent proxies agreeing is much stronger than one, and worth one sentence.' },
+        { key: 'proxy', label: 'That this is still a proxy', markers: ['proxy|not cost|no cost|relative|stand.in|approximat'], why: 'Repeating it mid-week is what stops it being dropped from the final summary.' },
+        { key: 'next', label: 'What you will look at next', markers: ['next|then|concentrat|cohort|starter|grow|churn|will'], why: 'She is drafting now and a note with no next step makes her ask for one.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sb-120': {
+    title: 'The fix that breaks',
+    hint: "Compute the tier total both ways in the same query and subtract. Then look at which tier loses money.",
+    brief: "Last week you were taught to use SUM(DISTINCT mrr) to avoid double counting across a join. Test it. Write ONE SQL SELECT returning, per tier across ACTIVE clients: the client count, the total revenue computed with a plain SUM, the total computed with SUM(DISTINCT), and the difference. Biggest difference first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS correct_total, SUM(DISTINCT mrr) AS distinct_total, SUM(mrr) - SUM(DISTINCT mrr) AS lost FROM clients WHERE status = 'active' GROUP BY tier ORDER BY lost DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'sb-121': {
+    title: 'Why DISTINCT lost fifteen thousand',
+    hint: "Find the two Starter accounts billing the same amount. That is the entire mechanism.",
+    brief: "SUM(DISTINCT mrr) reports the Starter tier as fifteen thousand smaller than it is. Work out why, and what it means for the technique generally.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'values', correct: true, label: 'DISTINCT deduplicates VALUES, not clients — two accounts bill exactly the same', why: 'Nimbus Analytics and Orchid Pharma are both on fifteen thousand. SUM(DISTINCT) sees one number and counts it once, silently dropping a customer.' },
+        { key: 'silent', correct: true, label: 'It fails silently and the result still looks plausible', why: 'No error, no warning, and a total that is only slightly wrong. The most dangerous class of bug there is.' },
+        { key: 'subquery', correct: true, label: 'A subquery over distinct client ids is the technique that does not have this failure mode', why: 'Deduplicate the CLIENTS and then sum their revenue. It is longer and it is correct regardless of what the values happen to be.' },
+        { key: 'always', correct: false, label: 'SUM(DISTINCT) is always wrong and should never be used', why: 'Too strong. It is correct whenever the values are genuinely unique — the problem is that whether they are is a property of today\'s data, not of your query.' },
+        { key: 'here', correct: false, label: 'It only matters because this dataset is small', why: 'The opposite. The more clients you have, the more likely two of them share a price point, so the bug becomes more likely at scale, not less.' },
+        { key: 'round', correct: false, label: 'Rounding the values before summing would avoid it', why: 'Rounding makes collisions more likely, not less. This is the fix that looks like diligence and makes it worse.' },
+      ],
+      skills: { sql: 100, businessLogic: 80 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-122': {
+    title: 'Support load per account, properly',
+    hint: "One row per client, so the join cannot double anything. Compare the top of this list with the tier table.",
+    brief: "Rebuild the cost proxy at client level. Write ONE SQL SELECT returning each ACTIVE client with at least one ticket: company, tier, revenue, ticket count, and tickets per hundred thousand of revenue. Heaviest load per rupee first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(t.id) AS tickets, ROUND(COUNT(t.id) * 100000.0 / c.mrr, 2) AS tickets_per_100k FROM clients c LEFT JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.id, c.company, c.tier, c.mrr HAVING tickets > 0 ORDER BY tickets_per_100k DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-123': {
+    title: 'Can five accounts carry a tier decision',
+    hint: "Look at how much of the Starter finding is one account, and what happens to the average without it.",
+    brief: "Your recommendation would affect the whole Starter tier. It rests on five accounts, and one of them is twice as heavy as any other. Decide what that permits.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'one', correct: true, label: 'One account drives a large share of the Starter load and must be named', why: 'Orchid Pharma is roughly double the next heaviest per rupee. A tier-wide conclusion resting on one account is a conclusion about that account.' },
+        { key: 'both', correct: true, label: 'Report the tier figure with and without it', why: 'It lets the reader see how much of the finding is structural and how much is one customer, which is the question they would ask anyway.' },
+        { key: 'direction', correct: true, label: 'The direction survives removing it, even if the size does not', why: 'Worth checking and worth saying. A finding that disappears without its biggest contributor is a different and much weaker finding.' },
+        { key: 'enough', correct: false, label: 'Five accounts is enough because the gap is so large', why: 'Effect size does not substitute for sample size — a large gap on five accounts is still five accounts, and two of them leaving would change the picture entirely.' },
+        { key: 'exclude', correct: false, label: 'Exclude the outlier so the tier figure is representative', why: 'Removing your heaviest account to make a cost analysis look calmer is the wrong direction of adjustment, and it would be indefensible if discovered.' },
+        { key: 'all', correct: false, label: 'Pool all fifteen accounts instead so the sample is bigger', why: 'It would dissolve the tier comparison, which is the entire question. A bigger sample answering nothing is not an improvement.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sb-124': {
+    title: 'Tell Diya the number moved',
+    hint: "You corrected your own figure. Say so plainly and say what it was.",
+    brief: "The Starter total you sent on Tuesday was fifteen thousand light. Write the correction. This is a short note and the tone of it matters more than the length — under 120 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Correction — Starter tier revenue', maxWords: 120,
+      prompt: 'The correction: what was wrong, what it should be, and whether anything downstream changes.',
+      rubric: [
+        { key: 'what', label: 'The corrected figure', markers: ['114|fifteen|15|thousand|correct|should be|actually'], why: 'Lead with the number. A correction that makes the reader hunt for the new value is a second error.' },
+        { key: 'why', label: 'Why it was wrong', markers: ['distinct|same|identical|two account|dedup|collapse|value'], why: 'The mechanism, briefly. It tells her whether anything else you sent is affected.' },
+        { key: 'scope', label: 'Whether the conclusion changes', markers: ['does not|doesn.t|no change|still|unchanged|same conclusion|direction'], why: 'The question she has the moment she reads it. Answer it before she asks.' },
+        { key: 'own', label: 'Owned plainly, without over-apologising', markers: ['I|my|mine|sent|sorry|apolog'], why: 'One clause of ownership. A long apology makes a small correction look like a large one.' },
+      ],
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
   'sa-002': {
     title: 'Support load against revenue',
     // What a colleague who knows you would point at — the trap, never the answer.
@@ -1916,6 +3878,956 @@ const TASKS = {
     day: 3,
     difficulty: 'medium',
   },
+
+  // ---- Senior 3 · Activation & Onboarding Review (product_events) -----------------
+  // The spine: every number in this dataset is wrong the first time you compute it, and
+  // each day teaches a different reason why. Monday the window is partial. Tuesday the
+  // funnel is not a funnel, because a third of users were invited into a workspace that
+  // already existed. Wednesday an event fires twice. Thursday the company's own staff are
+  // in the numbers. Friday activation and retention disagree about which channel is good,
+  // and the learner has to say which one they would act on.
+
+  'ac-101': {
+    title: 'Read the window before the numbers',
+    hint: "Look at the newest rows in every table before you compute anything from them.",
+    brief: "Maya has asked why signups collapsed in June. Before answering, establish what period this export actually covers — the answer to her question is mostly in that.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Maya Iyer', subject: 'June — what happened?',
+        body: "Pulled the signup numbers this morning and June is 48 against May's 140. That is a two-thirds drop in a month and nobody upstairs knows why.\n\nI need to take something to the product review on Friday. Can you find out what broke?",
+      },
+      prompt: 'Tick everything that follows from the data as it stands.',
+      options: [
+        { key: 'partial', correct: true, label: 'June is not a full month — the data stops on the 12th', why: 'Twelve days against thirty-one. Comparing the totals compares a fortnight with a month, which is the whole of her two-thirds drop.' },
+        { key: 'rate', correct: true, label: 'The comparison has to be a daily rate, not a monthly total', why: 'Four signups a day in June against 4.52 in May. That is a real dip and worth a sentence, but it is not a collapse and it is not what she was told.' },
+        { key: 'sayso', correct: true, label: 'Every chart from this data needs the cut-off stated on it', why: 'The partial month will be re-read as a cliff by everyone who sees it without the caveat, including Maya, who already has.' },
+        { key: 'broke', correct: false, label: 'Something broke in the signup flow in June', why: 'Nothing in the data suggests that, and going looking for a cause before checking the window is how an artefact becomes an incident.' },
+        { key: 'exclude', correct: false, label: 'Drop June entirely so the trend is clean', why: 'Twelve days of real signups are real. Dropping them hides the mild dip that IS there, and hiding data to make a chart tidy is how you lose the right to be believed.' },
+        { key: 'annualise', correct: false, label: 'Scale June up to thirty days so it is comparable', why: 'Tempting and defensible for a rate, but presenting an invented 120 as if it were a count puts a number in the deck that never happened. Give the rate and say it is a rate.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ac-102': {
+    title: 'Signups by month, and by day',
+    hint: "The daily rate is the count divided by the days that actually elapsed, and June's is not 30.",
+    brief: "Put the shape of it on paper. Write ONE SQL SELECT returning, per signup month: the number of signups, the last calendar day seen in that month, and signups per elapsed day rounded to two places. Oldest month first.",
+    referenceSql: "SELECT substr(signup_at, 1, 7) AS month, COUNT(*) AS signups, MAX(substr(signup_at, 9, 2)) AS last_day, ROUND(COUNT(*) * 1.0 / CAST(MAX(substr(signup_at, 9, 2)) AS INTEGER), 2) AS per_day FROM users GROUP BY month ORDER BY month",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ac-103': {
+    title: 'Where they came from',
+    hint: "A plain GROUP BY. You will need this split again on Friday, so get the names right now.",
+    brief: "Write ONE SQL SELECT returning the number of signups per acquisition channel, and each channel's share of all signups as a percentage rounded to one place. Biggest channel first.",
+    referenceSql: "SELECT channel, COUNT(*) AS signups, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 1) AS pct FROM users GROUP BY channel ORDER BY signups DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'normal', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ac-104': {
+    title: 'Two kinds of signup',
+    hint: "invited_by_user_id is NULL for people who arrived on their own. That column decides most of tomorrow.",
+    brief: "Not everyone who signs up is starting a workspace — some are joining one. Write ONE SQL SELECT returning the number of users of each kind, labelling them self_serve and invited.",
+    referenceSql: "SELECT CASE WHEN invited_by_user_id IS NULL THEN 'self_serve' ELSE 'invited' END AS kind, COUNT(*) AS users FROM users GROUP BY kind ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-105': {
+    title: 'What you now know about June',
+    hint: "You have the monthly counts and the daily rates side by side. Read both rows.",
+    brief: "Before you write to Maya, be clear in your own head about what the June number is and is not.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your own query supports.',
+      options: [
+        { key: 'notcollapse', correct: true, label: 'The two-thirds drop is an artefact of an incomplete month', why: '48 signups over 12 days. The month is not over; the data simply stops.' },
+        { key: 'mild', correct: true, label: 'There IS a small real dip — about 4.0 a day against 4.5', why: 'Roughly 11% down on May. Worth a line, not worth an investigation, and saying so protects your credibility when something real does break.' },
+        { key: 'growth', correct: true, label: 'The underlying trend to May is growth, not decline', why: '2.84 a day in January rising to 4.52 in May. The panic is about the one month that cannot be read.' },
+        { key: 'worst', correct: false, label: 'June is the worst month in the data on a per-day basis', why: 'It is the third best of six. January, February and March are all below it.' },
+        { key: 'seasonal', correct: false, label: 'The dip is seasonal', why: 'Six months of data covering one summer cannot establish seasonality. That would need the same month a year earlier and it does not exist here.' },
+        { key: 'sample', correct: false, label: 'Twelve days is too few to say anything at all', why: 'Forty-eight signups is a perfectly usable sample for a daily rate. The problem was never the sample size, it was the denominator.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-106': {
+    title: 'Answer Maya today',
+    hint: "She has a meeting on Friday and a wrong number in her head right now. Fix the number first.",
+    brief: "Write back before the end of day one. She believes signups fell by two-thirds. Tell her what actually happened, and do not oversell the good news either. Under 150 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Maya Iyer', subject: 'June signups — the number is a window, not a cliff', maxWords: 150,
+      prompt: 'What the June figure really is, the honest version of the trend, and what you would put in her Friday pack.',
+      rubric: [
+        { key: 'partial', label: 'That June is a partial month', markers: ['partial|incomplete|12 day|twelve day|12th|cut.?off|stops|half a month|not a full'], why: 'This is the entire answer to her question and it belongs in the first sentence.' },
+        { key: 'rate', label: 'The daily-rate comparison, with numbers', markers: ['per day|a day|daily|4\\.0|4\\.5|rate'], why: 'Replacing a wrong number with no number leaves her with nothing to say on Friday.' },
+        { key: 'dip', label: 'That there is a small genuine dip, not nothing', markers: ['dip|slight|small|modest|11%|down a little|softer|slower'], why: 'Overcorrecting to "everything is fine" is the same failure as the panic, pointing the other way.' },
+        { key: 'trend', label: 'The real trend through to May', markers: ['grow|rising|rose|up|increase|trend|doubl'], why: 'The context that makes the June number readable at all.' },
+        { key: 'caveat', label: 'That the cut-off must be shown on anything she presents', markers: ['label|caveat|footnote|state|mark|show the|note the|annotat'], why: 'Without it the same misreading happens again in the room, and this time with your chart on the screen.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ac-110': {
+    title: 'The funnel, as everyone computes it',
+    hint: "Count users, not rows. You will find out on Wednesday why that matters more than you think.",
+    brief: "Start the activation analysis. Write ONE SQL SELECT returning, for each of the five funnel events, the number of DISTINCT users who fired it. Most users first.",
+    referenceSql: "SELECT name, COUNT(DISTINCT user_id) AS users FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY name ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ac-111': {
+    title: 'Step over step',
+    hint: "Divide each step by the one before it. Do not fix what comes out — bring it to the stand-up as it is.",
+    brief: "Turn those counts into conversion rates. Write ONE SQL SELECT returning three rows labelled workspace_per_signup, connected_per_workspace and report_per_connected, each the percentage of the previous step, rounded to one place, in that order.",
+    referenceSql: "WITH s AS (SELECT name, COUNT(DISTINCT user_id) AS u FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run') GROUP BY name) SELECT 'workspace_per_signup' AS step, ROUND((SELECT u FROM s WHERE name = 'workspace_created') * 100.0 / (SELECT u FROM s WHERE name = 'signup_completed'), 1) AS pct UNION ALL SELECT 'connected_per_workspace', ROUND((SELECT u FROM s WHERE name = 'data_connected') * 100.0 / (SELECT u FROM s WHERE name = 'workspace_created'), 1) UNION ALL SELECT 'report_per_connected', ROUND((SELECT u FROM s WHERE name = 'first_report_run') * 100.0 / (SELECT u FROM s WHERE name = 'data_connected'), 1)",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-112': {
+    title: 'A step converted at 114%',
+    hint: "More people did the second thing than did the first. Ask how that is possible rather than how to hide it.",
+    brief: "Your middle step says 114.5%. That is not a rounding problem. Work out what it means before you touch the query.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true of a funnel step above 100%.',
+      options: [
+        { key: 'notfunnel', correct: true, label: 'These steps are not a sequence everybody passes through', why: 'A funnel assumes one ordered path. Above 100% is the data telling you that assumption is false — which is information, not an error.' },
+        { key: 'skip', correct: true, label: 'Some users reached data_connected without ever creating a workspace', why: '364 connected against 318 who created one. At least 46 people had a workspace they did not make.' },
+        { key: 'schema', correct: true, label: 'The explanation should be findable in the schema', why: 'users.invited_by_user_id exists for exactly this reason. A person invited into somebody else\'s workspace never creates one.' },
+        { key: 'cap', correct: false, label: 'Cap the step at 100% so the chart reads sensibly', why: 'That deletes the single most interesting fact in the dataset to make a rectangle look tidy.' },
+        { key: 'dedupe', correct: false, label: 'It is duplicate rows — count distinct users instead', why: 'You already counted distinct users. There is a duplicate-row problem in here and you will find it tomorrow, but it is not this.' },
+        { key: 'broken', correct: false, label: 'The event tracking is broken and the data cannot be used', why: 'The tracking is fine. The model you laid over it was wrong, and that is a much cheaper thing to fix.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-113': {
+    title: 'Prove where they came from',
+    hint: "Build a set of user_ids per event name once, then test membership. Do not loop the events table four times.",
+    brief: "Confirm the explanation rather than assuming it. In the notebook, compute for self_serve and invited users separately: how many users there are, and how many of them fired workspace_created, data_connected and first_report_run. Assign a list of dicts with keys kind, users, workspace, connected and activated to `result`, sorted by kind.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.7, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const fired = new Map();
+      for (const e of tables.events) {
+        if (!fired.has(e.name)) fired.set(e.name, new Set());
+        fired.get(e.name).add(e.user_id);
+      }
+      const has = (name, id) => (fired.get(name) || new Set()).has(id);
+      const out = new Map();
+      for (const u of tables.users) {
+        const kind = u.invited_by_user_id == null ? 'self_serve' : 'invited';
+        if (!out.has(kind)) out.set(kind, { kind, users: 0, workspace: 0, connected: 0, activated: 0 });
+        const row = out.get(kind);
+        row.users += 1;
+        if (has('workspace_created', u.id)) row.workspace += 1;
+        if (has('data_connected', u.id)) row.connected += 1;
+        if (has('first_report_run', u.id)) row.activated += 1;
+      }
+      return [...out.values()].sort((a, b) => (a.kind < b.kind ? -1 : 1));
+    },
+  },
+
+  'ac-114': {
+    title: 'The funnel that is actually a funnel',
+    hint: "One population, one ordered path. Everyone in it had to create a workspace to get anywhere.",
+    brief: "Rebuild it properly. Write ONE SQL SELECT over SELF-SERVE users only, returning one row per funnel stage — labelled signups, workspace, connected and activated — with the number of users who reached it. Keep them in funnel order, most users first.",
+    referenceSql: "SELECT 'signups' AS stage, COUNT(*) AS users FROM users WHERE invited_by_user_id IS NULL UNION ALL SELECT 'workspace', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'workspace_created') UNION ALL SELECT 'connected', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'data_connected') UNION ALL SELECT 'activated', COUNT(*) FROM users u WHERE u.invited_by_user_id IS NULL AND EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run')",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-115': {
+    title: 'What the split actually revealed',
+    hint: "Compare the two populations on the last column, not just the first.",
+    brief: "Splitting the funnel fixed the impossible number. It also turned up something nobody asked for.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your two queries support.',
+      options: [
+        { key: 'clean', correct: true, label: 'The self-serve funnel is monotonic and readable: 420, 318, 207, 134', why: 'Every step smaller than the one before, one population throughout. That is a funnel.' },
+        { key: 'invitedbetter', correct: true, label: 'Invited users activate at roughly twice the rate of self-serve ones', why: '112 of 184 against 134 of 420 — about 61% against 32%. Landing in a workspace where the data is already connected is a real head start.' },
+        { key: 'nowork', correct: true, label: 'Not one invited user fired workspace_created', why: 'Zero out of 184, which is what makes the invite path a genuinely different journey rather than a variation on the same one.' },
+        { key: 'biggest', correct: false, label: 'The biggest self-serve drop-off is at data_connected', why: '318 to 207 is a loss of 111; 420 to 318 is a loss of 102 — but as a rate, workspace creation loses 24% and connection loses 35%. Say which measure you mean.' },
+        { key: 'invitemore', correct: false, label: 'We should convert self-serve signups into invited ones', why: 'You cannot invite somebody into a workspace that does not exist yet. The two populations are not interchangeable and the comparison does not imply a lever.' },
+        { key: 'causal', correct: false, label: 'Being invited causes higher activation', why: 'Invited users join workspaces someone already cared enough to set up. The selection is doing work here and the data cannot separate the two.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ac-120': {
+    title: 'Rows against people',
+    hint: "COUNT(*) and COUNT(DISTINCT user_id) on the same events. If they differ, somebody fired twice.",
+    brief: "Before the funnel goes anywhere near a deck, check the raw event counts. Write ONE SQL SELECT returning, for each funnel event: the row count, the distinct user count, and the difference. Biggest difference first.",
+    referenceSql: "SELECT name, COUNT(*) AS rows_, COUNT(DISTINCT user_id) AS users_, COUNT(*) - COUNT(DISTINCT user_id) AS extra FROM events WHERE name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY name ORDER BY extra DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'ac-121': {
+    title: 'Nobody signs up twice',
+    hint: "One of those five events is logically impossible to repeat. Start there.",
+    brief: "670 signup_completed rows against 604 users. Work out what that tells you before you go looking for the cause.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'impossible', correct: true, label: 'signup_completed repeating is impossible in the real world, so it is a tracking fault', why: 'You cannot complete your own signup twice. Any event with a natural once-per-user meaning is a free integrity check, and this one just failed.' },
+        { key: 'allfive', correct: true, label: 'All five events are affected, so it is not specific to one step', why: '66, 35, 33, 24 and 5 extra rows. A bug that hits every event equally is a client or transport problem, not a product one.' },
+        { key: 'countdistinct', correct: true, label: 'Every rate computed from COUNT(*) is overstated', why: 'Yesterday you used COUNT(DISTINCT user_id) and were right by luck as much as judgement. Now you know why it is the rule.' },
+        { key: 'retry', correct: false, label: 'Users retried because the product was slow', why: 'A plausible story, and testable — but it would not duplicate signup_completed for people who only ever loaded the page once. Find the pattern before writing the narrative.' },
+        { key: 'dedupe', correct: false, label: 'Deduplicate the table and move on', why: 'That fixes your query and leaves the bug in production, still corrupting every number anyone else pulls. Find its shape first so it can be reported.' },
+        { key: 'ignore', correct: false, label: 'The difference is small enough to ignore', why: '66 phantom signups is 11% of the month-one funnel. It is also a live bug, and its size today is not its size next month.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'ac-122': {
+    title: 'Find the shape of the bug',
+    hint: "Events belong to sessions, and sessions know their platform and app version. Join and group by both.",
+    brief: "Locate it. Write ONE SQL SELECT joining funnel events to their sessions, returning per platform and app_version: the row count, the number of distinct user-and-event pairs, and rows divided by pairs rounded to two places. Worst ratio first.",
+    referenceSql: "SELECT s.platform, s.app_version, COUNT(*) AS rows_, COUNT(DISTINCT e.user_id || '|' || e.name) AS steps, ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT e.user_id || '|' || e.name), 2) AS rows_per_step FROM events e JOIN sessions s ON s.id = e.session_id WHERE e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate') GROUP BY s.platform, s.app_version ORDER BY rows_per_step DESC, rows_ DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-123': {
+    title: 'Scope it for the engineer',
+    hint: "An engineer needs the blast radius and the window, not an adjective.",
+    brief: "You know which build it is. Now size it. Write ONE SQL SELECT returning one row: how many distinct users fired a duplicated funnel event on mobile 4.3.0, how many surplus rows that produced, and the first and last date ANY mobile 4.3.0 session was seen. Label them users_affected, duplicate_rows, first_seen and last_seen.",
+    referenceSql: "SELECT (SELECT COUNT(DISTINCT e.user_id) FROM events e JOIN sessions s2 ON s2.id = e.session_id WHERE s2.platform <> 'web' AND s2.app_version = '4.3.0' AND e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate')) AS users_affected, (SELECT COUNT(*) - COUNT(DISTINCT e.user_id || '|' || e.name) FROM events e JOIN sessions s3 ON s3.id = e.session_id WHERE s3.platform <> 'web' AND s3.app_version = '4.3.0' AND e.name IN ('signup_completed', 'workspace_created', 'data_connected', 'first_report_run', 'invited_teammate')) AS duplicate_rows, MIN(substr(s.started_at, 1, 10)) AS first_seen, MAX(substr(s.started_at, 1, 10)) AS last_seen FROM sessions s WHERE s.platform <> 'web' AND s.app_version = '4.3.0'",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-124': {
+    title: 'What the version numbers tell you',
+    hint: "Look at when 4.3.0 stops and what replaces it. The fix may already have shipped.",
+    brief: "You have the version timeline. Read what it says about the state of the bug today.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the data supports.',
+      options: [
+        { key: 'both', correct: true, label: 'It affects iOS and Android equally, at exactly 2.00 rows per step', why: 'Both mobile platforms, both exactly double, web untouched. That points at shared mobile code, which is a useful thing for an engineer to be told.' },
+        { key: 'window', correct: true, label: 'It is bounded: 6 April to 10 May, then 4.3.1 appears', why: 'The last 4.3.0 session is 10 May and 4.3.1 starts on the 11th. Whether or not anyone knew, the bug stopped shipping a month ago.' },
+        { key: 'history', correct: true, label: 'Historical numbers still need correcting even though it is fixed', why: 'Five weeks of inflated events sit in every dashboard anyone has built. A fix forward does not repair the backward record.' },
+        { key: 'live', correct: false, label: 'It is still corrupting data today', why: 'No 4.3.0 session exists after 10 May. Reporting a live incident that ended five weeks ago would cost you the next one.' },
+        { key: 'web', correct: false, label: 'Web is affected too but less severely', why: 'Every web version sits at exactly 1.00. Not less severe — absent.' },
+        { key: 'nofix', correct: false, label: 'Nothing needs reporting since 4.3.1 fixed it', why: 'Somebody fixed a symptom in a release. Whether they knew what it was doing to the analytics is a different question, and the corrupted history is nobody\'s job until you make it somebody\'s.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-125': {
+    title: 'Report it to Rohan',
+    hint: "Lead with the window and the blast radius. He will ask both in his first reply if you do not.",
+    brief: "Rohan runs the mobile team. Write him the bug report: what you found, how big it is, when it happened, and what you want him to do about it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Rohan Desai', subject: 'Mobile 4.3.0 is double-firing funnel events', maxWords: 160,
+      prompt: 'The fault, its exact scope, the fact that it appears already fixed, and the ask.',
+      rubric: [
+        { key: 'what', label: 'What the fault is', markers: ['twice|double|duplicat|two rows|2 rows|fires again|repeat'], why: 'One sentence, no preamble. He triages a queue.' },
+        { key: 'where', label: 'Pinned to mobile 4.3.0 specifically', markers: ['4\\.3\\.0|ios and android|mobile'], why: 'Without the version he has to reproduce it himself, which is a week you do not need to spend.' },
+        { key: 'when', label: 'The window, and that 4.3.1 appears to end it', markers: ['4\\.3\\.1|6 april|10 may|april|may|window|five week|5 week|already fixed|no longer'], why: 'Telling him it is live when it is not turns a data-quality ticket into a false alarm.' },
+        { key: 'size', label: 'The blast radius in numbers', markers: ['89|163|users affected|duplicate row'], why: 'Scope is what decides whether this is looked at today or in the next cycle, and it is the part only you can supply.' },
+        { key: 'ask', label: 'A specific ask', markers: ['confirm|backfill|correct|clean|reprocess|flag|whether|can you|could you'], why: 'A report with no ask gets filed. Name the thing you want: usually confirmation of the cause and a decision on the historical data.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ac-130': {
+    title: 'Who else is in this table',
+    hint: "Look at the email domains. One of them is not a customer.",
+    brief: "Before Friday's recommendation, establish who the population actually is. Write ONE SQL SELECT returning, for staff (email_domain meridiansystems.com) and customers separately: the number of users, the number of sessions, and sessions per user rounded to two places.",
+    referenceSql: "SELECT CASE WHEN u.email_domain = 'meridiansystems.com' THEN 'staff' ELSE 'customer' END AS seg, COUNT(DISTINCT u.id) AS users, COUNT(s.id) AS sessions, ROUND(COUNT(s.id) * 1.0 / COUNT(DISTINCT u.id), 2) AS sessions_per_user FROM users u LEFT JOIN sessions s ON s.user_id = u.id GROUP BY seg ORDER BY seg",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'ac-131': {
+    title: 'What they are doing to the average',
+    hint: "Compute activation twice — once over everybody, once over customers only — and put the two side by side.",
+    brief: "Quantify the distortion rather than asserting it. Write ONE SQL SELECT returning two rows labelled 'all users' and 'customers only', each with the user count and the activation rate as a percentage rounded to one place. Activation means having fired first_report_run.",
+    referenceSql: "SELECT 'all users' AS scope, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u UNION ALL SELECT 'customers only', COUNT(*), ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) FROM users u WHERE u.email_domain <> 'meridiansystems.com'",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'ac-132': {
+    title: 'Thirty-one people, a quarter of the sessions',
+    hint: "Judge the size of the effect on each metric separately. It is not the same everywhere.",
+    brief: "Staff are 5% of the users and 1,144 of the 4,664 sessions. Decide what that means for the rest of the analysis.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'exclude', correct: true, label: 'They should be excluded from every customer-behaviour metric', why: 'They are not customers, they never churn, and they use it six times as much. Any engagement number that includes them describes the company, not the market.' },
+        { key: 'sessions', correct: true, label: 'The distortion is far worse for session metrics than for activation', why: 'Activation moves 40.7% to 37.7% — three points. Sessions per user is 36.9 against 6.14. The same contamination is nearly invisible in one metric and dominant in another.' },
+        { key: 'say', correct: true, label: 'The exclusion has to be stated wherever the numbers appear', why: 'An unexplained filter is indistinguishable from a mistake to the next person who reruns your query and gets a different answer.' },
+        { key: 'keep', correct: false, label: 'Keep them — more data is better', why: 'More of the wrong population is worse, not better. Volume does not fix a definition problem.' },
+        { key: 'small', correct: false, label: 'At 5% of users they cannot move anything much', why: 'This is the exact intuition the session figure disproves. Five percent of users producing a quarter of the sessions moves any per-session average a long way.' },
+        { key: 'dogfood', correct: false, label: 'Their usage is the best signal we have of what power users do', why: 'They built it, they have no alternative, and their incentives are not a customer\'s. It is the least representative behaviour in the table, not the most.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ac-133': {
+    title: 'Sessions where nothing happened',
+    hint: "SQLite has no median, which is the reason this one is in the notebook. Sort the durations yourself and take the middle, remembering the even-length case.",
+    brief: "Somebody is about to claim mobile users are less engaged. Check it properly. In the notebook, compute for web and mobile separately: total sessions, how many lasted zero seconds, that as a percentage, the mean duration over all sessions, the mean over only those longer than zero, and the MEDIAN over those longer than zero. Round every figure to one decimal place. Assign a list of dicts with keys grp, sessions, zero, zero_pct, avg_all, avg_real and median_real to `result`, sorted by grp.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const s of tables.sessions) {
+        const grp = s.platform === 'web' ? 'web' : 'mobile';
+        if (!by.has(grp)) by.set(grp, []);
+        by.get(grp).push(s.duration_seconds);
+      }
+      const r1 = (n) => Math.round(n * 10) / 10;
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([grp, all]) => {
+          const real = all.filter((d) => d > 0);
+          return {
+            grp,
+            sessions: all.length,
+            zero: all.length - real.length,
+            zero_pct: r1((all.length - real.length) * 100 / all.length),
+            avg_all: r1(all.reduce((s, d) => s + d, 0) / all.length),
+            avg_real: r1(real.reduce((s, d) => s + d, 0) / real.length),
+            median_real: r1(median(real)),
+          };
+        })
+        .sort((a, b) => (a.grp < b.grp ? -1 : 1));
+    },
+  },
+
+  'ac-134': {
+    title: 'The mobile engagement gap',
+    hint: "Compare avg_all across the two rows, then compare avg_real. The two comparisons disagree.",
+    brief: "Mobile averages 540 seconds against web's 625 — until you drop the sessions that recorded nothing. Say what is actually true.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything your own numbers support.',
+      options: [
+        { key: 'artefact', correct: true, label: 'The apparent 14% gap is entirely a measurement artefact', why: 'Excluding zero-length sessions, mobile is 718 seconds against web\'s 703 — mobile is marginally the longer of the two. The sign of the finding flips.' },
+        { key: 'bounce', correct: true, label: 'Mobile records far more zero-length sessions: 24.8% against 11.1%', why: 'The beacon fires on load and the user leaves. Twice as often on a phone, which is exactly what you would expect and precisely why it is not an engagement finding.' },
+        { key: 'median', correct: true, label: 'The median agrees with the mean once zeros are out — 550 seconds against 535', why: 'Worth checking, because a mean can be dragged by a handful of very long sessions. Here both measures say the same thing, which is what lets you state it without hedging.' },
+        { key: 'separate', correct: true, label: 'Mobile activation being poor is a separate, real problem', why: '19.2% against 53.2% is not an artefact. Two different mobile stories live in this dataset and conflating them would lose the true one inside the false one.' },
+        { key: 'lessengaged', correct: false, label: 'Mobile users are less engaged once they are in the product', why: 'This is the claim the second average refutes. Once they are genuinely in a session they stay marginally longer.' },
+        { key: 'drop', correct: false, label: 'Zero-length sessions are junk and should be deleted', why: 'They are a real signal about how people arrive and bounce. Exclude them from duration averages, keep them for anything about acquisition.' },
+        { key: 'nothing', correct: false, label: 'There is no mobile problem here at all', why: 'Over-correcting is the mirror of the original error. Mobile activates at a third of web\'s rate, and that is Friday\'s recommendation.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ac-135': {
+    title: 'Activation by platform, cleanly',
+    hint: "Customers only, mobile means not-web, and activation means the event exists.",
+    brief: "Put the real platform finding on the table. Write ONE SQL SELECT over CUSTOMERS ONLY returning, for web and mobile: the number of users and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp ORDER BY activation DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ac-140': {
+    title: 'Which channel activates best',
+    hint: "Customers only. You are ranking channels, so the order of the rows is the answer.",
+    brief: "Friday is the recommendation. Start with acquisition. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per channel: the number of users and the activation rate as a percentage rounded to one place. Best activating channel first.",
+    referenceSql: "SELECT u.channel, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS activation FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.channel ORDER BY activation DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'ac-141': {
+    title: 'Which channel stays',
+    hint: "A user is retained in week four if they had a session between 28 and 35 days after signing up. Stop at the April cohort so every user has had the chance.",
+    brief: "Activation is not the only measure of a good channel. Write ONE SQL SELECT over CUSTOMERS ONLY who signed up in or before April, returning per channel: the number of users and the percentage who had a session between 28 and 35 days after their signup date, rounded to one place. Best retaining channel first.",
+    referenceSql: "SELECT u.channel, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) >= 28 AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) < 35) THEN 1.0 ELSE 0.0 END) * 100, 1) AS wk4 FROM users u WHERE u.email_domain <> 'meridiansystems.com' AND substr(u.signup_at, 1, 7) <= '2026-04' GROUP BY u.channel ORDER BY wk4 DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    // Deliberately flagged for rework: Asha accepts the ranking and then asks whether it
+    // holds once the censored cohorts come out, which is the same query with a tighter
+    // window. Being asked for the same thing twice, slightly differently, is the job.
+    rework: true,
+  },
+
+  'ac-142': {
+    title: 'The two rankings disagree',
+    hint: "Find the channel that moves furthest between the two lists, and ask which metric the business actually pays for.",
+    brief: "Your activation ranking and your retention ranking are not the same ranking. That disagreement is the most useful thing you have found this week.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the two tables support.',
+      options: [
+        { key: 'paid', correct: true, label: 'Paid search activates respectably and then retains worst of all', why: '38.7% activation — third of five — against 14.8% week-four retention, last by a wide margin. It is the clearest disagreement in the data.' },
+        { key: 'partner', correct: true, label: 'Partner is strongest on both and is the smallest channel', why: 'Top of the activation table at 50% and top of the retention table at 39.3%, on the fewest users of any channel. Best on both measures and barely being used.' },
+        { key: 'wrongmetric', correct: true, label: 'Judging channels on activation alone would rank paid search too highly', why: 'Which is the point: activation measures whether onboarding worked, not whether the user was worth acquiring. They are different questions.' },
+        { key: 'kill', correct: false, label: 'Stop spending on paid search', why: 'It is a quarter of all signups. A recommendation that large needs cost-per-acquisition and lifetime value, and neither is in this data.' },
+        { key: 'organic', correct: false, label: 'Organic is the weakest channel overall', why: 'It is last on activation but mid-table on retention, and it is the largest channel by volume. Last on one measure is not weakest overall.' },
+        { key: 'same', correct: false, label: 'The rankings agree once you allow for sample size', why: 'Paid search has the second-largest sample in the table. Sample size is not what is moving it.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-143': {
+    title: 'Retention by cohort',
+    hint: "Report how many days the youngest member of each cohort has actually been observed for, beside the retention figure.",
+    brief: "Somebody will ask whether retention is getting worse. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per signup month: the number of users, the fewest days any of them has been observed for as at 12 June 2026, and the week-four retention percentage rounded to one place. Oldest cohort first.",
+    referenceSql: "SELECT substr(u.signup_at, 1, 7) AS cohort, COUNT(*) AS users, MIN(CAST(julianday('2026-06-12') - julianday(substr(u.signup_at, 1, 10)) AS INTEGER)) AS min_days, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) >= 28 AND julianday(s.started_at) - julianday(substr(u.signup_at, 1, 10)) < 35) THEN 1.0 ELSE 0.0 END) * 100, 1) AS wk4 FROM users u WHERE u.email_domain <> 'meridiansystems.com' GROUP BY cohort ORDER BY cohort",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-144': {
+    title: 'Retention is falling off a cliff',
+    hint: "Your min_days column is the whole answer. Ask which cohorts could possibly have produced a week-four session.",
+    brief: "The cohort table shows week-four retention dropping from 27.9% in April to 14.3% in May to zero in June. Decide what you are looking at.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'censored', correct: true, label: 'June cannot have a week-four figure at all — nobody has been here 28 days', why: 'The youngest June cohort member has been observed for zero days and the oldest for eleven. That zero is not retention, it is arithmetic.' },
+        { key: 'maypartial', correct: true, label: 'May is partly censored too, which is why it halves rather than falls to zero', why: 'Only the first fortnight of May signups could reach day 28 before the export. The cohort is a mix of the observed and the unobservable.' },
+        { key: 'stopwhere', correct: true, label: 'The chart has to stop at the last fully observed cohort — April', why: 'Jan through April sit between 22.5% and 29.8% with no trend worth reporting. Everything after that is a measurement window, not a behaviour.' },
+        { key: 'declining', correct: false, label: 'Retention has been declining since January', why: '29.8, 22.5, 27.3, 27.9. That is noise around a flat line, and February is the low point, not June.' },
+        { key: 'urgent', correct: false, label: 'The June collapse needs escalating today', why: 'It is the same mistake as Monday\'s signup panic, one table further in. Twice in one week would be a pattern.' },
+        { key: 'impute', correct: false, label: 'Estimate the missing cohorts from the earlier ones', why: 'Then you are reporting your own assumption back to yourself. Leave the cell empty and say why it is empty.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ac-145': {
+    title: 'The recommendation',
+    hint: "One recommendation, the reason for it, and the things you are explicitly not claiming. Priya reads the caveats.",
+    brief: "Priya runs Product and has to decide where next quarter's onboarding effort goes. Give her the week: what you would change, what the data says, and what it does not. Under 220 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'Activation review — where the effort should go', maxWords: 220,
+      prompt: 'A single clear recommendation, the evidence, and an honest account of the limits.',
+      rubric: [
+        { key: 'rec', label: 'One specific recommendation', markers: ['mobile|onboarding|partner|recommend|priorit|focus|invest|fix'], why: 'A week of analysis that ends in a list of observations makes the decision somebody else\'s problem.' },
+        { key: 'mobile', label: 'The mobile activation gap, with numbers', markers: ['19|53|mobile|platform|third|2\\.7|half'], why: 'The largest real effect you found, and the one with an obvious lever behind it.' },
+        { key: 'clean', label: 'That staff were excluded and the funnel split by invite path', markers: ['staff|internal|exclud|meridian|self.serve|invited|invite path'], why: 'Both corrections changed the answer. Stating them is what lets Priya trust the numbers that follow.' },
+        { key: 'bug', label: 'The 4.3.0 duplicate and its effect on historical reporting', markers: ['4\\.3\\.0|duplicat|double|bug|inflat'], why: 'She owns dashboards built on the corrupted period. She will hear about it eventually; better from you.' },
+        { key: 'limits', label: 'What the data cannot support', markers: ['cannot|can.t|not say|no data|does not|doesn.t|caveat|limit|unable|beyond'], why: 'No cost data, no revenue, censored cohorts. Naming the boundary is what makes the rest of it credible.' },
+        { key: 'window', label: 'That the last cohorts are censored, not declining', markers: ['censor|partial|incomplete|window|28 day|not yet|too recent|cut.?off'], why: 'The trap she is most likely to fall into on her own, twice over — signups and retention both.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Senior 4 · Onboarding Experiment Readout (product_events) -------------------
+  // One finding, arrived at four times. Monday the randomisation is broken. Tuesday the
+  // naive readout says the new onboarding lost. Wednesday it wins in every segment and
+  // the overall number was composition all along. Thursday the learner is handed the
+  // means to manufacture any finding they like, and has to not. Friday they write the
+  // readout that says the opposite of what the room was told on Tuesday.
+
+  'ex-101': {
+    title: 'What you need before reading any result',
+    hint: "You have been handed a conclusion. Work out what would have to be true for it to be one.",
+    brief: "Priya has the experiment result and wants it written up. Before you compute anything, establish what an experiment readout actually requires.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Priya Menon', subject: 'onboarding_v2 — write it up please',
+        body: "We ran the new onboarding from 1 March to 15 May. I have had the headline from the growth channel: treatment activates at 36% against control's 45%.\n\nSo it lost, and fairly clearly. I need a short readout I can circulate saying we are rolling it back, and ideally why it failed.\n\nCan you have it by Wednesday?",
+      },
+      prompt: 'Tick everything you should establish before writing a word of that readout.',
+      options: [
+        { key: 'balance', correct: true, label: 'Whether the two arms are actually comparable', why: 'A difference between arms only measures the change if the arms differ in nothing else. That is the assumption the whole method rests on and it is checkable in one query.' },
+        { key: 'window', correct: true, label: 'Whether every assigned user has been observed long enough to activate', why: 'A treatment arm assigned later than control would lose on measurement alone. Cheap to rule out, expensive to miss.' },
+        { key: 'who', correct: true, label: 'Who is in the assignment table, including whether staff are', why: 'Same population question as every other week. Eight staff in each arm is balanced, which is luck rather than design.' },
+        { key: 'why', correct: false, label: 'Why the new onboarding failed', why: 'She has asked for the cause of a thing you have not yet confirmed happened. Answering that question as framed is how you end up defending a conclusion you never tested.' },
+        { key: 'accept', correct: false, label: 'Nothing — the numbers are already computed and they are unambiguous', why: '36 against 45 is unambiguous only about what the raw averages are. It says nothing yet about what caused the difference.' },
+        { key: 'rerun', correct: false, label: 'Ask for the experiment to be re-run before commenting', why: 'Ten weeks of data already exist. Read it properly first; a re-run is a recommendation you might reach, not a way to avoid reading.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ex-102': {
+    title: 'What was actually run',
+    hint: "Start with the assignment table on its own. You are establishing the shape of the experiment, not its result.",
+    brief: "Write ONE SQL SELECT over the assignment table returning, per experiment: how many users were assigned, and the first and last assignment dates. Label them assigned, first_assigned and last_assigned.",
+    referenceSql: "SELECT experiment, COUNT(*) AS assigned, MIN(substr(assigned_at, 1, 10)) AS first_assigned, MAX(substr(assigned_at, 1, 10)) AS last_assigned FROM experiment_assignments GROUP BY experiment",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ex-103': {
+    title: 'The two arms',
+    hint: "Customers only, same exclusion as every other week. A 50/50 split is what you are checking for.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: the number of users assigned, and each arm's share of the assigned population as a percentage rounded to one place.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS users, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM experiment_assignments a2 JOIN users u2 ON u2.id = a2.user_id WHERE u2.email_domain <> 'meridiansystems.com'), 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY users DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ex-104': {
+    title: 'What each arm is made of',
+    hint: "Compare the arms on the one attribute you already know predicts activation. Report each platform as a share OF ITS OWN ARM.",
+    brief: "An unequal split is a warning, not a diagnosis. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant and platform group (web against mobile): the number of users and that group's percentage of its own arm, rounded to one place.",
+    referenceSql: "SELECT a.variant, CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY a.variant), 1) AS pct_of_arm FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant, grp ORDER BY a.variant, grp",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-105': {
+    title: 'This was not a randomised experiment',
+    hint: "You know from last week what platform does to activation. Now look at how it is distributed between the arms.",
+    brief: "Control is 27.8% mobile. Treatment is 73.0% mobile. Work out what that does to any comparison between them.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'broken', correct: true, label: 'The arms are not comparable, so the headline difference is uninterpretable as it stands', why: 'Treatment is loaded with the platform that activates at a third of web\'s rate. Any gap between the arms is that loading plus whatever the change did, and the raw number cannot separate them.' },
+        { key: 'device', correct: true, label: 'The assignment was probably bucketed on something device-related', why: 'A 73/27 split against a 28/72 one is not chance. Something in the rollout mechanism was correlated with the device, and that is worth writing down as the likely cause.' },
+        { key: 'salvage', correct: true, label: 'It can still be analysed, but only within platform', why: 'Comparing like with like inside each segment is valid. What is not valid is the pooled average, and the distinction is the whole readout.' },
+        { key: 'size', correct: false, label: 'The unequal arm sizes — 169 against 122 — are the main problem', why: 'Unequal sizes cost you precision and nothing else. It is the unequal COMPOSITION that biases the result, and the two are easy to confuse.' },
+        { key: 'bin', correct: false, label: 'The experiment is worthless and should be discarded', why: 'Ten weeks of data with a known, measurable confounder is recoverable. Discarding it would throw away a real finding to avoid doing the arithmetic.' },
+        { key: 'noise', correct: false, label: 'With nearly 300 users the imbalance will average out', why: 'Sample size fixes noise. It does nothing at all to systematic assignment bias — a larger sample would reproduce this skew more precisely.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-106': {
+    title: 'Tell Priya on day one',
+    hint: "She asked for a rollback note by Wednesday. She needs to know today that the question changed.",
+    brief: "You have not computed the result yet and you already know the readout she asked for cannot be written. Say so now, without overclaiming what you will find. Under 150 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — the arms are not comparable', maxWords: 150,
+      prompt: 'What you found in the assignment, why it blocks the readout she asked for, and what you will do instead.',
+      rubric: [
+        { key: 'skew', label: 'The composition problem, with the numbers', markers: ['73|27|mobile|platform|composition|skew|imbalance|made up of'], why: 'One specific pair of percentages is more persuasive than any amount of methodological language.' },
+        { key: 'why', label: 'Why it invalidates the pooled comparison', markers: ['activat|third|lower|worse|confound|not comparable|like for like|apples'], why: 'She needs the mechanism, not just the word "confounded".' },
+        { key: 'hold', label: 'That the rollback note should wait', markers: ['hold|wait|not yet|before|pause|premature|would not|don.t circulate'], why: 'The concrete ask. Without it she may circulate the original number anyway.' },
+        { key: 'plan', label: 'What you will do instead, and by when', markers: ['segment|within|by platform|split|standardis|weight|wednesday|thursday|instead'], why: 'A problem reported with no path forward reads as obstruction rather than analysis.' },
+        { key: 'honest', label: 'That you do not yet know which way it will go', markers: ['may|might|could|not yet|do not know|don.t know|either|possible|until'], why: 'You genuinely do not know on Monday. Implying you do would be the same error she made, pointed the other way.' },
+      ],
+      skills: { communication: 100, statistics: 90 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ex-110': {
+    title: 'The number everyone has seen',
+    hint: "Reproduce it exactly, customers only. You cannot correct a figure you have not first matched.",
+    brief: "Compute the headline. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: users, how many activated, and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY pct DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'ex-112': {
+    title: 'Rule out the boring explanations',
+    hint: "If treatment users were assigned later they would have had less time to activate. Check it rather than assume it.",
+    brief: "Before blaming composition, eliminate measurement. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per variant: the earliest and latest signup date in the arm, and the fewest days any member of it has been observed for as at 12 June 2026. Label them first_signup, last_signup and min_days_observed.",
+    referenceSql: "SELECT a.variant, MIN(substr(u.signup_at, 1, 10)) AS first_signup, MAX(substr(u.signup_at, 1, 10)) AS last_signup, MIN(CAST(julianday('2026-06-12') - julianday(substr(u.signup_at, 1, 10)) AS INTEGER)) AS min_days_observed FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY a.variant ORDER BY a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-113': {
+    title: 'Staff in the arms',
+    hint: "You exclude them anyway. This is about whether their presence was ALSO lopsided.",
+    brief: "Write ONE SQL SELECT over STAFF ONLY returning, per variant, how many were assigned. Label the column staff_assigned.",
+    referenceSql: "SELECT a.variant, COUNT(*) AS staff_assigned FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain = 'meridiansystems.com' GROUP BY a.variant ORDER BY a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.3, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ex-111': {
+    title: 'What the headline does and does not say',
+    hint: "Two of these are ruled out by queries you have just run. One is not ruled out by anything yet.",
+    brief: "You have reproduced 45.0% against 36.1% and checked the obvious alternatives. Say precisely where that leaves you.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true right now.',
+      options: [
+        { key: 'reproduced', correct: true, label: 'The headline reproduces exactly on customers only: 45.0 against 36.1', why: 'Matching the number you are about to correct is what stops the conversation becoming an argument about whose query is right.' },
+        { key: 'nowindow', correct: true, label: 'It is not a measurement-window artefact — every assigned user has at least 28 days', why: 'Both arms span 1 March to 15 May and the youngest has been observed 28 days. A whole class of explanation is now closed.' },
+        { key: 'nostaff', correct: true, label: 'It is not staff contamination — eight in each arm, and they are excluded anyway', why: 'Balanced by luck, not design. Worth one line in the readout precisely because nobody planned it.' },
+        { key: 'lost', correct: false, label: 'The new onboarding performed worse', why: 'This is the claim under test, and the composition problem from yesterday is untouched by anything you did today.' },
+        { key: 'nothing', correct: false, label: 'Nothing can be concluded from this experiment', why: 'Too strong, and it is the counsel of despair. A confounder you can measure is a confounder you can adjust for.' },
+        { key: 'sig', correct: false, label: 'The gap is too large to be chance, so it is real', why: 'Ruling out chance does not rule out bias. A systematic imbalance produces large, stable, entirely spurious gaps.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-114': {
+    title: 'The growth channel wants to post it',
+    hint: "They are not asking permission. Decide what you would need them to add.",
+    brief: "Someone is about to broadcast the rollback. Decide what to do about it today.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: '#growth',
+        body: "Posting this to the channel now: \"onboarding_v2 result is in — treatment 36% vs control 45%. We're rolling back. Good news is we caught it in ten weeks.\"\n\nShout if that's wrong.",
+      },
+      prompt: 'Tick everything you should do.',
+      options: [
+        { key: 'stop', correct: true, label: 'Ask him to hold it today, before it is posted', why: 'A number in a channel is repeated for months. The cost of asking him to wait a day is far below the cost of a public correction on Thursday.' },
+        { key: 'reason', correct: true, label: 'Give him the reason in one line, not a request to trust you', why: '"The arms are 73% and 28% mobile" takes six seconds to read and is impossible to argue with. "I have concerns" invites a debate you will lose to a deadline.' },
+        { key: 'when', correct: true, label: 'Tell him when he will have something he can post', why: 'He has a channel to feed. Holding without a date is asking him to choose between you and his job.' },
+        { key: 'let', correct: false, label: 'Let it go — he said shout if it is wrong, and you have not finished', why: 'You have finished enough to know the number is not interpretable. That is exactly the shout he asked for.' },
+        { key: 'correct', correct: false, label: 'Post the correction in the channel yourself', why: 'Correcting a colleague in public before he has had the chance to correct himself buys one accurate message and costs every future one.' },
+        { key: 'escalate', correct: false, label: 'Raise it with Asha before replying to him', why: 'It is a one-line message to someone who explicitly invited it. Escalating a thing you can simply say is how a team stops talking to each other.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ex-115': {
+    title: 'Hold the line with Vikram',
+    hint: "One line of evidence, one commitment, no methodology lecture.",
+    brief: "Reply to Vikram in the channel. He is about to post the rollback and asked to be told if it is wrong. Under 100 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Hold the onboarding_v2 post', maxWords: 100,
+      prompt: 'The ask, the one-line reason, and when he gets something postable.',
+      rubric: [
+        { key: 'hold', label: 'A clear ask to hold', markers: ['hold|wait|don.t post|do not post|pause|before you|hang on|give me'], why: 'Lead with it. Everything after is the justification.' },
+        { key: 'evidence', label: 'The composition figure', markers: ['73|27|28|mobile|platform|made up|composition|skew'], why: 'The specific pair of numbers is what makes this unarguable in a channel.' },
+        { key: 'notyet', label: 'That the direction is genuinely not settled', markers: ['not yet|may|might|could|do not know|don.t know|either way|reverse|change'], why: 'Do not tell him it is wrong. Tell him it is not yet readable, which is what is true on Tuesday.' },
+        { key: 'date', label: 'When he gets a number he can post', markers: ['tomorrow|thursday|wednesday|end of|by|day|24 hour'], why: 'Without a date this reads as an indefinite block on his work.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ex-120': {
+    title: 'Compare like with like',
+    hint: "Two segments, two arms, four cells. This is the query the whole week has been building to.",
+    brief: "Now the comparison that is actually valid. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per platform group and variant: users, how many activated, and the activation rate as a percentage rounded to one place. Group first, then variant.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp, a.variant ORDER BY grp, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 3, day: 3, difficulty: 'hard',
+    // Deliberately flagged for rework: Priya accepts the four-cell table and then asks
+    // for it variant-first rather than segment-first, because that is the order she has
+    // to speak it in. A presentation request, not a correction.
+    rework: true,
+  },
+
+  'ex-121': {
+    title: 'It wins in both segments and loses overall',
+    hint: "Check the direction inside each segment, then the direction of the pooled number. They disagree.",
+    brief: "Mobile: 17.0 against 24.7. Web: 55.7 against 66.7. Pooled: 45.0 against 36.1. Say what you are looking at.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'simpson', correct: true, label: 'A reversal caused by composition — treatment beats control in every segment', why: "Simpson's paradox. It is not a contradiction and not an error: the pooled average is a weighted average, and the weights differ between the arms." },
+        { key: 'both', correct: true, label: 'Treatment is ahead by 7.7 points on mobile and 11.0 on web', why: 'Both segments, same direction, and neither margin is small. That consistency is what makes the reversal a composition story rather than a fluke.' },
+        { key: 'weights', correct: true, label: 'The pooled figure is measuring the platform mix, not the onboarding', why: 'Treatment is three-quarters mobile, and mobile activates at a third of web\'s rate. Pooling hands the arm with the worse mix a penalty that has nothing to do with the change.' },
+        { key: 'error', correct: false, label: 'One of the two calculations must be wrong', why: 'Both are arithmetically correct. That is precisely what makes the paradox worth understanding rather than debugging.' },
+        { key: 'pooled', correct: false, label: 'The pooled number is the real one — it is what users actually experienced', why: 'What users experienced is real. It is not an estimate of what the CHANGE did, which is the only question an experiment is run to answer.' },
+        { key: 'mobileonly', correct: false, label: 'The new onboarding only helps mobile users', why: 'It helps web users more, in percentage points. The mobile-heavy treatment arm is why the pooled figure falls, not where the benefit is.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-122': {
+    title: 'One number for the readout',
+    hint: "Apply each arm's within-segment rates to the SAME platform mix — the pooled one — so the arms differ only in the thing you are testing.",
+    brief: "Priya needs a single figure per arm, not a four-cell table. Standardise them. In the notebook, over CUSTOMERS ONLY, compute each variant's activation rate re-weighted to the platform mix of the whole assigned population. Assign a list of dicts with keys variant and standardised_pct, rounded to one decimal place, sorted by variant, to `result`.",
+    tool: 'python', datasetKey: 'product_events',
+    estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const users = new Map(tables.users.map((u) => [u.id, u]));
+      const activated = new Set(tables.events.filter((e) => e.name === 'first_report_run').map((e) => e.user_id));
+      const cells = new Map();
+      const groupTotals = new Map();
+      for (const a of tables.experiment_assignments) {
+        const u = users.get(a.user_id);
+        if (!u || u.email_domain === 'meridiansystems.com') continue;
+        const grp = u.primary_platform === 'web' ? 'web' : 'mobile';
+        const key = a.variant + '|' + grp;
+        if (!cells.has(key)) cells.set(key, { n: 0, act: 0 });
+        const c = cells.get(key);
+        c.n += 1;
+        if (activated.has(u.id)) c.act += 1;
+        groupTotals.set(grp, (groupTotals.get(grp) || 0) + 1);
+      }
+      const total = [...groupTotals.values()].reduce((s, n) => s + n, 0);
+      const variants = [...new Set([...cells.keys()].map((k) => k.split('|')[0]))].sort();
+      return variants.map((variant) => {
+        let acc = 0;
+        for (const [grp, weight] of groupTotals) {
+          const c = cells.get(variant + '|' + grp);
+          if (c && c.n) acc += (c.act / c.n) * weight;
+        }
+        return { variant, standardised_pct: Math.round((acc / total) * 1000) / 10 };
+      });
+    },
+  },
+
+  'ex-123': {
+    title: 'Check the mechanism',
+    hint: "Users who signed up outside the experiment window were never assigned. They are your untouched baseline.",
+    brief: "Confirm that mobile really is the weaker platform, independently of the experiment. Write ONE SQL SELECT over CUSTOMERS ONLY who have NO row in the assignment table, returning per platform group: users and the activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM users u WHERE u.email_domain <> 'meridiansystems.com' AND NOT EXISTS (SELECT 1 FROM experiment_assignments a WHERE a.user_id = u.id) GROUP BY grp ORDER BY pct DESC",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-124': {
+    title: 'Which number goes in the readout',
+    hint: "You now have three candidates. Only one of them answers the question the experiment was run to answer.",
+    brief: "You have the pooled figure, the four-cell table and the standardised pair. Decide what Priya gets.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that belongs in the readout.',
+      options: [
+        { key: 'standard', correct: true, label: 'The standardised pair: 37.6 control against 47.1 treatment', why: 'Both arms evaluated against the same platform mix, so the only remaining difference is the onboarding. This is the estimate of the effect.' },
+        { key: 'segments', correct: true, label: 'The per-segment table underneath it', why: 'The standardised number is a summary of those four cells. Showing them is what lets someone check your weighting rather than take it on faith.' },
+        { key: 'original', correct: true, label: 'The original 45.0 against 36.1, labelled as the confounded figure', why: 'It is already circulating. A readout that silently replaces it leaves two numbers loose with no explanation of which to believe.' },
+        { key: 'baseline', correct: true, label: 'The unassigned baseline — mobile 16.0, web 48.4 — as corroboration', why: 'It shows the platform gap exists outside the experiment entirely, which is what turns "I reweighted it" from a manoeuvre into a documented fact.' },
+        { key: 'onlybest', correct: false, label: 'Only the segment where treatment did best, since that is the clearest result', why: 'Reporting the strongest cell and omitting the other is how you would have manufactured the opposite conclusion on Tuesday.' },
+        { key: 'avgpct', correct: false, label: 'The simple average of the two segment rates: (24.7 + 66.7) / 2', why: 'That weights a 33-user segment equally with an 89-user one. Standardising uses the real population mix, which is the point.' },
+      ],
+      skills: { statistics: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-125': {
+    title: 'Tell Priya it reversed',
+    hint: "She told the business it lost. Give her the corrected result and the sentence she can use to explain the change.",
+    brief: "Write to Priya. The conclusion she circulated on Monday is the opposite of the corrected one. Make that easy for her to carry. Under 180 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — the result reverses once the arms are matched',
+      maxWords: 180,
+      prompt: 'The corrected result, why it moved, and what you are recommending now.',
+      rubric: [
+        { key: 'result', label: 'The corrected figures', markers: ['37\\.6|47\\.1|standardis|weight|adjust|matched|nine|9\\.5'], why: 'Lead with the answer. The method is the second paragraph.' },
+        { key: 'why', label: 'Why the raw number said the opposite', markers: ['mobile|73|composition|mix|confound|weighted|more of'], why: 'Without the mechanism this reads as an analyst producing whichever answer was asked for.' },
+        { key: 'segments', label: 'That treatment won in both segments', markers: ['both|each|every|web and mobile|17|24\\.7|55\\.7|66\\.7'], why: 'Consistency across segments is what makes the corrected direction believable rather than an artefact of the correction.' },
+        { key: 'rec', label: 'A recommendation, not just a correction', markers: ['roll|ship|keep|not roll back|recommend|adopt|launch|do not'], why: 'She asked for a rollback note. The obligation is to replace it with a decision, not to leave her with a methodology note.' },
+        { key: 'caveat', label: 'The limits — non-random assignment, small web treatment arm', markers: ['not random|non.random|assign|33|small|caveat|cannot|limit|confiden|re.run'], why: 'This is an adjusted observational comparison, not a clean experiment. Saying so is what keeps it defensible when somebody checks.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ex-130': {
+    title: 'The result by channel',
+    hint: "Same four-cell shape, different splitter. Watch the sample sizes in each cell.",
+    brief: "Somebody will ask whether the effect holds everywhere. Write ONE SQL SELECT over CUSTOMERS ONLY returning, per channel and variant: users and activation rate as a percentage rounded to one place. Channel, then variant.",
+    referenceSql: "SELECT u.channel, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.channel, a.variant ORDER BY u.channel, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-131': {
+    title: 'The result by plan',
+    hint: "Same again. Note how few users are in some of these cells before reading anything into them.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, per plan and variant: users and activation rate as a percentage rounded to one place. Plan, then variant.",
+    referenceSql: "SELECT u.plan, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY u.plan, a.variant ORDER BY u.plan, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.5, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-132': {
+    title: 'Two segments that disagree with everything',
+    hint: "Look at the cell sizes behind the two biggest swings before deciding they are findings.",
+    brief: "Partner has control at 66.7% against treatment's 33.3%. Business plan has 55.6% against 29.4%. Both point the opposite way to the result. Decide what they are.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'small', correct: true, label: 'Both sit on cells of 15 to 27 users, where a handful of people moves the rate 10 points', why: 'On 15 users one person is 6.7 percentage points. These cells cannot distinguish a real reversal from five coin flips.' },
+        { key: 'expected', correct: true, label: 'With five channels and three plans, extreme cells are expected even if nothing is happening', why: 'Sixteen subgroup comparisons will throw up two or three that look striking by chance alone. That is arithmetic, not bad luck.' },
+        { key: 'notprespec', correct: true, label: 'Neither split was specified before the result was known', why: 'The platform split was forced on you by the assignment mechanism. These two you went looking for after seeing the answer, which is a different kind of evidence.' },
+        { key: 'partner', correct: false, label: 'The new onboarding actively harms partner-sourced users', why: 'On 27 against 15 users, that claim needs far more evidence than a percentage gap. It is the single most quotable wrong sentence available this week.' },
+        { key: 'both', correct: false, label: 'Report both alongside the platform finding, for completeness', why: 'Completeness is not the goal — a reader cannot weigh a 15-user cell against a 122-user one, and putting them side by side implies they are comparable.' },
+        { key: 'hide', correct: false, label: 'Do not mention subgroup results at all', why: 'Somebody will run these splits. Better that the readout says you looked, they were underpowered, and here is what would settle them.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ex-133': {
+    title: 'The result by invite path',
+    hint: "One more splitter, and this one has a real reason to differ. Report it either way.",
+    brief: "Write ONE SQL SELECT over CUSTOMERS ONLY returning, for self_serve and invited users and each variant: users and activation rate as a percentage rounded to one place.",
+    referenceSql: "SELECT CASE WHEN u.invited_by_user_id IS NULL THEN 'self_serve' ELSE 'invited' END AS kind, a.variant, COUNT(*) AS users, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY kind, a.variant ORDER BY kind, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-134': {
+    title: 'Vikram found the partner number',
+    hint: "He is not wrong that it is in the data. Decide what you owe him, and what you do not.",
+    brief: "He has run his own split and wants to use it. Answer him.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: '#growth',
+        body: "Ran your query with a channel breakdown. Partner users do WAY worse on treatment — 33% vs 67% on control.\n\nThat's a real segment for us. Can we ship the new onboarding to everyone except partner-sourced signups? Best of both.",
+      },
+      prompt: 'Tick everything that should be in your reply.',
+      options: [
+        { key: 'n', correct: true, label: 'The cell sizes: 27 control and 15 treatment', why: 'He has not seen the denominator. Almost nobody reads a subgroup result and checks it, which is why quoting it is the most useful thing you can do.' },
+        { key: 'multiple', correct: true, label: 'That sixteen subgroup splits will always produce a couple of extremes', why: 'The general principle, once, so he can apply it himself next time rather than bringing you each new slice.' },
+        { key: 'test', correct: true, label: 'What would actually settle it — a pre-specified split in the re-run', why: 'It turns a refusal into a plan, and if partner really is different the re-run will show it.' },
+        { key: 'ship', correct: false, label: 'Agree — carving out one segment is a cheap hedge', why: 'It is not cheap. It splits the product into two onboarding paths permanently, on the evidence of 15 users.' },
+        { key: 'dismiss', correct: false, label: 'Tell him subgroup analysis is not valid and leave it there', why: 'Subgroup analysis is valid when pre-specified and powered. A flat dismissal is both wrong and guarantees he stops bringing you what he finds.' },
+        { key: 'rerun', correct: false, label: 'Offer to re-run the numbers to check', why: 'The numbers are right. Re-running them concedes that the problem was arithmetic, and he will come back with the same figure and more confidence.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ex-135': {
+    title: 'Answer him in the channel',
+    hint: "Short. Give him the denominator, the principle, and the way to settle it.",
+    brief: "Reply to Vikram about the partner carve-out, in public, without making him look careless. Under 120 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Re: partner segment', maxWords: 120,
+      prompt: 'The denominator, why extreme subgroups are expected, and what would settle it.',
+      rubric: [
+        { key: 'n', label: 'The cell sizes', markers: ['15|27|small|sample|handful|few|denominat'], why: 'The single fact that changes his reading of his own number.' },
+        { key: 'why', label: 'That extreme subgroups are expected across many splits', markers: ['sixteen|16|many|several|split|chance|expect|random|multiple'], why: 'The principle, so the next slice does not come back to you.' },
+        { key: 'settle', label: 'What would settle it', markers: ['pre.specif|re.run|next|design|power|larger|test it'], why: 'Refusal plus a path is a collaboration. Refusal alone is a blocker.' },
+        { key: 'respect', label: 'Written so he keeps bringing you things', markers: ['good|fair|worth|glad|thanks|right to|useful|keep'], why: 'He did the right thing by checking. If answering costs him face he will stop checking, and the next wrong number will go out unexamined.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ex-140': {
+    title: 'The readout table',
+    hint: "One row per arm per segment, plus the users behind each. This is the table that goes under the headline.",
+    brief: "Assemble what Priya circulates. Write ONE SQL SELECT over CUSTOMERS ONLY returning one row per platform group and variant: the group, the variant, users, activated, and the rate as a percentage rounded to one place — ordered so web comes before mobile and control before treatment within each.",
+    referenceSql: "SELECT CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END AS grp, a.variant, COUNT(*) AS users, SUM(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1 ELSE 0 END) AS activated, ROUND(AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100, 1) AS pct FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY grp, a.variant ORDER BY CASE WHEN grp = 'web' THEN 0 ELSE 1 END, a.variant",
+    datasetKey: 'product_events', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-141': {
+    title: 'The chart for the readout',
+    hint: "Four bars, one per arm per segment, and the axis has to start at zero or the reversal looks bigger than it is.",
+    brief: "Build the visual. Activation rate for each arm within each platform segment, so the consistency across segments is the thing a reader sees first. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'product_events',
+    chart: {
+      sourceSql: "SELECT (CASE WHEN u.primary_platform = 'web' THEN 'web' ELSE 'mobile' END) || ' · ' || a.variant AS segment, AVG(CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.user_id = u.id AND e.name = 'first_report_run') THEN 1.0 ELSE 0.0 END) * 100 AS activation FROM experiment_assignments a JOIN users u ON u.id = a.user_id WHERE u.email_domain <> 'meridiansystems.com' GROUP BY segment ORDER BY activation DESC",
+      prompt: 'Activation by arm within platform segment, for the experiment readout.',
+      answer: { type: 'bar', x: 'segment', y: 'activation', sort: 'desc', baselineZero: true },
+      why: 'Four named categories compared on one measure is a bar chart. Sorted descending the two web bars sit together and the two mobile bars sit together, so the reader sees the within-segment ordering before the between-segment gap. A zero baseline is non-negotiable on a percentage — truncating it here would make a 7.7 point difference look like a doubling.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'ex-142': {
+    title: 'What this experiment can and cannot support',
+    hint: "You corrected a confounder you could see. That is not the same as having run a clean experiment.",
+    brief: "Before you write the recommendation, be precise about the strength of what you have.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything that is true of your corrected result.',
+      options: [
+        { key: 'adjusted', correct: true, label: 'It is an adjusted observational comparison, not a randomised result', why: 'Randomisation protects against confounders you did not think of. Standardising protects only against the one you measured, and that difference has to be in the readout.' },
+        { key: 'direction', correct: true, label: 'The direction is well supported — both segments agree and the margins are wide', why: 'Consistency across independent segments is the strongest thing you have. It is what makes the reversal a finding rather than an artefact of the adjustment.' },
+        { key: 'magnitude', correct: true, label: 'The size of the effect is much less certain than its direction', why: 'The web treatment cell has 33 users. The +9.5 point standardised gap is an estimate with a wide interval around it, and quoting it to one decimal implies a precision you do not have.' },
+        { key: 'unknown', correct: true, label: 'Anything correlated with device that you have not measured is still uncontrolled', why: 'The assignment was device-bucketed. Whatever else travels with device — country, plan, how people found us — travels with the arms too.' },
+        { key: 'proven', correct: false, label: 'It proves the new onboarding is better', why: 'It supports that conclusion. Proof is not a thing an adjusted comparison on 291 users delivers, and the word is what gets quoted back at you.' },
+        { key: 'nothing', correct: false, label: 'Non-random assignment means nothing can be concluded', why: 'Then you would have spent a week to arrive back where Monday started. A measured confounder is exactly the case where adjustment is legitimate.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-143': {
+    title: 'Design the re-run',
+    hint: "Every item here is a fix for something that actually went wrong this week.",
+    brief: "You are recommending the change ship, and a proper test alongside it. Specify what the re-run has to do differently.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick everything the re-run must include.',
+      options: [
+        { key: 'bucket', correct: true, label: 'Assignment bucketed on user identifier, not device', why: 'The single cause of everything that went wrong here. Bucketing on device guarantees the arms differ on the strongest predictor you have.' },
+        { key: 'checkbalance', correct: true, label: 'A balance check on platform, channel and plan before anyone looks at the outcome', why: 'It takes one query and it would have caught this in week one instead of week ten.' },
+        { key: 'prespec', correct: true, label: 'The subgroups written down before the result is known', why: 'The difference between a subgroup finding and a story is whether you named the split first. Partner is the obvious candidate to pre-specify.' },
+        { key: 'power', correct: true, label: 'A minimum cell size, so no segment is read off 15 users', why: 'Set it in advance and the question of whether to report a tiny cell never becomes a negotiation.' },
+        { key: 'longer', correct: false, label: 'A longer window — ten weeks was not enough', why: 'Ten weeks gave every user at least 28 days to activate. Duration was the one thing that was fine.' },
+        { key: 'bigger', correct: false, label: 'A larger sample, which would have avoided the reversal', why: 'More users would have reproduced the same skew more precisely. Sample size does not fix biased assignment, and believing it does is how this recurs.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-144': {
+    title: 'The number Priya will be asked in the room',
+    hint: "She needs one sentence with one number in it. Work out which number survives being quoted without its table.",
+    brief: "Someone in the leadership meeting will ask 'so how much better is it?'. Decide what Priya should say.",
+    tool: 'choice', datasetKey: 'product_events',
+    choice: {
+      prompt: 'Tick the answers Priya can safely give.',
+      options: [
+        { key: 'ppt', correct: true, label: '"About nine points better on activation, once we compare like with like"', why: 'Gives the magnitude, flags the adjustment, and the hedge is built into the sentence rather than living in a footnote nobody reads.' },
+        { key: 'segments', correct: true, label: '"Better on both web and mobile — the earlier number was a mix effect"', why: 'The most defensible form, because it does not depend on trusting the weighting at all.' },
+        { key: 'exact', correct: false, label: '"47.1% against 37.6%"', why: 'Quoted to one decimal on 291 users, and it will be repeated to one decimal for a year. The precision is fictional.' },
+        { key: 'double', correct: false, label: '"Roughly a quarter better" (47.1 divided by 37.6)', why: 'Relative framing on a rate this size inflates the perception of the effect. Percentage points are what a product decision is made in.' },
+        { key: 'rawflip', correct: false, label: '"The original number was wrong"', why: 'It was arithmetically right and answered a different question. Calling a colleague\'s work wrong when it was misinterpreted is both inaccurate and expensive.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ex-145': {
+    title: 'The readout',
+    hint: "Result, method, limits, decision, and what the re-run changes. In that order, and nothing else.",
+    brief: "Write the readout Priya circulates. It has to replace a conclusion the business has already heard, survive being forwarded without you in the thread, and end in a decision. Under 260 words.",
+    tool: 'writeup', datasetKey: 'product_events',
+    writeup: {
+      to: 'Priya Menon', subject: 'onboarding_v2 — readout and recommendation', maxWords: 260,
+      prompt: 'The corrected result, how it was reached, what it cannot support, and what you recommend.',
+      rubric: [
+        { key: 'result', label: 'The corrected result up front', markers: ['better|improv|higher|47|37\\.6|nine|9\\.5|both segment|win'], why: 'A readout that opens with method loses the reader before the answer.' },
+        { key: 'why', label: 'Why the circulated figure said the opposite', markers: ['mobile|73|composition|mix|confound|weight|made up'], why: 'The business heard a number on Monday. Not explaining the reversal leaves two live figures and no way to choose.' },
+        { key: 'method', label: 'What you did to correct it', markers: ['standardis|weight|same mix|adjust|within|segment|like with like|matched'], why: 'Reproducible in one sentence, or it is not a readout — it is an assertion.' },
+        { key: 'limits', label: 'That assignment was not random, so this is adjusted not randomised', markers: ['not random|non.random|device|bucket|observational|adjust|cannot rule|caveat|limit'], why: 'The honest boundary. Without it the number gets treated as experimental evidence, which it is not.' },
+        { key: 'subgroup', label: 'That subgroup splits were checked and were underpowered', markers: ['subgroup|partner|plan|channel|small|15|underpower|not read|chance'], why: 'Somebody will run them. The readout should already have said what they are worth.' },
+        { key: 'decide', label: 'A decision and a re-run design', markers: ['recommend|ship|roll out|adopt|keep|re.run|bucket|user id|balance check|pre.specif'], why: 'Two weeks of work has to end in what happens next, not in a summary of what was found.' },
+      ],
+      skills: { communication: 100, statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
 };
 
 function now() { return new Date().toISOString(); }
@@ -1978,7 +4890,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       const graded = db.prepare("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'")
         .get(existing.id).c;
       if (graded > 0) {
-        throw new Error(`You're already enrolled as a ${existing.level === 'senior' ? 'Senior' : 'Junior'} Data Analyst and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
+        throw new Error(`You're already enrolled as a ${levelLabel(existing.level)} and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
       }
       // No graded work: wipe the unstarted assignment and re-issue at the new level.
       db.prepare('DELETE FROM sim_tasks WHERE enrollment_id = ?').run(existing.id);
@@ -1986,7 +4898,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       db.prepare('UPDATE sim_enrollments SET level = ? WHERE id = ?').run(level, existing.id);
       const fresh = getEnrollment(userId);
       addMessage(fresh.id, 'people_partner', PEOPLE_PARTNER_NAME,
-        `Your level has been changed to ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
+        `Your level has been changed to ${levelLabel(level)}. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
         null, 'Level updated');
       if (fresh.baseline_at) beginNextProject(fresh);
       return getEnrollment(userId);
@@ -2004,7 +4916,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
   `).run(id, userId, role, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
 
   addMessage(id, 'people_partner', PEOPLE_PARTNER_NAME,
-    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${level === 'senior' ? 'Senior' : 'Junior'} Data Analyst. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
+    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${levelLabel(level)}. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
   // Day one is the skill test, not the first task. The learner asked for this ordering
   // and their reasoning was better than mine: the test is the BASELINE for the skill
   // matrix. Without it, "your SQL improved" is a claim with nothing behind it.
@@ -3043,7 +5955,6 @@ function getState(userId) {
   releaseDueTasks(enrollment);
   nudgeOverdueProjects(userId, enrollment);
 
-  const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ? ORDER BY assigned_at ASC').all(enrollment.id);
   const attendanceRows = db.prepare('SELECT attended_on FROM sim_attendance WHERE enrollment_id = ? ORDER BY attended_on ASC').all(enrollment.id);
   const attendedDays = attendanceRows.length;
@@ -3077,14 +5988,22 @@ function getState(userId) {
   const skillTest = getSkillTest(enrollment);
 
   const streaks = computeStreaks(attendanceRows.map((r) => r.attended_on));
+
+  // Signs the project off the moment the last of the fifty-one items lands, and says so.
+  // Read time rather than a scheduler, same as the promotion review below it.
+  //
+  // This runs BEFORE the projects are read, not after. It used to sit below them, which
+  // meant the project a learner had just finished was still 'active' when the promotion
+  // round counted, so every promotion event — the conversation opening at project three,
+  // the decision at four — landed one page load late. The learner saw their last task
+  // graded and nothing happen, then heard about it on some unrelated click afterwards.
+  finishProjectIfComplete(enrollment);
+
   let projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
 
   // The promotion round runs here, before anything is rendered: a learner who has just
-  // cleared the bar should see the senior board on this load, not the next one.
+  // cleared the bar should see the next board on this load, not the next one.
   let promotion = getPromotion(enrollment, projects.projects, gradedTasks, tasks);
-  // Signs the project off the moment the last of the fifty-one items lands, and says so.
-  // Read time rather than a scheduler, same as the promotion review below it.
-  finishProjectIfComplete(enrollment);
 
   if (promotion && runPromotionReview(enrollment, promotion, tasks)) {
     enrollment = getEnrollment(userId);
@@ -3099,6 +6018,12 @@ function getState(userId) {
     projects = getProjects(enrollment.role, tasks, streaks, enrollment.id, enrollment.level);
   }
   closeCompletedRuns(enrollment, projects.projects);
+
+  // Read AFTER the promotion round, not before it. Asha's promotion messages — the
+  // conversation opening, the verdict — are written during that round, so reading the
+  // inbox first showed the learner an unchanged inbox on the very load where the thing
+  // they had been working towards actually happened.
+  const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
   const rosterList = rosterWithAvatars(enrollment.id);
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
@@ -3406,6 +6331,11 @@ function closeCompletedRuns(enrollment, projects) {
     if (!run) continue;
     const c = projectCompletion(enrollment, run);
     if (c && !c.complete) continue;
+    // Everything is done — but the last day has not been signed off yet, and signing it
+    // off is the moment the whole week builds to. Closing the run here would end the
+    // project out from under the learner: activeRun goes null, the wrap-up button never
+    // appears, and "that's the week" is never said. Wait for them to clock off.
+    if (!dayIsClosed(enrollment, run, PROJECT_WEEK_DAYS)) continue;
     db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
   }
 }
@@ -4387,6 +7317,11 @@ function finishProjectIfComplete(enrollment) {
   if (!run) return false;
   const c = projectCompletion(enrollment, run);
   if (!c || !c.complete) return false;
+  // Everything is done, but the last day has not been clocked off — and clocking off is
+  // the moment the whole week builds to. Closing here would end the project out from
+  // under the learner: activeRun goes null, the wrap-up button never appears, "that's the
+  // week" is never said, and closeDay then fails with "no project is running".
+  if (!dayIsClosed(enrollment, run, PROJECT_WEEK_DAYS)) return false;
 
   db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
 
@@ -4713,6 +7648,53 @@ function timeTravelState(enrollment, projects) {
     role: enrollment.role,
     level: enrollment.level,
   };
+}
+
+// Testing only: jump straight to any finished project.
+//
+// The unlock gate is real and stays real — but verifying that project four works should
+// not require playing projects one to three first, and neither should a learner reporting
+// a bug on it. Gated on TIME_TRAVEL like every other shortcut, and it still refuses a
+// project that is not finished being written, because starting one of those is the bug.
+function timeTravelStartProject(userId, projectKey) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === projectKey);
+  if (!def) throw new Error('Unknown project for this role and level.');
+  const ready = projectReadiness(def);
+  if (!ready.ready) throw new Error(`That project is still being written (${ready.missing.join(', ')}).`);
+
+  // Clear whatever is in flight so the board is not two projects deep. Everything else
+  // about the run is the real path — the same rows, the same messages, the same drip.
+  for (const run of db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id)) {
+    const other = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+    if (other) {
+      const keys = other.taskKeys.map(() => '?').join(',');
+      db.prepare(`DELETE FROM sim_tasks WHERE enrollment_id = ? AND task_key IN (${keys})`).run(enrollment.id, ...other.taskKeys);
+    }
+    // Everything belonging to the abandoned run, not just its tasks. An activity row left
+    // behind still counts as "already issued", so the new run would never deliver it —
+    // and the day would then sit forever at one of two activities with nothing to do.
+    db.prepare('DELETE FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_situations WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_chores WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?').run(enrollment.id, run.project_key);
+    db.prepare('DELETE FROM sim_days WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_project_runs WHERE id = ?').run(run.id);
+  }
+
+  const run = startProjectRun(enrollment.id, projectKey);
+  for (const key of def.taskKeys) {
+    const taskId = assignTask(enrollment.id, key, run.started_at);
+    const task = TASKS[key];
+    if ((TASKS[key].day || 1) === 1) {
+      addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+        `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+    }
+  }
+  return { started: projectKey, state: getState(userId) };
 }
 
 function startProject(userId, projectKey) {
@@ -5668,6 +8650,7 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
 
 module.exports = {
   closeDay,
+  timeTravelStartProject,
   startNextDay,
   completeChore,
 
