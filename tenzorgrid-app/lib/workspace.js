@@ -483,6 +483,38 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 2,
     },
+    {
+      key: 'board-pack',
+      title: 'Year-End Board Pack',
+      description: 'Three people submitted three different revenue figures. You own the one the board hears, and the estimate for next year.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — three submissions, three correct answers to three unstated questions.
+        'td-101', 'td-102', 'td-103', 'td-104', 'td-105', 'td-106',
+        // Day 2 — the bridge, which has to reconcile to the rupee.
+        'td-110', 'td-111', 'td-112', 'td-113', 'td-114', 'td-115',
+        // Day 3 — the wobble. The learner's own earlier correction was right for a
+        // comparison and wrong for a total, and cost three and a half lakh of real trade.
+        'td-120', 'td-121', 'td-122', 'td-123', 'td-124', 'td-125',
+        // Day 4 — an estimate for next year that has to survive being asked what it assumes.
+        'td-130', 'td-131', 'td-132', 'td-133', 'td-134', 'td-135',
+        // Day 5 — the pack, the board question, and the standard that stops this recurring.
+        'td-140', 'td-141', 'td-142', 'td-143', 'td-144', 'td-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 52000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Submitted the gross figure', day: 1 },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Submitted the net figure', day: 1 },
+        { name: null, role: 'Data Analytics Team Lead', does: 'Owns the number the board hears', day: 1, throughDay: 5 },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Presents the pack to the board', day: 5, needsYou: true },
+      ],
+      unlockAfter: 3,
+    },
   ],
 };
 
@@ -6337,6 +6369,552 @@ const TASKS = {
         { key: 'space', label: 'Space or slot data, so a delist has two sides', markers: ['space|slot|planogram|shelf|facing|capacity|cost of'], why: 'The saving half of the trade is currently unmeasurable, which is why delist papers keep asserting it.' },
         { key: 'listing', label: 'A check that listed lines are actually ranged', markers: ['listed|ranged|planogram|process|sign.?off|gap|report|flag|monitor'], why: 'The seven lines were a process failure, and the fix costs one scheduled query.' },
         { key: 'own', label: 'Written as decisions, not suggestions', markers: ['I would|we will|I will|propose|put in place|add|introduce|ask for'], why: 'A lead asked what changes is being asked to decide, not to list options.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 4 · Year-End Board Pack (retail_sales) --------------------------------
+  // The last Team Lead project, and the one where the learner owns the number rather
+  // than checking somebody else's. Monday three people submit three different revenue
+  // figures. Tuesday they have to reconcile exactly. Wednesday the learner's own earlier
+  // correction turns out to have been right for a comparison and wrong for a total.
+  // Thursday an estimate for next year that has to survive being asked what it assumes.
+  // Friday the pack, and the standard that stops this recurring.
+
+  'td-101': {
+    title: 'Three people, three revenue figures',
+    hint: "None of them is wrong. Work out what each one is counting before you touch a query.",
+    brief: "Three submissions for the year-end pack, three different numbers. Establish what each is measuring.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Year-end pack — three numbers, one board',
+        body: "Three submissions in and no two agree on revenue for the year.\n\nRavi: ₹5.00 crore.\nDiya: ₹4.85 crore.\nSneha: ₹4.45 crore.\n\nBoard is Thursday week. I need one number, and I need to be able to explain the other two.",
+      },
+      prompt: 'Tick everything that is likely true.',
+      options: [
+        { key: 'defs', correct: true, label: 'All three are probably correct computations of different things', why: 'Gross or net of returns, whole estate or like-for-like, with or without the duplicated month. Three choices, eight possible answers, and nobody wrote down which they took.' },
+        { key: 'spread', correct: true, label: 'The spread is about ₹55 lakh, which is larger than most decisions in the pack', why: 'Eleven percent of the business. A pack that cannot say which figure it means cannot support anything built on it.' },
+        { key: 'bridge', correct: true, label: 'The fix is a bridge between them, not a choice among them', why: 'A board that hears "we picked Diya\'s" learns nothing. A board that sees gross, less returns, less a duplicated month, less non-comparable stores, understands the business.' },
+        { key: 'wrong', correct: false, label: 'At least two of the three must contain an error', why: 'That is the assumption to avoid. Three right answers to three unstated questions is far more common than two mistakes.' },
+        { key: 'highest', correct: false, label: 'The highest figure is the one to use, since it is the most complete', why: 'Gross revenue is the most complete and the least honest — it counts money that was refunded.' },
+        { key: 'average', correct: false, label: 'Take the middle figure as a reasonable compromise', why: 'It would be a number that answers no question at all, and nobody could reproduce it.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'td-102': {
+    title: 'Every figure they could have meant',
+    hint: "Four definitions, four rows. You have computed all of them in previous weeks.",
+    brief: "Lay out the candidates. Write ONE SQL SELECT returning one row per basis, with columns basis and revenue, in this order: gross, net, net_dedup (net with the duplicated rows removed), and net_dedup_lfl (also restricted to stores trading the whole window).",
+    referenceSql: "SELECT 'gross' AS basis, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS revenue FROM sales UNION ALL SELECT 'net', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'net_dedup', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'net_dedup_lfl', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'td-103': {
+    title: 'Match each submission',
+    hint: "Round your four figures to the nearest lakh and compare them with what the three people sent.",
+    brief: "Work out who computed what. Say which basis each of the three submissions corresponds to.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'ravi', correct: true, label: 'Ravi\'s ₹5.00 crore is gross revenue, before returns', why: '₹5,00,34,052. He has counted what went through the till and not what came back.' },
+        { key: 'diya', correct: true, label: 'Diya\'s ₹4.85 crore is net of returns, whole estate, duplicates included', why: '₹4,84,62,913. The straightforward reading of the table, and the one Finance would take.' },
+        { key: 'sneha', correct: true, label: 'Sneha\'s ₹4.45 crore is net, de-duplicated and like-for-like', why: '₹4,44,98,388. She has applied every correction, which makes it the right measure of trading and the wrong measure of what the business earned.' },
+        { key: 'nobody', correct: false, label: 'Nobody computed net with duplicates removed but all stores included', why: 'Correct — and it is the figure the board actually needs, which is why none of the three is usable as submitted.' },
+        { key: 'sneha2', correct: false, label: 'Sneha\'s figure is the most correct and should be the headline', why: 'It excludes two new stores and a closed one. The board approved that capital and the pack cannot silently drop it from the total.' },
+        { key: 'ravi2', correct: false, label: 'Ravi has made an error', why: 'Gross revenue is a real figure that Finance uses. He did not label it, which is a different failure from computing it wrongly.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-104': {
+    title: 'The figure nobody submitted',
+    hint: "Net, duplicates removed, every store included. That is what the business earned.",
+    brief: "Compute the headline. Write ONE SQL SELECT returning one row: net revenue with the duplicated rows removed and every store included, the gross figure, the value of returns, and — for contrast — the same corrected figure restricted to stores trading the whole window. Label them headline, gross, returns and like_for_like.",
+    referenceSql: "SELECT (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') AS headline, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS gross, (SELECT -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS returns, (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') AS like_for_like",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-105': {
+    title: 'Tell the three of them at once',
+    hint: "Nobody is wrong. Say so first, then say what the pack will use and why.",
+    brief: "Write to all three. They will each see the others' figures in the pack and each assume theirs was rejected. Under 170 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon, Diya Chandra and Sneha Joshi', subject: 'Year-end revenue — all three are right', maxWords: 170,
+      prompt: 'That each figure is a correct answer to a different question, which the pack will use, and the rule going forward.',
+      rubric: [
+        { key: 'allright', label: 'That none of them made an error', markers: ['all|each|three|right|correct|no error|different question|not wrong'], why: 'Say it first. Three people whose work has just been replaced need to know they were not wrong before they hear what was chosen.' },
+        { key: 'which', label: 'What each one computed', markers: ['gross|net|return|like.for.like|lfl|duplicat|estate|all store'], why: 'Naming each basis is what turns a disagreement into a definitions problem.' },
+        { key: 'headline', label: 'The figure the pack will carry, and why', markers: ['4\\.81|48,?1|net|dedup|all store|board|headline|earned'], why: 'What the business earned, on every store, with the known fault removed.' },
+        { key: 'others', label: 'That the other two still appear, as the bridge', markers: ['bridge|also|alongside|reconcil|show|both|appendix|beside'], why: 'Nothing is discarded. The three figures become the explanation rather than the argument.' },
+        { key: 'rule', label: 'A rule so this does not recur', markers: ['label|define|state|basis|going forward|standard|always|glossary'], why: 'Three people made the same omission, which means it is a process gap rather than three oversights.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-106': {
+    title: 'What a definitions note has to fix',
+    hint: "Each ambiguity cost you a submission this week. Which ones would recur next year?",
+    brief: "You are going to write a standing definitions note. Decide what has to be in it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every term that has to be defined before the next pack.',
+      options: [
+        { key: 'revenue', correct: true, label: 'Revenue — gross or net of returns', why: 'A ₹15.7 lakh difference and three people who each assumed the other meaning was obvious.' },
+        { key: 'lfl', correct: true, label: 'Like-for-like — which stores, and on what date test', why: 'Two openings and a closure in one year. Without a rule, everybody draws the boundary differently and the totals stop tying.' },
+        { key: 'txn', correct: true, label: 'Transaction — whether a refund counts as one', why: 'It changes the count by 492 and the average value by nearly ₹500, and it has already gone into one draft.' },
+        { key: 'correction', correct: true, label: 'How a known data fault is handled and disclosed', why: 'The duplicated month has now been treated three different ways by three people, and none of them said so on the page.' },
+        { key: 'margin', correct: true, label: 'Margin — on the cost that applied, or on current cost', why: 'A four percent difference overall and nearly seven in Equipment, which is where the range decisions are made.' },
+        { key: 'target', correct: false, label: 'The revenue target for next year', why: 'Not a definition. Setting it is the board\'s job and putting it in a glossary would be a quiet way of proposing one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'td-110': {
+    title: 'The bridge, step by step',
+    hint: "Each row is a step from the figure above it. The steps have to add up exactly or it is not a bridge.",
+    brief: "Build the reconciliation. Write ONE SQL SELECT returning one row per step with columns step and value, in this order: gross, less_returns (negative), net, less_duplicates (negative), headline, less_new_stores (negative), less_closed_store (negative), like_for_like.",
+    referenceSql: "WITH d AS (SELECT SUM(quantity * unit_price) / 2 AS dup FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03'), n AS (SELECT SUM(s.quantity * s.unit_price) AS newv FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on > '2025-07-01'), c AS (SELECT SUM(s.quantity * s.unit_price) AS closedv FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.closed_on IS NOT NULL) SELECT 'gross' AS step, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS value UNION ALL SELECT 'less_returns', (SELECT SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) UNION ALL SELECT 'net', (SELECT SUM(quantity * unit_price) FROM sales) UNION ALL SELECT 'less_duplicates', -(SELECT dup FROM d) UNION ALL SELECT 'headline', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) UNION ALL SELECT 'less_new_stores', -(SELECT newv FROM n) UNION ALL SELECT 'less_closed_store', -(SELECT closedv FROM c) UNION ALL SELECT 'like_for_like', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) - (SELECT newv FROM n) - (SELECT closedv FROM c)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 1.1, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'td-111': {
+    title: 'Check it ties',
+    hint: "Add the steps up yourself. A bridge that does not reconcile to the rupee is worse than no bridge.",
+    brief: "Your bridge runs gross ₹5,00,34,052 to like-for-like ₹4,44,98,388. Decide what has to be true of it before it goes in a pack.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is required.',
+      options: [
+        { key: 'exact', correct: true, label: 'Every step has to reconcile to the rupee, not approximately', why: 'A bridge whose steps nearly add up invites somebody to find the gap in the room, and then nothing else on the page is believed.' },
+        { key: 'named', correct: true, label: 'Each step has to say what it removes and why', why: '"Less duplicates ₹3,46,357" means nothing without "a feed fault duplicated one store-month". The number and its reason travel together or not at all.' },
+        { key: 'both', correct: true, label: 'Both ends are real figures the board may be quoted', why: 'Gross is what Finance sees in the till system; like-for-like is what the trading discussion uses. The bridge exists so that hearing either does not cause a panic.' },
+        { key: 'reproduce', correct: true, label: 'Somebody else has to be able to reproduce every step from the source', why: 'That is the whole function of disclosure. An undisclosed correction is indistinguishable from an error the next time anybody checks.' },
+        { key: 'simplify', correct: false, label: 'The bridge should be simplified to two or three steps for a board audience', why: 'The steps ARE the explanation. Collapsing them is how the ₹55 lakh becomes unexplainable again.' },
+        { key: 'lflonly', correct: false, label: 'Only the like-for-like end matters, since it is the cleanest', why: 'It excludes ₹36 lakh of trade from stores the board funded. Cleanest is not the same as complete.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-112': {
+    title: 'The bridge chart',
+    hint: "Ranked comparison across named steps, and the axis has to start at zero or the steps lie about their size.",
+    brief: "Build the visual: the revenue bases side by side, so a reader sees the spread before they read the steps. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT 'gross' AS basis, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS revenue FROM sales UNION ALL SELECT 'net', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'net de-duplicated', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'like-for-like', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+      prompt: 'The four revenue bases, for the board pack.',
+      answer: { type: 'bar', x: 'basis', y: 'revenue', sort: 'desc', baselineZero: true },
+      why: 'Four named bases compared on one measure is a bar chart, sorted so the descent from gross to like-for-like is the shape the reader takes away. The zero baseline is doing real work here — the four figures span only eleven percent, and a truncated axis would turn a definitional difference into what looks like a collapse.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'td-113': {
+    title: 'Which figure answers which question',
+    hint: "Five questions a board actually asks. Each wants a different one of your four.",
+    brief: "The pack will be read by people asking different things. Match the figure to the question.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every statement that pairs the right figure with the right question.',
+      options: [
+        { key: 'earned', correct: true, label: '"What did the business earn?" — net, de-duplicated, all stores', why: 'Every store the company owned, money actually kept, known fault removed. The headline.' },
+        { key: 'trading', correct: true, label: '"Are the shops trading better?" — like-for-like', why: 'The only figure where the two periods contain the same estate, which is what the question is about.' },
+        { key: 'till', correct: true, label: '"What went through the tills?" — gross', why: 'A real operational figure, used for staffing and for reconciling against the till system.' },
+        { key: 'invest', correct: true, label: '"Did the new stores work?" — neither total, but the new stores reported on their own', why: 'They are excluded from like-for-like for a methodological reason, not a performance one, and hiding them in a total answers nothing.' },
+        { key: 'oneno', correct: false, label: '"What is the one true revenue number?" — the headline', why: 'There is no one true number, and a pack that pretends otherwise is the reason three people submitted three figures.' },
+        { key: 'growth', correct: false, label: '"Did we grow?" — the headline against last year\'s headline', why: 'Last year had a different estate. Growth is a like-for-like question or it is a question about the size of the company, and those are not the same.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-114': {
+    title: 'The estate, reported on its own',
+    hint: "The three stores excluded from like-for-like each need a line, with the reason they are excluded.",
+    brief: "Write ONE SQL SELECT over stores that opened inside the window or have closed, returning: name, opened_on, closed_on, days open within the window, net revenue, and revenue per day open rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.opened_on, st.closed_on, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-115': {
+    title: 'Write the definitions note',
+    hint: "Five terms, one line each, and a rule about disclosure. Short enough that people read it.",
+    brief: "Produce the standing definitions note that goes at the front of every pack from now on. Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Reporting definitions — standing note', maxWords: 200,
+      prompt: 'The terms, defined tightly enough that two people cannot reasonably differ.',
+      rubric: [
+        { key: 'revenue', label: 'Revenue defined as gross or net', markers: ['gross|net|return|refund|deduct'], why: 'The one that cost ₹15.7 lakh of confusion this week.' },
+        { key: 'lfl', label: 'Like-for-like with an explicit date test', markers: ['like.for.like|lfl|open before|trading throughout|both period|closed|1 july|whole window'], why: 'A rule anybody can apply without judgement, or people will apply judgement.' },
+        { key: 'txn', label: 'Transaction defined against refunds', markers: ['transaction|refund|return|sale line|positive|count'], why: 'Changes the count by 492 and the average by nearly ₹500.' },
+        { key: 'margin', label: 'Margin on a stated cost basis', markers: ['cost|time of sale|applied|current|basis|margin'], why: 'Four percent overall, seven in Equipment, and it decides range decisions.' },
+        { key: 'disclose', label: 'A rule that corrections are disclosed on the page', markers: ['disclos|state|show|note|exclusion|correction|on the page|reproduce'], why: 'The rule that makes every other definition checkable rather than a matter of trust.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-120': {
+    title: 'Your own correction, three months on',
+    hint: "Look at what you did to the duplicated month last time, and ask whether it was the right operation for a TOTAL.",
+    brief: "The trading review excluded store 3's whole March from the comparison. Compare that with removing only the duplicated rows.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'toomuch', correct: true, label: 'Excluding the whole month removes ₹3,46,357 of real trade as well as the duplicate', why: 'Every line is duplicated, so half of what is there is genuine. Dropping the month throws away the half that actually happened.' },
+        { key: 'right', correct: true, label: 'For the half-on-half COMPARISON, excluding the month was defensible', why: 'You could not tell which of each pair was real, so neither half of the period could be trusted for that store. Dropping it kept the comparison clean.' },
+        { key: 'wrong', correct: true, label: 'For a TOTAL it is wrong, because the money was earned', why: 'The board is being told what the business made. Understating it by ₹3.46 lakh to avoid a data fault is a different error, not a safer one.' },
+        { key: 'dedupe', correct: true, label: 'Keeping one row of each duplicated pair is the right operation here', why: 'Both rows are identical, so either is the real one. Keeping one recovers the trade and removes the fault.' },
+        { key: 'same', correct: false, label: 'The two approaches give the same answer to within rounding', why: '₹3.46 lakh apart. Small against ₹4.8 crore and larger than several line items in the pack.' },
+        { key: 'badlast', correct: false, label: 'The trading review should be reissued with the corrected figure', why: 'It was a comparison and the treatment was right for a comparison. Reissuing a correct document would confuse the one thing that is currently settled.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-121': {
+    title: 'What each treatment costs',
+    hint: "Three figures for the same year, differing only in how one month is handled.",
+    brief: "Quantify the choice. Write ONE SQL SELECT returning one row per treatment with columns treatment and revenue, in this order: as_loaded (no correction), dedup (one row of each duplicated pair kept) and exclude_month (the whole store-month dropped).",
+    referenceSql: "SELECT 'as_loaded' AS treatment, SUM(quantity * unit_price) AS revenue FROM sales UNION ALL SELECT 'dedup', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'exclude_month', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-122': {
+    title: 'Ashok Nagar, corrected properly',
+    hint: "Halve March for that store and compare it against its own other months.",
+    brief: "Check the correction lands somewhere plausible. Write ONE SQL SELECT for store 3 only, returning per month: net revenue as loaded, and net revenue with March halved. Oldest first.",
+    referenceSql: "SELECT substr(sold_at, 1, 7) AS month, SUM(quantity * unit_price) AS as_loaded, CASE WHEN substr(sold_at, 1, 7) = '2026-03' THEN SUM(quantity * unit_price) / 2 ELSE SUM(quantity * unit_price) END AS corrected FROM sales WHERE store_id = 3 GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'td-123': {
+    title: 'When to drop and when to de-duplicate',
+    hint: "The question being asked decides it, not the fault.",
+    brief: "Write the rule the team will apply next time a period is found to be corrupt. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Handling a corrupted period — the rule', maxWords: 160,
+      prompt: 'When to repair the data and when to exclude the period, and why the answer depends on the question.',
+      rubric: [
+        { key: 'repair', label: 'That a repairable fault should be repaired, for totals', markers: ['repair|dedup|half|keep one|recover|correct|total|earned'], why: 'A total has to include money that was actually made, and an identical pair is repairable with certainty.' },
+        { key: 'exclude', label: 'That a period you cannot repair is excluded from comparisons', markers: ['exclude|drop|comparison|trend|cannot tell|unrepairable|uncertain|like.for.like'], why: 'The case where the trading review was right, and it needs to stay right.' },
+        { key: 'question', label: 'That the question decides which applies', markers: ['depend|question|total|comparison|purpose|what is being asked|use'], why: 'The load-bearing idea. Same fault, two correct treatments.' },
+        { key: 'disclose', label: 'That either way it is disclosed', markers: ['disclos|state|note|page|say|reproduc|record'], why: 'Otherwise two packs carry two figures and neither explains the other.' },
+        { key: 'concrete', label: 'The March figures as the worked example', markers: ['3,?46|346|march|ashok|store 3|lakh|half'], why: 'A rule with a worked example gets applied. A rule without one gets interpreted.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-124': {
+    title: 'Everything the pack quotes, from one place',
+    hint: "One pass over sales. Build every figure the pack needs so they cannot drift apart.",
+    brief: "Produce the pack's numbers in a single computation, so no two of them can disagree. In the notebook, compute: gross, returns (positive), net, duplicates (positive), headline (net less duplicates), new_stores, closed_store, and like_for_like (headline less the other two). Round every figure to whole rupees. Assign a dict with those eight keys to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      let gross = 0, returns = 0, net = 0, dupMonth = 0, newStores = 0, closedStore = 0;
+      for (const s of tables.sales) {
+        const value = s.quantity * s.unit_price;
+        net += value;
+        if (s.quantity > 0) gross += value; else returns -= value;
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') dupMonth += value;
+        const store = stores.get(s.store_id);
+        if (store.opened_on > '2025-07-01') newStores += value;
+        if (store.closed_on != null) closedStore += value;
+      }
+      const duplicates = dupMonth / 2;
+      const headline = net - duplicates;
+      return {
+        gross: Math.round(gross),
+        returns: Math.round(returns),
+        net: Math.round(net),
+        duplicates: Math.round(duplicates),
+        headline: Math.round(headline),
+        new_stores: Math.round(newStores),
+        closed_store: Math.round(closedStore),
+        like_for_like: Math.round(headline - newStores - closedStore),
+      };
+    },
+  },
+
+  'td-125': {
+    title: 'One computation, many figures',
+    hint: "Think about what happens when eight numbers in a pack come from eight separate queries.",
+    brief: "You have just built every figure the pack quotes in one pass. Say why that matters.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'tie', correct: true, label: 'Figures from one computation cannot disagree with each other', why: 'Eight separate queries means eight chances for a filter to differ, and the pack stops reconciling without anybody changing a number.' },
+        { key: 'change', correct: true, label: 'A change to a definition propagates everywhere at once', why: 'When the duplicate treatment changed, one line moved and all eight figures stayed consistent. Eight queries would have needed eight edits and somebody would have missed one.' },
+        { key: 'audit', correct: true, label: 'It makes the pack auditable — one place to read the rules', why: 'Somebody checking your work reads one function rather than hunting for filters across a folder of SQL.' },
+        { key: 'this', correct: true, label: 'It is exactly how the three submissions diverged in the first place', why: 'Three people, three queries, three unstated filters. The structural fix is one computation, not three more careful people.' },
+        { key: 'faster', correct: false, label: 'It is faster to run', why: 'True and irrelevant. These figures are computed once a year and correctness is the entire point.' },
+        { key: 'always', correct: false, label: 'All analysis should be done this way', why: 'Exploratory work is meant to be throwaway. This applies to the numbers that get published and quoted, which is a much smaller set.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'td-130': {
+    title: 'The estimate somebody has already made',
+    hint: "Check what his 5% growth is being applied to, and what it assumes about the estate.",
+    brief: "Vikram has put a number for next year in the draft. Work out what is wrong with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Next year — putting 5.1 crore in the draft',
+        body: "Taking this year at ₹4.85 crore and adding 5% growth gives ₹5.09 crore. Round to ₹5.1 crore.\n\nFeels about right and the board will want to see growth. Shout if you disagree.",
+      },
+      prompt: 'Tick every problem with it.',
+      options: [
+        { key: 'base', correct: true, label: 'The base includes the duplicated month, so it starts ₹3.46 lakh too high', why: 'He has used the uncorrected figure, which you established on Monday is not the one the pack will carry.' },
+        { key: 'closed', correct: true, label: 'It assumes Park Street keeps trading, and Park Street closed in January', why: '₹11.64 lakh of this year\'s revenue cannot recur. The estate next year is not the estate this year.' },
+        { key: 'newstores', correct: true, label: 'It ignores that two new stores only traded part of the year', why: 'Sector 29 for 268 days and Salt Lake for 149. A full year of each adds far more than the 5% he is applying.' },
+        { key: 'trend', correct: true, label: '5% growth contradicts the trend in the data — like-for-like fell in the second half', why: 'The only trend evidence available points down. Applying growth because the board wants to see growth is the reasoning to name out loud.' },
+        { key: 'promo', correct: true, label: 'It assumes the promotion repeats, without saying so', why: 'November added about ₹15.2 lakh of revenue. Whether it runs again is a decision nobody has taken, and the estimate silently takes it.' },
+        { key: 'round', correct: false, label: 'Rounding to ₹5.1 crore is too imprecise for a board', why: 'Rounding is the least of it, and an estimate quoted to the rupee would imply precision that no forecast has.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-131': {
+    title: 'What the estate alone does to next year',
+    hint: "Annualise each part-year store at its own daily rate, and remove the store that closed.",
+    brief: "Build the estate adjustment. Write ONE SQL SELECT returning one row per store that opened inside the window or closed during it, with: name, days open, actual revenue, and revenue annualised to 365 days at the same daily rate, rounded to the nearest rupee.",
+    referenceSql: "SELECT st.name, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS actual, ROUND(SUM(s.quantity * s.unit_price) * 365.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS annualised FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY annualised DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-132': {
+    title: 'The estimate, with its assumptions on the page',
+    hint: "Start from the headline, adjust the estate, then decide the promotion separately. Each step is an assumption.",
+    brief: "Build the estimate properly. In the notebook, start from the headline figure and produce two scenarios: with the promotion repeated and without it. Adjust for the estate — remove the closed store entirely, and uplift each part-year store to a full year at its own daily rate. Assume flat like-for-like trading. Assign a dict with keys base, estate_adjustment, promotion_value, with_promotion and without_promotion — all rounded to whole rupees — to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.2, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      const day = (d) => Date.parse(d + 'T00:00:00Z') / 86400000;
+      let net = 0, dupMonth = 0, closed = 0;
+      const partYear = new Map();
+      const byMonth = new Map();
+      for (const s of tables.sales) {
+        const value = s.quantity * s.unit_price;
+        net += value;
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') dupMonth += value;
+        const store = stores.get(s.store_id);
+        if (store.closed_on != null) closed += value;
+        if (store.opened_on > '2025-07-01') partYear.set(store.id, (partYear.get(store.id) || 0) + value);
+        byMonth.set(s.sold_at.slice(0, 7), (byMonth.get(s.sold_at.slice(0, 7)) || 0) + value);
+      }
+      const base = net - dupMonth / 2;
+      let uplift = 0;
+      for (const [id, revenue] of partYear) {
+        const store = stores.get(id);
+        const days = day('2026-06-30') - day(store.opened_on) + 1;
+        uplift += revenue * 365 / days - revenue;
+      }
+      const estate = uplift - closed;
+      const nov = byMonth.get('2025-11');
+      const others = [...byMonth.entries()].filter(([m]) => m !== '2025-11').map(([, v]) => v);
+      const promotion = nov - others.reduce((s, v) => s + v, 0) / others.length;
+      return {
+        base: Math.round(base),
+        estate_adjustment: Math.round(estate),
+        promotion_value: Math.round(promotion),
+        with_promotion: Math.round(base + estate),
+        without_promotion: Math.round(base + estate - promotion),
+      };
+    },
+  },
+
+  'td-133': {
+    title: 'What the estimate assumes',
+    hint: "Every step you took is an assumption. Name the ones a board should be told about.",
+    brief: "Your estimate is not a prediction. Decide what has to be said alongside it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every assumption that has to be stated on the page.',
+      options: [
+        { key: 'flat', correct: true, label: 'That like-for-like trading is assumed flat, which the data does not support', why: 'The second half fell. Assuming flat is already optimistic, and a board told "no growth assumed" will hear conservatism where there is none.' },
+        { key: 'newstores', correct: true, label: 'That the new stores are assumed to continue at their current daily rate', why: 'A store open five months may still be in its opening peak or still building. Annualising assumes neither, and that assumption is invisible in the number.' },
+        { key: 'promo', correct: true, label: 'Which scenario assumes the promotion repeats, and that repeating it is a decision nobody has taken', why: 'A ₹15.2 lakh swing that depends entirely on a choice outside this analysis.' },
+        { key: 'nomarket', correct: true, label: 'That nothing is assumed about the market, because nothing can be', why: 'No competitor, footfall or macro data exists. Saying so stops the estimate being read as a forecast.' },
+        { key: 'range', correct: true, label: 'That it should be presented as a range, not a point', why: 'Two scenarios ₹15.2 lakh apart on a decision not yet taken. A single number hides the decision inside it.' },
+        { key: 'confidence', correct: false, label: 'A confidence interval around the estimate', why: 'There is no sampling process here to have an interval about. The uncertainty is in the assumptions, not in the arithmetic, and dressing it as statistics would misrepresent it.' },
+      ],
+      skills: { statistics: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-134': {
+    title: 'Answer Vikram',
+    hint: "He offered you a shout. Replace his number rather than just objecting to it.",
+    brief: "Write back. His figure is too high for four separate reasons and you have an alternative with its assumptions attached. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Next year — what I would put in instead', maxWords: 180,
+      prompt: 'What is wrong with the 5% approach, your figures, and the assumptions they rest on.',
+      rubric: [
+        { key: 'base', label: 'That the base was the uncorrected figure', markers: ['base|4\\.85|duplicat|3,?46|corrected|headline|start'], why: 'The simplest correction and the one that makes the rest credible.' },
+        { key: 'estate', label: 'The estate adjustment, with direction', markers: ['closed|park street|new store|annualis|full year|sector|salt lake|estate'], why: 'It pushes the number up for one reason and down for another, and both have to be visible.' },
+        { key: 'two', label: 'Two scenarios rather than one number', markers: ['two|range|scenario|with|without|promotion|depend'], why: 'The promotion decision is worth ₹15.2 lakh and belongs to somebody else.' },
+        { key: 'flat', label: 'That flat like-for-like is already an optimistic assumption', markers: ['flat|no growth|second half|fell|declin|optimist|not conservative|17'], why: 'The sentence that stops the board reading the estimate as cautious.' },
+        { key: 'notgrowth', label: 'That growth cannot be assumed because the board wants it', markers: ['want|expect|because|evidence|support|data|assume|cannot'], why: 'He said "the board will want to see growth" out loud, which is the part to answer directly rather than politely ignore.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-135': {
+    title: 'Monthly revenue for the trend page',
+    hint: "Twelve months, with March for store 3 halved so the series does not have a spike in it.",
+    brief: "The pack needs both series, for the same reason the headline needs both bases. Write ONE SQL SELECT returning, per month: net revenue as loaded, net revenue with store 3's March halved across the whole estate, and the same corrected figure restricted to stores trading the whole window. Label them as_loaded, corrected and corrected_lfl. Oldest month first.",
+    referenceSql: "SELECT substr(s.sold_at, 1, 7) AS month, SUM(s.quantity * s.unit_price) AS as_loaded, SUM(CASE WHEN s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03' THEN s.quantity * s.unit_price / 2.0 ELSE s.quantity * s.unit_price END) AS corrected, SUM(CASE WHEN st.opened_on <= '2025-07-01' AND st.closed_on IS NULL THEN (CASE WHEN s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03' THEN s.quantity * s.unit_price / 2.0 ELSE s.quantity * s.unit_price END) ELSE 0 END) AS corrected_lfl FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Asha accepts the series and then asks for it as a
+    // rolling three-month average, because the promotion spike dominates the chart.
+    rework: true,
+  },
+
+  'td-140': {
+    title: 'The pack, assembled',
+    hint: "Everything the board sees, from the one computation, with the basis on every line.",
+    brief: "Produce the pack's summary table. Write ONE SQL SELECT returning one row per line item with columns line and value, in this order: gross, returns, net, duplicate_correction, headline, new_stores, closed_store, like_for_like — returns and the corrections as positive numbers.",
+    referenceSql: "WITH d AS (SELECT SUM(quantity * unit_price) / 2 AS dup FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') SELECT 'gross' AS line, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS value UNION ALL SELECT 'returns', (SELECT -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) UNION ALL SELECT 'net', (SELECT SUM(quantity * unit_price) FROM sales) UNION ALL SELECT 'duplicate_correction', (SELECT dup FROM d) UNION ALL SELECT 'headline', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) UNION ALL SELECT 'new_stores', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on > '2025-07-01') UNION ALL SELECT 'closed_store', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.closed_on IS NOT NULL) UNION ALL SELECT 'like_for_like', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT dup FROM d)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 1.0, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-141': {
+    title: 'Sign off the board summary',
+    hint: "The numbers are yours and they are right. Read what the sentences claim on top of them.",
+    brief: "Asha has drafted the summary page from your pack. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Board summary — sign off?',
+        body: "\"Revenue for the year was ₹4.81 crore. Like-for-like trading declined, offset by two successful new store openings. A data quality issue was identified and corrected. We expect ₹4.90 crore next year on a conservative basis.\"\n\nThis is your pack. Anything?",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'conservative', correct: true, label: '"Conservative" describes an estimate that assumes flat trading after a falling half', why: 'Flat is optimistic against the only trend evidence there is. Calling it conservative tells the board the risk is on the upside when it is not.' },
+        { key: 'offset', correct: true, label: '"Offset by" implies the new stores compensated for the decline — they are different populations', why: 'The like-for-like decline and the new store revenue are not commensurable. One is a trading trend, the other is added capacity.' },
+        { key: 'successful', correct: true, label: '"Successful" openings is a judgement nobody has made', why: 'They trade in line with their format on a per-day basis. Whether that repays the capital is a question this analysis never asked.' },
+        { key: 'vague', correct: true, label: '"A data quality issue was identified and corrected" does not say what or how much', why: 'Third time this has come up across three packs. Without ₹3.46 lakh and a named month, nobody can reproduce the headline.' },
+        { key: 'promo', correct: true, label: 'The estimate quotes one scenario without saying which promotion assumption it takes', why: 'A ₹15.2 lakh swing on a decision nobody has taken, hidden inside a single number.' },
+        { key: 'figure', correct: false, label: 'The ₹4.81 crore headline is wrong', why: 'It is your figure and it is right. As in every pack this quarter, the arithmetic survives and the sentences do not.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-142': {
+    title: 'Rewrite the summary',
+    hint: "Same five facts, none of the five claims, and the estimate as a range.",
+    brief: "Send Asha a replacement summary paragraph. It has to be read aloud at a board and survive being quoted back. Under 140 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Board summary — suggested wording', maxWords: 140,
+      prompt: 'The headline with its basis, the trading picture, the new stores stated fairly, the correction named, and the estimate as a range with its assumption.',
+      rubric: [
+        { key: 'basis', label: 'The headline with its basis stated', markers: ['net|return|all store|every store|4\\.81|basis|de.?duplicat'], why: 'One clause, and it is what stops the figure being compared against a differently-defined one next year.' },
+        { key: 'lfl', label: 'The trading decline, scoped to like-for-like', markers: ['like.for.like|lfl|same store|ten store|decline|fell'], why: 'The trading story, kept separate from the capacity story.' },
+        { key: 'newstores', label: 'New stores stated without a verdict', markers: ['in line|for their format|per day|separately|added|open|not yet|too early'], why: '"Successful" is a judgement about capital returns that this work never touched.' },
+        { key: 'correction', label: 'The correction named, with the amount', markers: ['3,?46|346|march|ashok|store|duplicat|lakh'], why: 'So the headline reconciles with the warehouse for anybody who checks.' },
+        { key: 'range', label: 'The estimate as a range, with the flat-trading assumption named', markers: ['range|two|scenario|promotion|flat|assum|depend|between'], why: 'The estimate is a pair of scenarios on a decision the board itself has to take.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-143': {
+    title: 'The question you will be asked in the room',
+    hint: "Four packs this quarter each turned on a definition. Work out what a board member is entitled to conclude from that.",
+    brief: "A board member asks why the revenue figure has changed since the last pack. Decide how to answer.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the answer.',
+      options: [
+        { key: 'basis', correct: true, label: 'That the figure did not change — the basis did, and both are on the page', why: 'The bridge exists exactly so that this question has a one-sentence answer with a table behind it.' },
+        { key: 'own', correct: true, label: 'That the earlier packs were not wrong, they answered different questions', why: 'Throwing previous work under the bus to look rigorous costs the team more than the admission gains.' },
+        { key: 'fix', correct: true, label: 'That a definitions note now sits at the front of every pack', why: 'Turns an awkward question into evidence that it is being managed.' },
+        { key: 'fault', correct: true, label: 'That one genuine fault was found, quantified and disclosed', why: '₹3.46 lakh, named month, named store. Volunteering it is what makes the rest of the answer credible.' },
+        { key: 'blame', correct: false, label: 'That previous packs used an incorrect methodology', why: 'They used an unstated one. Calling it incorrect is both inaccurate and a way of blaming colleagues in front of a board.' },
+        { key: 'simplify', correct: false, label: 'That the difference is technical and not material to the decision', why: '₹55 lakh across the four bases. Describing it as technical would be the last thing you said before somebody worked out it was eleven percent.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-144': {
+    title: 'The reporting standard',
+    hint: "Four projects, four different failures, and every one of them has a control that would have caught it.",
+    brief: "Write the standard that governs retail reporting from now on. It has to be short enough that people follow it. Under 220 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Reporting standard — effective now', maxWords: 220,
+      prompt: 'The controls, each tied to something that actually went wrong.',
+      rubric: [
+        { key: 'definitions', label: 'Definitions at the front of every pack', markers: ['definition|glossary|basis|front|state|label|term'], why: 'Three people, three revenue figures, one week. The cheapest control available.' },
+        { key: 'onecomp', label: 'Published figures come from one computation', markers: ['one|single|same|source|computation|derive|together|tie'], why: 'Eight figures from eight queries is how a pack stops reconciling with itself.' },
+        { key: 'dupcheck', label: 'A scheduled duplicate check on the feeds', markers: ['duplicate|check|monthly|automat|schedul|feed|load|monitor'], why: 'One query, run monthly, would have caught a fault that survived three months of reporting.' },
+        { key: 'disclose', label: 'Every correction disclosed on the page it affects', markers: ['disclos|on the page|state|note|reproduc|exclusion|correction'], why: 'Three packs have now said "a data quality issue was corrected" and none has said what.' },
+        { key: 'claims', label: 'Sign-off covers the sentences, not just the numbers', markers: ['sentence|claim|wording|sign.?off|read|driven by|language|assert'], why: 'Every pack this quarter was arithmetically right and rhetorically wrong somewhere.' },
+        { key: 'own', label: 'Written as rules in force, not proposals', markers: ['will|must|from now|effective|every|each|no figure|standard'], why: 'A lead writing a standard is issuing it. Hedged into suggestions, none of it happens.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-145': {
+    title: 'What you would want to be measured on',
+    hint: "You have run four reviews. Think about which of your outputs actually changed a decision.",
+    brief: "Asha asks what the analytics team should be judged on next year. Answer as the lead. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'What the team should be measured on', maxWords: 180,
+      prompt: 'A measure of the team\'s value that cannot be gamed by producing more output.',
+      rubric: [
+        { key: 'notvolume', label: 'That volume of analysis is the wrong measure', markers: ['volume|number of|output|report|dashboard|count|more|not how many'], why: 'The obvious measure, and the one that rewards producing packs nobody reads.' },
+        { key: 'decisions', label: 'Something about decisions changed or prevented', markers: ['decision|changed|prevent|stopped|avoided|acted|influence|outcome'], why: 'Four reviews this quarter each stopped something wrong reaching a board. That is the product.' },
+        { key: 'trust', label: 'Something about figures being reproducible and trusted', markers: ['reconcil|reproduc|trust|tie|challenge|dispute|question|stand up'], why: 'A number nobody can reproduce has no value however correct it is.' },
+        { key: 'honest', label: 'Acknowledgement that the good measures are hard to count', markers: ['hard|difficult|cannot count|proxy|imperfect|qualitative|judge'], why: 'Proposing a measure while pretending it is easy to collect is how bad metrics get adopted.' },
+        { key: 'own', label: 'A clear answer rather than a survey of options', markers: ['I would|I think|propose|my view|should be|recommend'], why: 'She asked what you think. Three options with trade-offs is a way of not answering.' },
       ],
       skills: { communication: 100, businessLogic: 100 },
     },

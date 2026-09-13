@@ -470,6 +470,41 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'retail_sales',
   },
+
+  'board-pack': {
+    projectTitle: 'Year-End Board Pack',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Own the number the board hears, and be able to explain every other number in circulation.',
+      'Build figures that reconcile to the rupee, from one computation.',
+      'Publish an estimate with its assumptions on the same page, or do not publish it.',
+    ],
+    scenario:
+      'Three people have submitted three different revenue figures for the year — ₹5.00 crore, ₹4.85 crore and ₹4.45 crore. None of them is wrong. The board meets in ten days and needs one headline, a bridge to the others, and a figure for next year that somebody has already drafted as this year plus five percent.',
+    estimatedMinutes: 140,
+    difficulty: 'Hard',
+    primaryObjective: 'One headline the board can act on, a bridge that reconciles exactly, and an estimate whose assumptions are visible.',
+    constraints: [
+      { label: 'Reconciliation', value: 'Every step of the bridge must tie to the rupee. A bridge that nearly adds up is worse than none.' },
+      { label: 'Single source', value: 'Every figure the pack quotes comes from one computation, so no two can disagree.' },
+      { label: 'Estimates', value: 'A forecast is a set of assumptions with a number attached. Present the assumptions or do not present the number.' },
+    ],
+    deliverables: [
+      { text: 'A bridge from gross revenue to like-for-like, step by step.', via: 'sql-terminal' },
+      { text: 'Every published figure from a single computation.', via: 'python-notebook' },
+      { text: 'A board summary and a standing reporting standard.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The correction you made to the duplicated month last time was right for a comparison and wrong for a total — excluding the month throws away ₹3.46 lakh of real trade.',
+      'Two stores traded part of the year and one closed. An estimate that ignores the estate is not an estimate of anything.',
+      'Assuming flat like-for-like trading is optimistic here, not conservative. The second half fell.',
+      'A summary can be arithmetically perfect and still tell a board that a decline was offset, that openings were successful, and that an estimate was cautious.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

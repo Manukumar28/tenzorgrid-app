@@ -24,6 +24,221 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'board-pack': [
+    {
+      key: 'tda-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'Why three people got three answers',
+      title: 'Read: a number is a definition with arithmetic attached',
+      body: `Diya. Three of us submitted three revenue figures and all three are correct. That is worth sitting with, because it is the normal case rather than the unusual one.
+
+Revenue for a retail year has at least three independent choices baked into it. Gross or net of returns. Whole estate or like-for-like. Known data faults corrected or left. Three binary choices gives eight defensible answers, and ours happened to be three of them.
+
+Nobody made an error. Everybody omitted the same thing: saying which choices they took.
+
+The consequence is specific and expensive. Two figures in circulation with no bridge between them does not cause a debate about definitions — it causes a debate about competence. Somebody is assumed to have got it wrong, and the meeting is about that instead of about the business.
+
+So: the definition travels with the number, always, in the same sentence. Not a footnote, not an appendix, not a conversation you had with the person who asked. Written next to the figure, every time it appears.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Two teams report different revenue for the same year. What is the most likely cause?',
+        options: [
+          { key: 'defs', correct: true, label: 'Different definitions, both unstated' },
+          { key: 'error', correct: false, label: 'An arithmetic error in one of them' },
+          { key: 'data', correct: false, label: 'A data quality problem affecting one source' },
+          { key: 'timing', correct: false, label: 'The two were run at different times' },
+        ],
+        why: 'All three happen. Definitions are by far the commonest, and the only one where both parties are right and both feel accused.',
+      },
+    },
+    {
+      key: 'tda-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Replacing three people\'s work',
+      title: 'Asha: how to pick one number without losing three people',
+      body: `You are about to tell three colleagues that the pack will not use any of their figures. Handle that badly and you will get fewer submissions next year, and they will arrive later and less finished.
+
+Two things.
+
+Say they were right before you say what you chose. It is true — each computed a correct answer to a real question — and it has to be the first sentence, not a softening clause at the end.
+
+And do not discard their work. All three figures belong in the bridge. Ravi's gross is what Finance reconciles against, Diya's net is what the tills say, Sneha's like-for-like is what the trading discussion needs. They become the explanation rather than the competition, and each of them sees their number on the page.
+
+The failure mode is the lead who quietly produces a fourth figure and presents it as the answer. Technically fine, and everybody who submitted learns that submitting was pointless.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Three colleagues submitted three correct figures. The pack needs a fourth. What do you do with theirs?',
+        options: [
+          { key: 'bridge', correct: true, label: 'Put all three in the bridge, as the explanation of the headline' },
+          { key: 'discard', correct: false, label: 'Use the new figure and explain privately why theirs were not used' },
+          { key: 'pick', correct: false, label: 'Pick the closest of the three rather than producing a fourth' },
+          { key: 'credit', correct: false, label: 'Use the new figure and credit all three in the pack' },
+        ],
+        why: 'Picking the closest publishes a figure that answers the wrong question. Crediting people for work you did not use is worse than not crediting them — the bridge uses it.',
+      },
+    },
+    {
+      key: 'tda-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'A bridge that ties',
+      title: 'Read: why reconciliation is the whole job',
+      body: `Karthik. A bridge is a sequence of steps from one figure to another where every step is named and the arithmetic is exact. Not approximately exact. Exact.
+
+The reason is not pedantry. A bridge is the artefact that converts "your number disagrees with mine" into "here is where they diverge, and here is why". It only does that if somebody can add it up in the room and get your answer. One rupee out and the entire page is suspect, including the parts that are right.
+
+Three rules I would hold you to.
+
+Every step names what it removes AND why. "Less duplicates ₹3,46,357" is half a step; "a feed fault duplicated one store-month" is the other half.
+
+Both ends are figures somebody actually quotes. A bridge from a number nobody uses to another number nobody uses is a nice piece of arithmetic that helps no one.
+
+And it comes from one computation. If the eight figures in your bridge come from eight queries, they will drift the first time a definition changes, and the drift will appear in the room rather than in your review.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your bridge is out by ₹40 on ₹4.8 crore. What do you do?',
+        options: [
+          { key: 'find', correct: true, label: 'Find it before the pack goes out' },
+          { key: 'round', correct: false, label: 'Round every figure to the nearest lakh so it disappears' },
+          { key: 'note', correct: false, label: 'Add a rounding note' },
+          { key: 'ignore', correct: false, label: 'Ignore it — it is immaterial at that scale' },
+        ],
+        why: 'It is immaterial to the business and fatal to the bridge. Rounding to hide it is worse, because the difference is still there and now nobody can see where.',
+      },
+    },
+    {
+      key: 'tda-04', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can we simplify the bridge?',
+      title: 'Vikram wants fewer steps',
+      body: `Seven steps is a lot for a board slide. Can we collapse it to two — headline and like-for-like — and put the detail in an appendix?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['steps|explanation|why|55|lakh|appendix|nobody reads|collaps|difference|unexplain'],
+        why: 'The steps ARE the explanation. Collapsed to two, the ₹55 lakh between the ends becomes unexplainable again, which is the problem the bridge was built to solve.',
+      },
+    },
+    {
+      key: 'tda-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'Repair or exclude',
+      title: 'Read: the same fault, two correct treatments',
+      body: `You are about to find that a correction you made three months ago was wrong. It was not — it was right for what you were doing then and wrong for what you are doing now, and the difference is worth getting exactly straight.
+
+When a period is corrupt you have two moves. REPAIR it, if the fault is deterministic and you can recover the truth. EXCLUDE it, if you cannot.
+
+For the trading review you were comparing halves. Every line in that month was duplicated, so you could not tell which of each pair was real — except that both were identical, which means either one is. At the time you excluded the month, which kept the comparison clean and cost nothing, because a comparison does not need that store-month, only a consistent basis on both sides.
+
+For a total it is different. The board is being told what the business earned. Excluding the month understates it by ₹3.46 lakh of trade that genuinely happened. Correcting downward to avoid a data fault is still an error — it just feels safer, which is exactly why it is easy to defend and hard to notice.
+
+The rule: repair when you can, exclude when you cannot, and let the question decide which matters.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Every row in one store-month is duplicated exactly once. You need a total for the year. What do you do?',
+        options: [
+          { key: 'repair', correct: true, label: 'Keep one row of each pair — the trade is recoverable' },
+          { key: 'exclude', correct: false, label: 'Exclude the store-month, since the data cannot be trusted' },
+          { key: 'estimate', correct: false, label: 'Replace the month with an average of its neighbours' },
+          { key: 'flag', correct: false, label: 'Include it as loaded and flag the figure as provisional' },
+        ],
+        why: 'Both rows are identical, so either is the real one and the repair is certain. Excluding understates by real money; estimating invents a number; flagging publishes a figure you know is wrong.',
+      },
+    },
+    {
+      key: 'tda-06', day: 3, type: 'judgement', via: 'chat', from: 'finance_analyst', minutes: 6,
+      subject: 'So which of my numbers were wrong?',
+      title: 'Diya asks what else needs restating',
+      body: `If the duplicate has been in there since March, how many of my monthly reports are wrong, and do I restate them?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both parts.',
+        markers: ['march|one month|3,?46|346|only|store 3|small|material|her call|restate|going forward|not all'],
+        why: 'One store, one month, ₹3.46 lakh. Everything since is affected by that one figure and nothing else. Whether to restate is her judgement on materiality, and the useful input is the exact size rather than a blanket answer.',
+      },
+    },
+    {
+      key: 'tda-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 14,
+      subject: 'Forecasts and the word conservative',
+      title: 'Read: an estimate is assumptions with a number attached',
+      body: `Vikram. I have put next year at this year plus five percent, and you are about to tell me why that is wrong. Before you do, here is what I have learned from twenty years of being told.
+
+A forecast is not a prediction. It is a set of assumptions, and the number is an output. Which means the assumptions are the deliverable and the number is the summary.
+
+Four assumptions hide inside "this year plus five percent". That the base is right. That the estate is unchanged. That trading grows. That anything unusual in the base repeats. Every one of those is a decision, and every one of them was taken silently.
+
+The one that catches people is the word CONSERVATIVE. It gets attached to any assumption of no growth. But if trading is falling, flat is not conservative — it is optimistic, and telling a board an estimate is conservative when the risk is on the downside is the single most expensive sentence in any pack.
+
+The test: for each assumption, would the board be surprised to learn it was made? If yes, it goes on the page.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Like-for-like trading fell in the second half. Your estimate assumes it is flat next year. Is that conservative?',
+        options: [
+          { key: 'optimistic', correct: true, label: 'No — it is optimistic against the only trend evidence available' },
+          { key: 'yes', correct: false, label: 'Yes, since it assumes no growth' },
+          { key: 'neutral', correct: false, label: 'Neutral, since it neither grows nor declines' },
+          { key: 'depends', correct: false, label: 'It depends what the board expects' },
+        ],
+        why: 'Conservative means erring against yourself. With a falling trend, assuming flat errs in your favour — and a board told "conservative" will place its risk on the wrong side.',
+      },
+    },
+    {
+      key: 'tda-08', day: 4, type: 'pressure', via: 'email', from: 'stakeholder', minutes: 8,
+      subject: 'The board needs a single number',
+      title: 'Vikram will not take a range',
+      body: `I understand the two scenarios. The board will not accept a range — they want a number to plan against and they will ask me to pick one in the room.
+
+So pick one. Which is it?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you give him?',
+        options: [
+          { key: 'promo', correct: true, label: 'The figure that matches whatever the promotion decision turns out to be, and ask who takes that decision' },
+          { key: 'lower', correct: false, label: 'The lower one, as the prudent choice' },
+          { key: 'mid', correct: false, label: 'The midpoint of the two' },
+          { key: 'higher', correct: false, label: 'The higher one, since the board wants growth' },
+        ],
+        why: 'The two scenarios differ by one decision the business has not taken. Picking prudently, optimistically or splitting the difference all take that decision on their behalf, quietly, in a number.',
+      },
+    },
+    {
+      key: 'tda-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Four packs, four of the same failure',
+      title: 'Read: what the quarter actually taught',
+      body: `Look back across the four reviews you have led this quarter.
+
+Trading: a correct number under a claim it did not support. Margin: a column whose name did not match its meaning. Range: a measure that computed cleanly and described nothing. This one: three correct numbers answering three unstated questions.
+
+Not one of them was an arithmetic error. Every single one was a gap between what a number was and what somebody believed it was.
+
+That is the thing a lead is for, and it is why more careful analysts do not fix it. The gap does not live in the analysis — it lives between the analysis and the sentence somebody writes on top of it, and only the person who owns both can close it.
+
+Which is why the standard you write this week matters more than any of the four analyses. Definitions at the front. One computation behind the figures. Corrections disclosed on the page. Sign-off covering the sentences, not just the cells.
+
+Four controls, four failures, one each. Write them down and this quarter is the last time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Across four reviews, none of the problems was an arithmetic error. What does that tell you about where to spend attention?',
+        options: [
+          { key: 'meaning', correct: true, label: 'On establishing what a quantity is before computing with it' },
+          { key: 'review', correct: false, label: 'On more thorough checking of calculations' },
+          { key: 'tools', correct: false, label: 'On better tooling and automated tests' },
+          { key: 'people', correct: false, label: 'On hiring more experienced analysts' },
+        ],
+        why: 'Checking arithmetic finds arithmetic errors, and there were none. Tooling and experience both help and neither closes the gap between a number and what somebody believes it means.',
+      },
+    },
+    {
+      key: 'tda-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 9,
+      subject: 'Last one at this level',
+      title: 'Asha: what you would do differently',
+      body: `That is four projects as lead. Before the promotion conversation, one question, and I want the honest version.
+
+Across the four, where did you take longer than you needed to because you were checking something that was fine? And where did you move faster than you should have?
+
+I am not looking for modesty. I am looking for whether you can tell the difference yet — because at the next level nobody will have time to check your work, and the only control left is your own sense of which things need it.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both halves honestly.',
+        markers: ['check|time|slow|fast|assum|took|should|cover|stock|definition|bridge|estimate|trust|verif|too quick|too long'],
+        why: 'There is no right answer. What matters is whether the two halves are specific — a lead who can only name things they did well has not yet developed the sense the question is about.',
+      },
+    },
+  ],
   'range-review': [
     {
       key: 'tca-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
@@ -2349,6 +2564,115 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'board-pack': [
+    {
+      key: 'tds-01', day: 1, type: 'scope', via: 'email', from: 'line_manager',
+      subject: 'How much of the pack do you want to own?',
+      body: `You can reconcile the three revenue figures and hand the rest back, or you can own the whole pack including the forward estimate.
+
+Owning it means you carry the estimate into the room. Your call.`,
+      needsReply: true,
+      expect: ['choose', 'say what owning it requires'],
+      markers: ['own|whole|all|estimate|assumption|reconcil|both|yes|scope|room|carry'],
+      ifIgnored: 'Asha assumes the narrow scope, and the estimate goes in as this year plus five percent with nobody having checked it.',
+      note: 'Owning the estimate is the right call and it has a condition: the assumptions go on the page or you cannot defend it.',
+    },
+    {
+      key: 'tds-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Board papers — circulation deadline',
+      body: `A reminder that all board papers must reach the company secretary five working days before the meeting.
+
+Function heads have been notified directly of their deadlines.`,
+      expect: ['archive it'],
+      note: 'Directed at function heads, who have been told separately. Nothing to do.',
+    },
+    {
+      key: 'tds-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Revenue number, now',
+      body: `Someone has asked me for the year revenue figure for an external filing. What do I give them?`,
+      needsReply: true,
+      expect: ['net, whole estate', 'and say why not like-for-like'],
+      markers: ['net|whole|all store|entire|estate|not like.for.like|48|4\\.81|statutory|external|dedup'],
+      ifIgnored: 'A like-for-like figure ends up in an external filing, understating the business by ₹36 lakh with no way to explain it later.',
+      note: 'External filings want what the business earned: net, every store, corrected. Like-for-like is a management measure.',
+    },
+    {
+      key: 'tds-04', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Turning the bridge into a scheduled view',
+      body: `Since you are building it as one computation this year, I am wrapping it in a scheduled view with the window dates and the like-for-like test as parameters rather than literals.
+
+Next year it is a refresh instead of a rebuild. Nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has read the shape of what you built and drawn the right conclusion. Nothing to answer.',
+    },
+    {
+      key: 'tds-05', day: 3, type: 'judgement', via: 'email', from: 'finance_analyst',
+      subject: 'You are changing the correction again',
+      body: `The trading review excluded that whole month. Now you are halving it instead.
+
+I have to explain to my team why the same fault has been treated two different ways in two documents. Help me out.`,
+      needsReply: true,
+      expect: ['explain the two treatments', 'say why both are right'],
+      markers: ['comparison|total|repair|exclude|question|different|both|earned|clean|recover|identical'],
+      ifIgnored: 'Finance conclude the analytics team changes its mind, and every future correction is challenged on principle.',
+      note: 'Repair for a total, exclude for a comparison. Same fault, different question, both defensible — and that is a sentence worth her having.',
+    },
+    {
+      key: 'tds-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: duplicate-load check now active',
+      body: `The scheduled duplicate-load check for the retail feed is now active and will run on the first of each month.
+
+Alerts route to the retail analytics distribution list. No action required.`,
+      expect: ['archive it'],
+      note: 'The control you asked for, now live. Nothing to reply to — and worth noticing that it exists because somebody asked.',
+    },
+    {
+      key: 'tds-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'The board will want growth',
+      body: `I have been doing this a long time and a flat number does not land. They will ask what we are doing about it and the answer cannot be "nothing".
+
+Can we not find a growth assumption we can justify?`,
+      needsReply: true,
+      expect: ['decline to invent one', 'offer what would justify one'],
+      markers: ['cannot|no evidence|declin|fell|17|justif|would need|plan|initiative|not from this|separate'],
+      ifIgnored: 'A growth assumption goes into the estimate with analytics\' name on it and no evidence behind it.',
+      note: 'A growth assumption has to come from a plan somebody owns — a new store, a range change, a price move — not from the analysis.',
+    },
+    {
+      key: 'tds-08', day: 4, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'Store targets from your estimate',
+      body: `If the board accepts your number, it becomes next year's store targets.
+
+Is there anything about how you built it that would make a per-store split unfair?`,
+      needsReply: true,
+      expect: ['name what would make a naive split unfair'],
+      markers: ['new store|annualis|salt lake|sector|part year|closed|promotion|november|flat|assum|not evenly|daily rate'],
+      ifIgnored: 'Store targets are set by splitting the total evenly, and two new stores get targets built on an annualised opening peak.',
+      note: 'The new stores are annualised from a few months at their opening rate, and the estimate assumes flat trading everywhere. Neither survives being turned into a store target unexamined.',
+    },
+    {
+      key: 'tds-09', day: 5, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'A board member has pre-read it',
+      body: `One of the non-executives has read the pack early and come back with a question: why is revenue different from the figure in the half-year pack?
+
+I need an answer before Thursday.`,
+      needsReply: true,
+      expect: ['the basis changed, not the figure', 'point at the bridge'],
+      markers: ['basis|definition|bridge|not wrong|different question|page|reconcil|both|gross|net|like.for.like'],
+      ifIgnored: 'Vikram answers from memory in the meeting and the board spends its time on which number is right.',
+      note: 'The figure did not change — the basis did, and the bridge is on the page precisely so this question has a one-sentence answer.',
+    },
+    {
+      key: 'tds-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the board summary',
+      body: `One line from you at the top of the summary. What does the board need to know before anything else?`,
+      needsReply: true,
+      expect: ['one thing', 'stated as what it changes'],
+      markers: ['like.for.like|declin|fell|17|trading|estate|new store|growth|not|headline|basis'],
+      ifIgnored: 'Asha writes it from the definitions note, which is the least interesting page in the pack.',
+      note: 'The business is larger and the shops are trading worse. That is the sentence, and everything else in the pack supports it.',
+    },
+  ],
   'range-review': [
     {
       key: 'tcs-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -3576,6 +3900,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'board-pack': {
+    key: 'tdq-board', title: 'Year-End Board Pack — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'Three colleagues submit ₹5.00, ₹4.85 and ₹4.45 crore for the same year. What is the most likely explanation?',
+        options: [
+          { key: 'c', label: 'Three correct computations of three different definitions, none of them stated', correct: true },
+          { key: 'a', label: 'Two of the three contain errors' },
+          { key: 'b', label: 'They queried the data at different times' },
+          { key: 'd', label: 'One of them used a corrupted source' },
+        ],
+        why: 'Gross or net, whole estate or like-for-like, corrected or not. Three binary choices give eight defensible answers, and nobody wrote down which they took.',
+      },
+      {
+        id: 'q2', topic: 'business-sense',
+        q: 'Which figure belongs in an external filing?',
+        options: [
+          { key: 'b', label: 'Net of returns, every store, with the known fault corrected', correct: true },
+          { key: 'a', label: 'Gross revenue, since it is the most complete' },
+          { key: 'c', label: 'Like-for-like, since it is the cleanest comparison' },
+          { key: 'd', label: 'Whichever figure Finance already published' },
+        ],
+        why: 'It is what the business earned. Gross counts money that was refunded; like-for-like excludes ₹36 lakh of trade from stores the company owns.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'What must be true of a bridge before it goes in a pack?',
+        options: [
+          { key: 'a', label: 'Every step reconciles to the rupee, and names both what it removes and why', correct: true },
+          { key: 'b', label: 'It is simplified to two or three steps for a board audience' },
+          { key: 'c', label: 'It starts and ends on the two most conservative figures' },
+          { key: 'd', label: 'It is rounded consistently to the nearest lakh' },
+        ],
+        why: 'A bridge exists so somebody can add it up in the room and get your answer. Collapsing the steps removes the explanation; rounding to hide a gap leaves the gap and hides where it is.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Every row in one store-month is duplicated exactly once. You need the year total. What do you do?',
+        options: [
+          { key: 'd', label: 'Keep one row of each pair — the trade is recoverable with certainty', correct: true },
+          { key: 'a', label: 'Exclude the whole store-month' },
+          { key: 'b', label: 'Replace the month with the average of its neighbours' },
+          { key: 'c', label: 'Include it as loaded and mark the figure provisional' },
+        ],
+        why: 'Both rows are identical, so either is the real one. Excluding the month understates by ₹3.46 lakh of trade that genuinely happened — correcting downward to avoid a fault is still an error.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'The trading review excluded that month and this pack halves it. Was the earlier treatment wrong?',
+        options: [
+          { key: 'c', label: 'No — exclusion is right for a comparison, repair is right for a total', correct: true },
+          { key: 'a', label: 'Yes, and the trading review should be reissued' },
+          { key: 'b', label: 'Yes, but it is immaterial at that scale' },
+          { key: 'd', label: 'No, and the pack should exclude it too for consistency' },
+        ],
+        why: 'A comparison needs a consistent basis on both sides and does not need that store-month at all. A total has to include money that was earned. Same fault, different question.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why should every published figure in a pack come from one computation?',
+        options: [
+          { key: 'a', label: 'Figures from one computation cannot disagree, and a definition change propagates everywhere at once', correct: true },
+          { key: 'b', label: 'It runs faster' },
+          { key: 'c', label: 'It is easier to write' },
+          { key: 'd', label: 'It is required for audit' },
+        ],
+        why: 'Eight figures from eight queries is exactly how three people produced three revenue numbers. The structural fix is one computation, not three more careful people.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'Like-for-like trading fell in the second half. Your estimate assumes it is flat next year. Is that conservative?',
+        options: [
+          { key: 'b', label: 'No — flat errs in your favour against the only trend evidence there is', correct: true },
+          { key: 'a', label: 'Yes, since it assumes no growth' },
+          { key: 'c', label: 'Neutral, since it neither grows nor declines' },
+          { key: 'd', label: 'It depends on what the board expects' },
+        ],
+        why: 'Conservative means erring against yourself. Telling a board an estimate is conservative when the risk is on the downside is the most expensive sentence in any pack.',
+      },
+      {
+        id: 'q8', topic: 'business-sense',
+        q: 'Your two scenarios differ by ₹15.2 lakh depending on whether the promotion repeats. The board wants one number. What do you give them?',
+        options: [
+          { key: 'd', label: 'The figure matching whichever way that decision goes, and ask who takes it', correct: true },
+          { key: 'a', label: 'The lower one, as the prudent choice' },
+          { key: 'b', label: 'The midpoint' },
+          { key: 'c', label: 'The higher one, since the board wants growth' },
+        ],
+        why: 'Picking prudently, optimistically or splitting the difference all take a business decision on the board\'s behalf, quietly, inside a number.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A summary says "like-for-like declined, offset by two successful new store openings". What is wrong?',
+        options: [
+          { key: 'a', label: 'A trading trend and added capacity are not commensurable, and "successful" is a judgement nobody made', correct: true },
+          { key: 'b', label: 'Nothing — both statements are supported by the figures' },
+          { key: 'c', label: 'The new stores should be excluded from the summary entirely' },
+          { key: 'd', label: 'It should quantify the decline' },
+        ],
+        why: '"Offset" implies one compensated for the other. And whether an opening was successful is a question about capital returns that this analysis never asked.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'A board member asks why revenue differs from the half-year pack. What is the answer?',
+        options: [
+          { key: 'c', label: 'The figure did not change — the basis did, and both are on the page', correct: true },
+          { key: 'a', label: 'The earlier pack used an incorrect methodology' },
+          { key: 'b', label: 'The difference is technical and not material to the decision' },
+          { key: 'd', label: 'A data quality issue has since been corrected' },
+        ],
+        why: 'The earlier pack used an unstated basis, not an incorrect one — and blaming colleagues in front of a board costs more than it buys. ₹55 lakh across the four bases is not technical, and the correction is only part of the gap.',
+      },
+    ],
+  },
   'range-review': {
     key: 'tcq-range', title: 'Range & Space Review — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
