@@ -24,6 +24,220 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'reliability-review': [
+    {
+      key: 'ra-01', day: 1, type: 'learning', via: 'email', from: 'engineering_manager', minutes: 12,
+      subject: 'Before you start — how our incident records really work',
+      title: 'Read: what an incident record does and does not mean',
+      body: `Arjun. You are senior enough that I will give you the unvarnished version rather than the documentation one.
+
+severity is set in the first ten minutes by whoever is on call, from very little information, and is never revised. It records how alarming something looked, not how bad it turned out to be.
+
+resolved_at is NULL for anything still open. It is also NULL for anything nobody remembered to close. We do not distinguish those, and I would not swear the oldest open records are all genuinely live.
+
+rows_corrupted is the most trustworthy field we have. It comes out of the recovery tooling rather than a human judgement.
+
+started_at is when we noticed, not when it began. For anything found by a client rather than by monitoring, those can be hours apart.
+
+So: be careful with severity, be suspicious of very old open records, and lean on rows_corrupted. If your analysis contradicts the dashboard my team reports upward, that is interesting rather than wrong — come and talk to me.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which field would you trust most as a measure of how bad an incident was?',
+        options: [
+          { key: 'rows', correct: true, label: 'rows_corrupted — it comes from tooling, not judgement' },
+          { key: 'sev', correct: false, label: 'severity — it is the field designed for exactly this' },
+          { key: 'dur', correct: false, label: 'resolved_at minus started_at' },
+          { key: 'tickets', correct: false, label: 'the number of tickets the affected client raised' },
+        ],
+        why: 'Severity is a ten-minute first impression. Duration measures our response and is missing entirely for open incidents. Ticket counts measure how much a client complains. Only rows_corrupted is a machine-measured count of damage.',
+      },
+    },
+    {
+      key: 'ra-02', day: 1, type: 'policy', via: 'email', from: 'security', minutes: 6,
+      subject: 'Read and confirm: incident data and client names',
+      title: 'Read and confirm: what leaves this review',
+      body: `You will be handling incident records tied to named clients. The rules are short.
+
+Service-level aggregates — hours, counts, severities — are freely shareable internally and appear in the engineering review.
+
+Anything that names a client alongside an incident goes to Customer Success, Engineering leadership and nobody else. It never goes to another client, and it never goes into a deck that leaves the company.
+
+One that catches senior people specifically: you will be asked for "a quick example" in meetings. A named client used as an illustration is still a disclosure, however informal the room feels.
+
+Confirm you have read this.`,
+      check: { kind: 'acknowledge', label: 'I have read and understood' },
+    },
+    {
+      key: 'ra-03', day: 2, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 9,
+      title: 'Rahul on date arithmetic in SQLite',
+      body: `You will be computing durations all week, so — SQLite has no interval type and this catches everyone once.
+
+  (julianday(resolved_at) - julianday(started_at)) * 24
+
+julianday gives you a day number as a float. Subtract, multiply by 24, and you have hours. Without the * 24 you have days and the numbers look small and plausible, which is the dangerous version.
+
+Two more. Both timestamps must be non-NULL or the whole expression is NULL — so your WHERE clause has to exclude open incidents or your AVG silently drops them anyway, without telling you how many. And julianday on a malformed string returns NULL rather than erroring, so a single bad row becomes a silent gap rather than a loud failure.
+
+Count what you are averaging over. Every time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You AVG a duration expression without filtering out unresolved incidents. What happens?',
+        options: [
+          { key: 'skip', correct: true, label: 'The NULLs are skipped and the average covers only closed incidents — with no warning' },
+          { key: 'null', correct: false, label: 'The average comes back NULL' },
+          { key: 'zero', correct: false, label: 'Open incidents count as zero and drag the average down' },
+          { key: 'error', correct: false, label: 'SQLite raises an error' },
+        ],
+        why: 'AVG ignores NULLs. You get the right average over a different population from the one you think, and a COUNT(*) beside it will report the full number — which is exactly how a table ends up quietly wrong.',
+      },
+    },
+    {
+      key: 'ra-04', day: 2, type: 'judgement', via: 'email', from: 'line_manager', minutes: 10,
+      subject: 'When three measures disagree',
+      title: 'Read: choosing a measure is a decision, not a calculation',
+      body: `Asha. You have three rankings that name three different services, and this is the moment the job stops being SQL.
+
+There is no technique that resolves this. Frequency, duration and total time are all correct measurements of different things, and which one matters depends entirely on what the person is buying. Arjun is buying engineering capacity, so total hours is the measure connected to his decision. If he were buying customer goodwill it would be frequency, or blast radius.
+
+Two failure modes, and juniors do the first while seniors do the second.
+
+The junior one is picking whichever ranking looks most dramatic and presenting it as the answer.
+
+The senior one is refusing to choose — handing over all three with a note that says it depends. That feels rigorous and it is actually an abdication, because the person receiving it has less information than you do.
+
+Choose. Say which you chose. Say what the others said. That is the whole method.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Three measures name three services. Write how you would open the recommendation. Under 60 words.',
+        maxWords: 60,
+        markers: ['api.gateway|gateway|auth|service', 'total hours|capacity|engineering time|because|measure|chose|ranked by'],
+        why: 'Name the service, then name the measure that chose it, in the same breath. The alternatives come afterwards as context, not as a menu.',
+      },
+    },
+    {
+      key: 'ra-05', day: 3, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 10,
+      subject: 'Survivorship bias, and why your MTTR is wrong',
+      title: 'Read: the incidents your average cannot see',
+      body: `Diya. You have found something worth understanding properly rather than just reporting.
+
+Mean time to resolve is computed over incidents that resolved. That sounds tautological and it is the whole problem: the incidents that take longest are disproportionately the ones still running, so they are systematically absent from the average that is supposed to measure how long things take.
+
+The effect is not random. It flatters exactly the teams with the worst unfinished work, because their hardest incidents are the ones excluded. A service that resolves everything quickly and a service that resolves easy things quickly and never finishes the hard ones can post identical MTTRs.
+
+This is the same shape as measuring average customer lifetime using only customers who have already left, or fund performance using only funds that still exist. It is one of the most common quantitative errors in business reporting and almost nobody notices it, because the resulting number is always reassuring.
+
+The fix is not a better average. It is publishing the open count beside it, always.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why does MTTR computed on closed incidents flatter a team with a large open backlog?',
+        options: [
+          { key: 'hard', correct: true, label: 'Their hardest, longest incidents are still open, so the average never sees them' },
+          { key: 'fewer', correct: false, label: 'They have fewer incidents in the calculation, so the average is less reliable' },
+          { key: 'fast', correct: false, label: 'Teams with backlogs prioritise quick wins, which lowers the average' },
+          { key: 'no', correct: false, label: 'It does not — the average is unaffected by open incidents' },
+        ],
+        why: 'It is selection, not sample size. The excluded incidents are not a random subset — they are specifically the long ones, which is what makes the bias systematic and always in the same direction.',
+      },
+    },
+    {
+      key: 'ra-06', day: 3, type: 'policy', via: 'chat', from: 'support_lead', minutes: 6,
+      title: 'Sneha on very old open incidents',
+      body: `You will have spotted some incidents that have been open for months. Before you write that up — how it actually happens.
+
+Sometimes it is genuine: something is broken, there is a workaround, and it sits below the line quarter after quarter. That is a real finding and worth raising.
+
+More often the fix shipped and nobody closed the record. There is no prompt, it belongs to whoever was on call that night, and they moved teams in June.
+
+I cannot tell you which is which from here either — I would have to go and ask. So do not report a four-month SEV1 as an ongoing outage, and do not quietly assume it is stale. Ask. It takes one message and the answer changes what you write.`,
+      check: { kind: 'acknowledge', label: 'Will do' },
+    },
+    {
+      key: 'ra-07', day: 4, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul: SUM across a join, again',
+      body: `You are about to sum client revenue across the incidents table. The classic.
+
+A JOIN from incidents to clients gives you one row per INCIDENT. A client with four incidents appears four times, and SUM(c.mrr) adds their revenue four times. The number comes out roughly double and looks entirely plausible, which is why it survives review.
+
+SUM(DISTINCT c.mrr) works but is fragile — two clients on exactly the same MRR would collapse into one. Safer is a subquery: compute the distinct client set first, then sum their revenue.
+
+The tell is always the same. If a figure is "revenue at risk" and it is close to or above your total book, you have done this.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why is SUM(DISTINCT c.mrr) fragile as a fix?',
+        options: [
+          { key: 'dupes', correct: true, label: 'Two different clients with identical MRR collapse into one value' },
+          { key: 'slow', correct: false, label: 'It is much slower on large tables' },
+          { key: 'nulls', correct: false, label: 'It does not handle NULL revenue' },
+          { key: 'syntax', correct: false, label: 'SQLite does not support DISTINCT inside SUM' },
+        ],
+        why: 'DISTINCT deduplicates VALUES, not clients. It happens to be right here because no two clients share an MRR, and it would silently under-count the moment two did — which is why a subquery over distinct client ids is the habit worth having.',
+      },
+    },
+    {
+      key: 'ra-08', day: 4, type: 'judgement', via: 'email', from: 'comms', minutes: 8,
+      subject: 'Writing a recommendation that survives you',
+      title: 'Read: making a recommendation defensible second-hand',
+      body: `Meera. Arjun is going to take your recommendation into a room you are not in and be asked to defend it. That changes how it has to be written.
+
+The test I use: could somebody who has not read the analysis answer one hostile question from your document alone? Not three questions — one. The likely one.
+
+Here the likely question is "why that service and not the one with the worst average?". If the answer is in your document, Arjun handles it in a sentence. If it is only in your head, he says he will come back to them, and the decision slips a week.
+
+So write the objection into the recommendation. Name the ranking you did not use and why. It feels defensive on the page and it is the difference between a decision made on Friday and a decision made never.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the sentence pre-empting "why not the service with the worst average duration?". Under 45 words.',
+        maxWords: 45,
+        markers: ['billing.sync|worst average|slowest|longest', 'one|single|1 |sample|closed|two open|not enough'],
+        why: 'Name the service, name the reason it is not the answer — one closed incident — and move on. Two clauses, and it removes the only obvious objection.',
+      },
+    },
+    {
+      key: 'ra-09', day: 5, type: 'learning', via: 'chat', from: 'engineering_manager', minutes: 7,
+      title: 'Arjun on being asked to forecast',
+      body: `Vikram will ask you how much the incident count drops if we do this. I want to tell you what I have learned about that question.
+
+You cannot answer it. One quarter of data, no comparable intervention, no baseline for what a fix of this kind achieves here. Any number you give is a guess that will be quoted back to you in January.
+
+But "I cannot forecast it" on its own loses the funding, because he genuinely does need something to approve against.
+
+What works is turning the forecast into a measurement. Give him today's number — the hours, the open count — and propose that we check the same figures in three months. He is then approving a measurable experiment rather than a hope, and nobody has invented anything.
+
+I have watched analysts lose budget by being rigorous and win it by being rigorous and constructive. It is the same rigour.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are asked to forecast the improvement and have no basis for one. What is the strongest response?',
+        options: [
+          { key: 'baseline', correct: true, label: 'Decline the forecast, give the current baseline, and propose re-measuring in three months' },
+          { key: 'refuse', correct: false, label: 'Explain that forecasting is outside the scope of the analysis' },
+          { key: 'estimate', correct: false, label: 'Give a conservative estimate, clearly labelled as approximate' },
+          { key: 'industry', correct: false, label: 'Cite a typical industry improvement figure' },
+        ],
+        why: 'A labelled estimate is still repeated without its label, and an industry figure is an invented number wearing a suit. Turning an unanswerable forecast into a measurable before-and-after gives the decision-maker what they actually need.',
+      },
+    },
+    {
+      key: 'ra-10', day: 5, type: 'judgement', via: 'email', from: 'line_manager', minutes: 9,
+      subject: 'Before the recommendation goes',
+      title: 'Read: recommending where other people\'s time goes',
+      body: `Asha, last one. This recommendation moves a quarter of a team for three months. That is a person-year of engineering, and it is the largest thing you have influenced here.
+
+Two things senior people do that junior people do not.
+
+They say what will not improve. Every recommendation implicitly deprioritises something, and naming it yourself is far better than having it discovered. Berylline Retail has the joint-largest support backlog and no incidents at all — nothing in this programme touches them, and Arjun should hear that from you rather than from their CSM in March.
+
+They make the recommendation falsifiable. Say what you expect to be different and how you would check. An unfalsifiable recommendation cannot fail, which sounds comfortable and means it can never be shown to have worked either.
+
+Both of those make the document harder to write and much harder to argue with.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the sentence naming what this programme will NOT fix. Under 45 words.',
+        maxWords: 45,
+        markers: ['backlog|ticket|berylline|no incident|support', 'not|will not|won.t|unaffected|nothing|separate|outside'],
+        why: 'Name the thing and be explicit that it stays broken. Volunteering it costs a sentence; having it discovered costs the credibility of the whole recommendation.',
+      },
+    },
+  ],
   'pay-equity-audit': [
     {
       key: 'ea-01', day: 1, type: 'learning', via: 'email', from: 'people_partner', minutes: 11,
@@ -813,6 +1027,109 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'reliability-review': [
+    {
+      key: 'rs-01', day: 1, type: 'scope', via: 'email', from: 'engineering_manager',
+      subject: 'What do you need from me to start?',
+      body: `Before you disappear into the data — is there anything you need from my side that is not in the tables?
+
+I can tell you things the records will not: which services we already know are fragile, what we changed in the quarter, which incidents had a workaround. Ask now and it costs me ten minutes. Ask on Friday and it changes your conclusions.`,
+      needsReply: true,
+      expect: ['ask for something specific, or say you will come back', 'do not waste the offer'],
+      markers: ['workaround|change|deploy|known|fragile|severity|open|stale|closed|yes|would help|useful|come back|once I'],
+      ifIgnored: 'Arjun assumes you have what you need. The context he offered surfaces on Friday, in the meeting, as a reason your analysis missed something.',
+      note: 'A stakeholder offering ten minutes of context before you start is the cheapest input you will ever get. The only wrong answer is nothing.',
+    },
+    {
+      key: 'rs-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: query cluster maintenance completed',
+      body: `Scheduled maintenance on the reporting cluster completed successfully at 04:12.
+
+No action required. This is an automated confirmation sent to all warehouse users.`,
+      expect: ['archive it'],
+      note: 'Automated, retrospective, no action. The correct handling is the fastest one available.',
+    },
+    {
+      key: 'rs-03', day: 2, type: 'pressure', via: 'chat', from: 'support_lead',
+      body: `Quick one — I am writing the weekly support summary and I want to say billing-sync is our worst service for resolution time. Your numbers back that up, right? I saw 62 hours somewhere.`,
+      needsReply: true,
+      expect: ['stop the claim', 'give her the reason, not just a no'],
+      markers: ['one|single|1 |two open|sample|only closed|careful|not|would not|hold', 'instead|api.gateway|total|frequen|could say|what you can'],
+      ifIgnored: 'The support summary goes out naming billing-sync as the worst service on the strength of one incident, sourced to your analysis, a day before your own report says otherwise.',
+      note: 'The 62-hour figure is real and it is one closed incident. A colleague about to publish it in good faith is the cheapest possible moment to correct it.',
+    },
+    {
+      key: 'rs-04', day: 2, type: 'noise', via: 'chat', from: 'comms',
+      body: `Reminder that the engineering all-hands moved to Thursday. Nothing needed, just flagging it because three people have asked me today.`,
+      expect: ['nothing — it is a broadcast'],
+      note: 'A message sent specifically to stop people asking. Do not become the fourth.',
+    },
+    {
+      key: 'rs-05', day: 3, type: 'question', via: 'email', from: 'engineering_manager',
+      subject: 'You are about to tell me my metric is wrong',
+      body: `Asha mentioned you have found something about how we compute MTTR.
+
+I report that number to my skip-level every month and have done for a year. Before you write it up, I want to understand it properly rather than read it in a document — walk me through what is actually wrong with it.
+
+And be straight with me about whether the number I have been reporting was misleading.`,
+      needsReply: true,
+      expect: ['explain the mechanism', 'answer the uncomfortable question honestly'],
+      markers: ['open|unresolved|exclud|closed only|still running|longest', 'flatter|better|understate|lower|yes|misleading|optimistic|bias'],
+      ifIgnored: 'Arjun reads it in the document instead, cold, with his skip-level copied. A finding that could have been collaborative becomes an ambush.',
+      note: 'He asked the hard question directly, which deserves a direct answer: yes, the number was optimistic. Almost every company computes it this way, which is context, not an excuse.',
+    },
+    {
+      key: 'rs-06', day: 3, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Engineering hiring — two open roles, referrals welcome',
+      body: `Two open roles on the platform team, both senior. The referral bonus applies as usual.
+
+Details on the intranet. Sent to all engineering and analytics staff.`,
+      expect: ['archive it'],
+      note: 'Adjacent to your work, asking nothing of you.',
+    },
+    {
+      key: 'rs-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Give me the headline now',
+      body: `Vikram. I am building the quarterly review deck today, not Friday.
+
+One line on platform reliability. I will take a rough version and correct it later if I have to, but I need something in the slide this afternoon.`,
+      needsReply: true,
+      expect: ['give something true and defensible', 'do not give a rough version you will retract'],
+      markers: ['api.gateway|gateway|326|hours|auth|open|unresolved|seven|7 ', 'measure|total|basis|caveat|final|friday|stands|confirm'],
+      ifIgnored: 'Vikram writes his own line from the raw numbers. It goes in the deck and is very hard to change once the deck has circulated.',
+      note: '"I will correct it later" is almost never true — a line in a circulated deck outlives its correction. Give the sentence you are willing to keep.',
+    },
+    {
+      key: 'rs-08', day: 4, type: 'question', via: 'chat', from: 'finance_analyst',
+      body: `Your revenue-touched-per-service number — how did you avoid double counting? A client with four incidents would have their MRR added four times on a naive join and the total would come out near the whole book. I have been caught by it, so I am asking rather than assuming.`,
+      needsReply: true,
+      expect: ['name the technique', 'do not just assert it is right'],
+      markers: ['distinct|subquery|once|per client|group|dedup|not double|client id'],
+      ifIgnored: 'Diya cannot vouch for the figure and flags it as unverified in her own model. Your number goes into the deck with a question mark you could have removed in one line.',
+      note: 'A colleague who knows the trap and asks how you avoided it is offering to co-sign your number. One sentence buys that.',
+    },
+    {
+      key: 'rs-09', day: 5, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Can you make the case stronger?',
+      body: `I am taking your recommendation to the funding conversation this afternoon and I think it lands. One thing.
+
+Could you sharpen the language? "Consumes the most engineering time" is accurate but dry. Something like "critically unstable" would carry more weight in the room and get me the headcount.`,
+      needsReply: true,
+      expect: ['decline the overstatement', 'offer something stronger that is still true'],
+      markers: ['not|would not|cannot|no|careful|unstable|support|evidence|overstate', 'instead|could say|326|hours|person.month|quarter|concrete|specific|number'],
+      ifIgnored: 'Arjun sharpens it himself. "Critically unstable" enters the record attributed to your analysis, and the first person to check the data finds it unsupported.',
+      note: 'The right answer is not just no. 326 hours is most of a person-month — a concrete number is stronger in a funding room than an adjective, and it survives scrutiny.',
+    },
+    {
+      key: 'rs-10', day: 5, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Parking permit renewals due this month',
+      body: `Annual parking permits expire at the end of the month. Renew through the portal if you drive in.
+
+Sent to all staff regardless of whether you hold a permit.`,
+      expect: ['archive it'],
+      note: 'Sent to everyone regardless of relevance, on the day the recommendation is due. Three seconds.',
+    },
+  ],
   'pay-equity-audit': [
     {
       key: 'es-01', day: 1, type: 'question', via: 'email', from: 'people_partner',
@@ -1273,6 +1590,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'reliability-review': {
+    key: 'rq-reliability', title: 'Platform Reliability Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'statistics',
+        q: 'Mean time to resolve is computed over closed incidents. Why does that flatter a service with a large open backlog?',
+        options: [
+          { key: 'c', label: 'Its hardest, longest incidents are still open, so the average never sees them', correct: true },
+          { key: 'a', label: 'Fewer incidents make the average less reliable' },
+          { key: 'b', label: 'Teams with backlogs prioritise quick wins' },
+          { key: 'd', label: 'It does not — open incidents have no effect on it' },
+        ],
+        why: 'Selection, not sample size. The excluded incidents are specifically the long ones, which makes the bias systematic and always in the same direction — the same shape as measuring customer lifetime using only customers who already left.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'You AVG a duration expression without excluding unresolved incidents. What happens?',
+        options: [
+          { key: 'b', label: 'NULLs are skipped silently and the average covers only closed incidents', correct: true },
+          { key: 'a', label: 'The average returns NULL' },
+          { key: 'c', label: 'Open incidents count as zero' },
+          { key: 'd', label: 'SQLite raises an error' },
+        ],
+        why: 'AVG ignores NULLs with no warning. You get a correct average over a different population from the one you meant, and a COUNT(*) beside it reports the full number — which is how a table ends up quietly wrong.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Frequency, average duration and total hours each name a different worst service. What do you do?',
+        options: [
+          { key: 'd', label: 'Choose the measure that matches the decision being made, and say which you chose', correct: true },
+          { key: 'a', label: 'Present all three and let the stakeholder decide' },
+          { key: 'b', label: 'Combine them into a single reliability score' },
+          { key: 'c', label: 'Use average duration — it is the fairest' },
+        ],
+        why: 'Handing over three rankings feels rigorous and is an abdication: the recipient has less information than you. A composite with weights you chose makes an arbitrary decision look objective. Average duration is the measure most distorted by small samples here.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'One service shows a 62-hour average resolution time — the worst of any service. It has three incidents, two of them still open. What can you say?',
+        options: [
+          { key: 'a', label: 'Almost nothing — the average is one closed incident', correct: true },
+          { key: 'c', label: 'It is our least reliable service' },
+          { key: 'b', label: 'It should be the priority for engineering effort' },
+          { key: 'd', label: 'Its true average is likely even worse' },
+        ],
+        why: 'One data point. The last option is tempting and still unfounded — you are speculating about the duration of incidents that have not ended, which is exactly what you cannot know.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'You JOIN incidents to clients and SUM(c.mrr) to get revenue touched. What is wrong?',
+        options: [
+          { key: 'b', label: "Each client's revenue is added once per incident, inflating the total", correct: true },
+          { key: 'a', label: 'Nothing — that is the correct way to compute it' },
+          { key: 'c', label: 'It undercounts clients with no incidents' },
+          { key: 'd', label: 'SUM cannot be used on a joined column' },
+        ],
+        why: 'The join produces one row per incident, so a client with four incidents contributes four times. The tell is a "revenue at risk" figure close to or above your whole book.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'A SEV1 incident has been open since May and nobody has mentioned it. What do you do?',
+        options: [
+          { key: 'c', label: 'Ask whether it is genuinely open or was never closed off', correct: true },
+          { key: 'a', label: 'Report it as a four-month outage' },
+          { key: 'b', label: 'Leave it out — one row is not a pattern' },
+          { key: 'd', label: 'Treat it as closed so the figures behave' },
+        ],
+        why: 'The data cannot distinguish a live problem from a stale record, and they mean completely different things. A genuine four-month SEV1 would be a company emergency, which is itself evidence the record is probably stale — but only a person can confirm that.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Your largest Enterprise client has the joint-biggest support backlog and no incidents at all. What does that tell you?',
+        options: [
+          { key: 'a', label: 'Tickets and incidents measure different things, and reliability work will not help them', correct: true },
+          { key: 'b', label: 'They are a healthy account' },
+          { key: 'c', label: 'There is a gap in the incident records' },
+          { key: 'd', label: 'Their tickets should be reclassified as incidents' },
+        ],
+        why: 'An incident is something we broke; a ticket is a client asking for something. Naming the accounts a reliability programme will not touch is what stops it being judged against problems it was never aimed at.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'You are asked to forecast how much the incident count will drop, and you have one quarter of data and no comparable fix. What is the strongest response?',
+        options: [
+          { key: 'd', label: 'Decline the forecast, give the current baseline, and propose re-measuring in three months', correct: true },
+          { key: 'a', label: 'Give a conservative estimate, clearly labelled approximate' },
+          { key: 'b', label: 'Cite a typical industry improvement figure' },
+          { key: 'c', label: 'Say forecasting is outside the scope of the analysis' },
+        ],
+        why: 'A labelled estimate is repeated without its label; an industry figure is an invented number wearing a suit. Simply declining loses the funding. Turning an unanswerable forecast into a measurable before-and-after gives them something real to approve against.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A stakeholder asks you to describe a service as "critically unstable" to strengthen a funding case. Your evidence is 326 hours of engineering time. What do you do?',
+        options: [
+          { key: 'b', label: 'Decline, and offer the concrete number instead — it is stronger and it survives checking', correct: true },
+          { key: 'a', label: 'Agree — the underlying point is correct' },
+          { key: 'c', label: 'Agree, with a caveat in the footnotes' },
+          { key: 'd', label: 'Refuse and leave it there' },
+        ],
+        why: 'An adjective the data does not support is the one sentence a hostile reader will test. 326 hours is most of a person-month and carries more weight in a funding room than any adjective. Refusing without offering the alternative loses the case for no gain.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'What makes a recommendation defensible by somebody other than its author?',
+        options: [
+          { key: 'c', label: 'The likely objection is answered inside the document itself', correct: true },
+          { key: 'a', label: 'The full methodology is appended' },
+          { key: 'b', label: 'It presents every measure so nothing is hidden' },
+          { key: 'd', label: 'It avoids taking a position the author cannot personally defend' },
+        ],
+        why: 'The person carrying it into the room gets one hostile question and has to answer from the page. Appended methodology is not read; every measure is a menu rather than a recommendation; and avoiding a position is how a decision slips a quarter.',
+      },
+    ],
+  },
   'pay-equity-audit': {
     key: 'eq-equity', title: 'Pay Equity Audit — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

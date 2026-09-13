@@ -266,7 +266,16 @@ const PROJECT_CATALOG = {
       taskKeys: [
         // Day 1 — same six-slot shape as the junior week, senior questions.
         'sa-010', 'sa-011', 'sa-001', 'sa-012', 'sa-013', 'sa-014',
-        'sa-003',
+        // Day 2 — three measures of "worst service" that name three different services.
+        'sa-020', 'sa-021', 'sa-022', 'sa-023', 'sa-024', 'sa-025',
+        // Day 3 — the wobble. The fastest-looking service is fastest because its hard
+        // incidents never closed, and MTTR is biased the same way everywhere.
+        'sa-030', 'sa-031', 'sa-032', 'sa-033', 'sa-034', 'sa-003',
+        // Day 4 — blast radius and backlog. The biggest backlog belongs to a client with
+        // no incidents at all.
+        'sa-040', 'sa-041', 'sa-042', 'sa-043', 'sa-044', 'sa-045',
+        // Day 5 — where a quarter of engineering effort goes, which the data will not say.
+        'sa-050', 'sa-051', 'sa-052', 'sa-053', 'sa-054', 'sa-055',
       ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 28000,
@@ -2761,6 +2770,181 @@ const TASKS = {
   // brief written vaguer. So these are different questions, not harder wording: they
   // ask for a rate rather than a total, make the learner decide what to exclude, and
   // end with a recommendation the data does not hand them.
+  // ---- Senior project 1: Platform Reliability Review, days 2-5 ----------------------
+  //
+  // Senior questions, not harder junior ones: rates rather than totals, the learner
+  // decides what to exclude, and the recommendation is not in the data. The spine:
+  //
+  //   Tuesday   three measures of "worst service" that name three different services
+  //   Wednesday the wobble: the fastest-looking service is fastest because its hard
+  //             incidents are still open. MTTR on closed incidents is survivorship bias.
+  //   Thursday  blast radius and backlog -- and the client with the biggest backlog had
+  //             no incidents at all
+  //   Friday    where a quarter of engineering effort should go, which the data will not
+  //             tell you
+  //
+  // Every figure measured. api-gateway costs 326 hours; billing-sync's 62-hour average is
+  // one closed incident; auth-service has three of seven still open.
+
+  'sa-020': {
+    title: 'What the outages actually cost in engineering time',
+    hint: "SUM and AVG over the same group answer different questions. One is a budget, the other is an experience.",
+    brief: "Arjun plans engineering effort in weeks, not incidents. Write ONE SQL SELECT returning, per service: how many CLOSED incidents, the total hours spent on them, and the average hours per incident. Most total hours first. Open incidents have no resolution time, so they cannot be part of either figure.",
+    referenceSql: 'SELECT service, COUNT(*) AS closed, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours, ROUND(AVG((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY total_hours DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'sa-021': {
+    title: 'Three measures, three different answers',
+    hint: "Line up frequency, average duration and total hours. Then check how many incidents each average is built on.",
+    brief: "You now have three ways to say which service is worst, and they name three different services. Work out what that means before anyone sees a ranking.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'differ', correct: true, label: 'Frequency, average duration and total time each name a different service', why: 'report-builder breaks most often, billing-sync takes longest per incident, api-gateway consumes the most engineering time overall. The disagreement is the finding.' },
+        { key: 'sample', correct: true, label: "billing-sync's average rests on a single closed incident", why: 'Three incidents, two still open, one closed. A 62-hour average from one data point is a fact about that incident, not about the service.' },
+        { key: 'question', correct: true, label: 'Which measure is right depends on the decision being made', why: 'Reducing customer disruption points at frequency. Freeing engineering capacity points at total hours. Nobody can pick for you without knowing which one Arjun is buying.' },
+        { key: 'worst', correct: false, label: 'One service is objectively the worst', why: 'Three measures, three answers. Asserting one ranking as the truth hides the choice you quietly made to get there.' },
+        { key: 'avg', correct: false, label: 'Average hours per incident is the fairest measure', why: 'It is the one most distorted by small samples here, and it is the measure that makes the service with two unresolved incidents look worst on the strength of one.' },
+        { key: 'combine', correct: false, label: 'Combine the three into a single reliability score', why: 'A composite whose weights you chose, presented as one number, is the fastest way to make an arbitrary decision look objective.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-022': {
+    title: 'How much of each service is unfinished',
+    hint: "Count open and closed in the same pass. The service with the fewest incidents has the worst ratio.",
+    brief: "An average of closed incidents says nothing about the ones still running. Write ONE SQL SELECT returning, per service: total incidents, how many are still open, and how many are closed. Most still open first.",
+    referenceSql: 'SELECT service, COUNT(*) AS incidents, SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS still_open, COUNT(*) - SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS closed FROM incidents GROUP BY service ORDER BY still_open DESC, incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sa-023': {
+    title: 'The share still open, by service',
+    hint: "A count of open incidents favours the service with most incidents. A share does not.",
+    brief: "Two open incidents out of three is a different problem from two out of twenty. Write ONE SQL SELECT returning, per service, the PERCENTAGE of its incidents still unresolved and how many incidents that is over. Worst share first.",
+    referenceSql: 'SELECT service, ROUND(SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS pct_open, COUNT(*) AS incidents FROM incidents GROUP BY service ORDER BY pct_open DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-024': {
+    title: 'Chart the engineering cost',
+    hint: "Services are categories. Sort them so the reader can see where the time goes without reading the labels.",
+    brief: "One slide for the engineering planning session: total hours spent per service. Services have no natural order, which decides the chart type and the sorting.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Total engineering hours spent per service.',
+      sourceSql: 'SELECT service, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY total_hours DESC',
+      columns: ['service', 'total_hours'],
+      correct: { type: 'bar', x: 'service', y: 'total_hours', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted so the service consuming the most engineering time is first.',
+      why: {
+        type: 'Services are categories, not a sequence. A line between api-gateway and auth-service would imply a progression that does not exist.',
+        x: 'The service is the category.',
+        y: 'Total hours is the cost being compared.',
+        sort: 'Nothing orders services for you, so sort by size — and here the ranking is the entire point of the slide.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'sa-025': {
+    title: 'Tell Arjun which measure you are using',
+    hint: "He is planning capacity. Say which service costs him the most time, and name the measure that makes it so.",
+    brief: "Arjun is allocating next quarter's reliability work. Send him the picture. The difficult part is that the three measures disagree and he needs one answer with the reasoning visible. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao', subject: 'Reliability — which service actually costs us', maxWords: 160,
+      prompt: 'One ranking, the measure behind it, and the two it disagrees with.',
+      rubric: [
+        { key: 'answer', label: 'Which service consumes the most engineering time', markers: ['api.gateway|api gateway|326|gateway'], why: 'The number he is buying with. Lead with it.' },
+        { key: 'measure', label: 'Which measure that is', markers: ['total|sum|hours|cumulative|overall|aggregate'], why: 'Total hours, not frequency and not average. He has to know which question you answered.' },
+        { key: 'disagree', label: 'That the other measures name other services', markers: ['report.builder|billing.sync|most often|frequen|average|longest|different'], why: 'Volunteering the disagreement is what stops somebody arriving with a different ranking and treating yours as wrong.' },
+        { key: 'small', label: "That billing-sync's average is one incident", markers: ['one|1 |single|two open|small|sample'], why: 'Otherwise the slowest-looking service gets funded on the strength of a single data point.' },
+        { key: 'open', label: 'That these figures cover closed incidents only', markers: ['closed|open|unresolved|exclud|seven|7 '], why: 'A number that silently excludes the unfinished work is the one he will be caught by.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'sa-030': {
+    title: 'What is still running, oldest first',
+    hint: "No aggregate. Just the open ones, in the order they started, and read the top row carefully.",
+    brief: "Before trusting any average, look at what it left out. Write ONE SQL SELECT listing every UNRESOLVED incident with its service, severity, start time and rows corrupted, oldest first.",
+    referenceSql: 'SELECT service, severity, started_at, rows_corrupted FROM incidents WHERE resolved_at IS NULL ORDER BY started_at',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.3, priority: 'high', dueInDays: 4, day: 3, difficulty: 'easy',
+  },
+
+  'sa-031': {
+    title: 'Why the fastest service is not the fastest',
+    hint: "Look at auth-service in two tables at once: its average, and how many of its incidents never closed.",
+    brief: "auth-service has the lowest average resolution time of any service. It also has three of its seven incidents still open. Work out what that combination means.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'survivor', correct: true, label: 'Its average only contains the incidents that finished — the hard ones are still running', why: 'Survivorship bias, exactly. The incidents that would have raised the average are the ones excluded from it, because they have not ended yet.' },
+        { key: 'systematic', correct: true, label: 'This biases every service with open incidents in the same direction', why: 'Not a quirk of auth-service. Any MTTR computed on closed incidents flatters whoever has the most unfinished work, which is the opposite of what a reliability metric should do.' },
+        { key: 'report', correct: true, label: 'The open count has to sit beside the average wherever it is published', why: 'The two numbers are only meaningful together. An MTTR with no open count next to it is an invitation to be misread.' },
+        { key: 'good', correct: false, label: 'auth-service is our most reliable service', why: 'It has the worst unresolved ratio after billing-sync. The measure that makes it look best is the one distorted by that fact.' },
+        { key: 'exclude', correct: false, label: 'Exclude services with open incidents from the comparison', why: 'That removes four of five services. A method that discards most of your data to stay clean has stopped answering the question.' },
+        { key: 'guess', correct: false, label: 'Estimate resolution times for the open incidents so they can be included', why: 'Inventing the values that would change your conclusion is the most dangerous option on this list, and it is the one that sounds most diligent.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-032': {
+    title: 'Does severity predict duration at all',
+    hint: "Min and max per severity. Compare the ranges rather than the averages.",
+    brief: "Engineering triages by severity, so it is worth knowing whether severity says anything about how long something will take. Write ONE SQL SELECT returning, per severity across CLOSED incidents: how many, the fastest resolution in hours and the slowest. Severity order.",
+    referenceSql: 'SELECT severity, COUNT(*) AS closed, ROUND(MIN((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS fastest, ROUND(MAX((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS slowest FROM incidents WHERE resolved_at IS NOT NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-033': {
+    title: 'The SEV1 that has been open since May',
+    hint: "You have the list. Decide what you are entitled to conclude from one row, and what you would need to ask.",
+    brief: "The oldest unresolved incident is a billing-sync SEV1 that started in May. Nobody has mentioned it. Decide how to handle it.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'raise', correct: true, label: 'Raise it directly with Arjun and Sneha rather than only putting it in the report', why: 'A SEV1 open for months is either a live problem nobody owns or a record that was never closed. Both need a person, and a line in a Friday deck is not a person.' },
+        { key: 'ask', correct: true, label: 'Ask whether it is genuinely open or was simply never closed off', why: 'The data cannot distinguish those and they mean completely different things. This is a question, not a finding, until somebody answers it.' },
+        { key: 'flag', correct: true, label: 'Note that stale records would distort every open-incident figure you have produced', why: 'If records go unclosed, your unresolved percentages measure record-keeping rather than reliability — and that caveat belongs in the report either way.' },
+        { key: 'assume', correct: false, label: 'Report it as a four-month SEV1 outage', why: 'You do not know that. A SEV1 genuinely unresolved for four months would be a company-wide emergency, which is itself evidence the record is probably stale.' },
+        { key: 'ignore', correct: false, label: 'Leave it out — one row is not a pattern', why: 'It is a SEV1. Severity exists precisely so single rows get attention, and this is the one thing on your screen that might need action today.' },
+        { key: 'close', correct: false, label: 'Treat it as closed for the purposes of the analysis', why: 'Editing an inconvenient record to make the numbers behave is the point at which an analysis stops being trustworthy.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'sa-034': {
+    title: 'Tell Arjun the MTTR is flattering him',
+    hint: "You are undermining a metric his team reports upward. Give him the replacement in the same breath.",
+    brief: "Engineering reports mean time to resolve as a headline metric. You have just established it is biased in favour of whoever has the most unfinished work. Tell Arjun. Under 170 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao', subject: 'MTTR — a problem with how we are computing it', maxWords: 170,
+      prompt: 'The bias, why it matters, and what to report instead.',
+      rubric: [
+        { key: 'bias', label: 'That MTTR excludes unresolved incidents', markers: ['open|unresolved|exclud|closed only|still running|seven|7 '], why: 'The mechanism. Without it this is an assertion about a metric he trusts.' },
+        { key: 'direction', label: 'Which way the bias runs', markers: ['flatter|better|lower|down|understate|favour|improve'], why: 'It makes things look better, not worse. That is what makes it dangerous rather than merely imprecise.' },
+        { key: 'example', label: 'auth-service as the concrete case', markers: ['auth|fastest|lowest|three|3 of|42'], why: 'The service that looks best on MTTR has the second-worst unresolved ratio. One example beats a paragraph of theory.' },
+        { key: 'fix', label: 'What to report alongside it', markers: ['open|unresolved|count|share|percent|beside|alongside|both'], why: 'Never take away a metric without offering the pair that makes it honest. He has to report something on Monday.' },
+        { key: 'tone', label: 'Framed as a measurement problem, not a team failing', markers: ['we|our|metric|comput|method|standard|common|not|nobody'], why: 'Almost every company computes MTTR this way. Saying so is both true and the difference between being heard and being resented.' },
+      ],
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
   'sa-001': {
     title: 'Time to resolve, by service',
     // What a colleague who knows you would point at — the trap, never the answer.
@@ -2775,6 +2959,195 @@ const TASKS = {
     day: 1,
     difficulty: 'hard',
   },
+  'sa-040': {
+    title: 'Blast radius per service',
+    hint: "COUNT(DISTINCT client_id) is how many were touched. The ratio tells you whether it hits everyone once or a few repeatedly.",
+    brief: "Two services with nine incidents each are different problems if one hit seven clients and the other hit two. Write ONE SQL SELECT returning, per service: how many distinct clients were affected, how many incidents, and incidents per affected client. Most clients first.",
+    referenceSql: 'SELECT service, COUNT(DISTINCT client_id) AS clients_hit, COUNT(*) AS incidents, ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT client_id), 2) AS incidents_per_client FROM incidents GROUP BY service ORDER BY clients_hit DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 4, day: 4, difficulty: 'hard',
+  },
+
+  'sa-041': {
+    title: 'Revenue exposed to each service',
+    hint: "SUM(DISTINCT mrr) across a join, or the join multiplies each client's revenue by their incident count.",
+    brief: "Arjun is arguing for headcount and revenue is the language that works. Write ONE SQL SELECT returning, per service: how many distinct ACTIVE clients it has affected and the total monthly revenue of those clients. Most revenue first. Watch the join.",
+    referenceSql: "SELECT i.service, COUNT(DISTINCT i.client_id) AS clients, SUM(DISTINCT c.mrr) AS mrr_touched FROM incidents i JOIN clients c ON c.id = i.client_id WHERE c.status = 'active' GROUP BY i.service ORDER BY mrr_touched DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-042': {
+    title: 'The support backlog, by priority',
+    hint: "Three conditional counts in one pass. Compare where the volume is against where the urgency is.",
+    brief: "Incidents are our view of reliability; tickets are the clients' view. Write ONE SQL SELECT returning, per ticket priority: how many are open, how many pending and how many resolved. Most open first.",
+    referenceSql: "SELECT t.priority, SUM(CASE WHEN t.status = 'open' THEN 1 ELSE 0 END) AS open_now, SUM(CASE WHEN t.status = 'pending' THEN 1 ELSE 0 END) AS pending, SUM(CASE WHEN t.status = 'resolved' THEN 1 ELSE 0 END) AS resolved FROM tickets t GROUP BY t.priority ORDER BY open_now DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sa-043': {
+    title: 'Who is carrying the backlog',
+    hint: "Open and pending are both unfinished. One of the names at the top will surprise you if you remember the incident list.",
+    brief: "Write ONE SQL SELECT returning each ACTIVE client with unfinished tickets — open or pending — with their tier, revenue and how many. Biggest backlog first, then biggest client. Then compare the top rows against who actually had incidents.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS backlog FROM clients c JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr HAVING backlog > 0 ORDER BY backlog DESC, c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-044': {
+    title: 'The client with a backlog and no incidents',
+    hint: "Berylline Retail is joint top of the backlog and appears nowhere in the incident list. Work out what that can mean.",
+    brief: "Our largest Enterprise account by revenue has the joint-largest support backlog and has not had a single incident all quarter. Decide what that tells you.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'different', correct: true, label: 'Tickets and incidents measure different things and do not have to agree', why: 'An incident is something we broke. A ticket is a client asking for something. An account can be full of questions, requests and confusion without anything having failed.' },
+        { key: 'usage', correct: true, label: 'A big backlog with no incidents may mean heavy usage, or a product they find hard', why: 'Both are plausible, neither is in this data, and both are worth putting to their CSM as a question.' },
+        { key: 'reliability', correct: true, label: 'A reliability programme would do nothing for this account', why: 'The single most useful sentence here. It stops reliability investment being justified by a backlog that reliability cannot touch.' },
+        { key: 'fine', correct: false, label: 'No incidents means the account is healthy', why: 'They have the joint-largest backlog in the book. Zero incidents and zero problems are not the same measurement.' },
+        { key: 'merge', correct: false, label: 'Combine tickets and incidents into one "client pain" score', why: 'It would put an account with five questions alongside one with half a million corrupted rows and lose the distinction that makes either actionable.' },
+        { key: 'ignore', correct: false, label: 'Leave tickets out — this is a reliability review', why: 'The backlog is the clients\' experience of the platform, and Arjun will be asked about it. Scoping it out because it complicates the story is the wrong reason.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'sa-045': {
+    title: 'Chart the unresolved share',
+    hint: "Services are categories, and the finding is who is worst — so put worst first.",
+    brief: "One slide: the percentage of each service's incidents still unresolved. This is the measure the MTTR hides, so the chart has to make it obvious.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Share of incidents still unresolved, by service.',
+      sourceSql: 'SELECT service, ROUND(SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS pct_open FROM incidents GROUP BY service ORDER BY pct_open DESC',
+      columns: ['service', 'pct_open'],
+      correct: { type: 'bar', x: 'service', y: 'pct_open', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size, sorted worst first because the point of the slide is which services are not finishing their work.',
+      why: {
+        type: 'Services are categories. Bars compare them; a line would invent a progression between them.',
+        x: 'The service is the category.',
+        y: 'The share unresolved, as a percentage.',
+        sort: 'Descending. The reader is looking for the problem, and it should be the first thing under their eye.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'sa-050': {
+    title: 'Hours per affected client',
+    hint: "Total hours over distinct clients. It answers a question neither of the previous rankings did.",
+    brief: "One more angle before the recommendation. Write ONE SQL SELECT returning, per service across CLOSED incidents: total hours, distinct clients affected, and hours per affected client. Highest hours per client first.",
+    referenceSql: 'SELECT service, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24), 1) AS total_hours, COUNT(DISTINCT client_id) AS clients, ROUND(SUM((julianday(resolved_at) - julianday(started_at)) * 24) / COUNT(DISTINCT client_id), 1) AS hours_per_client FROM incidents WHERE resolved_at IS NOT NULL GROUP BY service ORDER BY hours_per_client DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-051': {
+    title: 'Median resolution time, in Python',
+    // Flagged for rework: Arjun accepts it and then wants it split a different way.
+    rework: true,
+    hint: "SQLite has no median. Build the list of durations per service, sort, take the middle, and handle the even-length case.",
+    brief: "Every duration figure this week has been a mean, and one 66-hour incident moves a mean built on six. In the notebook, compute for each service across CLOSED incidents: the mean hours, the median hours, and how many incidents. Sort by median descending. Assign a list of dicts with keys service, mean_hours, median_hours and closed to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const by = new Map();
+      for (const i of tables.incidents) {
+        if (!i.resolved_at) continue;
+        const hours = (Date.parse(i.resolved_at) - Date.parse(i.started_at)) / 3600000;
+        if (!by.has(i.service)) by.set(i.service, []);
+        by.get(i.service).push(hours);
+      }
+      const median = (xs) => {
+        const a = [...xs].sort((p, q) => p - q);
+        const m = Math.floor(a.length / 2);
+        return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+      };
+      return [...by.entries()]
+        .map(([service, v]) => ({
+          service,
+          mean_hours: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10,
+          median_hours: Math.round(median(v) * 10) / 10,
+          closed: v.length,
+        }))
+        .sort((a, b) => b.median_hours - a.median_hours);
+    },
+  },
+
+  'sa-052': {
+    title: 'Where a quarter of engineering effort should go',
+    hint: "The data ranks services four different ways. Picking one is a judgement, and the report has to show it being made.",
+    brief: "Arjun has roughly a quarter of one team to spend on reliability next quarter. Decide what you would recommend — and notice that the data does not contain the answer.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Arjun Rao', subject: 'What do I point them at?',
+        body: "I have about a quarter of a team for three months. Not enough to fix everything, plenty to fix one thing properly.\n\nI do not want a dashboard. I want you to tell me where to point them and why, and I want the why to be something I can say to my skip-level without him picking it apart.",
+      },
+      prompt: 'Tick every recommendation you could defend.',
+      options: [
+        { key: 'gateway', correct: true, label: 'api-gateway, because it consumes the most engineering time of any service', why: 'A quarter of a team is a capacity decision, and 326 hours is the largest capacity drain on the board. Directly connected to what he is spending.' },
+        { key: 'auth', correct: true, label: 'auth-service, because its unresolved backlog is growing and its MTTR hides it', why: 'Three of seven still open, including a SEV1 from May. The case is that the problem is not being finished, which no average will show him.' },
+        { key: 'state', correct: true, label: 'Either — provided the report says which measure drove the choice', why: 'Both are defensible; what is not defensible is a recommendation whose basis is invisible. The skip-level will ask exactly that question.' },
+        { key: 'billing', correct: false, label: 'billing-sync, because it has the worst average resolution time', why: 'One closed incident. Pointing a quarter of a team at a service on the strength of a single data point is the failure this week was built to prevent.' },
+        { key: 'all', correct: false, label: 'Spread the effort proportionally across all five services', why: 'He told you it is enough to fix one thing properly. Proportional allocation is how a reliability programme produces five half-fixes and no measurable change.' },
+        { key: 'dashboard', correct: false, label: 'Give him the full ranking and let him choose', why: 'He explicitly said he does not want a dashboard. Declining to recommend when you have the evidence is not neutrality, it is leaving the judgement to somebody with less information.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-053': {
+    title: 'What reliability work would not touch',
+    hint: "Clients with a backlog and no incidents. Their problem is real and it is not this programme's problem.",
+    brief: "A recommendation is partly a statement about what will NOT improve. Write ONE SQL SELECT returning each ACTIVE client that has unfinished tickets but NO incidents at all, with their tier, revenue and backlog size. Biggest backlog first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(CASE WHEN t.status IN ('open','pending') THEN 1 ELSE 0 END) AS backlog FROM clients c JOIN tickets t ON t.client_id = c.id WHERE c.status = 'active' AND NOT EXISTS (SELECT 1 FROM incidents i WHERE i.client_id = c.id) GROUP BY c.company, c.tier, c.mrr HAVING backlog > 0 ORDER BY backlog DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-054': {
+    title: 'The skip-level picks it apart',
+    hint: "He is asking for a guarantee. Work out which part of it you can actually give.",
+    brief: "Your recommendation reaches Arjun's skip-level and comes back with a question. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Before I sign off the reliability quarter',
+        body: "Arjun wants a quarter of a team on this and he is quoting your analysis.\n\nSimple question: if we do it, how much does our incident count drop? I need a number to put against the cost, otherwise I am approving effort against a hope.",
+      },
+      prompt: 'Which responses are honest and useful?',
+      options: [
+        { key: 'cannot', correct: true, label: '"I cannot forecast the reduction — we have one quarter of data and no comparable fix to learn from"', why: 'Naming why, not just refusing. One quarter with no prior intervention gives nothing to base a projection on.' },
+        { key: 'measure', correct: true, label: '"What I can give you is the current cost, so you can measure the change afterwards"', why: '326 hours is a baseline. Turning an unanswerable forecast into a measurable before-and-after is the move that gets the decision made.' },
+        { key: 'target', correct: true, label: '"Set it up as a target rather than a prediction — and agree now how we will check"', why: 'It puts the number where it belongs, as a commitment owned by engineering rather than a forecast owned by the analyst.' },
+        { key: 'thirty', correct: false, label: '"Around thirty percent."', why: 'Invented. It will be repeated as your estimate, it will appear in a budget document, and it will be the number you are measured against.' },
+        { key: 'industry', correct: false, label: '"Industry benchmarks suggest a forty percent reduction is typical."', why: 'You have no benchmark data and no reason to think another company\'s api-gateway resembles ours. It sounds far more rigorous than the invented number and is the same thing.' },
+        { key: 'refuse', correct: false, label: '"That is an engineering question, not an analytics one."', why: 'True and unhelpful. You have the baseline he needs, and pushing the whole question away wastes the leverage the analysis actually has.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'sa-055': {
+    title: 'The reliability recommendation',
+    hint: "One service, the measure that chose it, what it will not fix, and how you will both know whether it worked.",
+    brief: "The deliverable. Arjun will take this to a funding conversation and defend it without you, so everything he needs to defend it has to be in the document.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Arjun Rao and Vikram Nair', subject: 'Reliability — where to spend the quarter', maxWords: 220,
+      prompt: 'The recommendation: one service, the basis, the limits, and the baseline to measure against.',
+      rubric: [
+        { key: 'pick', label: 'One named service', markers: ['api.gateway|api gateway|auth.service|auth service|gateway|auth'], why: 'He asked where to point a team. A ranking is not an answer to that question.' },
+        { key: 'basis', label: 'The measure that chose it', markers: ['total hours|326|engineering time|capacity|unresolved|open|backlog|share'], why: 'The sentence his skip-level will probe. It has to be one measure, named.' },
+        { key: 'rejected', label: 'Why not the service that looks worst on average duration', markers: ['billing.sync|one|single|1 |sample|average|misleading'], why: 'Somebody will arrive with that ranking. Pre-empting it is cheaper than defending against it.' },
+        { key: 'mttr', label: 'That MTTR understates services with open work', markers: ['mttr|average|closed|exclud|open|flatter|bias|survivor'], why: 'The methodological finding of the week, and the reason his current metric did not surface this.' },
+        { key: 'wont', label: 'What this will NOT improve', markers: ['backlog|ticket|berylline|no incident|not|will not|won.t|unaffected'], why: 'Naming what stays broken is what stops the programme being judged against problems it was never aimed at.' },
+        { key: 'baseline', label: 'A baseline to measure the change against', markers: ['baseline|measure|before|after|compare|326|hours|track|re.run'], why: 'Vikram is approving effort against a hope unless you give him something to check it by.' },
+      ],
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
   'sa-002': {
     title: 'Support load against revenue',
     // What a colleague who knows you would point at — the trap, never the answer.
