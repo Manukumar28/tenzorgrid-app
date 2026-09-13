@@ -24,6 +24,205 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'outage-recovery': [
+    {
+      key: 'pa-01', day: 1, type: 'learning', via: 'email', from: 'support_lead', minutes: 10,
+      subject: 'Before you start — what our incident data actually records',
+      title: 'Read: incidents, tickets, and the difference between them',
+      body: `Sneha here — I log every one of these, so a few minutes on what the columns mean before you draw conclusions from them.
+
+An INCIDENT is something we broke. It has a service, a severity, a start time, a resolved time, and a count of rows corrupted. Severity is set when it opens, by whoever opens it, based on how urgent it looks at that moment. Nobody goes back and revises it afterwards.
+
+A TICKET is a client contacting us. Priority is set by the client's own account team and reflects how loudly they are asking, not how much damage was done.
+
+Two consequences, and both catch people. Severity is not a measure of damage — it is a measure of how alarming something looked in the first ten minutes. And ticket volume is a measure of how much an account complains, which correlates with their personality as much as with their experience.
+
+resolved_at is NULL for anything still open. Seven of them are.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which column most directly measures how much harm an incident did?',
+        options: [
+          { key: 'rows', correct: true, label: 'rows_corrupted' },
+          { key: 'sev', correct: false, label: 'severity' },
+          { key: 'pri', correct: false, label: 'the priority of the related tickets' },
+          { key: 'time', correct: false, label: 'hours from started_at to resolved_at' },
+        ],
+        why: 'Rows corrupted is a count of actual damage. Severity is a first-impression judgement, ticket priority measures complaint, and resolution time measures how long we took — which is about us, not about them.',
+      },
+    },
+    {
+      key: 'pa-02', day: 1, type: 'policy', via: 'email', from: 'security', minutes: 6,
+      subject: 'Read and confirm: client data in incident analysis',
+      title: 'Read and confirm: what may leave this analysis',
+      body: `Standard note for anyone working on the incident review, and it matters here because named clients are involved.
+
+Client names, revenue figures and incident counts stay internal. They may go to Customer Success, Finance and the board. They do not go to the clients themselves, and they never go to one client about another.
+
+If an account team wants to tell a client what happened to them, that is a conversation they have with their own account's figures only. Route it through Priya rather than answering it yourself.
+
+Confirm you have read this.`,
+      check: { kind: 'acknowledge', label: 'I have read and understood' },
+    },
+    {
+      key: 'pa-03', day: 2, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul on COUNT versus COUNT(DISTINCT ...)',
+      body: `You are about to count clients and incidents in the same query, so — the thing that catches everyone.
+
+COUNT(i.id) after a JOIN counts JOINED ROWS, not clients. If a client had four incidents, they contribute four rows, and anything you SUM over that join is fine but anything you COUNT is now counting incidents whether you meant to or not.
+
+COUNT(DISTINCT c.id) counts clients. Same for SUM: if you SUM(c.mrr) across a join, an account with four incidents has its revenue added four times. SUM(DISTINCT c.mrr) fixes it, and so does a subquery, and the subquery is more honest about what you are doing.
+
+It matters here because "revenue at risk" is exactly the number somebody will quote in a board meeting.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You JOIN clients to incidents and write SUM(c.mrr). What have you computed?',
+        options: [
+          { key: 'inflated', correct: true, label: "Each client's revenue counted once per incident — an inflated total" },
+          { key: 'right', correct: false, label: 'Total revenue of affected clients' },
+          { key: 'avg', correct: false, label: 'Average revenue per incident' },
+          { key: 'null', correct: false, label: 'Nothing — SQL would reject it' },
+        ],
+        why: 'The join multiplies each client row by their incident count before the SUM sees it. SQL runs it happily and returns a number that is too big, which is the worst kind of error — no message, just a wrong figure that looks plausible.',
+      },
+    },
+    {
+      key: 'pa-04', day: 2, type: 'judgement', via: 'email', from: 'finance_analyst', minutes: 10,
+      subject: 'A warning about ratios',
+      title: 'Read: what a ratio hides',
+      body: `Diya here. You are going to compute damage relative to what an account pays, and it is the right instinct, so a word about the trap inside it.
+
+A ratio compresses two numbers into one, which is useful and lossy. A client with fifteen thousand a month and seventy thousand corrupted rows gets a spectacular ratio. So would a client paying us a hundred rupees who lost one row.
+
+The fix is not to avoid ratios. It is to never publish one without both of its inputs beside it. A reader who can see the numerator and the denominator can spot a small-denominator artefact in a second; a reader given only the ratio cannot, and will rank on it.
+
+Same rule as any average: show the n.`,
+      check: {
+        kind: 'answer',
+        prompt: 'In two or three sentences: how would you present the damage-per-rupee figure so nobody misreads it?',
+        maxWords: 90,
+        markers: ['beside|alongside|with|show|both|input|numerator|denominator|mrr|revenue|rows', 'small|low|tiny|denominator|artefact|artifact|distort|mislead|caveat'],
+        why: 'Put the revenue and the rows next to the ratio, and say what a small denominator does to it. The ratio then earns its place instead of hiding its own weakness.',
+      },
+    },
+    {
+      key: 'pa-05', day: 3, type: 'learning', via: 'chat', from: 'engineering_manager', minutes: 7,
+      title: 'Arjun on why severity is set once and never revised',
+      body: `Since you are looking at our severity data — an honest word about it from the side that produces it.
+
+Severity gets set in the first ten minutes by whoever is on call, from very little information. SEV1 means "wake people up". SEV3 means "fix it in hours". It is a triage decision made under pressure and it is never revisited, because by the time we know how bad something really was, the useful moment for that label has passed.
+
+So do not treat it as a damage measurement. It is a record of how alarming something looked at the start. Sometimes an incident that looked routine turned out to have quietly corrupted a great deal, and it stays SEV3 forever.
+
+If you find our severity labels do not predict anything, you have not found a bug. You have found out what they are.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your data shows SEV3 incidents take longer to resolve than SEV2. What is the most likely explanation?',
+        options: [
+          { key: 'urgency', correct: true, label: 'Severity drives how urgently we respond, not how complex the problem turns out to be' },
+          { key: 'wrong', correct: false, label: 'The severity labels were assigned incorrectly' },
+          { key: 'data', correct: false, label: 'The resolution timestamps are unreliable' },
+          { key: 'random', correct: false, label: 'It is noise — the difference means nothing' },
+        ],
+        why: 'A SEV1 gets people out of bed, so it closes fast regardless of difficulty. A SEV3 sits in a queue behind other work. The label predicts our response, not the problem — which is exactly why it is a poor basis for compensating clients.',
+      },
+    },
+    {
+      key: 'pa-06', day: 3, type: 'policy', via: 'chat', from: 'line_manager', minutes: 5,
+      title: 'Asha: taking away someone\'s simple method',
+      body: `You are about to tell Priya that ranking by severity does not work. Before you send it — the shape that makes this land rather than annoy.
+
+Her method has a real virtue yours does not: she can explain it to the board in one sentence. If you replace it with something more correct and less explainable, you have not helped her, you have moved the problem.
+
+So the note has three parts. What is wrong with severity, in one concrete fact. What to use instead. And crucially — how to say the new thing in one sentence in a meeting.
+
+That third part is the one people skip, and it is the one that decides whether your analysis gets used or politely ignored.`,
+      check: { kind: 'acknowledge', label: 'Understood' },
+    },
+    {
+      key: 'pa-07', day: 4, type: 'learning', via: 'email', from: 'comms', minutes: 9,
+      subject: 'Writing about clients by name',
+      title: 'Read: naming accounts in an internal note',
+      body: `Meera here. Your recommendation is going to name specific clients and say they were damaged, which is fine internally and needs care in how it is written.
+
+Three habits worth having.
+
+Attach the measure to the name every time. "Harborview Bank, 492,000 rows" is a fact. "Harborview Bank, worst affected" is a conclusion, and conclusions get repeated without their evidence.
+
+Never write a sentence about a client you would not be comfortable reading aloud to them. Not because they will see it — they will not — but because that test catches the sentences that are actually speculation about their state of mind.
+
+And say what you do not know. "We have no evidence on whether they are considering leaving" is a sentence that makes everything around it more credible.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which sentence belongs in the recommendation?',
+        options: [
+          { key: 'fact', correct: true, label: '"Harborview Bank lost 492,000 rows across two incidents, the highest in the book."' },
+          { key: 'mind', correct: false, label: '"Harborview Bank are almost certainly considering their options."' },
+          { key: 'vague', correct: false, label: '"Several key accounts were significantly impacted this quarter."' },
+          { key: 'blame', correct: false, label: '"Harborview Bank were badly let down by the platform team."' },
+        ],
+        why: 'The first is measured and checkable. The second speculates about a client\'s intentions with no evidence, the third says nothing a reader can act on, and the fourth assigns blame in a document about compensation — which will be forwarded.',
+      },
+    },
+    {
+      key: 'pa-08', day: 4, type: 'judgement', via: 'chat', from: 'people_partner', minutes: 6,
+      title: 'Neha on being asked for something you cannot give',
+      body: `Priya mentioned you are getting asked whether these accounts will churn. A thought, because you will be asked this shape of question for the rest of your career.
+
+There are two honest answers and they are not the same. "I do not know" ends the conversation. "We have one churned account in the whole book, so anything I told you would be a guess with a percentage sign on it" ends the conversation AND explains why, so nobody thinks you are being unhelpful or hiding something.
+
+Then add what you can give them. Here that is the observation that the one account you did lose had been damaged — suggestive, not predictive, and worth saying as exactly that.
+
+The skill is not refusing. It is refusing in a way that leaves the other person better off than before they asked.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the sentence you would say when asked how many of these accounts will churn. Under 45 words.',
+        maxWords: 45,
+        markers: ['one|1 |single|only', 'cannot|can.t|guess|not predict|no basis|would be|suggest'],
+        why: 'Name the sample size — one churned account — and say plainly that no rate can be built on it. The number is the argument; without it you are just declining.',
+      },
+    },
+    {
+      key: 'pa-09', day: 5, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      title: 'Rahul: mean, median, and one enormous account',
+      body: `For the headline damage figure — you have thirteen affected accounts and one of them lost nearly half a million rows while several lost under ten thousand.
+
+The mean of that is a number no client experienced. It sits above almost every account in the list because one value is dragging it. Quote it on its own and the first person to check will find twelve of thirteen accounts below it, which makes everything else you said look shaky.
+
+The median tells you what a typical affected account went through. The mean tells you the total divided by the count, which is a fact about the total, not about a typical account.
+
+Report both, or report the median and say why. And SQLite has no median function — do it in the notebook, it is four lines.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Damage per client is 7k, 9k, 12k, 20k and 493k. Which figure describes a typical affected account?',
+        options: [
+          { key: 'median', correct: true, label: 'The median, 12k' },
+          { key: 'mean', correct: false, label: 'The mean, about 108k' },
+          { key: 'max', correct: false, label: 'The maximum, 493k' },
+          { key: 'range', correct: false, label: 'The range, 7k to 493k' },
+        ],
+        why: 'The mean of 108k is higher than four of the five accounts. It is a true statement about the total and a misleading one about any account in the list.',
+      },
+    },
+    {
+      key: 'pa-10', day: 5, type: 'judgement', via: 'email', from: 'line_manager', minutes: 8,
+      subject: 'Before the recommendation goes out',
+      title: 'Read: recommending who gets money',
+      body: `This is the first piece of work you have done here that moves a budget, so one thing before it goes.
+
+An analysis that ranks is read differently from one that describes. Nobody argues with a table of rows corrupted. The moment that table becomes a list of who gets paid, every account team with a client below the line has a reason to find a problem with your method.
+
+So the method has to be stated, stated first, and stated in one sentence. Not the SQL — the principle. "Ranked by rows corrupted, weighted toward accounts where the damage is large relative to what they pay, excluding one account that has already churned."
+
+Somebody reading that can disagree with the principle, which is a good conversation. What you want to avoid is them disagreeing with the OUTCOME and having to reverse-engineer your reasoning to do it, because that conversation is about you rather than about the decision.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Write the one sentence stating how your list was ranked. Under 40 words.',
+        maxWords: 40,
+        markers: ['rows|corrupted|damage', 'relative|per|proportion|open|unresolved|weight|exclud|churn|not.*revenue|rather than'],
+        why: 'One sentence containing the measure, the weighting and the exclusion. Everything else in the note hangs off it, and it is the sentence that gets repeated in rooms you are not in.',
+      },
+    },
+  ],
   'headcount-trends': [
     {
       key: 'ha-01', day: 1, type: 'learning', via: 'email', from: 'people_partner', minutes: 10,
@@ -413,6 +612,111 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'outage-recovery': [
+    {
+      key: 'ps-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'Actually — how far back should this go?',
+      body: `Forgot to say. The billing-sync problem was in the last few weeks, but the incident log goes back over the whole quarter.
+
+Do you want to look at the whole quarter or just the billing-sync window? I genuinely do not know which is more useful and I would rather you decided than me.`,
+      needsReply: true,
+      expect: ['pick one', 'give a reason he can repeat'],
+      markers: ['quarter|whole|all|wider|broad|billing.sync|narrow|window', 'because|since|two client|fourteen|14|damage|compare|more useful|meaningful'],
+      ifIgnored: 'Vikram assumes the narrow scope and tells the board this is about billing-sync. Everything you produce afterwards answers a question nobody in the room thinks you were asked.',
+      note: 'Being handed a scope decision is a compliment and a trap. The reply that works names the choice AND the reason, because he has to defend it without you.',
+    },
+    {
+      key: 'ps-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: your access to the incident log has been extended',
+      body: `Your read access to the incident and ticket tables has been extended for 90 days at your manager's request.
+
+No action required. This is an automated confirmation.`,
+      expect: ['archive it'],
+      note: 'Automated, confirms something already true, and says no action required. The easiest triage decision of the week — take the free win.',
+    },
+    {
+      key: 'ps-03', day: 2, type: 'pressure', via: 'chat', from: 'support_lead',
+      body: `Sorry to interrupt — Orchid Pharma's CSM is asking me whether they are on the compensation list. I have told her nothing is decided. Is there anything I can give her, or should I just keep holding?`,
+      needsReply: true,
+      expect: ['do not leak the draft ranking', 'give her something she can actually say'],
+      markers: ['not decided|nothing|no list|too early|not final|hold|cannot|can.t|priya|vikram', 'friday|end of week|by|when|will|soon|once'],
+      ifIgnored: 'Sneha is left holding a question she cannot answer. The CSM escalates to Priya, and Priya finds out you have a draft ranking from somebody else.',
+      note: 'Never let a draft allocation reach an account team before it is decided. "Nothing is decided, the recommendation goes to Priya on Friday" is true, useful and leaks nothing.',
+    },
+    {
+      key: 'ps-04', day: 2, type: 'noise', via: 'chat', from: 'engineering_manager',
+      body: `FYI the incident log will be read-only for about twenty minutes this afternoon while we reindex. Queries will still work, nothing to do, just so you do not think you have broken something.`,
+      expect: ['nothing — it is a broadcast'],
+      note: 'Somebody saving you twenty minutes of confusion is not somebody asking you for twenty minutes.',
+    },
+    {
+      key: 'ps-05', day: 3, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Revenue at risk — which number are you using?',
+      body: `I am modelling the downside and I need your "revenue at risk" figure.
+
+Careful with this one — if you have joined clients to incidents, an account with four incidents may have had its MRR counted four times. I have been caught by it before and the number came out nearly double.
+
+What is yours, and how did you compute it?`,
+      needsReply: true,
+      expect: ['say how you avoided double-counting', 'give the figure'],
+      markers: ['distinct|subquery|once|per client|group|not double|avoid', 'mrr|revenue|risk|total|\\d'],
+      ifIgnored: 'Diya models the downside on her own reconstruction. If it differs from yours, the board meeting becomes about the discrepancy rather than the decision.',
+      note: 'The double-count across a join is the single most common way a "revenue at risk" figure ends up wrong, and it always looks plausible.',
+    },
+    {
+      key: 'ps-06', day: 3, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly incident review — all-hands session on the 20th',
+      body: `Engineering are running an open session on the quarter's incidents on the 20th, covering root causes and what is changing.
+
+Open to everyone, recorded for those who cannot make it. No preparation needed and no reply required.`,
+      expect: ['archive it'],
+      note: 'Relevant to your work and asking nothing of you. Both things can be true; the temptation to reply "sounds useful!" is the thing being tested.',
+    },
+    {
+      key: 'ps-07', day: 4, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Is my team about to get blamed for this?',
+      body: `I hear your analysis names services and counts rows corrupted against them.
+
+I am not asking you to soften anything. I am asking whether the framing is "these clients were harmed" or "this team broke things", because those land very differently and my engineers will read whichever one goes out.
+
+Which is it?`,
+      needsReply: true,
+      expect: ['answer the framing question directly', 'do not promise to change the findings'],
+      markers: ['client|harm|damage|compensat|impact|not blame|not about|framing|who was affected', 'service|not.*team|no blame|root cause|separate|different'],
+      ifIgnored: 'Arjun assumes the worst and warns his team the analysis is coming for them. You have made an ally defensive over something that was never in the document.',
+      note: 'A fair question from someone with a legitimate interest. The answer is easy and specific: the analysis allocates compensation to clients, it does not assign fault to teams.',
+    },
+    {
+      key: 'ps-08', day: 4, type: 'scope', via: 'chat', from: 'people_partner',
+      body: `Quick one — Priya asked me whether the compensation list should factor in how long each client has been with us. Loyalty argument. I said I would pass it on rather than answer for you. Is that something your data can even do?`,
+      needsReply: true,
+      expect: ['say whether the data supports it', 'say what it would change'],
+      markers: ['signed_year|year|tenure|data|have|yes|can|column', 'but|however|would|change|different|separate|add|principle|not damage'],
+      ifIgnored: 'The suggestion goes unanswered and resurfaces in the meeting on Friday, when there is no time to look at it.',
+      note: 'signed_year exists, so the honest answer is "yes, and it is a different principle from damage". Introducing a second criterion late is a real decision, not a tweak.',
+    },
+    {
+      key: 'ps-09', day: 5, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Board in two hours — one line please',
+      body: `I am in front of the board at three and the only thing they will remember is the first sentence.
+
+Give me the one line about who was hurt and what we should do. I have read the detail. I need the sentence.`,
+      needsReply: true,
+      expect: ['one finding and one recommendation', 'name an account'],
+      markers: ['harborview|ionic|cobalt|keystone|rows|corrupt|damage|worst', 'recommend|should|propose|fund|compensat|prioriti|top|four|five'],
+      ifIgnored: 'Vikram writes his own opening line from the detail. Whatever he says becomes the board\'s understanding of your week.',
+      note: 'The one-line brief is a distinct skill from the analysis. A week of correct work that cannot be compressed into a sentence does not reach the room.',
+    },
+    {
+      key: 'ps-10', day: 5, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Reminder: clear desks before the office deep clean',
+      body: `The annual deep clean is this weekend. Please clear personal items from desks and lockers by Friday evening.
+
+Anything left will be bagged and held at reception for two weeks. Sent to all staff.`,
+      expect: ['archive it'],
+      note: 'Arriving two hours before a board deadline, asking about desk tidiness. The correct response is the one that takes three seconds.',
+    },
+  ],
   'headcount-trends': [
     {
       key: 'hs-01', day: 1, type: 'question', via: 'email', from: 'people_partner',
@@ -663,6 +967,122 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'outage-recovery': {
+    key: 'pq-phoenix', title: 'Project Phoenix — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'Which column in the incident log most directly measures how much harm was done to a client?',
+        options: [
+          { key: 'c', label: 'rows_corrupted', correct: true },
+          { key: 'a', label: 'severity' },
+          { key: 'b', label: 'hours from started_at to resolved_at' },
+          { key: 'd', label: 'the priority of that client\'s tickets' },
+        ],
+        why: 'Severity records how alarming something looked in its first ten minutes. Resolution time measures our response. Ticket priority measures how loudly the account complains. Only rows corrupted counts actual damage.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'You JOIN clients to incidents and write SUM(c.mrr) to get revenue at risk. What do you actually get?',
+        options: [
+          { key: 'b', label: "Each client's revenue counted once per incident — a total that is too high", correct: true },
+          { key: 'a', label: 'The correct total revenue of affected clients' },
+          { key: 'c', label: 'Average revenue per incident' },
+          { key: 'd', label: 'An error, because MRR is not an aggregate' },
+        ],
+        why: 'The join multiplies each client row by their incident count before SUM sees it. SQL runs it happily and returns a plausible-looking number that is nearly double. SUM(DISTINCT c.mrr) or a subquery fixes it.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'Seven of thirty-five incidents are still unresolved. You are computing average resolution time. What do you do?',
+        options: [
+          { key: 'd', label: 'Exclude them, and make sure your count says how many you included', correct: true },
+          { key: 'a', label: 'Include them with a resolution time of zero' },
+          { key: 'b', label: 'Include them using today as the resolution date' },
+          { key: 'c', label: 'Exclude them and report the count of all thirty-five' },
+        ],
+        why: 'An incident with no resolution time cannot contribute to an average of resolution times. The trap is the last option: a count of thirty-five beside an average of the twenty-eight closed ones is a table that gets quietly believed and is wrong.',
+      },
+      {
+        id: 'q4', topic: 'business-sense',
+        q: 'SEV3 incidents take longer to resolve on average than SEV2. What is the most likely explanation?',
+        options: [
+          { key: 'a', label: 'Severity drives how urgently we respond, not how hard the problem is', correct: true },
+          { key: 'c', label: 'The severity labels were assigned wrongly' },
+          { key: 'b', label: 'The resolution timestamps are unreliable' },
+          { key: 'd', label: 'It is noise and means nothing' },
+        ],
+        why: 'A SEV1 gets people out of bed and closes fast whatever its difficulty; a SEV3 waits in a queue. The label predicts our response rather than the problem — which is exactly why it is a poor basis for compensating clients.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'Your largest client by revenue lost about 7,000 rows. A mid-size client lost 492,000. How should the compensation list be ordered?',
+        options: [
+          { key: 'b', label: 'By damage, and say explicitly that you did not order it by account size', correct: true },
+          { key: 'a', label: 'By revenue — larger accounts are worth more to retain' },
+          { key: 'c', label: 'By revenue, with damage as a tiebreak' },
+          { key: 'd', label: 'Equally — every affected client gets the same' },
+        ],
+        why: 'Compensation is for harm, and the harm ranking is not the revenue ranking. Saying what you did NOT rank on is what stops somebody quietly re-sorting the list after you hand it over.',
+      },
+      {
+        id: 'q6', topic: 'statistics',
+        q: 'Damage per affected client is 7k, 9k, 12k, 20k and 493k. Which single figure best describes a typical affected account?',
+        options: [
+          { key: 'c', label: 'The median, 12k', correct: true },
+          { key: 'a', label: 'The mean, about 108k' },
+          { key: 'b', label: 'The maximum, 493k' },
+          { key: 'd', label: 'The mean, with the outlier removed' },
+        ],
+        why: 'The mean sits above four of the five accounts. It is a true statement about the total and a misleading one about any account. Silently dropping the outlier is worse — it is the most important account in the analysis.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'One damaged account has already churned. What do you do with them?',
+        options: [
+          { key: 'd', label: 'Remove them from the compensation list, say that you did, and keep them in the analysis', correct: true },
+          { key: 'a', label: 'Leave them on the list — they were damaged like everyone else' },
+          { key: 'b', label: 'Remove them quietly to keep the note short' },
+          { key: 'c', label: 'Recommend a win-back offer from the same budget' },
+        ],
+        why: 'Goodwill spend keeps accounts, so it cannot go to one that has gone. But a damaged account that then churned is the best evidence in the dataset that outages cost retention, so it belongs in the write-up even though it gets no payment. A silent removal is the one genuinely dishonest option.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'The account raising the most urgent tickets is one of your smallest clients and took middling damage. How does that fit the recommendation?',
+        options: [
+          { key: 'a', label: 'Report ticket volume as its own column — it measures complaint, not harm', correct: true },
+          { key: 'b', label: 'Move them to the top — they are clearly the most upset' },
+          { key: 'c', label: 'Ignore tickets entirely; only measured damage counts' },
+          { key: 'd', label: 'Average the damage rank and the ticket rank' },
+        ],
+        why: 'Both signals are real and they measure different things. Folding them together hides that; dropping tickets throws away something true about an account. A separate column lets the reader see where they agree, which is where the case is strongest.',
+      },
+      {
+        id: 'q9', topic: 'statistics',
+        q: 'You are asked what proportion of damaged accounts will churn. One account in the whole book has ever churned. What do you say?',
+        options: [
+          { key: 'b', label: 'That no rate can be built on one event, and offer what the data does show', correct: true },
+          { key: 'a', label: 'About 8% — one in thirteen' },
+          { key: 'c', label: '"I do not know."' },
+          { key: 'd', label: 'That all of them are at risk if nothing is done' },
+        ],
+        why: 'A rate from a single event is a guess with a percentage sign on it, and coming from you it will be repeated as fact. "I do not know" is honest but ends the conversation; naming the sample size and offering the one real observation leaves them better off than before they asked.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'Your recommendation moves a budget. What has to come first in the note?',
+        options: [
+          { key: 'c', label: 'The principle the list was ranked on, in one sentence', correct: true },
+          { key: 'a', label: 'The full methodology, so it can be checked' },
+          { key: 'b', label: 'The caveats, so nobody over-reads it' },
+          { key: 'd', label: 'The SQL, so the numbers are reproducible' },
+        ],
+        why: 'Every account team with a client below the line will look for a problem with your method. A stated principle lets them argue with the principle — a good conversation. Without it they argue with the outcome and reverse-engineer your reasoning, which is a conversation about you.',
+      },
+    ],
+  },
   'headcount-trends': {
     key: 'hq-head', title: 'Headcount & Hiring Trends — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',

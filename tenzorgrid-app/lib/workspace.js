@@ -195,7 +195,21 @@ const PROJECT_CATALOG = {
       kind: 'analysis',
       stakeholder: 'stakeholder',
       difficulty: 'Hard',
-      taskKeys: ['da-004'],
+      taskKeys: [
+        // Day 1 — what "affected" means. Billing-sync hit two clients; the quarter hit
+        // fourteen. The brief says one and the meeting means the other.
+        'ph-101', 'ph-102', 'ph-103', 'ph-104', 'da-004', 'ph-105',
+        // Day 2 — quantify it. Harborview took 492k rows; Dunmore, the biggest account in
+        // the book, lost seven thousand.
+        'ph-110', 'ph-111', 'ph-112', 'ph-115', 'ph-113', 'ph-114',
+        // Day 3 — the wobble. Lattice has already churned, and severity turns out not to
+        // track damage at all.
+        'ph-120', 'ph-121', 'ph-122', 'ph-123', 'ph-124', 'ph-125',
+        // Day 4 — a second signal. The loudest client is the smallest one.
+        'ph-130', 'ph-131', 'ph-132', 'ph-133', 'ph-134', 'ph-135',
+        // Day 5 — the recommendation, against a budget that covers four accounts.
+        'ph-140', 'ph-141', 'ph-142', 'ph-143', 'ph-144', 'ph-145',
+      ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 21000,
       contributors: [
@@ -204,7 +218,7 @@ const PROJECT_CATALOG = {
         { name: null, role: 'Data Analyst', does: 'The impact and revenue-at-risk analysis', day: 1, throughDay: 5 },
         { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Takes compensation offers to the clients', day: 5, needsYou: true },
       ],
-      unlockAfter: 3,
+      unlockAfter: 2,
     },
     {
       key: 'pay-equity-audit',
@@ -221,7 +235,7 @@ const PROJECT_CATALOG = {
         { name: null, role: 'Data Analyst', does: 'The role-by-role pay analysis', day: 1, throughDay: 5 },
         { name: 'Aarav Bose', role: 'Finance Manager', does: 'Costs the remediation from your findings', day: 5, needsYou: true },
       ],
-      unlockAfter: 2,
+      unlockAfter: 3,
     },
 
     // ---- Senior track -------------------------------------------------------------
@@ -1797,6 +1811,459 @@ const TASKS = {
       ],
     },
     estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Project 3: Project Phoenix — Outage Impact & Client Recovery -----------------
+  //
+  // Customer Success has a compensation budget and has to decide who gets it. The week's
+  // spine, and every figure in it measured against the generated dataset:
+  //
+  //   Monday    what "affected" means — billing-sync hit two clients, everything hit
+  //             fourteen, and the brief says one while the meeting means the other
+  //   Tuesday   quantify the damage — Harborview took 492k rows, and Dunmore, the biggest
+  //             client in the book, lost seven thousand
+  //   Wednesday the wobble — Lattice already churned, and severity does not track damage
+  //   Thursday  a second signal from tickets: the loudest client is the smallest one
+  //   Friday    the recommendation, with a budget that does not cover everyone
+  //
+  // The trap running through it: every instinct here (compensate the biggest, compensate
+  // the loudest, compensate by severity) is contradicted by the data.
+
+  'ph-101': {
+    title: 'What does "affected" actually mean',
+    hint: "Read the brief and the meeting note side by side. They are not asking the same question.",
+    brief: "Priya in Customer Success has asked you to size the damage from the billing-sync outage. Before you write any SQL, work out what is actually being asked — because the brief and the conversation behind it do not match.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Compensation for the outage — need this by Friday',
+        body: "We have a goodwill budget and the board wants it spent well. Customer Success needs to know which clients were hurt badly enough to warrant something.\n\nIt started with the billing-sync problem but honestly the whole quarter has been rough for some accounts. Use your judgement on scope — you will see the data before I do.",
+      },
+      prompt: 'Tick everything that follows from what he has actually asked for.',
+      options: [
+        { key: 'scope', correct: true, label: 'Scope is a decision you have to make and state, not one you have been given', why: '"Use your judgement on scope" is a real instruction. The analyst who silently picks one and never says which has not done the job.' },
+        { key: 'both', correct: true, label: 'Both readings are worth measuring before choosing', why: 'Billing-sync only and any-incident give very different client lists. Knowing the size of that difference is what makes the choice defensible.' },
+        { key: 'active', correct: true, label: 'Only clients we still have can be compensated', why: 'A goodwill payment to an account that has already left is not goodwill, it is an accounting error. This matters later than you think.' },
+        { key: 'literal', correct: false, label: 'Answer the billing-sync question exactly as written and nothing more', why: 'He told you the quarter was rough for some accounts. Answering the narrow question when you have been handed the wider one is technically compliant and useless.' },
+        { key: 'ask', correct: false, label: 'Go back and ask him to define "affected" precisely', why: 'He has explicitly delegated it. Bouncing it back is how an analyst becomes a ticket queue rather than someone whose judgement is wanted.' },
+        { key: 'all', correct: false, label: 'Recommend compensating everyone who had any incident at all', why: 'Fourteen of sixteen clients had an incident. A recommendation that covers almost everybody is not a recommendation, it is a refusal to prioritise.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.25, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ph-102': {
+    title: 'The size of the book',
+    hint: "One row. A CASE inside a SUM counts a condition without throwing the other rows away.",
+    brief: "Start with the denominator — you cannot say anyone was badly hit without knowing what the book looks like. Write ONE SQL SELECT returning, in a single row: how many clients we have, how many are still active, and the total monthly recurring revenue across all of them.",
+    referenceSql: "SELECT COUNT(*) AS clients, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active, SUM(mrr) AS total_mrr FROM clients",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.25, priority: 'medium', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'ph-103': {
+    title: 'Billing-sync, exactly as asked',
+    hint: "Filter on the service. Notice how short the answer is before you decide what it means.",
+    brief: "Answer the narrow question first, so you know what it is worth. Write ONE SQL SELECT returning every client hit by a BILLING-SYNC incident, with their tier, monthly revenue, how many billing-sync incidents they had and the total rows corrupted. Biggest client first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id WHERE i.service = 'billing-sync' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-104': {
+    title: 'How much of the quarter was billing-sync',
+    hint: "COUNT counts rows. COUNT(DISTINCT ...) counts things. You need both here and they are very different numbers.",
+    brief: "Put the billing-sync answer in context. Write ONE SQL SELECT returning, for each service, how many incidents it had and how many DISTINCT clients it hit, most incidents first.",
+    referenceSql: 'SELECT service, COUNT(*) AS incidents, COUNT(DISTINCT client_id) AS clients_hit FROM incidents GROUP BY service ORDER BY incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-105': {
+    title: 'Tell Vikram what you are going to measure',
+    hint: "The scope decision is the whole note. Give him the two numbers that make it obvious, then say which you are taking.",
+    brief: "Write back with the scope decision. He handed you the judgement call, which means he needs to see you make it — and to be able to stop you if he disagrees, today rather than on Friday. Under 140 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Outage compensation — how I am scoping it', maxWords: 140,
+      prompt: 'The scope decision, with the evidence that makes it the right one.',
+      rubric: [
+        { key: 'narrow', label: 'How small the billing-sync answer is', markers: ['two|2 client|three incident|3 incident|billing.sync|only'], why: 'Two clients out of sixteen. If he pictured a big number, he needs correcting now.' },
+        { key: 'wide', label: 'How big the any-incident answer is', markers: ['fourteen|14|most|nearly all|all but two'], why: 'Fourteen of sixteen. The other extreme is just as unusable, and saying so proves you looked.' },
+        { key: 'choice', label: 'Which scope you are taking', markers: ['I will|I am|taking|going with|propose|recommend|suggest'], why: 'Name it. A note that lays out both and picks neither has handed the decision back.' },
+        { key: 'why', label: 'Why that scope', markers: ['because|since|damage|severity|rows|material|meaningful|rank'], why: 'The reason is what lets him overrule you intelligently instead of just deferring.' },
+        { key: 'when', label: 'When it lands', markers: ['friday|by|end of|day|thursday'], why: 'He told you Friday. Confirming it is how he stops chasing.' },
+      ],
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ph-110': {
+    title: 'Everyone who was hit, and how hard',
+    hint: "Rows corrupted is the damage. Order by it, not by who pays us the most — that comparison is the point.",
+    brief: "Now the wide version. Write ONE SQL SELECT returning every client with at least one incident: company, tier, monthly revenue, status, how many incidents and total rows corrupted. Worst damage first.",
+    referenceSql: 'SELECT c.company, c.tier, c.mrr, c.status, COUNT(i.id) AS incidents, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company, c.tier, c.mrr, c.status ORDER BY rows_corrupted DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ph-111': {
+    title: 'What that table says, and does not',
+    hint: "Compare the top of the damage list with the top of the revenue list. They are not the same clients.",
+    brief: "You have the damage table. Before anyone sees it, work out what it actually supports — because the obvious reading of it is wrong in two separate ways.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own result supports.',
+      options: [
+        { key: 'harbor', correct: true, label: 'Harborview Bank took by far the worst damage, and is not our biggest client', why: 'Nearly half a million rows across two incidents — roughly three times the next worst — on a Growth account, not an Enterprise one.' },
+        { key: 'dunmore', correct: true, label: 'Our largest client by revenue was barely touched', why: 'Dunmore Legal pays the most and lost about seven thousand rows. Any scheme that pays out by account size would send the money exactly where the damage was not.' },
+        { key: 'rank', correct: true, label: 'Damage and revenue rank clients in different orders', why: 'That difference IS the finding. If they agreed, nobody would need this analysis.' },
+        { key: 'size', correct: false, label: 'Bigger clients were hit harder', why: 'Your own top row contradicts it. This is the assumption everyone walks in with, which is exactly why it has to be killed early.' },
+        { key: 'count', correct: false, label: 'The client with the most incidents took the most damage', why: 'Harborview had two. Others had four. Incident count and damage are different measures and they disagree here.' },
+        { key: 'everyone', correct: false, label: 'Fourteen of sixteen were affected, so effectively everyone was', why: 'True and useless. The spread between them is enormous — treating it as uniform throws away the only thing that can direct a budget.' },
+      ],
+      skills: { businessLogic: 100, dataViz: 40 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-112': {
+    title: 'Who was not touched at all',
+    hint: "NOT EXISTS with a correlated subquery. A LEFT JOIN with an IS NULL check works too, if you prefer it.",
+    brief: "The clean accounts matter as much as the damaged ones — they are revenue that does not belong anywhere in this analysis. Write ONE SQL SELECT returning every client with NO incidents at all, and their monthly revenue, biggest first.",
+    referenceSql: 'SELECT c.company, c.mrr FROM clients c WHERE NOT EXISTS (SELECT 1 FROM incidents i WHERE i.client_id = c.id) ORDER BY c.mrr DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-113': {
+    title: 'Chart the damage',
+    hint: "These categories have no order of their own, so give them one that helps the reader rank them.",
+    brief: "Put rows corrupted per client on a slide for the Customer Success meeting. Clients are categories, not a sequence — which decides both the chart type and what you do about ordering.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Rows corrupted per client.',
+      sourceSql: 'SELECT c.company, SUM(i.rows_corrupted) AS rows_corrupted FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company ORDER BY rows_corrupted DESC',
+      columns: ['company', 'rows_corrupted'],
+      correct: { type: 'bar', x: 'company', y: 'rows_corrupted', sort: 'desc' },
+      whyRight: 'Unordered categories compared by size: bars, sorted biggest first so the ranking reads at a glance.',
+      why: {
+        type: 'Companies are categories, not a sequence. A line between Harborview and Dunmore would imply a path that does not exist.',
+        x: 'The client is the category being compared.',
+        y: 'Rows corrupted is the damage being measured.',
+        sort: 'Nothing orders these for you, so sorting by size does the reader\'s work for them — and here the ranking IS the finding.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'ph-114': {
+    title: 'Send the damage table to Priya',
+    hint: "Lead with the client nobody expects. The second sentence is the one that stops the money going to the wrong place.",
+    brief: "Priya in Customer Success is drafting the compensation list. Send her what you have found so far. The hard part is that her working assumption — look after the big accounts — is the one your data contradicts. Under 150 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair', subject: 'Outage damage — who was actually hit', maxWords: 150,
+      prompt: 'The damage picture, with the assumption it overturns named explicitly.',
+      rubric: [
+        { key: 'worst', label: 'Who took the worst damage', markers: ['harborview|bank'], why: 'Name them. This is the sentence she needs.' },
+        { key: 'scale', label: 'How much worse they are than the rest', markers: ['three|3x|times|nearly half|492|most|far'], why: 'A ranking without a gap does not tell her whether the top one is special or just first.' },
+        { key: 'biggest', label: 'That the biggest account was barely touched', markers: ['dunmore|largest|biggest|enterprise'], why: 'The whole point. Left unsaid, the budget goes to the loudest and largest by default.' },
+        { key: 'clean', label: 'That two clients had no incidents at all', markers: ['two|2 |none|no incident|untouched|clean|not affected'], why: 'Half a million in revenue that belongs nowhere near this. It also shows you checked.' },
+        { key: 'next', label: 'What you are doing next', markers: ['next|then|tomorrow|will|working|severity|ticket'], why: 'She is drafting now. Tell her when the rest lands so she does not guess.' },
+      ],
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+
+  'ph-115': {
+    title: 'Broad damage or deep damage',
+    hint: "COUNT(DISTINCT service) says how many different things broke. MAX says how bad the worst single one was. They rank clients differently.",
+    brief: "Two clients with four incidents each can have had very different quarters. Write ONE SQL SELECT returning, per client with incidents: how many incidents, how many DISTINCT services were involved, and the worst single incident by rows corrupted. Most services affected first.",
+    referenceSql: 'SELECT c.company, COUNT(i.id) AS incidents, COUNT(DISTINCT i.service) AS services_hit, MAX(i.rows_corrupted) AS worst_single FROM clients c JOIN incidents i ON i.client_id = c.id GROUP BY c.company ORDER BY services_hit DESC, incidents DESC',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'medium', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ph-120': {
+    title: 'Only the clients we still have',
+    hint: "One of the names on yesterday's list is not a client any more. Find the filter that removes them.",
+    brief: "A goodwill payment can only go to somebody who is still with us. Write ONE SQL SELECT returning every ACTIVE client with at least one incident: company, tier, revenue, status and incident count, biggest client first. Then compare the row count against yesterday's.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, c.status, COUNT(i.id) AS incidents FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr, c.status ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 3, day: 3, difficulty: 'medium',
+  },
+
+  'ph-121': {
+    title: 'The client who already left',
+    hint: "They churned. Ask what that means for a compensation list, and what it means for the analysis.",
+    brief: "One of the damaged accounts is Lattice Education, and they have already churned. Priya's draft list has them on it. Decide what to do.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'remove', correct: true, label: 'Take them off the compensation list — you cannot retain a client who has gone', why: 'Goodwill spend is meant to keep accounts. Spending it on one that has left is money with no possible return.' },
+        { key: 'flag', correct: true, label: 'But say you removed them, and why', why: 'A name quietly vanishing between two drafts is how a reviewer stops trusting the whole list. An exclusion you explain costs nothing.' },
+        { key: 'signal', correct: true, label: 'They are still worth reporting as a warning sign', why: 'A damaged account that then churned is the closest thing here to evidence that outages cost retention. That belongs in the write-up even though they get no payment.' },
+        { key: 'keep', correct: false, label: 'Leave them in — they were damaged like everyone else', why: 'They were. They are also not a customer. The table measures damage; the list allocates budget, and those are different jobs.' },
+        { key: 'winback', correct: false, label: 'Recommend a win-back offer funded from the goodwill budget', why: 'A different decision, made by different people, from a different budget. Quietly repurposing this one would be noticed.' },
+        { key: 'silent', correct: false, label: 'Drop them without comment to keep the note short', why: 'This is the one genuinely dishonest option on the list. Shortness is not worth it.' },
+      ],
+      skills: { businessLogic: 100, communication: 80 },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-122': {
+    title: 'How long incidents take to resolve',
+    hint: "An incident with no resolved_at cannot contribute to an average of resolution times. Decide what that means for your COUNT as well.",
+    brief: "Priya wants to rank by severity, so check whether severity behaves the way everyone assumes. Write ONE SQL SELECT returning, per severity: how many incidents you counted and the average hours from start to resolution. Some incidents are still open — an incident with no resolution time cannot be part of an average of resolution times, and your count has to reflect whatever you decide.",
+    referenceSql: 'SELECT severity, COUNT(*) AS closed, AVG((julianday(resolved_at) - julianday(started_at)) * 24) AS avg_hours FROM incidents WHERE resolved_at IS NOT NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-123': {
+    title: 'What is still open',
+    hint: "The mirror of the last filter. Three of these are the worst kind.",
+    brief: "The incidents you just excluded are not nothing — they are the ones still hurting. Write ONE SQL SELECT returning, per severity, how many incidents are still unresolved.",
+    referenceSql: 'SELECT severity, COUNT(*) AS still_open FROM incidents WHERE resolved_at IS NULL GROUP BY severity ORDER BY severity',
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.25, priority: 'high', dueInDays: 4, day: 3, difficulty: 'easy',
+  },
+
+  'ph-124': {
+    title: 'Severity is not damage',
+    hint: "Put your two results side by side. The order they imply is not the order anyone expects.",
+    brief: "You have resolution times by severity and the open count. Priya wants to pay out by severity because it is simple. Decide what you can actually tell her.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      prompt: 'Tick everything your own results support.',
+      options: [
+        { key: 'inverted', correct: true, label: 'SEV3 incidents take longer to resolve on average than SEV2', why: 'About 35 hours against 28. Severity is set when an incident opens and reflects urgency, not how long it drags on — this is the evidence.' },
+        { key: 'open', correct: true, label: 'The averages exclude seven unresolved incidents, three of them SEV1', why: 'The worst ones are disproportionately still open, which pulls the SEV1 average DOWN. The number flatters us.' },
+        { key: 'proxy', correct: true, label: 'Severity is a weak proxy for damage and rows corrupted is a better one', why: 'You have both measures and they disagree. Saying which you trust, and why, is the actual analysis.' },
+        { key: 'sev1', correct: false, label: 'SEV1 incidents are resolved fastest, so the process works', why: 'Read again: SEV1 is the SLOWEST of the three at 44 hours, on only four closed incidents. This is what happens when you skim a table for the answer you expected.' },
+        { key: 'four', correct: false, label: 'The SEV1 average is reliable — it is the most serious category', why: 'Four closed incidents. Seriousness does not make a small sample large.' },
+        { key: 'payout', correct: false, label: 'Paying out by severity is the fairest approach', why: 'It is the simplest. Your own data says it would rank clients in roughly the wrong order.' },
+      ],
+      skills: { businessLogic: 100, statistics: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-125': {
+    title: 'Tell Priya severity will not work',
+    hint: "You are taking away her simple method. Do not do that without handing her a better one in the same note.",
+    brief: "Priya's draft ranks clients by worst severity because it is easy to explain to the board. You are about to tell her that will send the money to the wrong accounts. Say it in a way she can use. Under 160 words.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair', subject: 'Severity as a ranking — why it will not hold', maxWords: 160,
+      prompt: 'The objection, with the replacement attached to it.',
+      rubric: [
+        { key: 'finding', label: 'That severity does not track resolution time', markers: ['sev3|sev 3|longer|slower|28|35|invert|not track|does not'], why: 'The concrete fact. Without it this is just an opinion about methodology.' },
+        { key: 'open', label: 'That unresolved incidents are missing from the averages', markers: ['open|unresolved|seven|7 |exclud|still'], why: 'Three SEV1s still open flatter the SEV1 number. She will be asked about this.' },
+        { key: 'better', label: 'What to rank by instead', markers: ['rows|corrupted|damage|volume|impact'], why: 'Never take away the simple method without offering one. She has a board meeting either way.' },
+        { key: 'churn', label: 'That Lattice is off the list, and why', markers: ['lattice|churn|left|no longer|former'], why: 'Flagging the removal now stops it being discovered later as a silent edit.' },
+        { key: 'usable', label: 'Something she can act on today', markers: ['recommend|suggest|use|rank|list|propose|I would'], why: 'She is drafting now. A note that ends in a problem rather than a next step costs her a day.' },
+      ],
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ph-130': {
+    title: 'Who has been complaining',
+    hint: "Tickets are a different signal from incidents. Count both the total and the loud ones.",
+    brief: "Damage is one signal; how much noise an account is making is another, and they are not the same. Write ONE SQL SELECT returning, per client, how many support tickets they have raised and how many of those are urgent or high priority. Loudest first.",
+    referenceSql: "SELECT c.company, COUNT(t.id) AS tickets, SUM(CASE WHEN t.priority IN ('urgent','high') THEN 1 ELSE 0 END) AS urgent_high FROM clients c JOIN tickets t ON t.client_id = c.id GROUP BY c.company ORDER BY urgent_high DESC, tickets DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 4, day: 4, difficulty: 'medium',
+  },
+
+  'ph-131': {
+    title: 'Revenue by tier, current clients only',
+    hint: "This one IS a today question, so the active filter belongs on it.",
+    brief: "The board thinks in tiers, so give them the shape of the book. Write ONE SQL SELECT returning, per tier, how many ACTIVE clients there are and their total monthly revenue, biggest revenue first.",
+    referenceSql: "SELECT tier, COUNT(*) AS clients, SUM(mrr) AS mrr FROM clients WHERE status = 'active' GROUP BY tier ORDER BY mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.3, priority: 'medium', dueInDays: 4, day: 4, difficulty: 'easy',
+  },
+
+  'ph-132': {
+    title: 'The loudest client is the smallest one',
+    hint: "Cross-reference your ticket table against the damage table and the revenue table. Three orderings, three different answers.",
+    brief: "Orchid Pharma has raised more urgent tickets than anyone. They are also one of our smallest accounts and took middling damage. Decide what that means for the compensation list.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Sneha Joshi',
+        body: "Heads up before you finalise anything — Orchid Pharma have been on the phone to me every other day. Their CSM is getting hammered. I am not saying they deserve more than anyone else, I am saying you should know they are the ones making noise.",
+      },
+      prompt: 'Tick everything that is defensible.',
+      options: [
+        { key: 'separate', correct: true, label: 'Ticket volume measures how much an account complains, not how much it was harmed', why: 'They are genuinely different signals. Conflating them is how budgets end up allocated by whoever shouts.' },
+        { key: 'report', correct: true, label: 'Report it as its own column rather than folding it into the damage ranking', why: 'Priya needs to know who is angry — that is real information for a CSM. It just should not silently reorder a damage list.' },
+        { key: 'both', correct: true, label: 'An account that is both damaged AND complaining is the strongest case of all', why: 'Where the two signals agree, the case is unarguable. That is worth surfacing explicitly.' },
+        { key: 'top', correct: false, label: 'Put Orchid top of the list — they are clearly the most upset', why: 'Fifteen thousand a month and middling damage. This is exactly the decision the analysis exists to prevent.' },
+        { key: 'ignore', correct: false, label: 'Ignore tickets entirely — only measured damage counts', why: 'Equally wrong in the other direction. Sneha has told you something true about an account and throwing it away is not rigour.' },
+        { key: 'quiet', correct: false, label: 'Assume the quiet clients are fine', why: 'Harborview took the worst damage in the book. Silence is not evidence of satisfaction, and it is often evidence of an account already halfway out the door.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-133': {
+    title: 'What is still broken, for everyone',
+    hint: "Priya needs a row per client, including the ones with nothing open — so the unresolved condition belongs in the JOIN, not the WHERE. Put it in the WHERE and the clean accounts vanish.",
+    brief: "Priya is building the outreach list and needs a line for every account, not just the damaged ones — a CSM with nothing open still has to know that. Write ONE SQL SELECT returning EVERY ACTIVE client with their revenue and how many UNRESOLVED incidents they have, including clients with zero. Most open first, then biggest.",
+    referenceSql: "SELECT c.company, c.mrr, COUNT(i.id) AS open_incidents FROM clients c LEFT JOIN incidents i ON i.client_id = c.id AND i.resolved_at IS NULL WHERE c.status = 'active' GROUP BY c.company, c.mrr ORDER BY open_incidents DESC, c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-134': {
+    title: 'What Meera is about to send out',
+    hint: "She has written four sentences from your tables. Two of them are not in your tables.",
+    brief: "Meera in Comms has drafted the summary that goes to the account teams, using your numbers. It goes out under Data & Analytics, which means it goes out as yours. Read it properly.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Meera Pillai', subject: 'Draft note to the account teams — quick check',
+        body: "Ready to send unless you shout:\n\n\"Analysis of the quarter's incidents shows our Enterprise accounts bore the brunt of the disruption. Harborview Bank was the single worst affected, with almost half a million records corrupted. Orchid Pharma raised the most urgent tickets and should be prioritised for outreach. Two clients came through the quarter with no incidents at all.\"",
+      },
+      prompt: 'Tick every sentence you would tell her to change or cut.',
+      options: [
+        { key: 'enterprise', correct: true, label: 'The "Enterprise accounts bore the brunt" sentence', why: 'The worst-hit account is Growth tier, and the largest Enterprise account was barely scratched. This is the assumption your whole week disproved, about to go out in your name.' },
+        { key: 'orchid', correct: true, label: 'The "Orchid should be prioritised" sentence', why: 'It converts ticket volume into priority for compensation, which is the exact conflation you have just spent a day separating.' },
+        { key: 'harborview', correct: false, label: 'The Harborview sentence', why: 'Straight out of your own query, and the strongest true finding in the note. Challenging a correct sentence spends the credibility you need for the two that are wrong.' },
+        { key: 'clean', correct: false, label: 'The "two clients had no incidents" sentence', why: 'Also correct, and worth keeping — it tells account teams which conversations they do not need to have.' },
+        { key: 'all', correct: false, label: 'Ask her to pull the whole note until Friday', why: 'Two sentences are wrong, not the note. Blocking a communication you could fix in one reply makes you the bottleneck rather than the check.' },
+        { key: 'numbers', correct: false, label: 'Ask her to remove the specific figures and keep it qualitative', why: 'The figures are the only part that is checkable. Vagueness is not safer, it just moves the error somewhere nobody can see it.' },
+      ],
+      skills: { communication: 100, businessLogic: 80 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ph-135': {
+    title: 'Chart what is still open',
+    hint: "Severity has a natural order — SEV1, SEV2, SEV3. Ask whether that order is worth preserving here.",
+    brief: "One slide for the operations review: how many incidents remain unresolved at each severity. These categories do have an inherent order, which changes the sorting decision from the last chart you built.",
+    tool: 'chart', datasetKey: 'saas_ops',
+    chart: {
+      prompt: 'Unresolved incidents by severity.',
+      sourceSql: 'SELECT severity, COUNT(*) AS still_open FROM incidents WHERE resolved_at IS NULL GROUP BY severity ORDER BY severity',
+      columns: ['severity', 'still_open'],
+      correct: { type: 'bar', x: 'severity', y: 'still_open', sort: 'none' },
+      whyRight: 'Severity is an ordered scale, so keep its own order — but the values are counts of separate categories, so bars rather than a line.',
+      why: {
+        type: 'Bars. SEV1 to SEV3 is a scale, not a time series — there is no trend between them to trace, just three counts to compare.',
+        x: 'Severity is the category.',
+        y: 'The number still unresolved.',
+        sort: 'Do not sort by value. SEV1, SEV2, SEV3 is the order the reader already has in their head, and reordering it by count makes the chart harder to read, not easier.',
+      },
+    },
+    estHours: 0.25, priority: 'medium', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+
+  'ph-140': {
+    title: 'Damage against what they pay us',
+    hint: "A ratio needs both numbers in the same row. Divide, and remember integer division will give you zeros.",
+    brief: "Two clients can lose the same number of rows and it means very different things depending on what they pay. Write ONE SQL SELECT returning, for each ACTIVE client with incidents: company, tier, revenue, total rows corrupted, and rows corrupted per rupee of monthly revenue. Biggest client first.",
+    referenceSql: "SELECT c.company, c.tier, c.mrr, SUM(i.rows_corrupted) AS rows_corrupted, ROUND(SUM(i.rows_corrupted) * 1.0 / c.mrr, 2) AS rows_per_rupee FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.company, c.tier, c.mrr ORDER BY c.mrr DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-141': {
+    title: 'Cost of the outage per client, in Python',
+    // Deliberately flagged for rework: Priya accepts it and then wants it a different way.
+    rework: true,
+    hint: "Group the incidents by client yourself, then take the middle value as well as the mean — they will not agree and that is the point.",
+    brief: "Priya wants a single headline figure for the damage per affected client. The mean is dragged around by one enormous account. In the notebook, compute across ACTIVE clients that had incidents: the mean rows corrupted, the median rows corrupted, and how many clients that covers. Assign a dict with keys mean_rows, median_rows and clients to `result`.",
+    tool: 'python', datasetKey: 'saas_ops',
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const active = new Set(tables.clients.filter((c) => c.status === 'active').map((c) => c.id));
+      const by = new Map();
+      for (const i of tables.incidents) {
+        if (!active.has(i.client_id)) continue;
+        by.set(i.client_id, (by.get(i.client_id) || 0) + i.rows_corrupted);
+      }
+      const totals = [...by.values()].sort((a, b) => a - b);
+      const m = Math.floor(totals.length / 2);
+      const median = totals.length % 2 ? totals[m] : (totals[m - 1] + totals[m]) / 2;
+      const mean = totals.reduce((a, b) => a + b, 0) / totals.length;
+      return { mean_rows: Math.round(mean), median_rows: median, clients: totals.length };
+    },
+  },
+
+  'ph-142': {
+    title: 'The budget does not cover everyone',
+    hint: "Thirteen damaged accounts, a budget that stretches to a handful. Decide what principle you are allocating on, and be able to say it in one sentence.",
+    brief: "Vikram confirms the goodwill budget will cover about four or five accounts meaningfully, not thirteen. Decide how you would allocate it.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Budget reality',
+        body: "The number I have got signed off will do something meaningful for four, maybe five accounts. Spread across thirteen it is a gesture nobody will notice.\n\nSo it is a prioritisation, not a distribution. Tell me who and tell me why, and make the why something I can repeat in a board meeting.",
+      },
+      prompt: 'Tick every basis you could defend in that room.',
+      options: [
+        { key: 'damage', correct: true, label: 'Rank by measured damage, and fund the top of that list', why: 'It is the measure most directly connected to the thing being compensated, and it is checkable by anyone who asks.' },
+        { key: 'risk', correct: true, label: 'Weight toward accounts where damage is large relative to what they pay', why: 'A hundred thousand rows matters more to a fifteen-thousand-a-month account than to a four-hundred-thousand one. This is the ratio you just computed, doing real work.' },
+        { key: 'open', correct: true, label: 'Prioritise accounts still living with an unresolved incident', why: 'Compensation for a problem that is fixed is an apology. For one that is ongoing it is a retention move, which is what the budget is actually for.' },
+        { key: 'equal', correct: false, label: 'Split it evenly across all thirteen affected accounts', why: 'Vikram has just told you that produces a gesture nobody notices. Even-handedness that achieves nothing is not fairness.' },
+        { key: 'mrr', correct: false, label: 'Allocate in proportion to what each account pays us', why: 'That sends the most money to Dunmore, who lost seven thousand rows. Your own table says it is the wrong answer.' },
+        { key: 'loud', correct: false, label: 'Start with the accounts raising the most tickets', why: 'It rewards volume of complaint. It is also indefensible in the room the moment somebody asks how the list was built.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-143': {
+    title: 'The damage by tier',
+    hint: "SUM(DISTINCT mrr) avoids counting an account's revenue once per incident. Check your total against the book.",
+    brief: "The board reads by tier, so give them that cut. Write ONE SQL SELECT returning, per tier: how many distinct ACTIVE clients were hit, the total rows corrupted, and the total monthly revenue of those clients. Most revenue at risk first.",
+    referenceSql: "SELECT c.tier, COUNT(DISTINCT c.id) AS clients_hit, SUM(i.rows_corrupted) AS rows_corrupted, SUM(DISTINCT c.mrr) AS mrr_at_risk FROM clients c JOIN incidents i ON i.client_id = c.id WHERE c.status = 'active' GROUP BY c.tier ORDER BY mrr_at_risk DESC",
+    datasetKey: 'saas_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-144': {
+    title: 'Vikram pushes back in the corridor',
+    hint: "He is not asking you to change the ranking. He is asking you to say something about the future that you have not measured.",
+    brief: "Ten minutes before the meeting, Vikram asks the question he will be asked. Tick every response you can stand behind.",
+    tool: 'choice', datasetKey: 'saas_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair',
+        body: "One thing and then I will leave you alone. If we do nothing for these accounts, how many of them churn? The board will ask me that number and I would rather not invent one.",
+      },
+      prompt: 'Which responses are honest and useful to him?',
+      options: [
+        { key: 'cannot', correct: true, label: '"I cannot give you a churn number — we have one churned account in the whole book"', why: 'One data point. Any churn model built on it would be a guess wearing a percentage sign, and he would repeat it as fact.' },
+        { key: 'lattice', correct: true, label: '"What I can tell you is that the one account we did lose had three incidents"', why: 'True, specific, and the strongest thing the data will carry on this question. It is suggestive without pretending to be predictive.' },
+        { key: 'offer', correct: true, label: '"If you want a churn number, that needs history we do not hold — I can scope what it would take"', why: 'Turns a no into a next step, which is what a stakeholder can actually use in a meeting.' },
+        { key: 'guess', correct: false, label: '"Probably two or three."', why: 'Invented. He specifically said he did not want to invent one, and a number from you carries far more weight than a number from him.' },
+        { key: 'pct', correct: false, label: '"About 8% — that is one in thirteen, based on our churn rate"', why: 'A rate computed from a single event, presented to three significant figures. This is the most dangerous option here because it sounds the most rigorous.' },
+        { key: 'all', correct: false, label: '"All of them are at risk if we do nothing."', why: 'Unmeasured, unfalsifiable, and it would win you the budget by scaring people. That works exactly once.' },
+      ],
+      skills: { communication: 100, businessLogic: 100, statistics: 60 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ph-145': {
+    title: 'The recommendation, to Customer Success',
+    hint: "Who, why, and what you are not claiming. In that order, and the third part is what makes the first two believable.",
+    brief: "The deliverable the week has been for. Priya will take this list into the budget conversation and be asked to defend it without you in the room.",
+    tool: 'writeup', datasetKey: 'saas_ops',
+    writeup: {
+      to: 'Priya Nair and Vikram Nair', subject: 'Outage compensation — who, and why', maxWords: 200,
+      prompt: 'The recommendation. A short list, the principle behind it, and the limits of it.',
+      rubric: [
+        { key: 'who', label: 'Named accounts, not a method', markers: ['harborview|ionic|cobalt|keystone|orchid|juniper|pinehill|ferrous'], why: 'She needs a list. A note that describes how to build one has left her the job.' },
+        { key: 'basis', label: 'The principle you ranked on', markers: ['rows|corrupted|damage|relative|per rupee|proportion|open|unresolved'], why: 'This is the sentence Vikram repeats in the board meeting. It has to survive being said out loud.' },
+        { key: 'not', label: 'That it is deliberately not ranked by account size', markers: ['not|rather than|instead of|mrr|revenue|biggest|largest|size'], why: 'Saying what you did NOT rank on is what stops someone quietly re-sorting the list afterwards.' },
+        { key: 'excluded', label: 'That the churned account was removed', markers: ['lattice|churn|left|former|excluded|removed'], why: 'An exclusion you explain is diligence; one that is discovered is a credibility problem.' },
+        { key: 'limit', label: 'One thing this does not tell them', markers: ['churn|cannot|can\'t|does not|doesn\'t|predict|severity|no data|one account'], why: 'Volunteering the limit before the board finds it is what makes the rest credible.' },
+        { key: 'scope', label: 'Which incidents are in scope', markers: ['all incident|quarter|billing.sync|any|scope|whole'], why: 'You made a scope decision on Monday. The reader has to know which question this answers.' },
+      ],
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
   // ---- Senior track -----------------------------------------------------------------
@@ -3406,6 +3873,11 @@ function closeCompletedRuns(enrollment, projects) {
     if (!run) continue;
     const c = projectCompletion(enrollment, run);
     if (c && !c.complete) continue;
+    // Everything is done — but the last day has not been signed off yet, and signing it
+    // off is the moment the whole week builds to. Closing the run here would end the
+    // project out from under the learner: activeRun goes null, the wrap-up button never
+    // appears, and "that's the week" is never said. Wait for them to clock off.
+    if (!dayIsClosed(enrollment, run, PROJECT_WEEK_DAYS)) continue;
     db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
   }
 }
@@ -4387,6 +4859,11 @@ function finishProjectIfComplete(enrollment) {
   if (!run) return false;
   const c = projectCompletion(enrollment, run);
   if (!c || !c.complete) return false;
+  // Everything is done, but the last day has not been clocked off — and clocking off is
+  // the moment the whole week builds to. Closing here would end the project out from
+  // under the learner: activeRun goes null, the wrap-up button never appears, "that's the
+  // week" is never said, and closeDay then fails with "no project is running".
+  if (!dayIsClosed(enrollment, run, PROJECT_WEEK_DAYS)) return false;
 
   db.prepare('UPDATE sim_project_runs SET completed_at = ? WHERE id = ?').run(now(), run.id);
 
@@ -4713,6 +5190,53 @@ function timeTravelState(enrollment, projects) {
     role: enrollment.role,
     level: enrollment.level,
   };
+}
+
+// Testing only: jump straight to any finished project.
+//
+// The unlock gate is real and stays real — but verifying that project four works should
+// not require playing projects one to three first, and neither should a learner reporting
+// a bug on it. Gated on TIME_TRAVEL like every other shortcut, and it still refuses a
+// project that is not finished being written, because starting one of those is the bug.
+function timeTravelStartProject(userId, projectKey) {
+  if (!TIME_TRAVEL_ENABLED) throw new Error('Time travel is not enabled on this server.');
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === projectKey);
+  if (!def) throw new Error('Unknown project for this role and level.');
+  const ready = projectReadiness(def);
+  if (!ready.ready) throw new Error(`That project is still being written (${ready.missing.join(', ')}).`);
+
+  // Clear whatever is in flight so the board is not two projects deep. Everything else
+  // about the run is the real path — the same rows, the same messages, the same drip.
+  for (const run of db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL').all(enrollment.id)) {
+    const other = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
+    if (other) {
+      const keys = other.taskKeys.map(() => '?').join(',');
+      db.prepare(`DELETE FROM sim_tasks WHERE enrollment_id = ? AND task_key IN (${keys})`).run(enrollment.id, ...other.taskKeys);
+    }
+    // Everything belonging to the abandoned run, not just its tasks. An activity row left
+    // behind still counts as "already issued", so the new run would never deliver it —
+    // and the day would then sit forever at one of two activities with nothing to do.
+    db.prepare('DELETE FROM sim_activities WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_situations WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_chores WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_quiz WHERE enrollment_id = ? AND project_key = ?').run(enrollment.id, run.project_key);
+    db.prepare('DELETE FROM sim_days WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ?').run(enrollment.id, run.id);
+    db.prepare('DELETE FROM sim_project_runs WHERE id = ?').run(run.id);
+  }
+
+  const run = startProjectRun(enrollment.id, projectKey);
+  for (const key of def.taskKeys) {
+    const taskId = assignTask(enrollment.id, key, run.started_at);
+    const task = TASKS[key];
+    if ((TASKS[key].day || 1) === 1) {
+      addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+        `You're picking up ${def.title}. First task: ${task.title}. ${task.brief}`, taskId);
+    }
+  }
+  return { started: projectKey, state: getState(userId) };
 }
 
 function startProject(userId, projectKey) {
@@ -5668,6 +6192,7 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
 
 module.exports = {
   closeDay,
+  timeTravelStartProject,
   startNextDay,
   completeChore,
 
