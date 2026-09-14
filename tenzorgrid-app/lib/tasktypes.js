@@ -99,6 +99,59 @@ function gradeWriteup(spec, text) {
   };
 }
 
+// ---- Coaching -------------------------------------------------------------------------
+//
+// The senior slot. Somebody junior has done a piece of work and it is not right, and the
+// job is no longer to fix it — it is to see what is wrong and then tell them in a way that
+// leaves them able to do it themselves next time.
+//
+// Graded as two halves because it really is two skills, and people are reliably good at
+// one and bad at the other:
+//
+//   diagnose — what is actually wrong with this. Reuses the judgement grader, including
+//              the rule that ticking every box scores zero. Flagging everything in a
+//              junior's work is not review, it is discouragement with a checklist.
+//   reply    — what you say to them. Reuses the prose grader against an authored rubric.
+//
+// Fifty-fifty on purpose. A correct diagnosis delivered badly is most of what makes people
+// quit a job, and a kind message that misses the bug ships the bug.
+const COACH_SPLIT = { diagnose: 0.5, reply: 0.5 };
+
+function gradeCoach(spec, answer) {
+  const picked = (answer && answer.picked) || [];
+  const reply = (answer && answer.reply) || '';
+
+  const d = gradeChoice(spec.diagnose, picked);
+  const r = gradeWriteup(spec.reply, reply);
+  const score = Math.round(d.score * COACH_SPLIT.diagnose + r.score * COACH_SPLIT.reply);
+
+  const who = spec.menteeName || 'them';
+  const parts = [
+    `What you spotted — ${d.score}/100`,
+    d.feedback,
+    `How you said it — ${r.score}/100`,
+    r.feedback,
+  ];
+  // The failure worth naming out loud, because it is the one that feels like helping.
+  if (d.score >= 70 && r.score < 50) {
+    parts.push(`You found it. ${who} still has to hear it in a way they can act on, though — being right is the easy half.`);
+  }
+  if (d.score < 50 && r.score >= 70) {
+    parts.push(`That reads well, which is worse than it sounds: you have told ${who} confidently about the wrong thing.`);
+  }
+
+  return {
+    score,
+    feedback: parts.join('\n\n'),
+    skills: {
+      coaching: score,
+      communication: r.score,
+      businessLogic: d.score,
+    },
+    detail: { diagnose: d.detail, reply: r.detail, diagnoseScore: d.score, replyScore: r.score },
+  };
+}
+
 // ---- Option order ---------------------------------------------------------------------
 //
 // Authored option lists put the correct answers first, because that is how a person writes
@@ -170,4 +223,22 @@ function presentWriteup(spec) {
   };
 }
 
-module.exports = { gradeChoice, gradeWriteup, presentChoice, presentWriteup, shuffleSeeded, seedFrom };
+// The coaching task as the learner sees it: the junior's work, what might be wrong with
+// it, and a box to write to them. Correct answers and rubric markers stay on the server,
+// and the diagnosis options are shuffled on the same seeded basis as any other judgement.
+function presentCoach(spec, seed) {
+  return {
+    mentee: spec.menteeName || null,
+    menteeTitle: spec.menteeTitle || null,
+    prompt: spec.prompt,
+    exhibit: spec.exhibit || null,
+    diagnose: presentChoice(spec.diagnose, seed),
+    reply: presentWriteup(spec.reply),
+  };
+}
+
+module.exports = {
+  gradeChoice, gradeWriteup, gradeCoach,
+  presentChoice, presentWriteup, presentCoach,
+  shuffleSeeded, seedFrom,
+};

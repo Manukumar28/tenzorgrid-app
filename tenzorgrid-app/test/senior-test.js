@@ -42,7 +42,15 @@ function newLearner(email, name, level) {
   check('their first project is the senior one', active.key === 'reliability-review', active.key);
   check('its week has started', Boolean(active.week));
   const keys = s2.tasks.map((t) => t.task_key).sort();
-  check('they get senior tasks, not da-001', keys.every((k) => k.startsWith('sa-')), JSON.stringify(keys));
+  // The prefix check used to be `startsWith('sa-')`, which was a proxy for "not junior
+  // work" and stopped being true the day the senior track gained its coaching slot. Say
+  // what it means instead: nothing from the junior track, and the responsibility tasks
+  // that make this level different are actually on the board.
+  check('they get senior work, nothing from the junior track',
+    keys.every((k) => !k.startsWith('da-') && !k.startsWith('hc-') && !k.startsWith('pe-') && !k.startsWith('ph-')),
+    JSON.stringify(keys));
+  const coaching = keys.filter((k) => k.startsWith('co-'));
+  check('one coaching task a day, five across the project', coaching.length === 5, JSON.stringify(coaching));
   const mail = s2.messages.find((m) => m.subject && /need by Thursday/.test(m.subject));
   check('the stakeholder names the right project', /Platform Reliability Review/.test(mail.subject), mail.subject);
 

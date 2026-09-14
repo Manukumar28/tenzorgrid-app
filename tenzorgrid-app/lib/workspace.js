@@ -94,6 +94,21 @@ const ROSTER = [
     helpsWith: ['writing', 'how to say it', 'the leadership summary'], about: 'Turns your analysis into something leadership reads. Blunt about unclear writing.' },
   { archetype: 'finance_manager', name: 'Aarav Bose', title: 'Finance Manager', gender: 'male',
     helpsWith: ['remediation cost', 'budget'], about: 'Costs the remediation from your findings. Thinks in what it would take to fix.' },
+
+  // The person the senior track is responsible for.
+  //
+  // Every other colleague is someone you ask for help. He is the first one who needs help
+  // FROM you, and that is the whole difference between doing the work and being senior.
+  // He follows the learner up the ladder: at senior you check his work, and when the lead
+  // and manager tracks get their own responsibility slots he becomes someone you staff and
+  // then someone you decide about.
+  //
+  // His name is deliberately outside lib/datasets.js's own FIRST_NAMES and LAST_NAMES
+  // pools, so a generated employee can never turn up sharing it — the collision that put
+  // the Business Stakeholder in analytics_ops as a team lead being assessed.
+  { archetype: 'junior_analyst', name: 'Ishaan Varghese', title: 'Junior Data Analyst', gender: 'male',
+    helpsWith: ['his own work', 'what he has already tried', 'where he is stuck'],
+    about: 'Joined four months ago. Quick, eager, and does not yet know what he does not know — which is what you are for.' },
 ];
 
 // Everyone who is not one of the three core characters. These are the people a learner
@@ -282,17 +297,17 @@ const PROJECT_CATALOG = {
       level: 'senior',
       taskKeys: [
         // Day 1 — same six-slot shape as the junior week, senior questions.
-        'sa-010', 'sa-011', 'sa-001', 'sa-012', 'sa-013', 'sa-014',
+        'sa-010', 'co-101', 'sa-001', 'sa-012', 'sa-013', 'sa-014',
         // Day 2 — three measures of "worst service" that name three different services.
-        'sa-020', 'sa-021', 'sa-022', 'sa-023', 'sa-024', 'sa-025',
+        'sa-020', 'sa-021', 'sa-022', 'co-102', 'sa-024', 'sa-025',
         // Day 3 — the wobble. The fastest-looking service is fastest because its hard
         // incidents never closed, and MTTR is biased the same way everywhere.
-        'sa-030', 'sa-031', 'sa-032', 'sa-033', 'sa-034', 'sa-003',
+        'co-103', 'sa-031', 'sa-032', 'sa-033', 'sa-034', 'sa-003',
         // Day 4 — blast radius and backlog. The biggest backlog belongs to a client with
         // no incidents at all.
-        'sa-040', 'sa-041', 'sa-042', 'sa-043', 'sa-044', 'sa-045',
+        'sa-040', 'sa-041', 'co-104', 'sa-043', 'sa-044', 'sa-045',
         // Day 5 — where a quarter of engineering effort goes, which the data will not say.
-        'sa-050', 'sa-051', 'sa-052', 'sa-053', 'sa-054', 'sa-055',
+        'co-105', 'sa-051', 'sa-052', 'sa-053', 'sa-054', 'sa-055',
       ],
       skillFocus: ['sql', 'businessLogic', 'communication'],
       impactValue: 28000,
@@ -313,16 +328,16 @@ const PROJECT_CATALOG = {
       level: 'senior',
       taskKeys: [
         // Day 1 — there is no cost column, so build a proxy and say it is one.
-        'sb-101', 'sb-102', 'sb-103', 'sa-002', 'sb-104', 'sb-105',
+        'sb-101', 'sb-102', 'sb-103', 'sa-002', 'co-201', 'sb-105',
         // Day 2 — flat support load against thirteenfold revenue variation.
-        'sb-110', 'sb-111', 'sb-112', 'sb-113', 'sb-114', 'sb-115',
+        'sb-110', 'co-202', 'sb-112', 'sb-113', 'sb-114', 'sb-115',
         // Day 3 — the wobble. SUM(DISTINCT mrr), the fix taught last week, silently loses
         // a client because two Starter accounts bill the same amount.
-        'sb-120', 'sb-121', 'sb-122', 'sa-004', 'sb-123', 'sb-124',
+        'sb-120', 'co-203', 'sb-122', 'sa-004', 'sb-123', 'sb-124',
         // Day 4 — concentration, and a CSM analysis that turns out to be a non-finding.
-        'sb-130', 'sb-131', 'sb-132', 'sb-133', 'sb-134', 'sb-135',
+        'sb-130', 'sb-131', 'co-204', 'sb-133', 'sb-134', 'sb-135',
         // Day 5 — the Starter recommendation, under pressure to just kill the tier.
-        'sb-140', 'sb-141', 'sb-142', 'sb-143', 'sb-144', 'sb-145',
+        'sb-140', 'sb-141', 'sb-142', 'sb-143', 'co-205', 'sb-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic'],
       impactValue: 34000,
@@ -344,15 +359,15 @@ const PROJECT_CATALOG = {
       datasetKey: 'product_events',
       taskKeys: [
         // Day 1 — the window. June looks like a collapse and is twelve days of data.
-        'ac-101', 'ac-102', 'ac-103', 'ac-104', 'ac-105', 'ac-106',
+        'ac-101', 'ac-102', 'ac-103', 'ac-104', 'co-301', 'ac-106',
         // Day 2 — the funnel that is not a funnel: a step converts at 114%.
-        'ac-110', 'ac-111', 'ac-112', 'ac-113', 'ac-114', 'ac-115',
+        'ac-110', 'ac-111', 'ac-112', 'ac-113', 'ac-114', 'co-302',
         // Day 3 — the wobble. An event fires twice, and only on one mobile build.
-        'ac-120', 'ac-121', 'ac-122', 'ac-123', 'ac-124', 'ac-125',
+        'ac-120', 'co-303', 'ac-122', 'ac-123', 'ac-124', 'ac-125',
         // Day 4 — who is in the table, and what a session with no duration means.
-        'ac-130', 'ac-131', 'ac-132', 'ac-133', 'ac-134', 'ac-135',
+        'ac-130', 'ac-131', 'co-304', 'ac-133', 'ac-134', 'ac-135',
         // Day 5 — activation and retention rank the channels differently. Pick one.
-        'ac-140', 'ac-141', 'ac-142', 'ac-143', 'ac-144', 'ac-145',
+        'ac-140', 'ac-141', 'co-305', 'ac-143', 'ac-144', 'ac-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'statistics'],
       impactValue: 31000,
@@ -374,15 +389,15 @@ const PROJECT_CATALOG = {
       datasetKey: 'product_events',
       taskKeys: [
         // Day 1 — check the randomisation before reading the result. It is broken.
-        'ex-101', 'ex-102', 'ex-103', 'ex-104', 'ex-105', 'ex-106',
+        'ex-101', 'ex-102', 'ex-103', 'ex-104', 'co-401', 'ex-106',
         // Day 2 — reproduce the headline, then rule out the boring explanations.
-        'ex-110', 'ex-112', 'ex-113', 'ex-111', 'ex-114', 'ex-115',
+        'ex-110', 'ex-112', 'ex-113', 'ex-111', 'co-402', 'ex-115',
         // Day 3 — the wobble, and the whole point: it wins in both segments.
-        'ex-120', 'ex-121', 'ex-122', 'ex-123', 'ex-124', 'ex-125',
+        'ex-120', 'ex-121', 'ex-122', 'ex-123', 'co-403', 'ex-125',
         // Day 4 — handed the means to manufacture any finding, and having to not.
-        'ex-130', 'ex-131', 'ex-132', 'ex-133', 'ex-134', 'ex-135',
+        'ex-130', 'ex-131', 'co-404', 'ex-133', 'ex-134', 'ex-135',
         // Day 5 — the readout that reverses what the business was told on Monday.
-        'ex-140', 'ex-141', 'ex-142', 'ex-143', 'ex-144', 'ex-145',
+        'ex-140', 'ex-141', 'ex-142', 'co-405', 'ex-144', 'ex-145',
       ],
       skillFocus: ['sql', 'python', 'statistics', 'communication'],
       impactValue: 38000,
@@ -937,13 +952,37 @@ const GRADE_BANDS = [
 // The five axes the Skill Matrix (Overview tab) reports on. A task only ever moves the
 // axes it actually exercises — da-001 is a SQL task, so python/dataViz genuinely stay at
 // 0 until a task exists that touches them. No axis is ever synthesized.
-const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic'];
-const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic' };
+const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic', 'coaching'];
+const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic', coaching: 'Coaching' };
+
+// Which axes a learner can actually move at their level. Coaching arrives with the senior
+// track, because that is where the first task exists that could ever score it — and an
+// axis nobody can move is worse than a missing one: it reports a permanent zero on a skill
+// the learner was never given a chance to show. That was exactly the Data Viz hole before
+// chart tasks existed, and it is not being repeated.
+const LEVEL_ONLY_AXES = { coaching: ['senior', 'lead', 'manager'] };
+
+function axesForLevel(level) {
+  return SKILL_AXES.filter((axis) => {
+    const levels = LEVEL_ONLY_AXES[axis];
+    return !levels || levels.includes(level || 'junior');
+  });
+}
 
 // Self-paced product: a learner is never expected to sit here for a full workday.
 // Two hours is the realistic daily pace, and it's what "how long is my open workload"
 // estimates are measured against.
-const HOURS_PER_DAY_TARGET = 2;
+// How long a day is meant to take, per level. It was one number for everybody, which
+// stopped being true the moment the levels stopped doing the same work: measured across
+// the authored estimates a Manager's day already ran to 3.9 hours against a target of 2.
+// The rung is supposed to cost more, and the target should say so rather than the content
+// quietly disagreeing with it.
+const HOURS_PER_DAY_BY_LEVEL = { junior: 2, senior: 3, lead: 3.25, manager: 3.5 };
+const HOURS_PER_DAY_TARGET = HOURS_PER_DAY_BY_LEVEL.junior;
+
+function hoursTargetFor(level) {
+  return HOURS_PER_DAY_BY_LEVEL[level || 'junior'] || HOURS_PER_DAY_BY_LEVEL.junior;
+}
 
 // Every graded submission and every learner-sent chat/email costs an AI call, so
 // those — not the hours figure — are what actually drive cost. These are per-learner,
@@ -3599,6 +3638,878 @@ const TASKS = {
       ],
     },
     estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  // ---- Coaching: the senior responsibility slot ------------------------------------
+  //
+  // One a day, every day, from the senior track onward. Ishaan Varghese is four months in
+  // and does good work that is wrong in ways he cannot see yet. The learner is no longer
+  // being asked to get the number right — they already did that in the task above. They
+  // are being asked to see what he missed and then tell him so he can do it himself.
+  //
+  // Every exhibit here is a query that RUNS against the project's dataset and produces the
+  // wrong answer for a real reason, and every figure quoted in an option or a rubric was
+  // measured against the generated data rather than invented. A coaching task whose
+  // premise is fictional teaches a learner to correct things that are not wrong.
+  'co-101': {
+    title: "Ishaan's first pass at the service ranking",
+    hint: 'Run his query, then run it again restricted to clients who are still with us. One number moves, and it is the one his whole conclusion rests on.',
+    brief: "Ishaan has been asked to help on the reliability review and has sent you his first cut with a conclusion attached. He is four months in and this is the first thing he has done that anyone will read. Work out what is actually wrong with it, then reply to him — he has to be able to fix it himself, so a corrected query is not an answer.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'Ishaan sent this over chat. Work out what is wrong, then write back to him.',
+      exhibit: {
+        kind: 'sql',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "-- Which service breaks most? Looks like report-builder.\nSELECT service, COUNT(*) AS incidents\nFROM incidents\nGROUP BY service\nORDER BY incidents DESC\n\n-- report-builder 10, api-gateway 9, auth-service 7, data-export 6, billing-sync 3\n-- So report-builder is our worst service and should be first in the review.",
+      },
+      diagnose: {
+        prompt: 'What is genuinely wrong here? Only the real problems — flagging things that are fine costs you the same as missing something, and it costs him more.',
+        options: [
+          { key: 'churn', correct: true, label: 'It counts incidents for a client who has already churned', why: 'Lattice Education left. Three of these incidents are theirs. Take them out and report-builder drops to 9 — which is exactly what api-gateway has. His headline finding is a tie he cannot see.' },
+          { key: 'conclusion', correct: true, label: 'The conclusion is stated with more confidence than a count of 10 against 9 can carry', why: 'Even before the churn filter, one incident of difference is not a finding. He has written "our worst service" off a gap that a single ticket would close.' },
+          { key: 'countnotimpact', correct: true, label: 'Incident count is not the same as reliability impact', why: 'The review is about what it costs when a service goes. Ten short outages and three long ones are not the same problem, and the count cannot tell them apart.' },
+          { key: 'groupby', correct: false, label: 'GROUP BY service is the wrong grain', why: 'Service is exactly the grain the review is asked at. Nothing wrong.' },
+          { key: 'orderby', correct: false, label: 'Ordering by the count descending is wrong', why: 'It is the right ordering for the question he thought he was answering. The ordering is not the problem; the population is.' },
+          { key: 'star', correct: false, label: 'COUNT(*) should be COUNT(id)', why: 'On this table they return the same number. Telling a junior this is where you lose their attention for the thing that actually matters.' },
+        ],
+        whyRight: 'You found the population error and did not pad it out with style notes. Three real problems, no invented ones.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 160,
+        rubric: [
+          { key: 'churn', label: 'Names the churned client as the thing to check', markers: ['churn', 'Lattice', 'still a client', 'left us', 'status'], why: 'He cannot fix a problem you have not named. "Check your population" is not a hint, it is a riddle.' },
+          { key: 'consequence', label: 'Says what it does to his answer', markers: ['tie', 'nine', '9', 'same', 'no longer', 'drops', 'changes'], why: 'A correction without its consequence reads as pedantry. He needs to know his headline dies, not just that a filter is missing.' },
+          { key: 'nothandover', label: 'Leaves him to write the fix', markers: ['try', 'have a go', 'rerun', 're-run', 'run it again', 'see what', 'your turn', 'let me know what'], why: 'Pasting the corrected query gets today fixed and teaches him nothing. He is here for four months, not one afternoon.' },
+          { key: 'kept', label: 'Tells him what was right, specifically', markers: ['right', 'good', 'correct', 'sensible', 'fine', 'well'], why: 'Specific praise is information. It tells him which instincts to keep, and it is the only reason the next paragraph gets read.' },
+        ],
+        whyRight: 'That names the fault, says what it costs him, leaves the fix with him, and tells him what to keep. That is the whole job.',
+      },
+    },
+    estHours: 0.55,
+    priority: 'medium',
+    dueInDays: 2,
+    day: 1,
+    difficulty: 'medium',
+  },
+
+  'co-102': {
+    title: 'He has priced an outage by counting it',
+    hint: 'Ask yourself what unit Arjun plans and budgets in. It is not incidents.',
+    brief: "Ishaan has had a go at what the outages cost engineering. He has a number and it is wrong in a way that will look right to anyone who does not check the units. Diagnose it, then write back.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: "Ishaan's second attempt. What is wrong, and what do you say to him?",
+      exhibit: {
+        kind: 'sql',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "-- Engineering cost per service\nSELECT service, COUNT(*) * 4 AS est_engineer_hours\nFROM incidents\nGROUP BY service\nORDER BY est_engineer_hours DESC\n\n-- I used 4 hours per incident as an average. Seems about right?",
+      },
+      diagnose: {
+        prompt: 'What is actually wrong with this?',
+        options: [
+          { key: 'invented', correct: true, label: 'The four hours is invented, and the table has the real durations', why: 'started_at and resolved_at are both in this table. He has estimated a number he could have measured, which is the one unforgivable move in analysis.' },
+          { key: 'variance', correct: true, label: 'A flat per-incident figure erases the variation the review is about', why: 'Measured on resolved incidents for current clients, the mean runs from 13.7 hours on auth-service to 43.6 on data-export. A flat 4 makes every service look identical, which is the opposite of the finding.' },
+          { key: 'open', correct: true, label: 'Unresolved incidents are priced as if they were finished', why: 'Seven incidents are still open. They have no end time, so they have no cost yet — and counting them at four hours each quietly asserts they are done.' },
+          { key: 'churn2', correct: true, label: 'The churned client is still in the population', why: 'Same problem as yesterday, which is the thing worth noticing: he fixed the instance you pointed at and not the habit.' },
+          { key: 'multiply', correct: false, label: 'Multiplying inside the SELECT is bad practice', why: 'It is fine. The arithmetic is not the problem; the number going into it is.' },
+          { key: 'alias', correct: false, label: 'est_engineer_hours is a misleading column name', why: 'It is honestly named — it says est. The estimate is the problem, not the label on it.' },
+        ],
+        whyRight: 'You spotted that he estimated something the table already knows, and that yesterday’s correction did not stick.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 170,
+        rubric: [
+          { key: 'measure', label: 'Points at the columns that hold the real answer', markers: ['started_at', 'resolved_at', 'duration', 'measure', 'timestamp', 'julianday'], why: 'The fix is not "estimate better", it is "stop estimating". Naming the columns makes that concrete.' },
+          { key: 'repeat', label: 'Names the repeat of yesterday’s population mistake', markers: ['again', 'yesterday', 'same', 'churn', 'Lattice', 'still there', 'twice'], why: 'Letting a repeat pass is how it becomes permanent. Raising it once, plainly, is kinder than raising it four times later.' },
+          { key: 'open', label: 'Raises the unresolved incidents as a decision he has to make', markers: ['open', 'unresolved', 'NULL', 'not finished', 'still running', 'seven', '7'], why: 'There is no single right answer on whether to include them, which is exactly why he has to decide it deliberately rather than let the arithmetic decide silently.' },
+          { key: 'nothandover', label: 'Leaves the query to him', markers: ['try', 'have a go', 'see what', 'rerun', 're-run', 'your turn', 'come back', 'let me know'], why: 'He learns the habit by doing it, not by reading yours.' },
+        ],
+        whyRight: 'You named the real columns, raised the repeat without making a meal of it, and left the work with him.',
+      },
+    },
+    estHours: 0.65,
+    priority: 'high',
+    dueInDays: 2,
+    day: 2,
+    difficulty: 'medium',
+  },
+
+  'co-103': {
+    title: 'The worst service, measured on one incident',
+    hint: 'Look at how many incidents each of his averages is actually built from before you look at the averages themselves.',
+    brief: "Ishaan has redone the duration analysis properly and is pleased with it. His top line is a service with a mean resolution time far above everything else. Check how many incidents that mean is built on before you congratulate him.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'He has fixed the last two things. This one is new. What do you tell him?',
+      exhibit: {
+        kind: 'sql',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "SELECT i.service,\n       ROUND(AVG((julianday(i.resolved_at) - julianday(i.started_at)) * 24), 1) AS mean_hours\nFROM incidents i\nJOIN clients c ON c.id = i.client_id\nWHERE c.status = 'active' AND i.resolved_at IS NOT NULL\nGROUP BY i.service\nORDER BY mean_hours DESC\n\n-- billing-sync 62.0, data-export 43.6, api-gateway 40.8, report-builder 27.5, auth-service 13.7\n-- billing-sync is far and away our worst service. Recommending we start there.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with the conclusion?',
+        options: [
+          { key: 'n1', correct: true, label: 'The billing-sync mean is one incident', why: 'Measured: billing-sync has exactly one resolved incident for a current client. Its "mean" is that single incident’s duration wearing a statistical hat.' },
+          { key: 'nocount', correct: true, label: 'The query does not report how many incidents each row is built on', why: 'A COUNT(*) beside the average would have shown him this himself. An aggregate with no n is an aggregate nobody can check.' },
+          { key: 'ranking', correct: true, label: 'Ranking services by this mean puts the least evidenced one first', why: 'The ordering rewards small samples, because a single long incident beats an average of eight. The ranking is upside down for the decision it feeds.' },
+          { key: 'query', correct: false, label: 'The query itself has a bug', why: 'It does not. He has taken both corrections from the last two days and applied them correctly — the filter and the join are right.' },
+          { key: 'round', correct: false, label: 'ROUND to one decimal is too precise', why: 'One decimal on an hours figure is fine. Not the problem.' },
+          { key: 'meanmedian', correct: false, label: 'He should never use a mean, only a median', why: 'Too strong, and it would teach a rule instead of a habit. The mean is fine when you can see what it is built on.' },
+        ],
+        whyRight: 'You caught that his best query so far still produced a conclusion built on one incident — and that a missing COUNT is what let it happen.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 160,
+        rubric: [
+          { key: 'n', label: 'Tells him the billing-sync figure is a single incident', markers: ['one incident', 'one row', 'single', 'n=1', 'n = 1', 'just one', 'only one'], why: 'This is the fact that dissolves his conclusion. Everything else in the reply is decoration without it.' },
+          { key: 'habit', label: 'Gives him the habit, not just the correction', markers: ['count', 'COUNT', 'n', 'how many', 'alongside', 'next to', 'always'], why: 'Reporting n beside every aggregate is a habit that prevents this class of mistake forever, not just today.' },
+          { key: 'credit', label: 'Credits the query itself, which is now correct', markers: ['query is right', 'query is good', 'took the', 'applied', 'filter', 'better', 'improved', 'nailed'], why: 'He fixed two real things. If the only thing he ever hears is the next problem, he will stop sending you work early — and early is when you can still help.' },
+        ],
+        whyRight: 'You gave him the fact, the habit that generalises it, and honest credit for the part he got right.',
+      },
+    },
+    estHours: 0.6,
+    priority: 'high',
+    dueInDays: 2,
+    day: 3,
+    difficulty: 'hard',
+  },
+
+  'co-104': {
+    title: 'His chart makes a 2x gap look like a 10x one',
+    hint: 'The numbers behind it are right. Look at where the value axis starts.',
+    brief: "Ishaan has built the chart that will go in front of engineering leadership. The query behind it is correct — you checked it yesterday. The chart is not, and the way it is wrong will make the review look like it is overstating its case.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'He has sent the chart spec rather than an image. Read it and tell him.',
+      exhibit: {
+        kind: 'note',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Chart for the Thursday pack:\n\n  type: bar\n  x: service\n  y: mean_hours_to_resolve\n  y-axis starts at: 25\n  order: as returned by the query (alphabetical)\n\nStarting the axis at 25 makes the differences much clearer — at zero the bars all look\nthe same height and you cannot see the story. Happy with this one.",
+      },
+      diagnose: {
+        prompt: 'What do you tell him about this chart?',
+        options: [
+          { key: 'baseline', correct: true, label: 'A bar chart with a truncated value axis misstates the comparison', why: 'A bar means its length. Starting at 25 cuts most of every bar off, so a service at 43.6 hours against one at 27.5 — about 1.6x — is drawn looking several times worse.' },
+          { key: 'honest', correct: true, label: 'His reason for doing it is the reason not to', why: '"You cannot see the story at zero" means the gap is smaller than he wants it to be. That is information about the finding, not a problem with the axis.' },
+          { key: 'order', correct: true, label: 'Alphabetical ordering wastes the one free thing a bar chart gives you', why: 'Sorting by value makes the ranking readable without the reader doing arithmetic. Alphabetical order encodes nothing.' },
+          { key: 'bartype', correct: false, label: 'Bar is the wrong chart type here', why: 'Categories against one measure is exactly what a bar chart is for. The type is right.' },
+          { key: 'labels', correct: false, label: 'He has not specified data labels', why: 'Optional, and not what makes this chart misleading.' },
+          { key: 'colour', correct: false, label: 'He has not specified colours', why: 'Irrelevant to whether the chart tells the truth.' },
+        ],
+        whyRight: 'You caught the truncated baseline and, more importantly, that his justification for it is the finding talking.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 160,
+        rubric: [
+          { key: 'zero', label: 'Says the bar baseline has to be zero, and why', markers: ['zero', '0', 'baseline', 'length', 'proportion', 'start at'], why: 'The rule is only memorable with its reason attached: a bar means its length, so cutting the bottom off changes what it means.' },
+          { key: 'reason', label: 'Addresses his reason rather than only his chart', markers: ['smaller', 'story', 'gap', 'if the difference', 'that is the finding', 'that tells you', 'honest'], why: 'He will do this again on a different chart unless somebody points out that "I cannot see the difference" is a result, not a formatting problem.' },
+          { key: 'sort', label: 'Tells him to sort by value', markers: ['sort', 'order', 'descending', 'by value', 'largest'], why: 'A small, concrete, immediately actionable improvement — and the reply should leave him with at least one.' },
+          { key: 'stakes', label: 'Names what it would have cost in the room', markers: ['Arjun', 'leadership', 'credibility', 'overstat', 'exaggerat', 'trust', 'picked apart', 'challenged'], why: 'A chart that overstates gets caught, and when it does, every other number in the pack is doubted too. He needs to know the stake is the whole review, not the one slide.' },
+        ],
+        whyRight: 'You gave him the rule with its reason, took his justification seriously enough to answer it, and named what it would have cost.',
+      },
+    },
+    estHours: 0.6,
+    priority: 'high',
+    dueInDays: 2,
+    day: 4,
+    difficulty: 'hard',
+  },
+
+  'co-105': {
+    title: 'He has drafted the message to Arjun, and it is confident',
+    hint: 'It is well written. Read what it actually claims, then check which of those claims your own analysis this week can support.',
+    brief: "Ishaan has drafted the note to Arjun and asked you to glance over it before he sends. It reads well — better than most things you get from people twice his experience. That is exactly the problem: read what it claims rather than how it reads, and check each claim against what the week actually established.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'He is ready to send this. Decide what has to change, then tell him.',
+      exhibit: {
+        kind: 'email',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "To: Arjun Rao (Engineering Manager)\nCc: Priya Menon (Head of Product)\nSubject: Reliability review — where to put next quarter\n\nHi Arjun,\n\nWe have finished the reliability analysis. data-export is our worst service, at a mean\n43.6 hours to resolve against 13.7 for auth-service — more than three times slower. We\nrecommend the reliability work goes there first.\n\nFixing data-export should cut our overall MTTR by roughly a third.\n\nHappy to walk through it whenever.\n\nIshaan",
+      },
+      diagnose: {
+        prompt: 'What has to change before this goes?',
+        options: [
+          { key: 'forecast', correct: true, label: 'The one-third MTTR claim is not something the analysis supports', why: 'Nothing this week modelled what fixing a service would do. He has turned a descriptive finding into a forecast, and it is the sentence Arjun will hold him to in three months.' },
+          { key: 'we', correct: true, label: 'He is writing "we recommend" on an analysis he does not own', why: 'You are accountable for this review. A junior signing a recommendation to an engineering manager commits you to a position you have not agreed, and leaves him exposed if it is challenged.' },
+          { key: 'cc', correct: true, label: 'Copying the Head of Product on a first draft escalates it before it is agreed', why: 'Once Priya has read it, retracting the one-third claim is a correction in front of an audience rather than a conversation with Arjun.' },
+          { key: 'nouncertainty', correct: true, label: 'Nothing in it says how confident to be', why: 'Some of these means are built on very few incidents. A reader cannot tell which numbers are solid from a note that states all of them flatly.' },
+          { key: 'numbers', correct: false, label: 'The 43.6 and 13.7 figures are wrong', why: 'They are right — measured on resolved incidents for current clients, which is the population you agreed. He got the hard part correct.' },
+          { key: 'tone', correct: false, label: 'The tone is too informal for an engineering manager', why: 'It is fine. Flagging tone here would bury the four things that actually matter.' },
+        ],
+        whyRight: 'You separated how well it reads from what it claims, and caught the forecast he cannot support.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan. He is about to send this, so be clear about what must change.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 200,
+        rubric: [
+          { key: 'forecast', label: 'Names the unsupported forecast specifically', markers: ['third', 'MTTR', 'forecast', 'predict', 'cannot support', "can't support", 'not something we', 'nothing we did'], why: 'This is the sentence that would cost him. It has to be named, not gestured at.' },
+          { key: 'ownership', label: 'Deals with who is recommending what', markers: ['recommend', 'my name', 'your name', 'own', 'sign', 'I should', 'from me', 'together'], why: 'The fix is not "take it out" but "this goes out from me, or we agree it first" — which is what having a senior actually means.' },
+          { key: 'cc', label: 'Raises the Cc', markers: ['cc', 'Priya', 'copy', 'copied', 'audience', 'escalat'], why: 'A retraction in front of the Head of Product is a different event from a correction in a chat with Arjun.' },
+          { key: 'praise', label: 'Says plainly that the writing and the numbers are good', markers: ['well written', 'reads well', 'good', 'clear', 'numbers are right', 'figures are right', 'nailed', 'strong'], why: 'Both are genuinely true and both are rare. A reply that is four corrections and no acknowledgement teaches him to send you less, later.' },
+          { key: 'next', label: 'Says what happens next, concretely', markers: ['send', 'redraft', 'again', 'then', 'once', 'after', 'come back', 'we go'], why: 'He is holding a draft with a deadline on it. Ending without a next step leaves him guessing whether to wait.' },
+        ],
+        whyRight: 'You caught the claim that would have cost him, handled the ownership question properly, and still told him the truth about what was good.',
+      },
+    },
+    estHours: 0.8,
+    priority: 'high',
+    dueInDays: 1,
+    day: 5,
+    difficulty: 'hard',
+  },
+
+  'co-201': {
+    title: 'He has ranked the tiers by raw ticket count',
+    hint: 'His counts are correct. Divide each one by what that tier pays and the order turns over completely.',
+    brief: "Ishaan has counted support tickets by tier and drawn a conclusion about which tier is the problem. The counts are right. The conclusion survives exactly as long as nobody divides by revenue.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'Read it, decide what is wrong, then write to him.',
+      exhibit: {
+        kind: 'sql',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "SELECT c.tier, COUNT(t.id) AS tickets\nFROM clients c\nLEFT JOIN tickets t ON t.client_id = c.id\nWHERE c.status = 'active'\nGROUP BY c.tier\nORDER BY tickets DESC\n\n-- Growth 29, Starter 23, Enterprise 20\n-- Growth is the tier generating the most support load, so that is where the cost is.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with the conclusion he has drawn?',
+        options: [
+          { key: 'normalise', correct: true, label: 'A raw count is not a load — it has to be set against what the tier is worth', why: 'Per 100k of MRR the order reverses completely: Starter 4.62 tickets, Growth 0.86, Enterprise 0.30. Starter is fifteen times heavier than Enterprise on the measure that matters, and his ranking puts it second.' },
+          { key: 'size', correct: true, label: 'The tiers hold different numbers of accounts, so the counts are not comparable', why: 'Six Growth accounts against four Enterprise and five Starter. Even per account rather than per rupee, the raw total is answering a question about tier size.' },
+          { key: 'costword', correct: true, label: 'He has called it "cost" when he has measured volume', why: 'A ticket is not a cost until you know what it took to close. Using the word commits Finance to a number he has not computed.' },
+          { key: 'leftjoin', correct: false, label: 'LEFT JOIN is the wrong join here', why: 'It is the right one — it keeps clients with no tickets, which an inner join would silently drop. He got this right and should keep doing it.' },
+          { key: 'status', correct: false, label: 'The status filter is missing', why: 'It is there, on the third line. He has taken that lesson.' },
+          { key: 'groupby', correct: false, label: 'Grouping by tier is too coarse for this question', why: 'Tier is the grain Finance asked at. Not an error.' },
+        ],
+        whyRight: 'You caught that the counts are right and the ranking is still upside down, because nothing has been divided by anything.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 160,
+        rubric: [
+          { key: 'perwhat', label: 'Tells him to express it per unit of revenue', markers: ['per 100k', 'per 100,000', 'per rupee', 'divide', 'normalis', 'normaliz', 'relative to', 'against revenue', 'per account'], why: 'The instruction has to be concrete enough to act on this afternoon. "Think about it differently" is not.' },
+          { key: 'reversal', label: 'Warns him the order changes', markers: ['revers', 'flip', 'turns', 'changes', 'Starter', 'opposite', 'other way'], why: 'If he does not expect the answer to move he will assume he has made a mistake and quietly go back to the count.' },
+          { key: 'keep', label: 'Names the LEFT JOIN or the filter as right', markers: ['LEFT JOIN', 'left join', 'join is right', 'filter', 'status', 'kept', 'good'], why: 'He applied two previous corrections correctly. Saying so is how they stick.' },
+          { key: 'nothandover', label: 'Leaves the query to him', markers: ['try', 'have a go', 'rerun', 're-run', 'run it', 'see what', 'come back', 'let me know'], why: 'The reversal is worth more if he watches it happen.' },
+        ],
+        whyRight: 'You gave him the concrete fix, warned him the answer moves, and credited what he had already learned.',
+      },
+    },
+    estHours: 0.4, priority: 'medium', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'co-202': {
+    title: 'Sixty per cent of revenue, read as good news',
+    hint: 'He is right about the number. Ask what the same number means to somebody whose job is risk rather than growth.',
+    brief: "Ishaan has worked out how concentrated the book is and is pleased about it. The arithmetic is correct. What he has concluded from it is the opposite of what Finance will conclude.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'What do you tell him?',
+      exhibit: {
+        kind: 'note',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Ran the concentration numbers:\n\n  Enterprise: 4 accounts, 1,241,000 MRR (59.9% of the book)\n  Top 3 accounts alone: 48% of all MRR\n\nThis is a strong position — the Enterprise motion is clearly working and most of our\nrevenue comes from accounts that are easy to serve (only 20 tickets between them).\nI think the recommendation writes itself: double down on Enterprise.",
+      },
+      diagnose: {
+        prompt: 'What is wrong here?',
+        options: [
+          { key: 'risk', correct: true, label: 'Concentration is a risk finding, and he has reported it as a strength', why: 'Three accounts carrying 48% of revenue means losing one is a material event. Finance will read that number as exposure, and he has written "strong position" beside it.' },
+          { key: 'causal', correct: true, label: '"Easy to serve" is a causal claim the ticket count cannot support', why: 'Twenty tickets across four accounts might mean they are easy, or that they have a dedicated CSM absorbing the work, or that they escalate elsewhere. The number does not say which.' },
+          { key: 'recommend', correct: true, label: 'He has jumped from one ratio to a strategy recommendation', why: '"Double down on Enterprise" is a decision about where the company puts its people. It does not follow from a concentration percentage, and it is not his to make.' },
+          { key: 'arithmetic', correct: false, label: 'The percentages are wrong', why: 'They are right. 1,241,000 of 2,073,000 is 59.9%, and the top three are 48%. He has done the sums correctly.' },
+          { key: 'tier', correct: false, label: 'He should not be grouping by tier', why: 'Tier is exactly the grain this review works at.' },
+          { key: 'mrrword', correct: false, label: 'He should have used ARR rather than MRR', why: 'MRR is the unit the whole review is in. Changing it would break comparability with everything else.' },
+        ],
+        whyRight: 'You separated the arithmetic, which is right, from the reading of it, which is backwards.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 170,
+        rubric: [
+          { key: 'risk', label: 'Says plainly that concentration reads as risk', markers: ['risk', 'exposure', 'expos', 'lose one', 'losing', 'depend', 'vulnerab', 'if one'], why: 'This is the whole reframe. Without it he will write the same sentence again next quarter.' },
+          { key: 'audience', label: 'Points at who reads it and what they will do with it', markers: ['Diya', 'Finance', 'board', 'they will read', 'reader', 'audience', 'whoever'], why: 'The lesson is not "concentration is bad", it is that a number means what its reader does with it. That generalises; the rule does not.' },
+          { key: 'causal', label: 'Challenges "easy to serve"', markers: ['easy to serve', 'easy', 'CSM', 'does not tell', "doesn't tell", 'cannot tell', 'why', 'assume'], why: 'It is the quietest error in the note and the one most likely to end up in a slide unchallenged.' },
+          { key: 'arith', label: 'Confirms the arithmetic is right', markers: ['sums', 'arithmetic', 'numbers are right', 'percentages', 'maths', 'math', 'correct', 'right'], why: 'He will assume the whole note was wrong otherwise, and the sums were the part he sweated over.' },
+        ],
+        whyRight: 'You reframed the finding, tied it to who reads it, and left him certain about which half was good.',
+      },
+    },
+    estHours: 0.35, priority: 'medium', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'co-203': {
+    title: 'His revenue total has grown five times over',
+    hint: 'Count how many rows each client gets once tickets are joined on, and what SUM then adds up.',
+    brief: "Ishaan has joined clients to tickets and summed the revenue. The total he has come back with is about five times the size of the book. He has not noticed, because nothing in the output says what it should have been.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'Work out what happened, then tell him.',
+      exhibit: {
+        kind: 'sql',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "SELECT c.tier, SUM(c.mrr) AS mrr, COUNT(t.id) AS tickets\nFROM clients c\nJOIN tickets t ON t.client_id = c.id\nWHERE c.status = 'active'\nGROUP BY c.tier\n\n-- Enterprise 6,640,000 | Growth 3,386,000 | Starter 498,000\n-- Enterprise is even bigger than I thought.",
+      },
+      diagnose: {
+        prompt: 'What has gone wrong?',
+        options: [
+          { key: 'fanout', correct: true, label: 'The join repeats each client once per ticket, so SUM adds their MRR many times', why: 'Enterprise should be 1,241,000 and comes back as 6,640,000 — each account counted once for every ticket it has. The join multiplied the thing being summed.' },
+          { key: 'nocheck', correct: true, label: 'Nothing in the output would have told him', why: 'There is no row count, no per-account figure, and no comparison to the known book total. A query that cannot contradict itself will never warn you.' },
+          { key: 'inner', correct: true, label: 'The inner join also drops any client with no tickets', why: 'Two errors in one line: accounts without tickets vanish entirely, which is the opposite of the LEFT JOIN he got right yesterday.' },
+          { key: 'status', correct: false, label: 'The status filter is wrong', why: 'It is correct and correctly placed.' },
+          { key: 'groupby', correct: false, label: 'GROUP BY tier is missing a column', why: 'Tier is the only non-aggregated column selected. The grouping is fine.' },
+          { key: 'alias', correct: false, label: 'Aliasing SUM(c.mrr) as mrr is misleading', why: 'The alias is not what made the number wrong. Leading with this would bury the fanout.' },
+        ],
+        whyRight: 'You found the fanout and the fact that nothing in his output could have caught it.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 170,
+        rubric: [
+          { key: 'fanout', label: 'Explains that the join multiplies the rows being summed', markers: ['once per ticket', 'repeat', 'duplicat', 'multipl', 'fan', 'one row per', 'every ticket'], why: 'Naming the mechanism is what stops it recurring. "Your join is wrong" does not.' },
+          { key: 'sanity', label: 'Gives him a check he can run himself', markers: ['total', 'compare', 'sanity', 'check', 'should be', 'know the', 'against the book', '2,073,000', '2073000'], why: 'The real habit is having a number you already trust to test the new one against. That is worth more than the specific bug.' },
+          { key: 'inner', label: 'Raises the inner join dropping clients', markers: ['inner', 'LEFT', 'left join', 'drops', 'disappear', 'no tickets', 'missing'], why: 'He had this right yesterday and has lost it. Better he hears it now than rediscovers it under a deadline.' },
+          { key: 'tone', label: 'Does not make him feel stupid about it', markers: ['everyone', 'common', 'classic', 'caught me', 'I have done', 'happens', "don't worry", 'easy to'], why: 'This is the single most common SQL error there is. A junior who feels stupid about a common mistake hides the next one.' },
+        ],
+        whyRight: 'You named the mechanism, handed him a check that generalises, and kept him willing to show you the next one.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'co-204': {
+    title: 'Five accounts, and a rule for the whole tier',
+    hint: 'Count the accounts the pattern is drawn from before you weigh the pattern.',
+    brief: "Ishaan has found something real in the Starter tier and wants to turn it into a policy. Look at how many accounts the pattern rests on, and what happens to it if one of them is unusual.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'Decide what is wrong, then write to him.',
+      exhibit: {
+        kind: 'note',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Starter tier, ticket load per account:\n\n  Orchid Pharma      15,000 MRR   8 tickets\n  Pinehill Realty    33,000 MRR   5 tickets\n  Nimbus Analytics   15,000 MRR   4 tickets\n  Keystone Insurance 23,000 MRR   3 tickets\n  Meridian Transport 28,000 MRR   3 tickets\n\nClear pattern: the cheaper the account, the more support it needs. I'd propose a rule —\nany account under 20,000 MRR goes to self-serve support only.",
+      },
+      diagnose: {
+        prompt: 'What do you say to him about this?',
+        options: [
+          { key: 'five', correct: true, label: 'A five-account pattern cannot carry a company-wide rule', why: 'Five points, and the two at 15,000 disagree with each other — 8 tickets against 4. The "pattern" is one account doing most of the work.' },
+          { key: 'onepoint', correct: true, label: 'Orchid Pharma is driving the whole shape', why: 'Take Orchid out and the relationship between price and tickets essentially disappears. A finding that rests on one row needs to say so.' },
+          { key: 'consequence', correct: true, label: 'The proposed rule has consequences he has not looked at', why: 'Moving accounts to self-serve changes churn, and this book has already lost one Starter account. Recommending it without touching that is recommending blind.' },
+          { key: 'real', correct: false, label: 'The underlying finding is wrong', why: 'It is not — Starter really does carry 4.62 tickets per 100k against Enterprise at 0.30. The tier-level finding is solid; the per-account rule is what overreaches.' },
+          { key: 'sorting', correct: false, label: 'The table is sorted misleadingly', why: 'It is sorted by tickets, which is reasonable for what he is showing.' },
+          { key: 'mrrunit', correct: false, label: 'He should be using annual values', why: 'MRR is the review unit throughout. Not the issue.' },
+        ],
+        whyRight: 'You kept the real tier-level finding and stopped the five-account rule that was about to be built on top of it.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 170,
+        rubric: [
+          { key: 'n', label: 'Names how few accounts the rule rests on', markers: ['five', '5 accounts', 'five accounts', 'too few', 'small', 'sample', 'one account', 'Orchid'], why: 'The number is the argument. Saying "be careful" without it is advice he cannot check.' },
+          { key: 'keepfinding', label: 'Protects the tier-level finding, which is real', markers: ['tier', 'real', 'stands', 'holds', 'is right', 'good finding', 'keep', 'per 100k'], why: 'If the whole note is corrected he will drop the true part with the false one, and the true part is the review.' },
+          { key: 'consequence', label: 'Raises what the rule would actually do', markers: ['churn', 'lose', 'consequence', 'what happens', 'Lattice', 'leave', 'impact'], why: 'Teaching him to ask what a recommendation costs is more durable than teaching him this recommendation was thin.' },
+          { key: 'nothandover', label: 'Leaves the next step with him', markers: ['try', 'have a go', 'what if', 'take out', 'without', 'see what', 'come back', 'let me know'], why: 'Dropping Orchid and re-reading the pattern is a two-minute exercise he will remember for years.' },
+        ],
+        whyRight: 'You saved the finding, killed the rule, and gave him a test he can run on the next one himself.',
+      },
+    },
+    estHours: 0.35, priority: 'medium', dueInDays: 2, day: 4, difficulty: 'medium',
+  },
+
+  'co-205': {
+    title: 'He wants his name on the closure recommendation',
+    hint: 'This one is not about the analysis. It is about what a junior should and should not be carrying.',
+    brief: "Ishaan has asked to be the one who presents the Starter recommendation to Diya. He has done a lot of the work and he is right that he has. Decide what actually serves him here — then answer him.",
+    tool: 'coach',
+    datasetKey: 'saas_ops',
+    coach: {
+      menteeName: 'Ishaan Varghese',
+      menteeTitle: 'Junior Data Analyst',
+      prompt: 'He has asked you directly. What is the honest answer?',
+      exhibit: {
+        kind: 'email',
+        from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Hey — can I take the Starter recommendation to Diya on Friday?\n\nI did most of the tier analysis and I think I can explain it better than anyone. It'd be\ngood for me to be in front of Finance for once rather than always handing things over.\n\nI know the numbers cold. Worst case she disagrees and we come back with more.",
+      },
+      diagnose: {
+        prompt: 'What is actually true about this request?',
+        options: [
+          { key: 'earned', correct: true, label: 'He has genuinely done the work and the ask is reasonable', why: 'He built most of the tier analysis and corrected three errors in it when they were pointed out. Treating this as presumption would be both unkind and untrue.' },
+          { key: 'exposure', correct: true, label: 'The recommendation carries a decision he cannot be accountable for', why: 'Closing or repricing a tier is a commercial call. If Diya pushes, the answer has to come from whoever owns the analysis — and that is you, not him.' },
+          { key: 'middle', correct: true, label: 'There is a version of this that gives him the room without the exposure', why: 'He presents the analysis, you carry the recommendation and the questions. He gets the visibility he is asking for and none of the accountability he cannot hold yet.' },
+          { key: 'notready', correct: false, label: 'He does not know the numbers well enough', why: 'He does. That is not the reason, and saying it would be false as well as discouraging.' },
+          { key: 'never', correct: false, label: 'Juniors should not present to Finance', why: 'A rule invented to avoid a conversation. It is also the fastest way to lose someone who is trying.' },
+          { key: 'diya', correct: false, label: 'Diya would object to hearing from a junior', why: 'Nothing suggests that, and hiding behind an imagined objection from someone else is the worst available answer.' },
+        ],
+        whyRight: 'You took the request seriously, named the real constraint, and found the version that gives him most of what he asked for.',
+      },
+      reply: {
+        prompt: 'Answer Ishaan.',
+        to: 'Ishaan Varghese',
+        subject: null,
+        maxWords: 180,
+        rubric: [
+          { key: 'yes', label: 'Gives him a real share of the room', markers: ['you present', 'you take', 'you walk', 'you do the', 'come with', 'together', 'your part', 'you run'], why: 'A no dressed as a maybe is worse than a no. He asked for something specific and deserves a specific answer.' },
+          { key: 'why', label: 'Explains what you are keeping and why', markers: ['recommend', 'own', 'accountab', 'carry', 'my name', 'push back', 'if she', 'questions'], why: 'The reasoning is the teaching. Without it he learns only that he was refused.' },
+          { key: 'earned', label: 'Says the work earned it', markers: ['earned', 'you did', 'most of', 'your analysis', 'deserve', 'right that', 'fair'], why: 'It is true, and it is why he will keep pushing for more responsibility instead of stopping.' },
+          { key: 'next', label: 'Says what he has to do to carry the whole thing later', markers: ['next time', 'when you', 'to get there', 'work towards', 'the thing to', 'build up', 'after'], why: 'Turning a refusal into a path is the difference between managing someone and just answering them.' },
+        ],
+        whyRight: 'You gave him a real share, explained what you were keeping and why, and left him with a route to the rest of it.',
+      },
+    },
+    estHours: 0.35, priority: 'medium', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'co-301': {
+    title: 'He has counted events and called them people',
+    hint: 'Count the rows, then count the distinct users. The gap is the whole problem.',
+    brief: "Ishaan has given Maya a signup number for June. It is 670. The number of people who signed up is 604. He has counted the right table the wrong way, and the difference is about to go in a product update.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'Find what is wrong, then write to him.',
+      exhibit: {
+        kind: 'sql', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "SELECT COUNT(*) AS signups\nFROM events\nWHERE name = 'signup_completed'\n\n-- 670 signups. Sending this to Maya now so she has it for the update.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with this?',
+        options: [
+          { key: 'distinct', correct: true, label: 'It counts events, not people — some users have more than one signup event', why: 'COUNT(*) gives 670; COUNT(DISTINCT user_id) gives 604. Sixty-six of those rows are the same people signing up again, and nobody signs up twice.' },
+          { key: 'staff', correct: true, label: 'Meridian staff are still in it', why: 'Thirty-one of the users are on our own domain. They belong in a debugging query and not in a number that goes to Product as customer signups.' },
+          { key: 'sending', correct: true, label: 'He is sending it before anyone has checked it', why: 'The mistake is recoverable. A number already in Maya’s update is not, and this is the habit that matters more than the query.' },
+          { key: 'table', correct: false, label: 'He should be counting the users table instead', why: 'Either table can answer this. Counting signup events distinctly is perfectly valid — the DISTINCT is what is missing, not the table.' },
+          { key: 'where', correct: false, label: "The WHERE clause has the wrong event name", why: 'signup_completed is the right event. Not the problem.' },
+          { key: 'index', correct: false, label: 'The query will be slow without an index', why: 'Irrelevant at this size, and a distraction from a number that is about to be wrong in public.' },
+        ],
+        whyRight: 'You caught the duplicate events, the staff, and the fact that he was about to send it.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan — quickly, because he is about to send it.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 150,
+        rubric: [
+          { key: 'hold', label: 'Tells him to hold it before anything else', markers: ['hold', 'wait', "don't send", 'do not send', 'before you send', 'stop', 'pause'], why: 'Everything else can be fixed in ten minutes. A number in someone else’s update cannot.' },
+          { key: 'distinct', label: 'Names the events-versus-people problem', markers: ['distinct', 'DISTINCT', 'people', 'users', 'twice', 'duplicate', 'per user', '604'], why: 'It is the fault, and it is a one-word fix he can make himself the moment he understands it.' },
+          { key: 'staff', label: 'Raises the internal users', markers: ['staff', 'internal', 'meridian', 'our own', 'domain', 'colleagues', 'us'], why: 'Otherwise he fixes the distinct count and ships a still-wrong number with more confidence.' },
+          { key: 'nothandover', label: 'Leaves the fix to him', markers: ['try', 'have a go', 'rerun', 're-run', 'run it', 'see what', 'come back', 'let me know', 'send me'], why: 'Two small corrections he makes himself are worth more than a query he pastes.' },
+        ],
+        whyRight: 'You stopped the send first and corrected second, which is the right order.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'co-302': {
+    title: 'A funnel step that converts at 114%',
+    hint: 'More people did the second thing than did the first. Either the funnel is not a funnel, or the steps are not in that order.',
+    brief: "Ishaan has built the activation funnel and one step converts at over a hundred per cent. He has noticed, decided it is a rounding issue, and moved on. It is not a rounding issue.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'What do you tell him?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Activation funnel, distinct users per step:\n\n  signup_completed   604\n  workspace_created  318   (52.6%)\n  data_connected     364   (114.5% of previous step)\n  first_report_run   246   (67.6%)\n\nThe 114% looks like a rounding thing or maybe some double-counting. I've left it as is\nand flagged it in a footnote. Overall activation is 246/604 = 40.7%.",
+      },
+      diagnose: {
+        prompt: 'What is actually going on, and what is wrong with how he has handled it?',
+        options: [
+          { key: 'notfunnel', correct: true, label: 'More users connected data than created a workspace, so these are not sequential steps', why: 'A funnel requires every user at step three to have passed step two. 364 did the one and 318 did the other — the ordering he has assumed is not what the product does.' },
+          { key: 'footnote', correct: true, label: 'Footnoting an impossible number is not handling it', why: 'A conversion above 100% is proof the model is wrong. It is the finding, not an untidy detail to be annotated and left in.' },
+          { key: 'overall', correct: true, label: 'The overall 40.7% inherits the same broken assumption', why: 'If the steps are not sequential, the end-to-end rate is not measuring what he says it measures — and that is the number people will quote.' },
+          { key: 'rounding', correct: false, label: 'It really could be a rounding artefact', why: '114.5% is not a rounding distance from 100%. Agreeing here would teach him to explain away exactly the signals worth chasing.' },
+          { key: 'distinct', correct: false, label: 'He has forgotten COUNT(DISTINCT ...)', why: 'He has not — these are distinct user counts. He took yesterday’s correction.' },
+          { key: 'stepcount', correct: false, label: 'Four steps is too many for a funnel', why: 'Four steps is unremarkable. The number of steps is not the problem; their order is.' },
+        ],
+        whyRight: 'You treated the impossible number as the finding rather than the footnote.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'impossible', label: 'Says an over-100% step is impossible, not untidy', markers: ['impossible', "can't be", 'cannot be', 'not a funnel', 'proof', 'tells you', 'means the'], why: 'He needs the reframe, not the arithmetic. The number is information about his model.' },
+          { key: 'order', label: 'Points at the step order or the sequencing assumption', markers: ['order', 'sequence', 'sequential', 'before', 'after', 'assum', 'path', 'skip'], why: 'That is where the answer actually is, and it is something he can go and check in the events.' },
+          { key: 'overall', label: 'Warns him the headline rate is affected too', markers: ['40.7', '40.7%', 'overall', 'headline', 'end to end', 'end-to-end', 'same assumption', 'too'], why: 'He will fix the one row he was asked about and publish the summary number that has the same flaw in it.' },
+          { key: 'noticed', label: 'Credits him for spotting it at all', markers: ['spotted', 'noticed', 'caught', 'flagged', 'good that', 'right to', 'well'], why: 'Most people scroll past a number like that. He did not, and the instinct is worth more than the mistake cost.' },
+        ],
+        whyRight: 'You turned his footnote into the finding and made sure he knew the instinct was right.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'co-303': {
+    title: 'He wants to delete the duplicate rows',
+    hint: 'He is right that they are duplicates. Ask what created them before you agree to anything being removed.',
+    brief: "Ishaan has tracked down the sixty-six extra signup events and has proposed a fix. The fix is to delete them. Work out what is wrong with that, and answer him — he is keen and he will act on whatever you say.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'He is waiting on your answer before he does anything. What is it?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Found the signup duplicates — 670 events across 604 users, so 66 extra.\n\nThey're clearly junk, and they're skewing every count we do off this table. I can write\na delete for the later row in each pair and we'd have a clean table by lunchtime. Want\nme to run it on the practice copy first or just go?",
+      },
+      diagnose: {
+        prompt: 'What is wrong with what he is proposing?',
+        options: [
+          { key: 'cause', correct: true, label: 'Nobody has worked out what is creating them', why: 'A duplicate signup event is a symptom. It might be a retry, a double-fired client event, or a real re-registration — and each of those means something different for the product.' },
+          { key: 'evidence', correct: true, label: 'Deleting them destroys the evidence of the bug', why: 'Those 66 rows are the only record of whatever is misfiring. Clean them up and the engineer who has to fix it has nothing to look at.' },
+          { key: 'notours', correct: true, label: 'It is not analytics’ call to mutate the event table', why: 'The table belongs to the team that emits into it. Changing someone else’s data to make your query tidier is how two teams end up with different numbers and no idea why.' },
+          { key: 'query', correct: true, label: 'The reporting problem is solved in the query, not in the data', why: 'COUNT(DISTINCT user_id) fixes every count he is worried about, today, without touching a row.' },
+          { key: 'wrong', correct: false, label: 'He is wrong that they are duplicates', why: 'He is right, and he found them himself. That part is good work.' },
+          { key: 'practice', correct: false, label: 'Running it on the practice copy first is the mistake', why: 'Asking that was the sensible instinct in the message. It is not the thing to correct.' },
+        ],
+        whyRight: 'You stopped a deletion, kept the evidence, and pointed at the fix that was always in the query.',
+      },
+      reply: {
+        prompt: 'Answer Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'stop', label: 'Says clearly not to delete anything', markers: ["don't delete", 'do not delete', 'no delete', 'leave them', 'hold off', 'not ours', 'stop'], why: 'He offered to go and do it. An ambiguous reply gets rows deleted.' },
+          { key: 'cause', label: 'Redirects him to why they exist', markers: ['why', 'cause', 'what is creating', 'retry', 'double', 'fire', 'find out', 'investigat'], why: 'That is the actual next piece of work, and it is more interesting than the cleanup he was offering.' },
+          { key: 'queryfix', label: 'Gives him the reporting fix that needs no deletion', markers: ['distinct', 'DISTINCT', 'in the query', 'count', 'handle it in', 'dedup'], why: 'He has a real problem today. Saying only "do not delete" leaves it unsolved.' },
+          { key: 'praise', label: 'Credits him for finding them', markers: ['found', 'good', 'well', 'nice', 'spotted', 'tracked', 'right'], why: 'He chased something nobody asked him to chase. That is exactly the behaviour to reinforce, right before you refuse his proposal.' },
+        ],
+        whyRight: 'You refused the action, kept the initiative behind it alive, and left him with something better to do.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'co-304': {
+    title: 'A quarter of the sessions are us',
+    hint: 'Thirty-one users out of six hundred sounds negligible. Count their sessions instead of counting them.',
+    brief: "Ishaan has checked whether internal users matter to the engagement numbers, concluded they do not, and moved on. His reasoning is the obvious one and it is wrong by an order of magnitude.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'What has he missed?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Checked the internal-users question you raised.\n\n31 of our 604 users are on meridiansystems.com — that's 5.1%. Rounding noise. I don't\nthink it's worth filtering them out for the engagement work, it'll just add a join to\nevery query for no real change in the numbers.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with his reasoning?',
+        options: [
+          { key: 'sessions', correct: true, label: 'He counted users when the metric is built on sessions', why: 'Those 31 people account for 1,144 of 4,664 sessions — 24.5%, not 5.1%. Staff use the product constantly, which is exactly why counting heads understates them.' },
+          { key: 'wrongunit', correct: true, label: 'He tested the share in the wrong unit', why: 'The general lesson: check the contamination in the same unit as the metric you are protecting. Per-user share tells you nothing about a per-session average.' },
+          { key: 'cost', correct: true, label: 'He has weighed it as a cost of effort rather than a risk to the number', why: '"It adds a join" is a real consideration and the wrong one to decide on. The question is what the number is for, not what it costs to compute.' },
+          { key: 'five', correct: false, label: 'The 5.1% figure is wrong', why: 'It is right — 31 of 604. The arithmetic is fine; the quantity chosen is not.' },
+          { key: 'domain', correct: false, label: 'Email domain is not a reliable way to identify staff', why: 'In this dataset it is exactly how staff are marked. Inventing a data-quality doubt would send him down a hole for nothing.' },
+          { key: 'join', correct: false, label: 'The join he is avoiding would in fact be expensive', why: 'It would not, and even if it were, that is not how you decide whether a number is right.' },
+        ],
+        whyRight: 'You caught the unit mismatch — the single most useful habit in this whole class of mistake.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 160,
+        rubric: [
+          { key: 'number', label: 'Gives him the session share', markers: ['24', '24.5', 'quarter', '1,144', '1144', 'sessions'], why: 'The gap between 5% and 25% is the entire argument, and it lands far harder as a number than as a principle.' },
+          { key: 'unit', label: 'States the habit — check contamination in the metric’s own unit', markers: ['unit', 'same unit', 'sessions not users', 'whatever you are measuring', 'per session', 'measure it in', 'in the same'], why: 'This is the transferable part. He will meet it again with events, revenue and tickets.' },
+          { key: 'decide', label: 'Addresses the "not worth the join" reasoning', markers: ['worth', 'join', 'effort', 'cheap', 'not the question', 'decide', 'cost'], why: 'Unchallenged, that instinct will drop a filter on a much more expensive day.' },
+          { key: 'checked', label: 'Credits him for checking rather than assuming', markers: ['good', 'right to', 'checked', 'glad', 'well', 'thanks for'], why: 'He did the check and reported it honestly. Punishing that reads as punishing the checking.' },
+        ],
+        whyRight: 'You handed him the number, the habit behind it, and the reason his shortcut was the wrong kind of pragmatism.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 4, difficulty: 'hard',
+  },
+
+  'co-305': {
+    title: 'He has picked the winning channel, once',
+    hint: 'Ask which of the two rankings he looked at, and what the other one says.',
+    brief: "Ishaan has a channel recommendation ready for the readout. He has ranked by the metric he computed first and stopped there. The week's whole finding is that the two rankings disagree.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'What do you tell him before this goes in the readout?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "For the readout — channel recommendation:\n\nRanked by activation rate, referral comes out top. Recommending we shift budget into\nreferral for next quarter.\n\n(Used customers only and distinct users, as you said.)",
+      },
+      diagnose: {
+        prompt: 'What is wrong with this recommendation?',
+        options: [
+          { key: 'onemetric', correct: true, label: 'Activation and retention rank the channels differently, and he has only looked at one', why: 'That disagreement is the finding of the week. A recommendation built on whichever ranking he computed first is an accident, not an analysis.' },
+          { key: 'budget', correct: true, label: 'Shifting budget is not a conclusion this analysis can reach', why: 'Referral has no budget line in the way paid search does. "Spend more on referral" is not an available action, so the recommendation cannot be executed as written.' },
+          { key: 'noqual', correct: true, label: 'Nothing says how confident to be or what would change the answer', why: 'A readout that states a single ranking flatly invites the room to act on it. He has to say which number would have to move to change the recommendation.' },
+          { key: 'filters', correct: false, label: 'He has forgotten the customer and distinct filters', why: 'He has applied both, and said so. Those are three corrections that have now stuck.' },
+          { key: 'channelgrain', correct: false, label: 'Channel is the wrong grain for this question', why: 'It is precisely the grain Priya asked at.' },
+          { key: 'referral', correct: false, label: 'Referral is the wrong answer', why: 'It may well be the right one on activation. The problem is that he has not looked at the ranking that disagrees, not that his ranking is wrong.' },
+        ],
+        whyRight: 'You caught the single-metric recommendation and the fact that the action he proposed is not one the business can take.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan. The readout is tomorrow.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'both', label: 'Tells him to put both rankings in front of the reader', markers: ['both', 'retention', 'other', 'two ranking', 'disagree', 'alongside', 'as well'], why: 'The disagreement is the insight. Hiding it to give a clean answer is the thing the whole project has been teaching against.' },
+          { key: 'action', label: 'Raises whether the recommendation is actionable', markers: ['budget', 'cannot', "can't", 'no line', 'act on', 'actionable', 'how would', 'what would they do'], why: 'A recommendation nobody can execute wastes the only decision the readout gets to influence.' },
+          { key: 'confidence', label: 'Asks him to say what would change his answer', markers: ['confiden', 'what would change', 'caveat', 'uncertain', 'would have to', 'if', 'depends'], why: 'It is the sentence that makes a junior sound senior, and it is learnable in one go.' },
+          { key: 'stuck', label: 'Acknowledges the corrections that have stuck', markers: ['filters', 'distinct', 'customers', 'you applied', 'good', 'took', 'stuck', 'right'], why: 'Four weeks of corrections have landed. Telling him so is the thing that makes a fifth week of them bearable.' },
+        ],
+        whyRight: 'You protected the finding, tested whether the recommendation could be acted on, and closed the loop on everything he has fixed.',
+      },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'co-401': {
+    title: 'He has read the result before checking the split',
+    hint: 'Count each arm before you read anything computed from them.',
+    brief: "Ishaan has the headline number from the onboarding experiment and wants to take it to Priya. Before anyone reads a result, somebody has to check the experiment was an experiment.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'What has to happen before this number goes anywhere?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "onboarding_v2 result:\n\n  control    45.0% activated\n  treatment  36.1% activated\n\nTreatment is 8.9 points worse. That's a big miss — I think we can tell Priya the new\nonboarding isn't working and she should roll it back.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with going to Priya with this?',
+        options: [
+          { key: 'split', correct: true, label: 'The arms are not the same size, and nobody has asked why', why: '169 in control against 122 in treatment. A 58/42 split is not what a randomiser produces, and until somebody explains it the two groups cannot be assumed comparable.' },
+          { key: 'composition', correct: true, label: 'Nothing has been checked about what each arm is made of', why: 'Two groups of different sizes are usually different in other ways too. Comparing their outcomes before comparing their composition is the whole trap.' },
+          { key: 'rollback', correct: true, label: 'He has jumped from a result to a product decision', why: 'Rolling back is Priya’s call and it costs engineering time. His job is to tell her what the data says with the right amount of confidence attached.' },
+          { key: 'maths', correct: false, label: 'The percentages are miscalculated', why: 'They are right — 76 of 169 and 44 of 122. The arithmetic is not where this goes wrong.' },
+          { key: 'metric', correct: false, label: 'Activation is the wrong outcome metric', why: 'It is the metric the experiment was designed around. Changing it now would be moving the goalposts.' },
+          { key: 'staff', correct: false, label: 'Staff are still in the arms', why: 'They are not — he has filtered them. That is a correction that stuck.' },
+        ],
+        whyRight: 'You stopped at the split before reading the result, which is the order that saves people.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 160,
+        rubric: [
+          { key: 'split', label: 'Points at the unequal arms', markers: ['169', '122', 'split', 'arm', 'sizes', 'unequal', 'not 50', 'uneven'], why: 'It is the single check that would have stopped him, and it takes one query.' },
+          { key: 'order', label: 'Gives him the order of operations', markers: ['before', 'first', 'check the', 'then read', 'order', 'start with'], why: 'Check the experiment, then read the result. That sequence is most of what separates a readout that survives the room from one that does not.' },
+          { key: 'decision', label: 'Separates the finding from the decision', markers: ['Priya', 'her call', 'decision', 'not ours', 'recommend', 'roll back', 'rollback', 'hers'], why: 'He keeps reaching for the decision. Naming the boundary each time is how it becomes instinct.' },
+          { key: 'filters', label: 'Credits the staff filter he remembered', markers: ['staff', 'filtered', 'good', 'you did', 'right', 'remembered'], why: 'He applied a previous correction unprompted. That is the first sign the coaching is working.' },
+        ],
+        whyRight: 'You gave him the check, the sequence it belongs in, and the boundary he keeps stepping over.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'co-402': {
+    title: 'He is about to post it in the growth channel',
+    hint: 'The question is not whether the number is right. It is what happens to it once forty people have seen it.',
+    brief: "Ishaan has drafted a message for the company growth channel with the experiment result in it. The number is the one you have both been working with. Decide what is wrong with posting it there, today, and tell him.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'He has not posted yet. What do you say?',
+      exhibit: {
+        kind: 'email', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Draft for #growth:\n\n  Early read on onboarding_v2 — treatment is 8.9pts BELOW control on activation.\n  Looks like the new flow is hurting us. More to come once we've dug in. 📉\n\nGoing to post this now so people aren't waiting on it. Fine?",
+      },
+      diagnose: {
+        prompt: 'What is wrong with posting this?',
+        options: [
+          { key: 'provisional', correct: true, label: 'It is labelled as early but will be read as settled', why: '"Early read" does not survive a screenshot. Once it is in the channel the 8.9 points is the number people carry, whatever comes later.' },
+          { key: 'unchecked', correct: true, label: 'The arms have not been reconciled yet, so the number may not hold', why: 'You already know the split is uneven. Publishing a comparison that might reverse is the most expensive thing an analyst can do to their own credibility.' },
+          { key: 'audience', correct: true, label: 'The experiment owner has not seen it yet', why: 'Priya finding out in a public channel makes it her problem to manage rather than her result to interpret, and she will remember that longer than the number.' },
+          { key: 'emoji', correct: false, label: 'The tone and the emoji are unprofessional', why: 'It reads fine for an internal channel. Leading with this would make it a style conversation instead of a judgement one.' },
+          { key: 'number', correct: false, label: 'The 8.9 points is wrong', why: 'It is what the data currently says. The issue is confidence and sequencing, not arithmetic.' },
+          { key: 'never', correct: false, label: 'Analysts should never post in the growth channel', why: 'Not a rule, and it would teach him to hide work rather than to time it.' },
+        ],
+        whyRight: 'You separated whether the number is right from whether it is ready, which is the distinction this whole week turns on.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 160,
+        rubric: [
+          { key: 'hold', label: 'Asks him to hold it', markers: ['hold', 'wait', "don't post", 'do not post', 'not yet', 'before you', 'pause'], why: 'He said he is posting now. Anything less than clear is a post.' },
+          { key: 'why', label: 'Gives the reason as reversibility, not permission', markers: ['revers', 'change', 'might not hold', 'screenshot', 'stick', 'carry', 'remember', 'travels'], why: '"Check with me first" teaches him to ask permission. "This number might move and you cannot unsay it" teaches him to judge.' },
+          { key: 'priya', label: 'Says Priya should see it first', markers: ['Priya', 'owner', 'her first', 'before the channel', 'directly'], why: 'The sequencing point generalises to every result he will ever publish.' },
+          { key: 'instinct', label: 'Credits the instinct to keep people informed', markers: ['good instinct', 'right to', 'fair', 'understand', 'keep people', 'transparen', 'not wrong'], why: 'He was trying to be useful. Correcting the timing without acknowledging that teaches him to sit on results, which is worse.' },
+        ],
+        whyRight: 'You stopped the post and taught the judgement rather than installing a permission step.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 2, difficulty: 'medium',
+  },
+
+  'co-403': {
+    title: 'He thinks he has found a bug in his own query',
+    hint: 'His segment numbers and his overall number are both right. That is the finding, not the error.',
+    brief: "Ishaan has split the experiment by platform and got a result that contradicts the headline. He has assumed he has broken something and is about to spend the afternoon debugging a query that works. This is the most important thing you will teach him this month.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'Read what he has found, then tell him what it is.',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Something's broken in my segment query. Split by platform:\n\n  web      control 55.7%  treatment 66.7%   treatment wins\n  android  control 16.0%  treatment 25.6%   treatment wins\n  ios      control 18.2%  treatment 24.0%   treatment wins\n\nBut overall control wins 45.0% to 36.1%. Treatment can't win every segment and lose\noverall — that's impossible. I'll rewrite the query and find where I've gone wrong.",
+      },
+      diagnose: {
+        prompt: 'What is going on here?',
+        options: [
+          { key: 'simpson', correct: true, label: 'Nothing is broken — this is a real and well-known reversal', why: 'A subgroup result can reverse in aggregate when the groups are mixed differently between arms. Both his numbers are correct at the same time.' },
+          { key: 'mix', correct: true, label: 'The arms have very different platform mixes', why: 'Control is 122 of 169 on web — 72% — against treatment at 33 of 122, about 27%. Web activates far better than mobile, so control is carrying a much heavier weight of the easy segment.' },
+          { key: 'headline', correct: true, label: 'It means the headline comparison is the unreliable one, not the segments', why: 'This inverts what he is about to do. The aggregate is the number contaminated by the mix; the segments are the cleaner read.' },
+          { key: 'waste', correct: true, label: 'He is about to debug working code', why: 'Left alone he loses an afternoon and, worse, may "fix" the query until it stops showing the finding.' },
+          { key: 'rounding', correct: false, label: 'The segment percentages are rounded misleadingly', why: 'One decimal place is not what produces an 8.9-point reversal.' },
+          { key: 'smallseg', correct: false, label: 'The mobile segments are too small to read', why: 'They are small, which is worth a caveat — but it is not the explanation, and offering it would let him miss the actual mechanism.' },
+        ],
+        whyRight: 'You recognised the reversal for what it is and stopped him debugging code that was telling him the truth.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan. He is about to start rewriting.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'notbroken', label: 'Tells him immediately that nothing is broken', markers: ['not broken', 'nothing wrong', 'query is right', 'both are right', "don't rewrite", 'do not rewrite', 'stop', 'correct'], why: 'He said he is starting now. The first line has to stop him.' },
+          { key: 'mechanism', label: 'Explains the mix, with the numbers', markers: ['mix', 'weight', '72', '27', 'web', 'proportion', 'composition', 'more web'], why: 'Naming the phenomenon is not enough — he has to see the mechanism in his own figures or it will not transfer.' },
+          { key: 'implication', label: 'Says which number to trust', markers: ['segment', 'aggregate', 'headline', 'trust', 'per platform', 'overall is', 'by platform'], why: 'This is the actionable half. Without it he knows a piece of trivia and still does not know what to put in the readout.' },
+          { key: 'instinct', label: 'Praises the instinct that this was impossible', markers: ['right to', 'good', 'instinct', 'spotted', 'noticed', 'impossible', 'well', 'exactly the'], why: 'He stopped at a contradiction instead of publishing through it. That instinct is rarer and more valuable than knowing the name of the effect.' },
+        ],
+        whyRight: 'You stopped the rewrite, showed him the mechanism in his own numbers, and told him which figure to trust.',
+      },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'co-404': {
+    title: 'He has sliced it until something was significant',
+    hint: 'Count how many cuts he tried before this one, and ask what you would expect to find in that many by chance.',
+    brief: "Ishaan has come back with a strong segment result. Before you get excited about it, find out how many segments he looked at to get there — the honest answer changes what the finding is worth.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'What do you tell him?',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Found something good. Cut the experiment by platform, plan, country, channel, invite\npath and signup month — eighteen cuts in total.\n\nPartner-channel users on the treatment arm activate way above everyone else. That's a\nreal effect and I think it should lead the readout. Everything else was flat.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with leading the readout with this?',
+        options: [
+          { key: 'multiple', correct: true, label: 'Eighteen cuts will produce a striking result by chance alone', why: 'That is the arithmetic of looking: test enough subgroups and one will look remarkable whether or not anything is happening. The finding needs to survive being one of eighteen.' },
+          { key: 'posthoc', correct: true, label: 'Nobody predicted this segment before the experiment ran', why: 'A hypothesis formed after seeing the data is not tested by the same data. It is a candidate for the next experiment, not a conclusion from this one.' },
+          { key: 'n', correct: true, label: 'The partner slice of one arm is a small number of people', why: 'Partner is 82 customers across the whole dataset before you split it by arm. Whatever is left in one cell will not carry a readout headline.' },
+          { key: 'flat', correct: true, label: '"Everything else was flat" is itself the result worth reporting', why: 'Seventeen flat cuts is real information about the feature. He has it and has thrown it away in favour of the exciting one.' },
+          { key: 'cutting', correct: false, label: 'He should not have looked at segments at all', why: 'Exploring is exactly right, and the platform cut yesterday was the best thing in the project. The problem is what he does with what he found, not the looking.' },
+          { key: 'partner', correct: false, label: 'Partner is not a meaningful channel to segment on', why: 'It is as meaningful as any other. Singling it out here would be arbitrary.' },
+        ],
+        whyRight: 'You caught the multiple-comparisons problem and rescued the flat result he was about to discard.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'eighteen', label: 'Uses the number of cuts as the argument', markers: ['eighteen', '18', 'how many', 'cuts', 'looked at', 'chance', 'by luck', 'expect'], why: 'The count is what makes it concrete. "Be careful with subgroups" is a slogan; "you took eighteen shots" is an argument.' },
+          { key: 'nextexp', label: 'Gives the finding somewhere to go', markers: ['next', 'hypothesis', 'test it', 'another experiment', 'design', 'confirm', 'propose'], why: 'Otherwise he learns that finding things gets him told off. It should become the next experiment, not nothing.' },
+          { key: 'flat', label: 'Tells him the flat result is worth reporting', markers: ['flat', 'everything else', 'no difference', 'that is a finding', 'null', 'worth report', 'consistent'], why: 'A feature that does nothing in seventeen cuts is a real answer to Priya’s question, and he is treating it as the boring leftover.' },
+          { key: 'work', label: 'Acknowledges the work', markers: ['thorough', 'good', 'lot of', 'effort', 'well', 'impress', 'nice'], why: 'Eighteen cuts is genuinely diligent. The lesson is about what conclusions they support, not that he should have done less.' },
+        ],
+        whyRight: 'You explained why eighteen cuts changes what one result means, and gave both the exciting finding and the flat one somewhere to live.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 4, difficulty: 'hard',
+  },
+
+  'co-405': {
+    title: 'The readout sentence that will be quoted',
+    hint: 'Read it as somebody who was not in any of this week’s conversations. Which sentence do they repeat afterwards?',
+    brief: "Ishaan has written the summary paragraph for the readout. It is accurate. Read it the way the room will read it, and decide whether the sentence people carry out of the meeting is the one you want them carrying.",
+    tool: 'coach',
+    datasetKey: 'product_events',
+    coach: {
+      menteeName: 'Ishaan Varghese', menteeTitle: 'Junior Data Analyst',
+      prompt: 'This goes in front of Priya and the room tomorrow. What has to change?',
+      exhibit: {
+        kind: 'email', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Readout summary — onboarding_v2\n\nOverall, treatment activated 8.9 points below control. However, when split by platform,\ntreatment outperformed control on web, android and iOS. This is due to differences in\nthe platform mix between the two arms. The arms were also unequal in size (169 vs 122).\n\nRecommendation: we should re-run the experiment with proper randomisation.",
+      },
+      diagnose: {
+        prompt: 'What is wrong with this as a readout summary?',
+        options: [
+          { key: 'leadwith', correct: true, label: 'It leads with the number that is known to be misleading', why: 'The first sentence is the one that gets quoted. He has put the contaminated aggregate first and the reliable segment result in the subordinate clause after "however".' },
+          { key: 'buried', correct: true, label: 'The real conclusion is buried as a mechanism, not stated as a finding', why: '"This is due to differences in the platform mix" is the finding. Written as an explanation for a discrepancy, it reads as an excuse for a bad result.' },
+          { key: 'sowhat', correct: true, label: 'It never says what the business should believe about the feature', why: 'Priya has to decide whether to keep building on this flow. "Re-run it" tells her what to do about the experiment and nothing about the product.' },
+          { key: 'accuracy', correct: false, label: 'Some of the statements are inaccurate', why: 'Every sentence in it is true. That is exactly what makes it a hard one to correct — accuracy is not the standard a readout is held to.' },
+          { key: 'rerun', correct: false, label: 'Recommending a re-run is wrong', why: 'It is the right recommendation. It is just not sufficient on its own.' },
+          { key: 'length', correct: false, label: 'It is too short for a readout', why: 'Length is not the problem. Order and emphasis are.' },
+        ],
+        whyRight: 'You judged it on what the room takes away rather than on whether each sentence is true.',
+      },
+      reply: {
+        prompt: 'Write back to Ishaan. This is his first readout and he has worked hard on it.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 200,
+        rubric: [
+          { key: 'order', label: 'Tells him to reorder it, and why order matters', markers: ['order', 'lead with', 'first sentence', 'start with', 'quoted', 'takeaway', 'top', 'front'], why: 'This is the transferable lesson: in a summary, sequence is emphasis, and emphasis is the argument.' },
+          { key: 'finding', label: 'Names the platform-mix result as the finding', markers: ['finding', 'the result is', 'that is the', 'mix', 'headline', 'lead', 'conclusion'], why: 'He has it written down already. He just does not know it is the answer rather than the explanation.' },
+          { key: 'sowhat', label: 'Asks what Priya should believe about the feature', markers: ['Priya', 'believe', 'what should', 'decision', 'so what', 'product', 'keep building', 'act'], why: 'A readout exists to change what someone does. His does not currently tell her anything about the thing she owns.' },
+          { key: 'true', label: 'Makes clear the problem is not accuracy', markers: ['accurate', 'true', 'all correct', 'nothing wrong with the facts', 'not wrong', 'right', 'every sentence'], why: 'He will assume he has made errors again. Telling him plainly that this is a different kind of note is the whole point of the lesson.' },
+          { key: 'progress', label: 'Says what has changed since the first week', markers: ['first readout', 'come a long way', 'progress', 'four weeks', 'improved', 'better', 'proud', 'far'], why: 'It is his first readout and the corrections have landed. Saying so is the difference between a junior who keeps asking and one who stops.' },
+        ],
+        whyRight: 'You held it to the right standard, named the finding for him, and told him how far he had come.',
+      },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
   },
 
   'sa-001': {
@@ -9117,12 +10028,15 @@ function roleDetail(roleKey) {
       key: lvl,
       label: roles.levelTitle(roleKey, lvl),
       projectCount: atLevel.length,
+      hoursPerDay: hoursTargetFor(lvl),
       firstProject: first ? first.title : null,
       firstProjectBlurb: first ? first.description : null,
     };
   });
 
-  // The shape of one week, read off the first authored project rather than asserted.
+  // The shape of one week, read off the first authored project rather than asserted. The
+  // hours are the one part that belongs to the LEVEL rather than the role, so they sit on
+  // each level above — a Manager's day is longer than a Junior's and the screen says so.
   const sample = all[0];
   const week = sample ? {
     days: PROJECT_WEEK_DAYS,
@@ -9130,7 +10044,6 @@ function roleDetail(roleKey) {
     activities: dayitems.activitiesFor(sample.key).length,
     situations: dayitems.situationsFor(sample.key).length,
     quizzes: dayitems.quizFor(sample.key) ? 1 : 0,
-    hoursPerDay: HOURS_PER_DAY_TARGET,
   } : null;
 
   const firstDoc = sample ? getProjectDoc(sample.key) : null;
@@ -9345,18 +10258,19 @@ function countTodaysAiUse(enrollmentId) {
 //
 // An axis the test did not cover, or that no graded task has exercised, stays null and
 // reports no movement. A delta computed against nothing is worse than no delta.
-function getSkillMatrix(gradedTasks, baseline) {
+function getSkillMatrix(gradedTasks, baseline, level) {
+  const axes = axesForLevel(level);
   const sums = {}, counts = {};
-  for (const axis of SKILL_AXES) { sums[axis] = 0; counts[axis] = 0; }
+  for (const axis of axes) { sums[axis] = 0; counts[axis] = 0; }
   for (const t of gradedTasks) {
     if (!t.skills_json) continue;
     const skills = JSON.parse(t.skills_json);
-    for (const axis of SKILL_AXES) {
+    for (const axis of axes) {
       if (typeof skills[axis] === 'number') { sums[axis] += skills[axis]; counts[axis] += 1; }
     }
   }
   const base = (baseline && baseline.skills) || {};
-  return SKILL_AXES.map((axis) => {
+  return axes.map((axis) => {
     const hasData = counts[axis] > 0;
     const value = hasData ? Math.round(sums[axis] / counts[axis]) : 0;
     const start = typeof base[axis] === 'number' ? base[axis] : null;
@@ -10416,8 +11330,8 @@ function getState(userId) {
       hoursAssigned,
       hoursCompleted,
       hoursOpen,
-      hoursPerDayTarget: HOURS_PER_DAY_TARGET,
-      daysAtPace: Math.ceil(hoursOpen / HOURS_PER_DAY_TARGET),
+      hoursPerDayTarget: hoursTargetFor(enrollment.level),
+      daysAtPace: Math.ceil(hoursOpen / hoursTargetFor(enrollment.level)),
       personalBest: computePersonalBest(gradedTasks),
     },
     attendance: {
@@ -10523,7 +11437,7 @@ function getState(userId) {
     promotion,
     timeTravel: timeTravelState(enrollment, projects.projects),
     standup: getStandup(userId),
-    skillMatrix: getSkillMatrix(gradedTasks, baseline),
+    skillMatrix: getSkillMatrix(gradedTasks, baseline, enrollment.level),
     scoreHistory,
     shoutouts: getShoutouts(gradedTasks),
     checklist,
@@ -12294,6 +13208,9 @@ function getWorkbench(userId, taskId) {
     // them and different from anyone else's.
     choice: tool === 'choice' && def.choice ? tasktypes.presentChoice(def.choice, task.id) : null,
     writeup: tool === 'writeup' && def.writeup ? tasktypes.presentWriteup(def.writeup) : null,
+    // Coaching: the junior's work, what might be wrong with it, and the reply box. Same
+    // seeded option order as any other judgement, so refreshing cannot buy a second look.
+    coach: tool === 'coach' && def.coach ? tasktypes.presentCoach(def.coach, task.id) : null,
     tools: tool === 'python'
       ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
       : tool === 'chart'
@@ -12302,7 +13219,9 @@ function getWorkbench(userId, taskId) {
           ? [TOOLS['email-client']]
           : tool === 'choice'
             ? [TOOLS['schema-browser']]
-            : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+            : tool === 'coach'
+              ? [TOOLS['team-chat'], TOOLS['schema-browser']]
+              : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
   };
 }
 
@@ -12678,6 +13597,31 @@ function openReview(enrollment, task, question, taskId) {
 
 // Asha's question for a judgement or a piece of writing. Always about something they
 // actually did — the specific thing they missed, or the specific claim they made.
+// Asha's sign-off question for a coaching task.
+//
+// She is the learner's manager, not the junior's, so she asks about the judgement rather
+// than the junior — and the question changes depending on WHICH half went wrong, because
+// "you were right but he will not know it" and "that was kind and wrong" are two entirely
+// different conversations to have with someone.
+function coachReviewQuestion(taskDef, marked) {
+  const who = (taskDef.coach && taskDef.coach.menteeName || 'Ishaan').split(' ')[0];
+  const d = marked.detail.diagnoseScore;
+  const r = marked.detail.replyScore;
+  if (d < 60 && r >= 70) {
+    return `That's a good message. I want to check the thing underneath it, though — talk me through what you think ${who} actually got wrong, because I read it differently and one of us is going to have told him something unhelpful.`;
+  }
+  if (d >= 70 && r < 60) {
+    return `You found it, which is the hard part. Now put yourself on his side of it: he's four months in and that just landed in his chat. What do you think he does next — and is that what you wanted?`;
+  }
+  if (marked.detail.diagnose && marked.detail.diagnose.falseAlarms) {
+    return `You flagged something to ${who} that I don't think is actually wrong. Tell me how you read it — and what it costs him if he goes and "fixes" a thing that was fine.`;
+  }
+  if (d >= 70 && r >= 70) {
+    return `That's the standard I want. One question: what did you deliberately not say to him? There's usually something you noticed and left for another day, and I'd like to know how you chose.`;
+  }
+  return `Talk me through this one. What did you decide was the single most important thing for ${who} to take away — and does your message make that the thing he sees first?`;
+}
+
 function judgementReviewQuestion(taskDef, tool, answer, marked) {
   if (tool === 'writeup') {
     const missed = (marked.detail.missed || [])[0];
@@ -12737,6 +13681,35 @@ async function submitTask(userId, taskId, code, computedResult) {
   // Choice and write-up tasks are graded against an authored spec rather than a dataset
   // comparison — there is no query to run. Both still go to Asha for sign-off afterwards,
   // because being able to explain the judgement is the point of every task here.
+  // Coaching. Two answers in one submission, because it is two skills — what you spotted,
+  // and what you said. Both have to be there; a diagnosis with no reply is a private
+  // opinion, and a reply with no diagnosis is a guess delivered warmly.
+  if (tool === 'coach') {
+    const answer = typeof code === 'string' ? safeJson(code) : code;
+    if (!answer || typeof answer !== 'object') throw new Error('Answer both parts before submitting.');
+    if (!Array.isArray(answer.picked) || !answer.picked.length) {
+      throw new Error('Say what you think is wrong with it before you write to him.');
+    }
+    if (!String(answer.reply || '').trim()) {
+      throw new Error('Write your reply to Ishaan before submitting.');
+    }
+    const marked = tasktypes.gradeCoach(taskDef.coach, answer);
+    db.prepare(`
+      UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+        submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
+      WHERE id = ?
+    `).run(JSON.stringify(answer), marked.score, marked.feedback, JSON.stringify(marked.skills), now(), taskId);
+
+    // What goes in the thread is what he would actually receive — the reply, not a count
+    // of boxes ticked. The learner should see their own words sitting there.
+    addMessage(enrollment.id, 'learner', 'You', String(answer.reply), taskId);
+
+    const question = coachReviewQuestion(taskDef, marked);
+    db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+    openReview(enrollment, task, question, taskId);
+    return { inReview: true, question, result: marked.detail };
+  }
+
   if (tool === 'choice' || tool === 'writeup') {
     const answer = tool === 'choice' ? safeJson(code) : String(code || '');
     if (tool === 'choice' && !Array.isArray(answer)) {

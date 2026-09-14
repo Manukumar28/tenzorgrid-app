@@ -11,6 +11,7 @@ import { api } from '../api.js';
 import PythonNotebook from './PythonNotebook.jsx';
 import ChartBuilder from './ChartBuilder.jsx';
 import JudgementTask from './JudgementTask.jsx';
+import CoachTask from './CoachTask.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -256,7 +257,7 @@ export default function Workbench({ taskId, onGraded }) {
         wb.tool === 'writeup' ? '' : 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]'}`}>
         {wb.tool !== 'writeup' && (
           <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
-            <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' || wb.tool === 'choice' ? null : insertAtCursor} />
+            <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' || wb.tool === 'choice' || wb.tool === 'coach' ? null : insertAtCursor} />
           </div>
         )}
 
@@ -264,6 +265,8 @@ export default function Workbench({ taskId, onGraded }) {
           <PythonNotebook wb={wb} onGraded={onGraded} />
         ) : wb.tool === 'chart' ? (
           <ChartBuilder wb={wb} onGraded={onGraded} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
+        ) : wb.tool === 'coach' ? (
+          <CoachTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (wb.tool === 'choice' || wb.tool === 'writeup') ? (
           <JudgementTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (

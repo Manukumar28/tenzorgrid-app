@@ -51,8 +51,40 @@ const LAST_NAMES = [
   'Banerjee', 'Krishnan', 'Ahuja', 'Sinha', 'Chopra',
 ];
 
-function nameFor(rng) {
-  return `${pick(rng, FIRST_NAMES)} ${pick(rng, LAST_NAMES)}`;
+// Names the simulation's own cast already uses.
+//
+// A generated employee sharing a colleague's name puts that colleague in the table the
+// learner is analysing — so the Comms person turns up as an HR Business Partner with a
+// salary, and the learner cannot tell whether that is the same person. Phase 11 found this
+// in analytics_ops, where the fix was to rename the authored analysts; hr_core draws its
+// names at random, so it can produce the collision on any seed and needed a guard instead.
+//
+// Asha Rao is deliberately absent from this list. She really is the line manager, so her
+// appearing in a people dataset is correct rather than a clash.
+//
+// This is a copy of the roster rather than an import: lib/workspace.js requires this file,
+// so reading the cast from there would be a cycle. test/coach-test.js asserts the two stay
+// in step, which is the part that actually matters.
+const RESERVED_NAMES = new Set([
+  'Neha Kulkarni', 'Vikram Nair', 'Rahul Verma', 'Sneha Joshi', 'Arjun Rao',
+  'Diya Chandra', 'Meera Pillai', 'Aarav Bose', 'Ishaan Varghese',
+  'Ravi Menon', 'Priya Menon', 'Rohan Desai',
+]);
+
+// Drawn only when a generated name collides, and drawn in order rather than at random, so
+// substituting one does not shift the PRNG by a single step — every salary, hire year and
+// exit year in the dataset is byte-identical to what it was before this guard existed.
+const SUBSTITUTE_NAMES = [
+  'Ritika Vaz', 'Karan Sethi', 'Anusha Rane', 'Vivek Dsouza', 'Tara Fernandes',
+  'Rohit Barve', 'Naina Chhabra', 'Aman Tiwari', 'Sonal Wadia', 'Kabir Jaggi',
+];
+
+function nameFor(rng, used) {
+  const name = `${pick(rng, FIRST_NAMES)} ${pick(rng, LAST_NAMES)}`;
+  if (!RESERVED_NAMES.has(name)) return name;
+  // Deterministic: the nth collision in a generation always takes the nth substitute.
+  const n = used ? used.collisions++ : 0;
+  return SUBSTITUTE_NAMES[n % SUBSTITUTE_NAMES.length];
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +136,7 @@ const LOCATIONS = ['Bengaluru', 'Mumbai', 'Pune', 'Hyderabad', 'Remote'];
 function generateHrCore(seed) {
   const rng = makeRng(seed);
   const employees = [];
+  const used = { collisions: 0 };
   let id = 1;
 
   for (const dept of DEPARTMENTS) {
@@ -130,7 +163,7 @@ function generateHrCore(seed) {
 
       employees.push({
         id: id++,
-        name: nameFor(rng),
+        name: nameFor(rng, used),
         department_id: dept.id,
         role,
         salary,
