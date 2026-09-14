@@ -9021,6 +9021,87 @@ function assignTask(enrollmentId, taskKey, weekStart) {
 // How hard a role would be for US to build is a real distinction (lib/roles.js derives it)
 // but it is our roadmap, not theirs, and dressing a roadmap up as a menu is how people end
 // up waiting for something nobody promised.
+// ---- Starting over ---------------------------------------------------------------------
+//
+// Every table that hangs off an enrollment, discovered rather than listed. A table added
+// later without ON DELETE CASCADE would otherwise leave a learner's old rows behind after
+// a reset, and nothing would ever say so — the new workspace would just quietly carry a
+// piece of the old one.
+function enrollmentTables() {
+  return db.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'sim_%' ORDER BY name",
+  ).all().map((r) => r.name).filter((t) => {
+    try { db.prepare(`SELECT enrollment_id FROM ${t} LIMIT 1`).get(); return true; }
+    catch { return false; }
+  });
+}
+
+// What a reset would actually destroy, counted from the learner's own rows.
+//
+// "Are you sure?" on its own is a question nobody can answer. The same rule the promotion
+// verdict follows applies here: if you are going to take something away from somebody,
+// show them the arithmetic first.
+function resetPreview(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) return null;
+  const one = (sql) => db.prepare(sql).get(enrollment.id).c;
+  const graded = one("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'");
+  const scored = db.prepare(
+    "SELECT AVG(score) a FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded' AND score IS NOT NULL",
+  ).get(enrollment.id).a;
+  return {
+    role: (roles.getRole(enrollment.role) || {}).label || enrollment.role,
+    level: levelLabel(enrollment.level, enrollment.role),
+    joinedOn: (enrollment.created_at || '').slice(0, 10),
+    gradedTasks: graded,
+    averageScore: scored === null || scored === undefined ? null : Math.round(scored),
+    projectsCompleted: one('SELECT COUNT(*) c FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NOT NULL'),
+    projectsStarted: one('SELECT COUNT(*) c FROM sim_project_runs WHERE enrollment_id = ?'),
+    daysAttended: one('SELECT COUNT(*) c FROM sim_attendance WHERE enrollment_id = ?'),
+    messages: one('SELECT COUNT(*) c FROM sim_messages WHERE enrollment_id = ?'),
+    skillTestTaken: Boolean(enrollment.baseline_at),
+  };
+}
+
+// Wipe the workspace and hand the learner back to the role picker.
+//
+// Deliberately NOT the same thing as the testing panel's "start over", which re-enrols at
+// the same role and level so a tester lands straight back on day one. This is the product
+// feature: it puts you back at the choice, because starting again is usually how somebody
+// says they picked the wrong role or the wrong level.
+//
+// Nothing here is recoverable, so it refuses to run without an explicit confirmation and
+// checks its own work before committing. Skill-test history, graded work, the promotion
+// record, every message — all of it goes. What survives is the account itself, the profile,
+// and any roles they asked us to build, none of which are workspace progress.
+function resetWorkspace(userId, opts) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('There is no workspace to reset — you have not started one yet.');
+  if (!opts || opts.confirm !== true) {
+    throw new Error('A reset erases everything in the workspace, so it has to be confirmed.');
+  }
+
+  const tables = enrollmentTables();
+  db.exec('BEGIN');
+  try {
+    db.prepare('DELETE FROM sim_enrollments WHERE id = ?').run(enrollment.id);
+    // Prove the cascade did its job before this becomes permanent. If a table is ever added
+    // without ON DELETE CASCADE this fails loudly with the table named, instead of leaving
+    // the learner half-reset.
+    const leftovers = tables
+      .map((t) => ({ t, n: db.prepare(`SELECT COUNT(*) c FROM ${t} WHERE enrollment_id = ?`).get(enrollment.id).c }))
+      .filter((x) => x.n > 0);
+    if (leftovers.length) {
+      throw new Error(`Reset aborted — these would have been left behind: ${leftovers.map((x) => `${x.t} (${x.n})`).join(', ')}`);
+    }
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+  return getState(userId);
+}
+
 // What a live role actually contains, measured from the authored content rather than
 // written down twice. Every number the enrolment screen quotes comes from here, so the
 // screen cannot promise a week that differs from the week the learner gets.
@@ -12897,6 +12978,8 @@ module.exports = {
   levelsForRole,
   getCatalogue,
   recordRoleInterest,
+  resetPreview,
+  resetWorkspace,
   startEnrollment,
   getEnrollment,
   getState,

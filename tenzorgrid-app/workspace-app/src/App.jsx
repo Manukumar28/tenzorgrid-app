@@ -29,6 +29,7 @@ export default function App() {
   // are all covered by the same four lines.
   const heard = useRef(null);
   const setState = useCallback((next) => {
+    if (!next) heard.current = null;
     if (next) {
       const counts = countMessages(next);
       if (heard.current) announceArrivals(heard.current, counts);

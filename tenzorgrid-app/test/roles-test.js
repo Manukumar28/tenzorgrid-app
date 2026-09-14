@@ -151,5 +151,72 @@ console.log('\n7. Asking for a role we have not built');
   check('an unknown role is refused', /Unknown role/.test(msg), msg);
 }
 
+console.log('\n8. Resetting the workspace');
+{
+  const uid = newUser('reset@test.local');
+  // Nothing to reset yet.
+  let msg = '';
+  try { ws.resetWorkspace(uid, { confirm: true }); } catch (e) { msg = e.message; }
+  check('a workspace that was never started cannot be reset', /not started one yet/.test(msg), msg);
+  check('and there is no preview to show', ws.resetPreview(uid) === null);
+
+  ws.startEnrollment(uid, { role: 'data_analyst', level: 'senior', scheduleType: 'weekdays' });
+  const st = require(path.join(ROOT, 'lib/skilltest.js'));
+  ws.submitSkillTest(uid, Object.fromEntries(st.QUESTIONS.map((q) => [q.id, q.answer])));
+  ws.checkIn(uid);
+  ws.getState(uid);
+  const e = ws.getEnrollment(uid);
+  // Grade some work so the preview has something real to count.
+  db.prepare(`UPDATE sim_tasks SET status='graded', score=82, graded_at=?, review_state='accepted'
+              WHERE enrollment_id=? AND task_key IN (SELECT task_key FROM sim_tasks WHERE enrollment_id=? LIMIT 4)`)
+    .run(new Date().toISOString(), e.id, e.id);
+
+  const pv = ws.resetPreview(uid);
+  check('the preview names the role and level', pv.role === 'Data Analyst' && pv.level === 'Senior Data Analyst',
+    JSON.stringify({ r: pv.role, l: pv.level }));
+  check('it counts the graded work', pv.gradedTasks === 4, String(pv.gradedTasks));
+  check('and its average', pv.averageScore === 82, String(pv.averageScore));
+  check('it counts days at the desk', pv.daysAttended === 1, String(pv.daysAttended));
+  check('and knows the skills check was taken', pv.skillTestTaken === true);
+
+  // Refusing without confirmation is the point — this is the only control that destroys work.
+  msg = '';
+  try { ws.resetWorkspace(uid, {}); } catch (err) { msg = err.message; }
+  check('a reset without confirmation is refused', /has to be confirmed/.test(msg), msg);
+  check('and nothing was deleted', Boolean(ws.getEnrollment(uid)));
+
+  // Every table that hangs off an enrollment, discovered the same way the reset does it,
+  // so a table added later without ON DELETE CASCADE fails here rather than silently
+  // leaking one workspace into the next.
+  const childTables = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'sim_%'",
+  ).all().map((r) => r.name).filter((t) => {
+    try { db.prepare(`SELECT enrollment_id FROM ${t} LIMIT 1`).get(); return true; } catch { return false; }
+  });
+  const before = childTables.reduce((n, t) => n + db.prepare(`SELECT COUNT(*) c FROM ${t} WHERE enrollment_id = ?`).get(e.id).c, 0);
+  check('the learner has rows across the child tables to begin with', before > 0, String(before));
+
+  const after = ws.resetWorkspace(uid, { confirm: true });
+  check('reset hands back a null state, which is what sends them to the role picker', after === null);
+  check('the enrollment is gone', !ws.getEnrollment(uid));
+  const left = childTables
+    .map((t) => ({ t, n: db.prepare(`SELECT COUNT(*) c FROM ${t} WHERE enrollment_id = ?`).get(e.id).c }))
+    .filter((x) => x.n > 0);
+  check(`nothing is left behind in any of the ${childTables.length} child tables`, left.length === 0,
+    left.map((x) => `${x.t}:${x.n}`).join(', '));
+
+  // The account survives; only the workspace goes.
+  check('the user account survives', Boolean(db.prepare('SELECT 1 x FROM users WHERE id = ?').get(uid)));
+  check('and so does the profile', Boolean(db.prepare('SELECT 1 x FROM profiles WHERE user_id = ?').get(uid)));
+
+  // And they can start again — at a different role level than before.
+  ws.startEnrollment(uid, { role: 'data_analyst', level: 'manager', scheduleType: 'weekdays' });
+  const fresh = ws.getState(uid);
+  check('starting again works, at a level of their choosing',
+    fresh.enrollment.levelTitle === 'Data Analytics Manager', fresh.enrollment.levelTitle);
+  check('and the new workspace carries nothing from the old one',
+    fresh.tasks.filter((t) => t.status === 'graded').length === 0);
+}
+
 console.log(fails ? `\n${fails} FAILURE(S)` : '\nAll role checks passed.');
 process.exit(fails ? 1 : 0);

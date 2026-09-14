@@ -422,6 +422,27 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { state: workspace.getState(user.id) });
   }
 
+  // What a reset would destroy, so the confirmation can show it rather than asking
+  // "are you sure?" about an amount of work nobody can remember.
+  if (pathname === '/api/workspace/reset-preview' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { preview: workspace.resetPreview(user.id) });
+  }
+
+  if (pathname === '/api/workspace/reset' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      // Returns null state on purpose: with no enrollment the app falls back to the role
+      // picker, which is where "start the workspace again" should land you.
+      return sendJson(res, 200, { state: workspace.resetWorkspace(user.id, { confirm: body.confirm === true }) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/catalogue' && req.method === 'GET') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
