@@ -135,6 +135,21 @@ CREATE TABLE IF NOT EXISTS sim_enrollments (
   created_at TEXT NOT NULL
 );
 
+-- Which unbuilt roles learners actually asked for.
+--
+-- 152 of the 153 roles in the catalogue are not open yet, so the enrolment picker will
+-- generate a lot of clicks on doors that do not open. Recording them turns that from a
+-- dead end into the only demand signal we have about which role to author next — the
+-- learners saying it, rather than us inferring it from which dataset happens to exist.
+-- One row per person per role; asking twice is not two votes.
+CREATE TABLE IF NOT EXISTS sim_role_interest (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role_key TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(user_id, role_key)
+);
+
 CREATE TABLE IF NOT EXISTS sim_tasks (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,

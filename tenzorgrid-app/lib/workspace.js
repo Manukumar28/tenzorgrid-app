@@ -21,6 +21,7 @@ const charttasks = require('./charttasks');
 const tasktypes = require('./tasktypes');
 const dayitems = require('./dayitems');
 const ambientmail = require('./ambientmail');
+const roles = require('./roles');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -28,22 +29,30 @@ const PEOPLE_PARTNER_NAME = 'Neha Kulkarni';
 
 // The levels a learner can be enrolled at. The switcher offers these and timeTravelReset
 // validates against them, so the two can never drift apart.
-const LEVELS = [
-  { key: 'junior', label: 'Junior Data Analyst' },
-  { key: 'senior', label: 'Senior Data Analyst' },
-  { key: 'lead', label: 'Data Analytics Team Lead' },
-  { key: 'manager', label: 'Data Analytics Manager' },
-];
+// Levels belong to the ROLE, not to the product. Every role has Junior, Senior and Lead;
+// Data Analyst carries a fourth rung because its track is authored that deep. The titles
+// come from lib/roles.js so a second role names its own rungs rather than inheriting
+// "Junior Data Analyst" — which is exactly what this used to do.
+const DEFAULT_ROLE = 'data_analyst';
+const LEVEL_ORDER = ['junior', 'senior', 'lead', 'manager'];
 
-const LEVEL_ORDER = LEVELS.map((l) => l.key);
-function levelLabel(key) {
-  const found = LEVELS.find((l) => l.key === (key || 'junior'));
-  return found ? found.label : 'Data Analyst';
+function levelsForRole(roleKey) {
+  return roles.levelsFor(roleKey || DEFAULT_ROLE)
+    .map((k) => ({ key: k, label: roles.levelTitle(roleKey || DEFAULT_ROLE, k) }));
 }
 
-const ROLE_CATALOG = {
-  data_analyst: { label: 'Data Analyst', skin: 'Data & Analytics' },
-};
+const LEVELS = levelsForRole(DEFAULT_ROLE);
+
+function levelLabel(key, roleKey) {
+  return roles.levelTitle(roleKey || DEFAULT_ROLE, key || 'junior');
+}
+
+// The roles a learner can actually be enrolled in. Derived from the catalogue rather than
+// listed again here, so "which roles exist" and "which roles can be started" can never
+// drift apart. A role is only ever live once it has an authored project catalogue.
+const ROLE_CATALOG = Object.fromEntries(
+  roles.liveRoles().map((r) => [r.key, { label: r.label, skin: r.subcategory }]),
+);
 
 // The Team tab roster. Manager-track direct reports get added here once team
 // assembly ships (P2) — for the IC track this fixed cast is the whole org chart
@@ -693,11 +702,10 @@ function touchedProjectKeys(role, tasks) {
 // carrying to climb it. The bar rises with the rung: the same score means something
 // different when the work is "answer this question" than when it is "decide what the
 // question should be and defend the answer to a board".
-const PROMOTION_LADDER = [
-  { from: 'junior', to: 'senior', title: 'Senior Data Analyst', minAverage: 75 },
-  { from: 'senior', to: 'lead', title: 'Data Analytics Team Lead', minAverage: 80 },
-  { from: 'lead', to: 'manager', title: 'Data Analytics Manager', minAverage: 85 },
-];
+// Built per role from its own rung list (lib/roles.js), so a three-level role tops out at
+// Lead and never renders a fourth bar nobody can reach. Data Analyst's four rungs come
+// back exactly as they were authored.
+const PROMOTION_LADDER = roles.ladderFor(DEFAULT_ROLE);
 
 // One month of the programme: four projects at five working days each.
 const PROMOTION_PROJECTS_REQUIRED = 4;
@@ -711,13 +719,13 @@ const PROMOTION_PROJECTS_REQUIRED = 4;
 const PROMOTION_OPENS_AFTER = 3;
 const PROMOTION_DECIDES_AFTER = 4;
 
-function promotionRung(level) {
-  return PROMOTION_LADDER.find((r) => r.from === (level || 'junior')) || null;
+function promotionRung(level, roleKey) {
+  return roles.ladderFor(roleKey || DEFAULT_ROLE).find((r) => r.from === (level || 'junior')) || null;
 }
 
 function getPromotion(enrollment, projects, gradedTasks, tasks) {
   const level = enrollment.level || 'junior';
-  const rung = promotionRung(level);
+  const rung = promotionRung(level, enrollment.role);
 
   // Top of the ladder. There is nothing left to negotiate, and saying that plainly beats
   // rendering an empty progress card that looks like a bug.
@@ -726,7 +734,7 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
       awarded: true,
       atTheTop: true,
       atLevel: level,
-      toTitle: levelLabel(level),
+      toTitle: levelLabel(level, enrollment.role),
       criteria: [],
       shortfall: null,
       negotiation: null,
@@ -788,7 +796,7 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
     criteria: [
       {
         key: 'training',
-        label: `Complete all ${decideAfter} ${levelLabel(level).toLowerCase()} project${decideAfter === 1 ? '' : 's'}`,
+        label: `Complete all ${decideAfter} ${levelLabel(level, enrollment.role).toLowerCase()} project${decideAfter === 1 ? '' : 's'}`,
         met: trainingDone,
         value: completed,
         target: decideAfter,
@@ -835,7 +843,7 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
 // so both phases fire by themselves.
 function runPromotionReview(enrollment, promotion, tasks) {
   if (!promotion || promotion.awarded || promotion.atTheTop) return false;
-  const rung = promotionRung(enrollment.level || 'junior');
+  const rung = promotionRung(enrollment.level || 'junior', enrollment.role);
   if (!rung) return false;
   const neg = promotion.negotiation;
 
@@ -869,7 +877,7 @@ function runPromotionReview(enrollment, promotion, tasks) {
       `I've put you forward for ${rung.title} and it's gone through.\n\n`
       + `${train.value} projects delivered and an average of ${perf.value} against a bar of ${rung.minAverage} — you cleared both, which is exactly what I told you the conditions were. `
       + `What changes is the work, not the amount of hand-holding: ${LEVEL_STEP_UP[rung.to] || "you'll be judged on judgement as much as on execution"}.\n\n`
-      + `Your first ${levelLabel(rung.to).toLowerCase()} project is on your board now.`,
+      + `Your first ${levelLabel(rung.to, enrollment.role).toLowerCase()} project is on your board now.`,
       null, `Promotion — ${rung.title}`);
     addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
       `Congratulations — your promotion to ${rung.title} is confirmed and effective today. It's on your record, so it'll appear on anything you take out of here.`,
@@ -891,7 +899,7 @@ function runPromotionReview(enrollment, promotion, tasks) {
   let body;
   if (promotion.parked.length) {
     const n = promotion.parked.length;
-    body = `We've reached the end of the ${levelLabel(enrollment.level || 'junior').toLowerCase()} track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
+    body = `We've reached the end of the ${levelLabel(enrollment.level || 'junior', enrollment.role).toLowerCase()} track and I want to be straight with you rather than leave you guessing.\n\nI can't put you forward yet, and it isn't the score — it's that ${n === 1 ? 'one task is' : `${n} tasks are`} still parked: ${promotion.parked.map((t) => `"${t.title}"`).join(', ')}. Parked means you got the answer out but couldn't talk me through the choice, and I'm not signing off work neither of us can explain.\n\nThat's the good news, though — it's the one thing here you can fix today. Reopen ${n === 1 ? 'it' : 'them'}, work out what you missed, and resubmit. Then we do the review properly.`;
   } else {
     body = `We've run the review we opened a project ago, and I want to be straight with you rather than leave you guessing.\n\nYou've finished all ${training.target} projects, which is the training condition met. The other one was an average of ${rung.minAverage} and you're at ${perf.value} — ${promotion.shortfall} short.\n\nEverything you've submitted is signed off, so there's nothing sitting there to recover. That means this is a next-cycle conversation, not a this-week one — the work you do from here is what moves it.\n\nThis isn't a judgement on you. It's a number, and numbers move.`;
   }
@@ -9005,7 +9013,109 @@ function assignTask(enrollmentId, taskKey, weekStart) {
 // /api/subscribe is still the Phase 0 dev-mode stub; this just records the
 // configuration choices from the HR session (role/level/schedule) so billing
 // can be wired in later without a schema change.
-function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
+// What the enrolment screen renders: every role we have catalogued, grouped into
+// categories and the functions inside them, each one carrying its own rungs and whether
+// it can actually be started today.
+//
+// The status is deliberately binary from a learner's point of view — 'live' or 'coming'.
+// How hard a role would be for US to build is a real distinction (lib/roles.js derives it)
+// but it is our roadmap, not theirs, and dressing a roadmap up as a menu is how people end
+// up waiting for something nobody promised.
+// What a live role actually contains, measured from the authored content rather than
+// written down twice. Every number the enrolment screen quotes comes from here, so the
+// screen cannot promise a week that differs from the week the learner gets.
+function roleDetail(roleKey) {
+  const def = roles.getRole(roleKey);
+  if (!def || def.status !== 'live') return null;
+  const all = PROJECT_CATALOG[roleKey] || [];
+
+  const levels = roles.levelsFor(roleKey).map((lvl) => {
+    const atLevel = all.filter((p) => (p.level || 'junior') === lvl);
+    const first = atLevel.find((p) => !p.unlockAfter) || atLevel[0] || null;
+    return {
+      key: lvl,
+      label: roles.levelTitle(roleKey, lvl),
+      projectCount: atLevel.length,
+      firstProject: first ? first.title : null,
+      firstProjectBlurb: first ? first.description : null,
+    };
+  });
+
+  // The shape of one week, read off the first authored project rather than asserted.
+  const sample = all[0];
+  const week = sample ? {
+    days: PROJECT_WEEK_DAYS,
+    tasks: sample.taskKeys.length,
+    activities: dayitems.activitiesFor(sample.key).length,
+    situations: dayitems.situationsFor(sample.key).length,
+    quizzes: dayitems.quizFor(sample.key) ? 1 : 0,
+    hoursPerDay: HOURS_PER_DAY_TARGET,
+  } : null;
+
+  const firstDoc = sample ? getProjectDoc(sample.key) : null;
+
+  return {
+    key: roleKey,
+    label: def.label,
+    levels,
+    week,
+    projectCount: all.length,
+    company: firstDoc ? firstDoc.companyBlurb : null,
+    manager: { name: LINE_MANAGER_NAME, title: 'Line Manager' },
+    // Only tools that exist. The registry already marks each one live or planned, and
+    // filtering on it here is what stops the screen promising a workbench nobody built.
+    tools: Object.values(TOOLS).filter((t) => t.status === 'live')
+      .map((t) => ({ label: t.label || t.name, summary: t.summary || t.blurb || '' })),
+    ladder: roles.ladderFor(roleKey).map((r) => ({ to: roles.levelTitle(roleKey, r.to), minAverage: r.minAverage })),
+    projectsRequired: PROMOTION_PROJECTS_REQUIRED,
+  };
+}
+
+function getCatalogue(userId) {
+  const asked = userId
+    ? db.prepare('SELECT role_key FROM sim_role_interest WHERE user_id = ?').all(userId).map((r) => r.role_key)
+    : [];
+  return {
+    categories: roles.catalogueTree(),
+    interested: asked,
+    totalRoles: roles.ROLES.length,
+    liveRoles: roles.liveRoles().length,
+    detail: Object.fromEntries(roles.liveRoles().map((r) => [r.key, roleDetail(r.key)])),
+  };
+}
+
+// "Tell me when this opens." Idempotent — asking twice is not two votes, and the learner
+// is told they are already on the list rather than silently re-recorded.
+function recordRoleInterest(userId, roleKey) {
+  const def = roles.getRole(roleKey);
+  if (!def) throw new Error(`Unknown role: ${roleKey}`);
+  if (def.status === 'live') throw new Error(`${def.label} is open already — you can start it now.`);
+  try {
+    db.prepare('INSERT INTO sim_role_interest (id, user_id, role_key, created_at) VALUES (?, ?, ?, ?)')
+      .run(cryptoRandomId(), userId, roleKey, now());
+  } catch (e) {
+    if (!/UNIQUE/i.test(e.message)) throw e; // already on the list — that is the same answer
+  }
+  return { role: def.label, interested: true };
+}
+
+function startEnrollment(userId, { role, level, scheduleType, scheduleDays }) {
+  // A role has to be one that is actually authored. Refusing loudly beats the old
+  // behaviour of the server quietly substituting its own answer, which is how a learner
+  // ends up somewhere they did not choose with nothing saying so.
+  const roleKey = role || DEFAULT_ROLE;
+  if (!roles.isLive(roleKey)) {
+    const def = roles.getRole(roleKey);
+    throw new Error(def
+      ? `${def.label} isn't open yet — we're still building it.`
+      : `Unknown role: ${roleKey}`);
+  }
+  // Same for the level: every role carries its own rungs, and Data Analyst is the only
+  // one with four. Silently dropping someone to Junior is the bug this replaces.
+  const roleLevels = roles.levelsFor(roleKey);
+  if (level && !roleLevels.includes(level)) {
+    throw new Error(`${roles.getRole(roleKey).label} doesn't have a ${level} level.`);
+  }
   const existing = getEnrollment(userId);
   if (existing && existing.status !== 'ended') {
     // Re-enrolling used to return the old row and silently discard the level you just
@@ -9019,7 +9129,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       const graded = db.prepare("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'")
         .get(existing.id).c;
       if (graded > 0) {
-        throw new Error(`You're already enrolled as a ${levelLabel(existing.level)} and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
+        throw new Error(`You're already enrolled as a ${levelLabel(existing.level, existing.role)} and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
       }
       // No graded work: wipe the unstarted assignment and re-issue at the new level.
       db.prepare('DELETE FROM sim_tasks WHERE enrollment_id = ?').run(existing.id);
@@ -9027,7 +9137,7 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
       db.prepare('UPDATE sim_enrollments SET level = ? WHERE id = ?').run(level, existing.id);
       const fresh = getEnrollment(userId);
       addMessage(fresh.id, 'people_partner', PEOPLE_PARTNER_NAME,
-        `Your level has been changed to ${levelLabel(level)}. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
+        `Your level has been changed to ${levelLabel(level, existing.role)}. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
         null, 'Level updated');
       if (fresh.baseline_at) beginNextProject(fresh);
       return getEnrollment(userId);
@@ -9035,17 +9145,16 @@ function startEnrollment(userId, { level, scheduleType, scheduleDays }) {
     return existing;
   }
 
-  const role = 'data_analyst'; // only role built in P0
   const track = 'ic'; // manager track needs team assembly — P2
   const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
   const id = cryptoRandomId();
   db.prepare(`
     INSERT INTO sim_enrollments (id, user_id, role, level, track, schedule_type, schedule_days_json, status, trial_ends_at, checklist_json, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', ?, '{}', ?)
-  `).run(id, userId, role, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
+  `).run(id, userId, roleKey, level, track, scheduleType, JSON.stringify(scheduleDays || null), trialEndsAt, now());
 
   addMessage(id, 'people_partner', PEOPLE_PARTNER_NAME,
-    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${levelLabel(level)}. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
+    `Welcome to TenzorGrid! I'm ${PEOPLE_PARTNER_NAME} from People Ops. You're joining as a ${levelLabel(level, roleKey)}. Your Line Manager is Asha Rao — she'll get you started. Ping me any time about policy or onboarding.`);
   // Day one is the skill test, not the first task. The learner asked for this ordering
   // and their reasoning was better than mine: the test is the BASELINE for the skill
   // matrix. Without it, "your SQL improved" is a claim with nothing behind it.
@@ -10196,7 +10305,13 @@ function getState(userId) {
   } : null;
 
   return {
-    enrollment,
+    // The UI used to build these itself with `level === 'senior' ? 'Senior' : 'Junior'`,
+    // which read "Junior Data Analyst" to a Team Lead and a Manager. The title of the job
+    // somebody is doing is the engine's to state, not the template's to infer.
+    enrollment: Object.assign({}, enrollment, {
+      roleLabel: (roles.getRole(enrollment.role) || {}).label || 'Data Analyst',
+      levelTitle: levelLabel(enrollment.level, enrollment.role),
+    }),
     messages,
     tasks,
     roster: rosterList,
@@ -11660,18 +11775,13 @@ function timeTravelReset(userId, opts) {
 
   // Landing somewhere the tester did not ask for is worse than refusing, because they would
   // spend the next ten minutes testing the wrong level without noticing.
-  const level = (opts && opts.level) || enrollment.level;
-  if (!LEVELS.some((l) => l.key === level)) throw new Error(`Unknown level: ${level}`);
   const role = (opts && opts.role) || enrollment.role;
   if (!ROLE_CATALOG[role]) throw new Error(`Unknown role: ${role}`);
+  const level = (opts && opts.level) || enrollment.level;
+  if (!roles.levelsFor(role).includes(level)) throw new Error(`Unknown level: ${level}`);
 
   db.prepare('DELETE FROM sim_enrollments WHERE id = ?').run(enrollment.id);
-  startEnrollment(userId, { level, scheduleType, scheduleDays });
-  // startEnrollment only builds Data Analyst today; when a second role exists it will take
-  // the role too. Setting it here means the switcher is already honest about what it did.
-  if (role !== 'data_analyst') {
-    db.prepare('UPDATE sim_enrollments SET role = ? WHERE user_id = ?').run(role, userId);
-  }
+  startEnrollment(userId, { role, level, scheduleType, scheduleDays });
   return getState(userId);
 }
 
@@ -11773,7 +11883,7 @@ function timeTravelState(enrollment, projects) {
     // Built from the catalogue rather than hardcoded in the UI, so the picker grows on its
     // own the day a second role is added and nobody has to remember to update a dropdown.
     roles: Object.entries(ROLE_CATALOG).map(([key, r]) => ({ key, label: r.label })),
-    levels: LEVELS,
+    levels: levelsForRole(enrollment.role),
     role: enrollment.role,
     level: enrollment.level,
   };
@@ -12784,6 +12894,9 @@ module.exports = {
   completeChore,
 
   ROLE_CATALOG,
+  levelsForRole,
+  getCatalogue,
+  recordRoleInterest,
   startEnrollment,
   getEnrollment,
   getState,
