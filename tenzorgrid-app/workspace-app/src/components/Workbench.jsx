@@ -160,6 +160,18 @@ export default function Workbench({ taskId, onGraded }) {
 
   const schema = useMemo(() => schemaForCompletion(wb && wb.dataset), [wb]);
 
+  // Which tasks get the table list beside them. Anything the learner queries does; a
+  // write-up, an allocation and a sign-off over an email or a note do not.
+  const showSchema = useMemo(() => {
+    if (!wb) return false;
+    if (wb.tool === 'writeup' || wb.tool === 'assign') return false;
+    if (wb.tool === 'signoff') {
+      const kind = wb.signoff && wb.signoff.exhibit && wb.signoff.exhibit.kind;
+      return kind === 'sql' || kind === 'table';
+    }
+    return true;
+  }, [wb]);
+
   // The editor is created once the schema is known, so autocomplete has the real
   // tables from the first keystroke rather than after a refresh.
   useEffect(() => {
@@ -253,10 +265,13 @@ export default function Workbench({ taskId, onGraded }) {
       </div>
 
       {/* A write-up has no schema pane, so it gets the full width rather than an empty
-          220px column beside it. */}
+          220px column beside it. Same for an allocation, and for a sign-off whose exhibit
+          is an email or a note — those are read-and-decide tasks with no query in them,
+          and a table list beside them is 220px of nothing. A sign-off built on a query or
+          a result set keeps the pane, because there the schema is the argument. */}
       <div className={`grid grid-cols-1 min-h-[26rem] ${
-        (wb.tool === 'writeup' || wb.tool === 'assign') ? '' : 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]'}`}>
-        {wb.tool !== 'writeup' && wb.tool !== 'assign' && (
+        showSchema ? 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]' : ''}`}>
+        {showSchema && (
           <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
             <SchemaBrowser dataset={wb.dataset} onInsert={['python','choice','coach','assign','signoff'].includes(wb.tool) ? null : insertAtCursor} />
           </div>
