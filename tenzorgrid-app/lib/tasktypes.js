@@ -152,6 +152,107 @@ function gradeCoach(spec, answer) {
   };
 }
 
+// ---- Allocation -----------------------------------------------------------------------
+//
+// The first Team Lead slot: a week of work and the people to do it. This is the one thing
+// a lead does that an analyst never does, and it is unusually gradeable — an assignment is
+// right or wrong against constraints you can count, not against taste.
+//
+// Each item names who should do it, who could, and who must not with the reason. "Must
+// not" is the interesting column: it is where the leaver, the six-week joiner and the
+// person already at capacity live, and a lead who staffs one of them has made a decision
+// with a name attached to it.
+const ASSIGN_SCORE = { best: 100, acceptable: 60, other: 25, forbidden: 0 };
+
+function gradeAssign(spec, answer) {
+  const picks = (answer && answer.assignments) || {};
+  const byKey = Object.fromEntries(spec.team.map((m) => [m.key, m]));
+  const notes = [];
+  let total = 0;
+
+  for (const item of spec.items) {
+    const who = picks[item.key];
+    const person = byKey[who];
+    let band;
+    if (!who) band = 'other';
+    else if (item.forbidden && item.forbidden[who]) band = 'forbidden';
+    else if ((item.best || []).includes(who)) band = 'best';
+    else if ((item.acceptable || []).includes(who)) band = 'acceptable';
+    else band = 'other';
+    total += ASSIGN_SCORE[band];
+
+    const name = person ? person.name.split(' ')[0] : 'nobody';
+    if (band === 'forbidden') notes.push(`${item.label} → ${name}: ${item.forbidden[who]}`);
+    else if (band === 'other') notes.push(`${item.label} → ${name}. ${item.why}`);
+    else if (band === 'acceptable') notes.push(`${item.label} → ${name} works, but ${item.why}`);
+  }
+
+  let score = spec.items.length ? Math.round(total / spec.items.length) : 0;
+
+  // Capacity is a hard constraint and deserves to be felt as one. A lead who assigns four
+  // days of work to somebody with two has not made a plan, they have made a wish.
+  const load = {};
+  for (const item of spec.items) {
+    const who = picks[item.key];
+    if (who) load[who] = (load[who] || 0) + (item.days || 0);
+  }
+  const over = [];
+  for (const m of spec.team) {
+    if (load[m.key] && m.capacityDays && load[m.key] > m.capacityDays) {
+      over.push(`${m.name.split(' ')[0]} is carrying ${load[m.key]} days against ${m.capacityDays} available`);
+    }
+  }
+  if (over.length) {
+    score = Math.max(0, score - 20 * over.length);
+    notes.push(`Over capacity — ${over.join('; ')}. Somebody has to be told this does not fit, and it is better that it is you, today.`);
+  }
+
+  const unassigned = spec.items.filter((i) => !picks[i.key]);
+  if (unassigned.length) notes.push(`Left unassigned: ${unassigned.map((i) => i.label).join(', ')}.`);
+
+  if (!notes.length) notes.push(spec.whyRight || 'Everything staffed to somebody who can carry it, inside the time they actually have.');
+
+  return {
+    score,
+    feedback: notes.join('\n\n'),
+    skills: { delivery: score, businessLogic: score },
+    detail: { items: spec.items.length, over: over.length, unassigned: unassigned.length },
+  };
+}
+
+// ---- Sign-off -------------------------------------------------------------------------
+//
+// The second Team Lead slot: work you did not do, going out with your name on it.
+//
+// Weighted toward the call rather than the wording — the opposite of the coaching split.
+// A senior who phrases feedback badly has a bad afternoon; a lead who ships the wrong
+// number has a bad quarter, and the person who wrote it is not the one who answers for it.
+const SIGNOFF_SPLIT = { decision: 0.6, reply: 0.4 };
+
+function gradeSignoff(spec, answer) {
+  const picked = (answer && answer.picked) || [];
+  const reply = (answer && answer.reply) || '';
+
+  const d = gradeChoice(spec.decision, picked);
+  const r = gradeWriteup(spec.reply, reply);
+  const score = Math.round(d.score * SIGNOFF_SPLIT.decision + r.score * SIGNOFF_SPLIT.reply);
+
+  const parts = [`The call — ${d.score}/100`, d.feedback, `What you said — ${r.score}/100`, r.feedback];
+  if (d.score < 50 && r.score >= 70) {
+    parts.push('Well put, and it goes out wrong. Nobody downstream will be able to tell those apart.');
+  }
+  if (d.score >= 70 && r.score < 50) {
+    parts.push('Right call. The person who wrote it still has to understand why, or you will be making the same call again next week.');
+  }
+
+  return {
+    score,
+    feedback: parts.join('\n\n'),
+    skills: { delivery: d.score, communication: r.score, coaching: score, businessLogic: d.score },
+    detail: { decision: d.detail, reply: r.detail, decisionScore: d.score, replyScore: r.score },
+  };
+}
+
 // ---- Option order ---------------------------------------------------------------------
 //
 // Authored option lists put the correct answers first, because that is how a person writes
@@ -237,8 +338,33 @@ function presentCoach(spec, seed) {
   };
 }
 
+// The week as the learner sees it: the work, the people, and what each of them has on.
+// Who SHOULD do what never leaves the server.
+function presentAssign(spec) {
+  return {
+    prompt: spec.prompt,
+    context: spec.context || null,
+    team: spec.team.map((m) => ({
+      key: m.key, name: m.name, title: m.title,
+      capacityDays: m.capacityDays, note: m.note || null,
+    })),
+    items: spec.items.map((i) => ({ key: i.key, label: i.label, days: i.days || null, note: i.note || null })),
+  };
+}
+
+function presentSignoff(spec, seed) {
+  return {
+    from: spec.fromName || null,
+    fromTitle: spec.fromTitle || null,
+    prompt: spec.prompt,
+    exhibit: spec.exhibit || null,
+    decision: presentChoice(spec.decision, seed),
+    reply: presentWriteup(spec.reply),
+  };
+}
+
 module.exports = {
-  gradeChoice, gradeWriteup, gradeCoach,
-  presentChoice, presentWriteup, presentCoach,
+  gradeChoice, gradeWriteup, gradeCoach, gradeAssign, gradeSignoff,
+  presentChoice, presentWriteup, presentCoach, presentAssign, presentSignoff,
   shuffleSeeded, seedFrom,
 };

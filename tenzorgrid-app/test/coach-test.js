@@ -205,8 +205,9 @@ const coachKeys = [...new Set([...src.slice(TASKS_START, TASKS_END).matchAll(/\n
   // that file and importing back would be a cycle. This is the assertion that keeps the
   // copy honest — add a colleague and forget the guard, and this fails.
   const dsSrc = fs.readFileSync(path.join(ROOT, 'lib/datasets.js'), 'utf8');
-  const reserved = new Set([...(dsSrc.match(/const RESERVED_NAMES = new Set\(\[([\s\S]*?)\]\)/) || [])[1]
-    .matchAll(/'([^']+)'/g)].map((m) => m[1]));
+  const reservedBlock = (dsSrc.match(/const RESERVED_NAMES = new Set\(\[([\s\S]*?)\]\)/) || [])[1]
+    .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  const reserved = new Set([...reservedBlock.matchAll(/'([^']+)'/g)].map((m) => m[1]));
   const unguarded = roster.filter((p) => p.archetype !== 'line_manager' && !reserved.has(p.name));
   check('every colleague is named in the generator’s reserved list',
     unguarded.length === 0, unguarded.map((p) => p.name).join(','));

@@ -12,6 +12,7 @@ import PythonNotebook from './PythonNotebook.jsx';
 import ChartBuilder from './ChartBuilder.jsx';
 import JudgementTask from './JudgementTask.jsx';
 import CoachTask from './CoachTask.jsx';
+import { AssignTask, SignoffTask } from './LeadTasks.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -254,10 +255,10 @@ export default function Workbench({ taskId, onGraded }) {
       {/* A write-up has no schema pane, so it gets the full width rather than an empty
           220px column beside it. */}
       <div className={`grid grid-cols-1 min-h-[26rem] ${
-        wb.tool === 'writeup' ? '' : 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]'}`}>
-        {wb.tool !== 'writeup' && (
+        (wb.tool === 'writeup' || wb.tool === 'assign') ? '' : 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]'}`}>
+        {wb.tool !== 'writeup' && wb.tool !== 'assign' && (
           <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
-            <SchemaBrowser dataset={wb.dataset} onInsert={wb.tool === 'python' || wb.tool === 'choice' || wb.tool === 'coach' ? null : insertAtCursor} />
+            <SchemaBrowser dataset={wb.dataset} onInsert={['python','choice','coach','assign','signoff'].includes(wb.tool) ? null : insertAtCursor} />
           </div>
         )}
 
@@ -265,6 +266,10 @@ export default function Workbench({ taskId, onGraded }) {
           <PythonNotebook wb={wb} onGraded={onGraded} />
         ) : wb.tool === 'chart' ? (
           <ChartBuilder wb={wb} onGraded={onGraded} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
+        ) : wb.tool === 'assign' ? (
+          <AssignTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
+        ) : wb.tool === 'signoff' ? (
+          <SignoffTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : wb.tool === 'coach' ? (
           <CoachTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (wb.tool === 'choice' || wb.tool === 'writeup') ? (
