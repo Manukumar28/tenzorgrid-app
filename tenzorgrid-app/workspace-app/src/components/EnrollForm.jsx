@@ -125,7 +125,7 @@ function PitchDetail({ detail, level }) {
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
                 <Stat icon={CalendarDays} value={`${detail.week.days} working days`} label="one project, one week" />
-                <Stat icon={Layers} value={`${detail.week.tasks} tasks`} label={`about ${detail.week.hoursPerDay} hours a day`} />
+                <Stat icon={Layers} value={`${detail.week.tasks} tasks`} label={`about ${(lvl && lvl.hoursPerDay) || 2} hours a day`} />
                 <Stat icon={Layers} value={`${detail.week.activities} activities`} label="reading and training" />
                 <Stat icon={Layers} value={`${detail.week.situations} situations`} label="inbound — not all deserve a reply" />
               </div>
