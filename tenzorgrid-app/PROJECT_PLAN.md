@@ -775,6 +775,48 @@ after month one.** Three consequences, all of which change what gets built next:
   - `product_events` had invites travelling backwards in time, events landing in
     zero-duration sessions, and activation uncensored where retention was censored.
 
+- **Phase 12 — ✅ SHIPPED. The rung does something, not just asks something harder.**
+  Above Junior, a day was six analysis tasks — the questions got harder, the *act* never
+  changed. Nobody trained anyone, nobody staffed anything. Measured first, which changed
+  the plan: the day already scaled (junior 2.34 h/day against a target of 2, senior 2.91,
+  lead 3.51, manager 3.91), so responsibility had to **displace** analysis rather than be
+  added on top. The user's call: compose the six.
+
+  | Level | Analysis | Responsibility | Target | Measured |
+  | --- | --- | --- | --- | --- |
+  | Junior | 6 | — | 2.0 | 2.34 |
+  | Senior | 5 | 1 — coaching | 3.0 | **3.00** |
+  | Lead | 4 | 2 — staffing + sign-off | 3.25 | **3.27** |
+  | Manager | 3 | 3 — not built yet | 3.5 | 3.91 |
+
+  - **Senior: coaching.** Ishaan Varghese, four months in, sends work that is wrong in
+    ways he cannot see. Graded 50/50 on what you spotted (the judgement grader, including
+    "ticking every box scores zero") and what you said (prose against a rubric that
+    penalises handing over the corrected query). 20 tasks.
+  - **Lead: staffing and sign-off.** A team of four with capacity in days, and work that
+    does not fit. `gradeAssign` is the one genuinely new grader — best / acceptable /
+    forbidden per item plus a capacity penalty, all deterministic. Sign-off is 60/40
+    toward the call rather than the wording: a senior who phrases feedback badly has a bad
+    afternoon, a lead who ships the wrong number has a bad quarter. 40 tasks.
+  - **The team is the cast, made real.** Ravi Menon was named 53 times in Lead task text
+    and could not be reached — the Phase 6 gap, reopened a level up. He, Nadia Baig and
+    Zubin Wadia are reports from lead. Ishaan carries over from senior: visible from the
+    start, a report only from lead, so the *relationship* changes rather than the person.
+  - **Two axes that appear where they can be moved** — Coaching from senior, Delivery from
+    lead. An axis nobody can move reports a permanent zero on a skill never offered, which
+    was the Data Viz hole before chart tasks existed.
+  - **A real collision the new suites caught**: `hr_core` draws names at random and had
+    generated an employee called *Meera Pillai*, who is also the Comms colleague. The
+    generator now reserves the roster's names and substitutes without consuming a PRNG
+    step, so every salary and date is byte-identical. `test/coach-test.js` and
+    `test/lead-test.js` keep the reserved list in step with the cast.
+
+  **Manager is the one left.** 3 analysis + 3 responsibility — team through leads,
+  portfolio, and the people decisions — and its day still measures 3.91 against 3.5 until
+  that lands. `analytics_ops` already holds a complete team (14 named analysts with levels,
+  day rates, leave dates, 384 requests, 32 queued and unassigned) and is currently only
+  ever queried, never staffed.
+
 - **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
   interview defence — the last three of the user's thirteen points that are not yet built.
 

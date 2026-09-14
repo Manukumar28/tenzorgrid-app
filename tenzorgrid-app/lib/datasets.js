@@ -69,6 +69,8 @@ const RESERVED_NAMES = new Set([
   'Neha Kulkarni', 'Vikram Nair', 'Rahul Verma', 'Sneha Joshi', 'Arjun Rao',
   'Diya Chandra', 'Meera Pillai', 'Aarav Bose', 'Ishaan Varghese',
   'Ravi Menon', 'Priya Menon', 'Rohan Desai',
+  // The Team Lead's reports.
+  'Nadia Baig', 'Zubin Wadia',
 ]);
 
 // Drawn only when a generated name collides, and drawn in order rather than at random, so

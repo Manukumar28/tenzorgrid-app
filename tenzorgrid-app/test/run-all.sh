@@ -20,7 +20,7 @@ fails=0; total=0; suites=0; walks=0
 SUITES="a1-migration-test chart-test content-gate-test dataset-test day-test dayend-test
         fullday-test gate-test guard-test jumble-test mail-test promotion-test
         reconcile-test senior-test skilltest-test standup-test team-test timetravel-test
-        wb-test week-test py-test negotiation-test backup-test roles-test coach-test"
+        wb-test week-test py-test negotiation-test backup-test roles-test coach-test lead-test"
 
 # Every project the catalogue calls finished. A project with no authored activities is a
 # stub and is gated out of the product elsewhere; it is not walked here.

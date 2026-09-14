@@ -108,8 +108,52 @@ const ROSTER = [
   // the Business Stakeholder in analytics_ops as a team lead being assessed.
   { archetype: 'junior_analyst', name: 'Ishaan Varghese', title: 'Junior Data Analyst', gender: 'male',
     helpsWith: ['his own work', 'what he has already tried', 'where he is stuck'],
-    about: 'Joined four months ago. Quick, eager, and does not yet know what he does not know — which is what you are for.' },
+    about: 'Joined four months ago. Quick, eager, and does not yet know what he does not know — which is what you are for.',
+    // He follows the learner up the ladder. Visible from the beginning, because the senior
+    // track coaches him; a direct report only from lead, where you decide his week rather
+    // than comment on it.
+    reportsToLearnerFrom: 'lead' },
+
+  // ---- The team, from Team Lead upward ------------------------------------------------
+  //
+  // Ravi Menon was named fifty-three times across the Team Lead task text and did not exist
+  // anywhere the learner could reach — the same gap Phase 6 closed for Rahul and Sneha,
+  // reopened one level up. He is a real colleague now, and from lead he is a report.
+  //
+  // `reportsToLearnerFrom` is the level at which somebody stops being a colleague and
+  // starts being yours. Below it they are not shown at all, because a junior with three
+  // direct reports on their Team tab is a promise the product does not keep.
+  { archetype: 'retail_analyst', name: 'Ravi Menon', title: 'Retail Analyst', gender: 'male',
+    helpsWith: ['the trading pack', 'store performance', 'what buying already believes'],
+    about: 'Six years in retail analytics and fast with it. Gets to an answer before anyone else and is loose about which definition he used to get there.',
+    reportsToLearnerFrom: 'lead', visibleFrom: 'lead' },
+  { archetype: 'data_quality_analyst', name: 'Nadia Baig', title: 'Analyst, Data Quality', gender: 'female',
+    helpsWith: ['duplicates', 'what the source system does', 'why a number moved'],
+    about: 'Slow, thorough, and right. If a figure has changed between two reports she is the one who can tell you which of them was wrong.',
+    reportsToLearnerFrom: 'lead', visibleFrom: 'lead' },
+  { archetype: 'graduate_analyst', name: 'Zubin Wadia', title: 'Graduate Analyst', gender: 'male',
+    helpsWith: ['anything you give him', 'asking early'],
+    about: 'Six weeks in. Enthusiastic, still learning what "finished" means, and will take on whatever you hand him whether or not he can carry it.',
+    reportsToLearnerFrom: 'lead', visibleFrom: 'lead' },
 ];
+
+const LEVEL_RANK = { junior: 0, senior: 1, lead: 2, manager: 3 };
+
+// Who the learner can see at their level.
+//
+// Visibility and reporting are deliberately separate. Ishaan is visible from day one —
+// the senior track spends a month coaching him — and only becomes a direct report at lead.
+// The three retail analysts are neither until the learner is a lead, because a junior with
+// three direct reports on their Team tab is a promise the product does not keep.
+function rosterForLevel(level) {
+  const at = LEVEL_RANK[level || 'junior'] || 0;
+  return ROSTER.filter((p) => !p.visibleFrom || at >= LEVEL_RANK[p.visibleFrom]);
+}
+
+function reportsForLevel(level) {
+  const at = LEVEL_RANK[level || 'junior'] || 0;
+  return ROSTER.filter((p) => p.reportsToLearnerFrom && at >= LEVEL_RANK[p.reportsToLearnerFrom]);
+}
 
 // Everyone who is not one of the three core characters. These are the people a learner
 // can befriend and ask for help.
@@ -117,13 +161,13 @@ const COLLEAGUES = ROSTER.filter((r) => !r.core);
 
 // Assigns each roster member a stable avatar from their gender's pool, guaranteeing no
 // two characters shown together end up with the same picture.
-function rosterWithAvatars(enrollmentId) {
+function rosterWithAvatars(enrollmentId, level) {
   const used = new Set();
   const contacts = enrollmentId
     ? Object.fromEntries(db.prepare('SELECT * FROM sim_contacts WHERE enrollment_id = ?').all(enrollmentId)
         .map((c) => [c.archetype, c]))
     : {};
-  return ROSTER.map((p) => {
+  return rosterForLevel(level).map((p) => {
     const c = contacts[p.archetype];
     return {
       ...p,
@@ -425,15 +469,15 @@ const PROJECT_CATALOG = {
       datasetKey: 'retail_sales',
       taskKeys: [
         // Day 1 — the headline counts refunds as transactions.
-        'ta-101', 'ta-102', 'ta-103', 'ta-104', 'ta-105', 'ta-106',
+        'tl-101', 'ta-102', 'ta-103', 'ta-104', 'tl-102', 'ta-106',
         // Day 2 — the store ranking is a ranking of trading days.
-        'ta-110', 'ta-111', 'ta-112', 'ta-113', 'ta-114', 'ta-115',
+        'ta-110', 'tl-103', 'ta-112', 'ta-113', 'ta-114', 'tl-104',
         // Day 3 — the wobble. The estate's one growing store is a double-loaded month.
-        'ta-120', 'ta-121', 'ta-122', 'ta-123', 'ta-124', 'ta-125',
+        'ta-120', 'ta-121', 'tl-105', 'ta-123', 'tl-106', 'ta-125',
         // Day 4 — rebuild it like for like, and refuse to name a cause you cannot show.
-        'ta-130', 'ta-131', 'ta-132', 'ta-133', 'ta-134', 'ta-135',
+        'ta-130', 'tl-107', 'ta-132', 'ta-133', 'tl-108', 'ta-135',
         // Day 5 — the pack, the sign-off, and what changes about how this gets produced.
-        'ta-140', 'ta-141', 'ta-142', 'ta-143', 'ta-144', 'ta-145',
+        'ta-140', 'ta-141', 'tl-109', 'tl-110', 'ta-144', 'ta-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 42000,
@@ -455,16 +499,16 @@ const PROJECT_CATALOG = {
       datasetKey: 'retail_sales',
       taskKeys: [
         // Day 1 — there is no margin column, and unit_cost is the cost today.
-        'tb-101', 'tb-102', 'tb-103', 'tb-104', 'tb-105', 'tb-106',
+        'tl-201', 'tb-102', 'tb-103', 'tb-104', 'tb-105', 'tl-202',
         // Day 2 — Equipment is two thirds of revenue at the worst rate in the book.
-        'tb-110', 'tb-111', 'tb-112', 'tb-113', 'tb-114', 'tb-115',
+        'tb-110', 'tl-203', 'tb-112', 'tb-113', 'tl-204', 'tb-115',
         // Day 3 — the wobble. The naive cost understates margin UNEVENLY, so it distorts
         // the comparison rather than shifting it, and invents an improving trend.
-        'tb-120', 'tb-121', 'tb-122', 'tb-123', 'tb-124', 'tb-125',
+        'tb-120', 'tl-205', 'tb-122', 'tl-206', 'tb-124', 'tb-125',
         // Day 4 — November: 55% more units, 39% more revenue, 12% more margin.
-        'tb-130', 'tb-131', 'tb-132', 'tb-133', 'tb-134', 'tb-135',
+        'tb-130', 'tl-207', 'tb-132', 'tb-133', 'tl-208', 'tb-135',
         // Day 5 — whether to do it again, and what to instrument before anyone does.
-        'tb-140', 'tb-141', 'tb-142', 'tb-143', 'tb-144', 'tb-145',
+        'tb-140', 'tb-141', 'tb-142', 'tl-209', 'tb-144', 'tl-210',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 46000,
@@ -486,17 +530,17 @@ const PROJECT_CATALOG = {
       datasetKey: 'retail_sales',
       taskKeys: [
         // Day 1 — seven products no store has ever carried, invisible to an inner join.
-        'tc-101', 'tc-102', 'tc-103', 'tc-104', 'tc-105', 'tc-106',
+        'tc-101', 'tc-102', 'tl-301', 'tc-104', 'tc-105', 'tl-302',
         // Day 2 — ten of sixty-one lines carry 55% of the margin, and a delist rule that
         // cannot see the worst lines in the book.
-        'tc-110', 'tc-111', 'tc-112', 'tc-113', 'tc-114', 'tc-115',
+        'tc-110', 'tl-303', 'tc-112', 'tc-113', 'tl-304', 'tc-115',
         // Day 3 — the wobble. Stock cover is computable and meaningless: every product
         // holds about twenty units whether it sells 234 a year or 482.
-        'tc-120', 'tc-121', 'tc-122', 'tc-123', 'tc-124', 'tc-125',
+        'tc-120', 'tl-305', 'tc-122', 'tc-123', 'tl-306', 'tc-125',
         // Day 4 — distribution against performance, and what a delist actually saves.
-        'tc-130', 'tc-131', 'tc-132', 'tc-133', 'tc-134', 'tc-135',
+        'tc-130', 'tc-131', 'tl-307', 'tc-133', 'tl-308', 'tc-135',
         // Day 5 — the paper, the sign-off, and what would make the next one answerable.
-        'tc-140', 'tc-141', 'tc-142', 'tc-143', 'tc-144', 'tc-145',
+        'tc-140', 'tc-141', 'tl-309', 'tl-310', 'tc-144', 'tc-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 44000,
@@ -518,16 +562,16 @@ const PROJECT_CATALOG = {
       datasetKey: 'retail_sales',
       taskKeys: [
         // Day 1 — three submissions, three correct answers to three unstated questions.
-        'td-101', 'td-102', 'td-103', 'td-104', 'td-105', 'td-106',
+        'td-101', 'td-102', 'tl-401', 'td-104', 'td-105', 'tl-402',
         // Day 2 — the bridge, which has to reconcile to the rupee.
-        'td-110', 'td-111', 'td-112', 'td-113', 'td-114', 'td-115',
+        'td-110', 'tl-403', 'td-112', 'td-113', 'tl-404', 'td-115',
         // Day 3 — the wobble. The learner's own earlier correction was right for a
         // comparison and wrong for a total, and cost three and a half lakh of real trade.
-        'td-120', 'td-121', 'td-122', 'td-123', 'td-124', 'td-125',
+        'tl-405', 'tl-406', 'td-122', 'td-123', 'td-124', 'td-125',
         // Day 4 — an estimate for next year that has to survive being asked what it assumes.
-        'td-130', 'td-131', 'td-132', 'td-133', 'td-134', 'td-135',
+        'tl-407', 'td-131', 'td-132', 'tl-408', 'td-134', 'td-135',
         // Day 5 — the pack, the board question, and the standard that stops this recurring.
-        'td-140', 'td-141', 'td-142', 'td-143', 'td-144', 'td-145',
+        'td-140', 'tl-409', 'td-142', 'td-143', 'tl-410', 'td-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 52000,
@@ -952,15 +996,19 @@ const GRADE_BANDS = [
 // The five axes the Skill Matrix (Overview tab) reports on. A task only ever moves the
 // axes it actually exercises — da-001 is a SQL task, so python/dataViz genuinely stay at
 // 0 until a task exists that touches them. No axis is ever synthesized.
-const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic', 'coaching'];
-const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic', coaching: 'Coaching' };
+const SKILL_AXES = ['sql', 'python', 'dataViz', 'communication', 'businessLogic', 'coaching', 'delivery'];
+const SKILL_AXIS_LABEL = { sql: 'SQL', python: 'Python', dataViz: 'Data Viz', communication: 'Communication', businessLogic: 'Business Logic', coaching: 'Coaching', delivery: 'Delivery' };
 
 // Which axes a learner can actually move at their level. Coaching arrives with the senior
 // track, because that is where the first task exists that could ever score it — and an
 // axis nobody can move is worse than a missing one: it reports a permanent zero on a skill
 // the learner was never given a chance to show. That was exactly the Data Viz hole before
 // chart tasks existed, and it is not being repeated.
-const LEVEL_ONLY_AXES = { coaching: ['senior', 'lead', 'manager'] };
+const LEVEL_ONLY_AXES = {
+  coaching: ['senior', 'lead', 'manager'],
+  // Delivery — staffing a week and owning what ships — arrives with the team, at lead.
+  delivery: ['lead', 'manager'],
+};
 
 function axesForLevel(level) {
   return SKILL_AXES.filter((axis) => {
@@ -4510,6 +4558,1579 @@ const TASKS = {
       },
     },
     estHours: 0.5, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Team Lead: staffing the week, and owning what leaves the team ----------------
+  //
+  // Two of the six every day from the lead track onward. The analyst slots ask what the
+  // number is; these ask who does the work and whether it goes out.
+  //
+  // The team is the cast, made real. Ravi Menon was named fifty-three times across this
+  // level's task text and could not be reached; he is a report now. Ishaan carries over
+  // from the senior track, where the learner spent a month coaching him — the relationship
+  // changes rather than the person.
+  //
+  // Capacity is in days and it is deliberately tight. A week where everything fits is a
+  // week that teaches nothing.
+  'tl-101': {
+    title: 'Staff the trading review week',
+    hint: 'Read what each of them is already carrying before you read the list of work. Two of these have a name on them before you start.',
+    brief: "Your first week as the lead on this. Five pieces of work, four people, and a board deadline on Friday. Decide who does what. You are graded on whether the plan survives contact with the week, not on whether it looks balanced.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the week. Every piece of work needs an owner.',
+      context: 'Half-year trading review. The pack goes to the board on Friday. Ravi has already told Priya he would do the headline numbers, which is not the same as you having decided it.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 4,
+          note: 'Six years in retail. Fastest person on the team and the loosest about which definition he used. One day already committed to the buying meeting.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 5,
+          note: 'Slow and right. If two reports disagree she can tell you which one is wrong.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 5,
+          note: 'Seven months in now. Solid on the query, still learning what a finding is.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 5,
+          note: 'Six weeks in. Will say yes to anything you give him.' },
+      ],
+      items: [
+        { key: 'headline', label: 'The headline revenue figures for the board pack', days: 2,
+          best: ['ravi'], acceptable: ['nadia'],
+          forbidden: { zubin: 'Six weeks in, going straight to the board with no one between him and it. If it is wrong, it is wrong in the room.' },
+          why: 'It is the highest-visibility piece and the one with the most prior context. Ravi has done it before and has already half-started it.' },
+        { key: 'duplicates', label: 'Chase the duplicate transaction loading at Ashok Nagar', days: 2,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ravi: 'He is the one whose star-store finding the duplicates would overturn. Asking him to audit his own headline is not a check.' },
+          why: 'It is a data-quality question about which of two loads is real, which is exactly what Nadia is for.' },
+        { key: 'estate', label: 'Rebuild the store list with opening and closing dates', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Small, bounded, checkable, and it teaches the estate to whoever does it. The right size for six weeks in.' },
+        { key: 'returns', label: 'Return rates by category', days: 1,
+          best: ['ishaan'], acceptable: ['zubin', 'nadia'],
+          forbidden: {},
+          why: 'A real analysis with a low blast radius — the level Ishaan should be working at now.' },
+        { key: 'chart', label: 'The trading chart for the pack', days: 1,
+          best: ['ishaan'], acceptable: ['ravi', 'zubin'],
+          forbidden: {},
+          why: 'Presentation work that somebody senior will check before Friday anyway.' },
+      ],
+      whyRight: 'Everything staffed to somebody who can carry it, the audit kept away from the person whose finding it checks, and nobody over their days.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tl-102': {
+    title: "Ravi's headline, and your name on it",
+    hint: 'He has answered a different question from the one the board asked. Decide whether that is a rewrite or a conversation.',
+    brief: "Ravi has sent through the headline figure for the pack. It is fast, it is confident, and the definition underneath it is not the one the board asked for. It goes out under your name on Friday.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide what happens to this, then tell him.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Headline for the pack:\n\n  Half-year revenue: gross, all stores, all transactions.\n  Up 6.1% on the prior half.\n\nI've used gross because that's what we always show and it's the bigger number, which is\nthe story Priya wants. Net is in the appendix if anyone asks.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'hold', correct: true, label: 'Hold it — the board asked for net, and "the bigger number" is not a reason', why: 'The pack answers a question the board set. Choosing the measure because it flatters is the thing the whole review exists to stop, and it is your name on the slide.' },
+          { key: 'ship', correct: false, label: 'Ship it — gross is what we always show', why: 'Precedent is not a definition. "We always show it" is how a definition nobody agreed becomes the standard.' },
+          { key: 'both', correct: false, label: 'Ship it with net added beside it', why: 'Two headline numbers is not a headline. Putting both in the top line moves the decision to the reader, which is the job you are being paid to do.' },
+          { key: 'rewrite', correct: false, label: 'Rewrite it yourself tonight', why: 'It gets Friday fixed and teaches Ravi that sending you something half-right is a way to get out of finishing it.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You held it, because the measure was chosen for the size of the number rather than the question.',
+      },
+      reply: {
+        prompt: 'Tell Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'which', label: 'Names net as the measure the board asked for', markers: ['net', 'board asked', 'asked for', 'brief', 'definition', 'the question'], why: 'He needs the specific instruction, not a principle about rigour.' },
+          { key: 'reason', label: 'Addresses "the bigger number" directly', markers: ['bigger', 'flatter', 'story', 'because it', 'not a reason', 'why we', 'chose'], why: 'The measure was picked for its size. Left unchallenged, he will do it again in a room where you are not there.' },
+          { key: 'owner', label: 'Makes clear whose name is on it', markers: ['my name', 'our name', 'I sign', 'I own', 'goes out under', 'I carry', 'answer for'], why: 'This is the difference between senior and lead, and he should hear it once, plainly.' },
+          { key: 'time', label: 'Says what happens now, given Friday', markers: ['Friday', 'today', 'tomorrow', 'by ', 'time', 'when', 'back to me'], why: 'A hold with no new deadline is how a pack misses a board.' },
+        ],
+        whyRight: 'You made the call, gave him the reason, and said when you need it back.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tl-103': {
+    title: 'Nadia has found something, and the week has to move',
+    hint: 'One piece of work just got bigger and one just became pointless. Move the days, do not add them.',
+    brief: "Nadia has confirmed the Ashok Nagar duplicates are real and it is a bigger job than the day you gave it. Something has to give, and everything still lands on Friday.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Re-staff what is left of the week.',
+      context: 'It is Tuesday. Nadia needs two more days on the duplicate audit, not one. The headline is on hold pending it. Three days of the week remain for everyone.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 3, note: 'Three days left. Headline is blocked until the duplicates are settled.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 1, note: 'Two of her three remaining days are now the duplicate audit.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 3, note: 'Returns analysis finished early.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 3, note: 'Estate list done and it was right.' },
+      ],
+      items: [
+        { key: 'rework', label: 'Rebuild the headline once the duplicates are settled', days: 2,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: { nadia: 'She has one day and she is the audit. Giving her the rebuild too is how both slip.' },
+          why: 'It is his figure and he has the context; the rebuild should sit with the person who will have to defend it.' },
+        { key: 'trading', label: 'Revenue per trading day, now the estate list exists', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'He built the estate list, so he already knows which stores were open when. The obvious next step for him.' },
+        { key: 'brief', label: 'Write the note telling Priya the headline is moving', days: 1,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: { zubin: 'Six weeks in, writing to the Head of Product about a slipping board figure. That note is yours or a senior’s.' },
+          why: 'Ishaan can draft it and you will edit it, which is how he learns to write upward.' },
+        { key: 'sanity', label: 'Check the prior-half comparison uses the same store set', days: 1,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'It is the one day she has and it is the check most likely to find the next problem.' },
+      ],
+      whyRight: 'You moved days rather than inventing them, kept the audit and the rebuild apart, and did not send the graduate to the Head of Product.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-104': {
+    title: "Zubin's estate list is finished, or he thinks it is",
+    hint: 'Three stores in this estate changed state inside the reporting window. Count how many his list accounts for.',
+    brief: "Zubin has sent the store list back and is pleased with it. Everything downstream this week uses it. Decide whether it is usable as it stands.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Zubin Wadia', fromTitle: 'Graduate Analyst',
+      prompt: 'The whole week keys off this list. Decide, then tell him.',
+      exhibit: {
+        kind: 'note', from: 'Zubin Wadia, Graduate Analyst',
+        body: "Store list rebuilt — 13 stores, one row each, with city, region and format.\n\nI left out opened_on and closed_on because every store in the sales data has sales in it,\nso they're all trading. Cleaner without two columns nobody uses.\n\nDone and handed to Ravi.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'back', correct: true, label: 'Send it back — the dates are the entire point of the list', why: 'Sector 29 opened in October and Salt Lake in February, both inside the window; Park Street closed in January. Without those dates every per-store comparison this week silently treats a four-month store as a full-year one.' },
+          { key: 'accept', correct: false, label: 'Accept it — the dates can be joined on later', why: 'Ravi already has it. "Later" is after the comparison has been built on it, which is the expensive time to find out.' },
+          { key: 'fixit', correct: false, label: 'Add the columns yourself, it takes two minutes', why: 'It does take two minutes, and it teaches him that "done" is whatever he decides it is. He is six weeks in — this is exactly when that gets set.' },
+          { key: 'escalate', correct: false, label: 'Raise it with Asha as a quality problem', why: 'A graduate leaving out two columns is a coaching moment, not an escalation. Taking it upward would be a disproportionate thing to do to somebody in week six.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You sent it back, because the columns he removed are the ones the week depends on.',
+      },
+      reply: {
+        prompt: 'Tell Zubin.',
+        to: 'Zubin Wadia', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'why', label: 'Names a store that makes the dates matter', markers: ['Sector 29', 'Salt Lake', 'Park Street', 'opened', 'closed', 'part of the', 'mid-year', 'not open all'], why: 'The abstract rule will not stick. One store that would be misread makes it obvious for good.' },
+          { key: 'reasoning', label: 'Takes his reasoning seriously rather than overruling it', markers: ['you thought', 'your reasoning', 'makes sense', 'why you', 'fair', 'see why', 'reasonable'], why: '"Every store has sales, so they all trade" is a sensible inference from what he could see. Telling him it was stupid teaches him not to reason.' },
+          { key: 'told', label: 'Deals with the fact Ravi already has it', markers: ['Ravi', 'already', 'handed', 'tell him', 'let him know', 'pull it back'], why: 'The work is downstream already. Correcting the file without correcting the person holding it fixes nothing.' },
+          { key: 'finished', label: 'Says something about what "finished" means', markers: ['finished', 'done', 'complete', 'check with', 'before you hand', 'next time', 'ask'], why: 'This is the actual lesson of week six, and it will save both of you a dozen of these.' },
+        ],
+        whyRight: 'You sent it back with a reason he can see, respected the thinking behind it, and dealt with the copy already downstream.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 2, difficulty: 'medium',
+  },
+
+  'tl-105': {
+    title: 'Wednesday: the duplicates are real',
+    hint: 'One person on this team has just been proved wrong in public. Where you put them next is a decision, not an afterthought.',
+    brief: "Nadia's audit is in and Ravi's star store is a double load. The week's work has to be re-cut again, and one of the pieces is telling the buying team the number they have been using since Monday is wrong.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff what is left, including the awkward part.',
+      context: 'Wednesday. Ashok Nagar was loaded twice for three months. Ravi built the "star store" finding on it and has already mentioned it to buying. Two days left before the pack is due.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: 'His finding. He knows by now.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: 'Audit finished. Knows exactly which rows are duplicated.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: 'Free from tomorrow.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 2, note: 'Estate list now correct.' },
+      ],
+      items: [
+        { key: 'correct', label: 'Recompute the half-year with the duplicates removed', days: 2,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { ravi: 'He built the number that is wrong. Having him produce the correction invites exactly the question you cannot answer in the room.' },
+          why: 'It has to be done by somebody with no stake in which way it comes out.' },
+        { key: 'tellbuying', label: 'Tell buying the star-store number is withdrawn', days: 1,
+          best: ['ravi'], acceptable: [],
+          forbidden: { zubin: 'Six weeks in, retracting a number to another function. That is not his to carry.', ishaan: 'It is not his finding and not his relationship. Sending him would read as the team hiding behind a junior.' },
+          why: 'He told them. He retracts it, with you standing behind him — which is both the right thing and the only version that keeps his credibility.' },
+        { key: 'method', label: 'Write down how we detect a double load next time', days: 1,
+          best: ['zubin'], acceptable: ['nadia', 'ishaan'],
+          forbidden: {},
+          why: 'Documenting the check is bounded work with real value, and it is how somebody in week six learns what the team actually cares about.' },
+        { key: 'pack', label: 'Rebuild the affected pack slides', days: 1,
+          best: ['ishaan'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'Mechanical once the corrected numbers exist, and the right size for him.' },
+      ],
+      whyRight: 'The correction went to somebody with no stake in it, the retraction went to the person who made the claim, and nobody junior was sent to carry someone else’s mistake.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-106': {
+    title: 'Ravi wants to bury it in a footnote',
+    hint: 'Ask what a reader who only reads the headline would come away believing.',
+    brief: "Ravi has accepted the duplicate finding and proposed how to handle it in the pack. His version is technically complete and practically invisible. It is your call.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide how this gets reported, then reply to him.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Proposal for the duplicate issue:\n\nKeep the trading slide as it is with the corrected total, and add a footnote:\n\n  \"Ashok Nagar figures restated following a data loading review.\"\n\nThat's accurate and it doesn't derail the whole pack over one store. Buying already know\nfrom our conversation, so nobody is being misled.",
+      },
+      decision: {
+        prompt: 'What goes in the pack?',
+        multi: false,
+        options: [
+          { key: 'surface', correct: true, label: 'Surface it — the restatement changes a ranking the board will act on', why: 'Ashok Nagar was presented as the star of the half. Removing it from that position is the finding, and a footnote is where findings go to not be read.' },
+          { key: 'footnote', correct: false, label: 'Ship it as Ravi proposes', why: 'Accurate and invisible. Every word is true and a reader of the headline would still come away believing the wrong thing.' },
+          { key: 'drop', correct: false, label: 'Drop the store from the pack entirely', why: 'Removing the inconvenient store is worse than the footnote — now the correction has no trace at all.' },
+          { key: 'delay', correct: false, label: 'Ask the board to defer the trading item to next month', why: 'Deferring a board item because one store was double-loaded spends credibility you will want later, and the corrected numbers are ready.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You surfaced it, because the correction changes what the board would decide rather than just what the total is.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'reader', label: 'Frames it around what a reader takes away', markers: ['reader', 'takes away', 'headline', 'believe', 'come away', 'skim', 'room', 'what they'], why: 'The test is not whether the pack is accurate — it is what somebody believes after reading it. That standard generalises to everything else he writes.' },
+          { key: 'ranking', label: 'Names the ranking as the thing that changed', markers: ['star', 'rank', 'top', 'best', 'position', 'league', 'decision'], why: 'The total moving a little is a footnote. A store leaving the top of the table is not.' },
+          { key: 'notblame', label: 'Does not relitigate whose fault it was', markers: ['not about', "isn't about", 'blame', 'happens', 'move on', 'from here', 'next'], why: 'He has already retracted it to another function this week. Making the reporting decision into a second punishment gets you a team that hides problems.' },
+          { key: 'how', label: 'Says concretely where it goes instead', markers: ['slide', 'on the', 'in the body', 'up front', 'main', 'alongside', 'note in'], why: '"Surface it" is not an instruction anyone can execute. Where it goes is the instruction.' },
+        ],
+        whyRight: 'You made the call on what a reader would believe, named what actually changed, and kept it about the pack rather than about him.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-107': {
+    title: 'Thursday, and somebody is going to miss Friday',
+    hint: 'You cannot fit it. Decide what does not happen and who finds out today rather than on Friday morning.',
+    brief: "Four things left, two days, and the arithmetic does not work. Staff what fits. What you leave unassigned is the decision being marked.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Two days left. Staff what fits, and leave what does not.',
+      context: 'Thursday morning. Everything below is wanted by Friday. Between them the team has six days; the list is eight. Leaving something unstaffed is a legitimate answer here if you have decided it deliberately.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 1, note: 'Out Friday.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 1, note: 'Induction Friday morning, half a day gone.' },
+      ],
+      items: [
+        { key: 'final', label: 'Final corrected pack numbers', days: 2,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'One day, half of it induction, and it is the number the board reads.' },
+          why: 'The pack is the deadline. If one thing lands, it is this.' },
+        { key: 'tie', label: 'Check the pack ties to the corrected total', days: 1,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { ravi: 'He is producing the numbers. The person who made them cannot be the person who checks they tie.' },
+          why: 'It is the last chance to catch an arithmetic break before the board sees it, and it needs someone other than the author.' },
+        { key: 'regional', label: 'Regional split for the appendix', days: 1,
+          best: ['ishaan'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'Appendix work. Useful, bounded, and nobody dies if it is thin.' },
+        { key: 'nextq', label: 'First look at next quarter’s trading plan', days: 2,
+          best: [], acceptable: [],
+          forbidden: { ravi: 'It is not due Friday and the pack is.', nadia: 'One day and she is the tie-out.', ishaan: 'It would come at the cost of the appendix, which somebody has actually asked for.', zubin: 'Half a day, and this is open-ended work with no deadline pressure behind it.' },
+          why: 'Nothing about next quarter has to happen this week. This is the one to leave, and to say out loud that you are leaving it.' },
+      ],
+      whyRight: 'You staffed the deadline, kept the tie-out away from the author, and left the piece with no deadline unstaffed on purpose.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-108': {
+    title: 'Ishaan wants to know why Ravi got the headline',
+    hint: 'He is not complaining. He is asking what he has to do to be trusted with it, and that deserves a real answer.',
+    brief: "Ishaan has asked you, privately and reasonably, why the visible work keeps going to Ravi. You coached him for a month before this. Decide how to handle it and answer him.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ishaan Varghese', fromTitle: 'Junior Data Analyst',
+      prompt: 'Decide what to do about this, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Can I ask something — not a complaint.\n\nEvery week the headline goes to Ravi and I get the appendix or the chart. I understand\nwhy in a board week. But I've been here seven months and I don't know what I'd have to\ndo to be handed something that matters.\n\nIs there something specific I'm not doing?",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'named', correct: true, label: 'Give him a specific piece of visible work, with a date, and say what has to go right', why: 'The question is answerable and he has earned an answer. A named piece of work with a date is the only reply that is not a platitude.' },
+          { key: 'soon', correct: false, label: 'Tell him it is coming and to keep going', why: 'Seven months of "keep going" is how you lose somebody who is trying. He asked for specifics precisely because he has already had this answer.' },
+          { key: 'ready', correct: false, label: 'Explain honestly that he is not ready yet', why: 'It might even be true, but stated without a route it is a verdict rather than feedback — and on this week’s evidence it is not obviously true.' },
+          { key: 'swap', correct: false, label: 'Give him the next headline instead of Ravi', why: 'Reassigning the highest-stakes piece to answer a fairness question is a decision made for the wrong reason, and Ravi will read it correctly as a demotion.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You gave him something real with a date on it rather than encouragement.',
+      },
+      reply: {
+        prompt: 'Answer Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'specific', label: 'Names an actual piece of work and when', markers: ['next', 'month', 'week', 'you take', 'you own', 'you run', 'give you', 'yours'], why: 'Anything less is the answer he has already had and is politely telling you was not enough.' },
+          { key: 'bar', label: 'Says what has to go well for it to stick', markers: ['if', 'what I need', 'has to', 'want to see', 'show me', 'depends', 'goes well'], why: 'A promise with no standard attached is not delegation, it is a favour — and it leaves him no way to know whether he succeeded.' },
+          { key: 'honest', label: 'Is honest about why it has been Ravi', markers: ['Ravi', 'board', 'context', 'done it before', 'experience', 'stakes', 'why it'], why: 'The real reason is defensible. Dodging it teaches him that asking direct questions gets vague answers.' },
+          { key: 'asked', label: 'Says asking was the right thing to do', markers: ['right to ask', 'glad', 'good question', 'fair', 'thanks for', 'pleased you'], why: 'It took something to send that. If it reads as unwelcome he will not ask again, and you will find out he is unhappy when he resigns.' },
+        ],
+        whyRight: 'You gave him a named piece of work, a standard, and an honest reason — and you made it safe to have asked.',
+      },
+    },
+    estHours: 0.4, priority: 'medium', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-109': {
+    title: 'Friday: who stands behind which number',
+    hint: 'Somebody has to be able to answer each of these live. Availability on the day is the constraint that matters.',
+    brief: "The pack goes to the board this afternoon. For each figure in it, decide who owns it in the room — meaning who answers if it is challenged. Some of these you keep.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Assign an owner to each figure for the board session.',
+      context: 'Friday. Board at 2pm. Nadia is out. Zubin has induction until midday. Owning a figure means answering for it live, not having produced it.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 3, note: 'In the room.' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: 'In the room.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 1, note: 'Not in the room, available on chat.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 1, note: 'Induction until midday. Not in the room.' },
+      ],
+      items: [
+        { key: 'headline', label: 'The half-year headline, net', days: 1,
+          best: ['you'], acceptable: ['ravi'],
+          forbidden: { ishaan: 'Not in the room. An owner who cannot answer live is not an owner.', zubin: 'Not in the room, and six weeks in.' },
+          why: 'It was withdrawn and restated this week. That history is yours to explain.' },
+        { key: 'restate', label: 'The Ashok Nagar restatement', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { ravi: 'He made the original claim. Making him defend the correction in front of the board is a punishment dressed as accountability.', ishaan: 'Not in the room.', zubin: 'Not in the room.' },
+          why: 'When the team gets something wrong, the lead carries it. That is most of what the title is for.' },
+        { key: 'stores', label: 'Store-level performance table', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: { zubin: 'Not in the room.' },
+          why: 'His area, his numbers, and a chance to be seen answering well after a difficult week.' },
+        { key: 'appendix', label: 'Regional appendix', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: { ishaan: 'Not in the room, however well he knows it.' },
+          why: 'Low risk of being asked, and whoever takes it has to actually be there.' },
+      ],
+      whyRight: 'You kept the restatement yourself, put Ravi back in front of the board on his own ground, and did not make anyone own a number they could not be asked about.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-110': {
+    title: 'The last slide, and what you put your name to',
+    hint: 'Read the closing recommendation as the thing the board will act on, not as the summary of a week.',
+    brief: "Ravi has drafted the closing recommendation. It is the part of the pack the board actually acts on. Decide whether it goes out as written.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'This is the slide the board decides from. Make the call, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Closing recommendation:\n\n  \"Trading is up 4.2% on a like-for-like basis. We recommend the board approve the\n   planned expansion of the express format on this evidence.\"\n\nThe 4.2% is the corrected number and it's right. Express is the format both new stores\nare, and they're trading well.",
+      },
+      decision: {
+        prompt: 'Does this go to the board?',
+        multi: false,
+        options: [
+          { key: 'strip', correct: true, label: 'Keep the trading figure, cut the expansion recommendation', why: 'Both new stores opened inside the window and have a few months of trading between them. A format decision cannot rest on that, and the pack was never asked for one.' },
+          { key: 'ship', correct: false, label: 'Ship it — the number is right and the inference is reasonable', why: 'The number is right. The inference runs from two part-year stores to an estate strategy, which is several times more weight than the evidence carries.' },
+          { key: 'caveat', correct: false, label: 'Ship it with a caveat about the short trading history', why: 'A caveat under a recommendation the board is being asked to approve does not stop them approving it. If the evidence is not there, the recommendation is not there.' },
+          { key: 'all', correct: false, label: 'Pull the whole slide', why: 'The trading figure is solid and was asked for. Removing it because the recommendation attached to it is wrong throws away the week’s actual work.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept what the evidence supports and cut what it does not, rather than caveating your way through the difference.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'evidence', label: 'Names the short trading history as the reason', markers: ['months', 'opened', 'new', 'part', 'short', 'Sector 29', 'Salt Lake', 'not a year', 'too early'], why: 'The specific gap between what the data covers and what the sentence claims is the whole argument.' },
+          { key: 'asked', label: 'Points out the pack was not asked for a format decision', markers: ['not asked', 'scope', 'brief', 'remit', 'they asked for', 'beyond'], why: 'A recommendation nobody requested, on evidence that does not reach, is the fastest way to lose the right to make the ones that matter.' },
+          { key: 'keep', label: 'Is clear the trading figure stays', markers: ['4.2', 'figure stays', 'keep', 'number is right', 'that part', 'stands', 'good'], why: 'He will hear "cut the slide" unless you are explicit. The number is the week’s work and it survives.' },
+          { key: 'caveatpoint', label: 'Explains why a caveat would not have fixed it', markers: ['caveat', 'footnote', 'hedge', 'qualif', 'still approve', 'would not', "wouldn't"], why: 'This is the transferable lesson: a caveat does not make an unsupported recommendation safe, it just makes it deniable.' },
+        ],
+        whyRight: 'You separated the finding from the inference, said why a hedge would not have saved it, and made clear what survives.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-201': {
+    title: 'Staff the margin week',
+    hint: 'One of these needs somebody who will be slow and exact about which cost applied when. Only one person on this team is that.',
+    brief: "Finance wants margin by category and store. Fifteen products have had a cost change inside the window, which is the whole difficulty. Staff the week.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the week.',
+      context: 'Diya in Finance needs this for the planning round. There is no margin column anywhere — it has to be built from cost and price, and fifteen products changed cost mid-window.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 5, note: 'Fast. Will use the current cost column unless told not to.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 4, note: 'One day on a handover.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 5, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 5, note: 'Eight weeks in now.' },
+      ],
+      items: [
+        { key: 'basis', label: 'Establish which cost applies to which sale', days: 2,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ravi: 'He is the one most likely to reach for the current cost column. Putting him on the definition is putting the fox on the henhouse.', zubin: 'Eight weeks in, and this is the decision every other number this week depends on.' },
+          why: 'Everything else keys off this. It needs the person who will be slow and exact about it.' },
+        { key: 'bycat', label: 'Margin by category, once the basis is settled', days: 2,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Straightforward once the cost basis exists, and he is quickest at it.' },
+        { key: 'bystore', label: 'Margin by store, like for like', days: 2,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'He has the estate dates from last week, which is exactly what "like for like" needs.' },
+        { key: 'moved', label: 'List the products whose cost moved, and when', days: 1,
+          best: ['zubin'], acceptable: ['nadia', 'ishaan'],
+          forbidden: {},
+          why: 'Bounded, checkable, and it hands the person doing it the shape of the whole problem.' },
+      ],
+      whyRight: 'The definition went to the person who will be exact about it, and the analysis waits on it rather than running ahead.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tl-202': {
+    title: 'Ravi has margin already, using the cost that applies today',
+    hint: 'Ask which cost his query used for a sale made in September, when the cost changed in January.',
+    brief: "Ravi has come back inside a day with margin by category. He has used the cost column on the product table, which is the cost that applies now. Fifteen products changed cost inside the window.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'sql', from: 'Ravi Menon, Retail Analyst',
+        body: "SELECT p.category,\n       SUM(s.quantity * s.unit_price * (1 - s.discount_pct/100.0)) AS revenue,\n       SUM(s.quantity * p.unit_cost) AS cost\nFROM sales s\nJOIN products p ON p.id = s.product_id\nGROUP BY p.category\n\n-- Margin by category, done. Nadia can catch up, this is the answer.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'hold', correct: true, label: 'Hold it — it prices a year of sales at today’s cost', why: 'unit_cost is the cost that applies now. Fifteen products changed cost inside the window, so every sale before the change is costed wrong, and the error runs in whichever direction the cost moved.' },
+          { key: 'ship', correct: false, label: 'Ship it — it is close enough for a planning round', why: 'Nobody knows how close without doing the work Nadia is doing, and Finance will build a plan on it either way.' },
+          { key: 'both', correct: false, label: 'Ship it labelled "at current cost"', why: 'An honest label on a number that answers a different question. Finance asked what the margin was, not what it would have been.' },
+          { key: 'drop', correct: false, label: 'Drop the category cut and go straight to stores', why: 'The category cut is what Diya asked for. The problem is the cost basis, and it would follow the work to the store cut anyway.' },
+        ],
+        skills: { sql: 100, businessLogic: 100 },
+        whyRight: 'You held it, because a year of sales priced at one day’s cost is not a margin.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'which', label: 'Names the cost-in-force problem concretely', markers: ['current cost', 'unit_cost', 'cost at the time', 'changed', 'previous', 'cost_changed_on', 'applied'], why: 'The fix is a join condition on a date, and he will find it himself the moment he sees the problem stated exactly.' },
+          { key: 'wait', label: 'Deals with him racing ahead of the cost basis', markers: ['Nadia', 'wait', 'basis', 'depends', 'first', 'before', 'blocked'], why: 'He did not go around the definition by accident — he went around it because it was slower. That is the habit to name.' },
+          { key: 'speed', label: 'Credits the speed without endorsing the shortcut', markers: ['fast', 'quick', 'day', 'speed', 'rapid', 'impressive'], why: 'His speed is genuinely valuable and it is why he does this. Killing it would cost you more than the error did.' },
+        ],
+        whyRight: 'You named the exact defect, dealt with why he skipped ahead, and did not punish the thing that makes him useful.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tl-203': {
+    title: 'Diya wants a number on Wednesday that is due Friday',
+    hint: 'You can give her something on Wednesday or something right on Friday. Decide which, and staff it.',
+    brief: "Finance has moved their planning meeting forward. Diya wants a margin number on Wednesday. The cost basis will not be finished until Thursday. Staff the rest of the week around that.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the rest of the week.',
+      context: 'Tuesday. Diya has asked for a number by Wednesday afternoon. Nadia will not have the cost basis settled before Thursday. Three days left.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 3, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 3, note: 'Two of these are the cost basis.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 3, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'finishbasis', label: 'Finish the cost basis', days: 2,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ravi: 'It is the piece he already tried to go around.', zubin: 'Too central to the week for eight weeks of experience.' },
+          why: 'It is the critical path. Everything else is waiting on it.' },
+        { key: 'bound', label: 'Work out how wrong the current-cost number could be', days: 1,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'This is what you can honestly give Diya on Wednesday — not the answer, but the size of the uncertainty around it.' },
+        { key: 'wed', label: 'Write to Diya about Wednesday', days: 1,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'Writing to Finance about a slipping commitment is not week-eight work.' },
+          why: 'He has the relationship with Finance and he is the reason the early number exists at all.' },
+        { key: 'prep', label: 'Prepare the store cut so it runs the moment the basis lands', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Useful, parallel, and impossible to get badly wrong — the query is written now and run on Thursday.' },
+      ],
+      whyRight: 'You protected the critical path, made Wednesday honest rather than fast, and kept the graduate on work that cannot hurt anyone.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-204': {
+    title: 'Zubin has found something and is not sure it matters',
+    hint: 'He has found the thing the whole week turns on and has filed it as a curiosity. Decide what that is worth.',
+    brief: "Zubin has sent a note he is clearly unsure about. Read it properly before you decide how to respond — it is more important than he thinks it is.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Zubin Wadia', fromTitle: 'Graduate Analyst',
+      prompt: 'Decide what to do with this, then reply to him.',
+      exhibit: {
+        kind: 'note', from: 'Zubin Wadia, Graduate Analyst',
+        body: "Probably nothing, but — while listing the cost changes I noticed most of them went UP,\nand they cluster around the same few weeks. Fifteen products, and I think eleven of them\nmoved in the same direction.\n\nIt might just be how the data was made. Didn't want to waste your time with it so I've\nleft it out of the list I sent. Happy to be told it's irrelevant.",
+      },
+      decision: {
+        prompt: 'What do you do with this?',
+        multi: false,
+        options: [
+          { key: 'chase', correct: true, label: 'Tell him it matters and get it into the week’s output', why: 'Cost moving one way at one time is the difference between "margin fell" and "our suppliers raised prices" — which is the sentence Finance actually needs. He has found the story and filed it as noise.' },
+          { key: 'later', correct: false, label: 'Note it for after the deadline', why: 'It changes how this week’s number should be read. Parking it means shipping a margin figure without the explanation for it.' },
+          { key: 'irrelevant', correct: false, label: 'Tell him it is an artefact of how the data was built', why: 'You do not know that, and saying it to avoid the detour teaches a graduate that noticing things is unwelcome.' },
+          { key: 'takeover', correct: false, label: 'Take it over and look into it yourself', why: 'Fastest, and it removes him from the only interesting thing he has found in eight weeks.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You recognised a finding that arrived apologetically, and left it with the person who found it.',
+      },
+      reply: {
+        prompt: 'Reply to Zubin.',
+        to: 'Zubin Wadia', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'matters', label: 'Says plainly that it matters and why', markers: ['matters', 'important', 'this is', 'explains', 'story', 'why margin', 'Finance', 'supplier'], why: 'He has explicitly invited you to dismiss it. Anything ambiguous gets read as a polite no.' },
+          { key: 'his', label: 'Leaves it with him', markers: ['you look', 'your', 'run with', 'take it', 'find out', 'go and', 'keep going'], why: 'Taking it off him is the cheapest way to teach him never to mention the next one.' },
+          { key: 'habit', label: 'Addresses "did not want to waste your time"', markers: ['waste', 'bring me', 'tell me', 'always', 'never a waste', 'ask', 'raise'], why: 'That sentence is the actual problem. It is week eight and he is already filtering what he tells you.' },
+        ],
+        whyRight: 'You told him it mattered, left it with him, and dealt with the reason he nearly did not mention it.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-205': {
+    title: 'The wobble: two defensible answers',
+    hint: 'Nadia is right and Ravi is right. Somebody still has to decide which number Finance gets.',
+    brief: "The cost basis is settled and it produces a different margin trend from the quick version. Both methods are defensible and they disagree about the direction. Staff the rest of the week around resolving it.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Wednesday onward.',
+      context: 'Costed at the cost in force, margin moves one way. Costed at current cost, it moves the other. Both are defensible ways to answer a slightly different question, and Finance is expecting one number.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: 'Author of the current-cost version.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: 'Author of the cost-in-force version.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 2, note: 'On the cost-movement finding.' },
+      ],
+      items: [
+        { key: 'sidebyside', label: 'Both methods, side by side, on one page', days: 1,
+          best: ['ishaan'], acceptable: ['zubin'],
+          forbidden: { ravi: 'He wrote one of the two. The comparison has to come from somebody who does not have a side.', nadia: 'Same reason in the other direction.' },
+          why: 'A neutral hand, because the point of the page is that neither method wins by being presented better.' },
+        { key: 'decide', label: 'Decide which basis we report on, and write down why', days: 1,
+          best: [], acceptable: [],
+          forbidden: { ravi: 'It is his method on one side of the argument.', nadia: 'And hers on the other.', ishaan: 'Choosing between two defensible company-wide definitions is not a junior’s call.', zubin: 'Eight weeks in.' },
+          why: 'This one is yours. Leave it unassigned — deciding between two defensible methods is exactly what the lead is for, and handing it to anyone on this list is avoiding the job.' },
+        { key: 'costfind', label: 'Finish the cost-movement finding', days: 1,
+          best: ['zubin'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'It is his, and it is the thing that will explain whichever number you end up reporting.' },
+        { key: 'redo', label: 'Re-run the store cut on the chosen basis', days: 1,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Mechanical once you have decided, and it gets him back onto delivery rather than defending his method.' },
+      ],
+      whyRight: 'You kept the comparison neutral, gave the cost finding back to Zubin, and did not delegate the decision that was yours.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-206': {
+    title: 'Nadia thinks you chose the wrong basis',
+    hint: 'She might be right. The question is whether that changes the decision, and what you owe her either way.',
+    brief: "You picked the cost basis. Nadia disagrees, in writing, with a reason. She is the most careful person on the team and she is not being difficult.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Nadia Baig', fromTitle: 'Analyst, Data Quality',
+      prompt: 'Decide how to handle this, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Nadia Baig, Analyst, Data Quality',
+        body: "I understand the decision and I'll build it that way.\n\nFor the record though, I think it's wrong. Reporting at cost-in-force is more accurate,\nbut Finance is going to compare this number to last year's, and last year was built at\ncurrent cost. We'll be handing them a comparison that isn't one, and nobody reading the\npack will know.\n\nNot trying to reopen it. I'd just rather have said it than not.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'reopen', correct: true, label: 'Reopen it — she has raised a comparability problem you had not considered', why: 'Her point is not a preference, it is a defect in the decision: a more accurate number that cannot be compared to the one it will be compared to. That is new information, and a decision that cannot survive new information was not a decision.' },
+          { key: 'hold', correct: false, label: 'Thank her and hold the decision', why: 'Comfortable, and it ships a comparison that is not one. "I have decided" is not an argument against a fact you did not have.' },
+          { key: 'both', correct: false, label: 'Report both bases and let Finance choose', why: 'Pushing the decision onto Finance after they asked you for a number. They do not have the context to choose and it is not their job.' },
+          { key: 'escalate', correct: false, label: 'Take it to Asha to decide', why: 'It is squarely your call and you have everything you need to make it. Escalating a decision at your own level costs you the next one.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You reopened it, because she gave you a fact you did not have rather than an opinion you had already weighed.',
+      },
+      reply: {
+        prompt: 'Reply to Nadia.',
+        to: 'Nadia Baig', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'right', label: 'Says plainly that she has a point', markers: ['right', 'good point', 'had not', "hadn't", 'fair', 'valid', 'changes'], why: 'Burying agreement inside process language is how people stop bothering to tell you things.' },
+          { key: 'what', label: 'Names the comparability issue as the reason', markers: ['compar', 'last year', 'prior', 'like for like', 'against', 'basis they'], why: 'Being specific about which part changed your mind is what makes the next challenge worth her time.' },
+          { key: 'next', label: 'Says what actually happens now', markers: ['so we', 'I will', "I'll", 'change', 'rerun', 're-run', 'switch', 'restate', 'plan'], why: 'A reopened decision with no new instruction leaves the team holding two versions and a deadline.' },
+          { key: 'record', label: 'Addresses "I would rather have said it than not"', markers: ['glad you', 'say it', 'tell me', 'keep doing', 'want that', 'exactly what', 'raise'], why: 'That sentence is her testing whether disagreeing is safe. The answer is the whole point of the exchange.' },
+        ],
+        whyRight: 'You changed your mind for a stated reason, said what happens now, and made disagreeing worth doing again.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-207': {
+    title: 'The promotion analysis, and who has the time',
+    hint: 'Two of these are due to other people on dates you do not control. Staff those first.',
+    brief: "Thursday. The promotion analysis is the last substantial piece, and two smaller commitments have dates attached that are not yours to move.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Thursday and Friday.',
+      context: 'The promotion analysis is what Diya actually wants. The range review team need a handover note by Friday, and Asha has asked for a one-pager on the cost movement for her own meeting.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 1, note: 'Half a day of training Friday.' },
+      ],
+      items: [
+        { key: 'promo', label: 'Margin at every discount level', days: 2,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'One day, and it is the centrepiece.' },
+          why: 'The main deliverable, and the kind of cut he is fastest and safest on.' },
+        { key: 'handover', label: 'Handover note to the range review team', days: 1,
+          best: ['ishaan'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'A real piece of written work with a named recipient and a low chance of catastrophe — the level he asked to be working at.' },
+        { key: 'onepager', label: 'One-pager on the cost movement for Asha', days: 1,
+          best: ['zubin'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'It is his finding. Somebody in week eight getting their own work in front of the manager is worth more than the hour it costs you to check it.' },
+        { key: 'check', label: 'Check the promotion numbers before they go', days: 1,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ravi: 'He is producing them.' },
+          why: 'Last substantial number of the week, and the author cannot be the checker.' },
+      ],
+      whyRight: 'The deliverable went to the fastest safe pair of hands, the checking stayed independent, and the graduate’s own finding went out under his name.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'medium',
+  },
+
+  'tl-208': {
+    title: 'Ravi has a target, and the analysis found it',
+    hint: 'Ask what he would have reported if the number had come out the other way.',
+    brief: "Ravi has the promotion analysis and the answer supports what buying already wanted to hear. That is not evidence of a problem. Read how he got there anyway.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Promotion analysis — good news, it lands where buying hoped.\n\nThe 25% discount band earns more margin than the 30% band, so the deeper discount isn't\npaying for itself. Recommend we cap promotions at 25%.\n\nI did try it by category and by store as well but those were messier, so I've led with\nthe clean cut. Buying will be happy.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'messy', correct: true, label: 'Ask for the messier cuts before anything goes out', why: '"Those were messier so I led with the clean one" is a selection made after seeing the results. The messy cuts are where the finding either survives or dies, and right now nobody knows which.' },
+          { key: 'ship', correct: false, label: 'Ship it — the headline cut is clean and the recommendation is sensible', why: 'The recommendation may well be right. It is not established by the one cut that agreed with the answer buying wanted.' },
+          { key: 'strip', correct: false, label: 'Ship the finding without the recommendation', why: 'Halfway. The finding itself is the thing that has not been tested across the other cuts.' },
+          { key: 'redo', correct: false, label: 'Have Nadia redo the whole analysis', why: 'Disproportionate, slow, and it treats a selection problem as a competence problem. He needs to produce the other cuts, not be replaced.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You went after the cuts he set aside, which is where the finding is actually decided.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'messy', label: 'Asks for the cuts he left out', markers: ['messier', 'messy', 'category', 'store', 'other cuts', 'the ones you', 'left out', 'see them'], why: 'It is the specific, actionable ask, and it is a morning’s work rather than a rebuke.' },
+          { key: 'selection', label: 'Names choosing after seeing the results as the problem', markers: ['after', 'chose', 'selected', 'led with', 'because it', 'agreed', 'wanted to hear', 'cherry'], why: 'Unnamed, it becomes his normal method — and it is the one habit that will eventually cost him a job.' },
+          { key: 'notaccusing', label: 'Does not accuse him of fixing the answer', markers: ['not saying', 'I know', 'not accusing', "don't think", 'may well be right', 'probably right', 'fine'], why: 'He almost certainly did it without noticing. An accusation makes him defensive about exactly the behaviour you need him to see.' },
+        ],
+        whyRight: 'You asked for the missing cuts, named the selection problem, and did not turn it into an accusation.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-209': {
+    title: 'Friday: what you hand to Finance, and who hands it',
+    hint: 'One of these is a conversation rather than a document, and it should not go to whoever is free.',
+    brief: "Last day. The margin work is done and there are four things to land, one of which is telling Diya the basis changed mid-week.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Land the week.',
+      context: 'Friday. Diya expects a margin pack. The cost basis changed on Wednesday after Nadia raised it, and she has not been told.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 2, note: '' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 1, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 1, note: 'Half day.' },
+      ],
+      items: [
+        { key: 'basis', label: 'Tell Diya the reporting basis changed mid-week', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { nadia: 'She raised the problem. Sending her to explain the change makes it look like the team was overruled by its own analyst.', ravi: 'It was his method that was dropped.', zubin: 'Half a day and eight weeks in.' },
+          why: 'You made the decision and you changed it. That conversation is yours and it is the whole job.' },
+        { key: 'pack', label: 'Assemble the margin pack', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: {},
+          why: 'His numbers, and assembling is the low-risk end of his week.' },
+        { key: 'tie', label: 'Tie the pack back to the cost basis', days: 1,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ravi: 'Author cannot be checker, and it is his pack.' },
+          why: 'She built the basis, so she is the only person who can say whether the pack actually uses it.' },
+        { key: 'file', label: 'File the cost-movement one-pager where the range team will find it', days: 1,
+          best: ['zubin'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'Half a day of tidy-up on his own work, which is exactly what half a day is for.' },
+      ],
+      whyRight: 'You kept the awkward conversation yourself rather than sending the person who was right or the person who was wrong.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-210': {
+    title: 'The planning note the range team will build on',
+    hint: 'Somebody downstream will treat every sentence in this as settled. Read it as them.',
+    brief: "Ishaan has drafted the handover note to the range review team. Whatever is in it becomes their starting assumption for a fortnight.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ishaan Varghese', fromTitle: 'Junior Data Analyst',
+      prompt: 'This becomes somebody else’s assumption. Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Handover to the range review:\n\n  - Margin is computed at cost-in-force, not current cost.\n  - The 25% discount band outperforms the 30% band.\n  - Supplier costs rose across most of the range during the window.\n  - Use the store list with opening and closing dates; three stores changed state.\n\nAll four are from this week's work. Let me know if I've missed anything.",
+      },
+      decision: {
+        prompt: 'Does this go over as written?',
+        multi: false,
+        options: [
+          { key: 'qualify', correct: true, label: 'Send it, but mark which of the four are settled and which are provisional', why: 'Two are settled definitions and two are findings that have not survived the other cuts yet. Written as a flat list they will all be treated as fact for a fortnight.' },
+          { key: 'ship', correct: false, label: 'Send it as written — all four came from this week', why: 'They did, and they do not carry the same weight. A handover that does not distinguish them is how a provisional finding becomes a foundation.' },
+          { key: 'cut', correct: false, label: 'Cut the two findings and hand over only the definitions', why: 'Throws away the most useful things the range team could know, to avoid a sentence of qualification.' },
+          { key: 'mine', label: 'Rewrite it and send it from you', correct: false, why: 'It is a good note that needs one distinction added. Taking it over teaches him that handovers are above his level, which is the opposite of true.' },
+        ],
+        skills: { communication: 100, businessLogic: 100 },
+        whyRight: 'You kept all four and made the difference between a definition and a provisional finding explicit.',
+      },
+      reply: {
+        prompt: 'Reply to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'distinction', label: 'Names the settled/provisional distinction', markers: ['settled', 'provisional', 'confirm', 'still', 'not yet', 'holds', 'firm', 'which of'], why: 'It is the single edit, and it is a habit he can apply to every handover he ever writes.' },
+          { key: 'which', label: 'Says which ones are which', markers: ['25', '30', 'discount', 'supplier', 'cost-in-force', 'store list', 'first two', 'last two', 'definitions'], why: 'Without naming them he has to guess, and he will guess the flattering way.' },
+          { key: 'downstream', label: 'Explains what the reader will do with it', markers: ['range team', 'they will', 'assume', 'build on', 'fortnight', 'treat', 'starting point'], why: 'The reason to qualify is the reader, not tidiness. That reason is what makes the habit stick.' },
+          { key: 'good', label: 'Says the note itself is good', markers: ['good', 'clear', 'well', 'right shape', 'nice', 'exactly', 'strong'], why: 'It is a genuinely well-made handover from somebody who a month ago could not have written it.' },
+        ],
+        whyRight: 'You protected the downstream team without taking the note off him, and told him why the distinction matters.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-301': {
+    title: 'Staff the range review',
+    hint: 'Seven products in this range have never sold. Finding them needs a particular kind of query and a particular kind of person.',
+    brief: "Buying want a delist list. The range is 68 lines and seven of them have never sold at all, which is the part most people's queries miss entirely. Staff the week.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the week.',
+      context: 'Sneha in buying owns the delist decision and wants a recommendation by Friday. Seven lines have no sales rows at all, so any inner join drops them silently.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 4, note: 'One day with buying.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 5, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 5, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 5, note: 'Ten weeks in.' },
+      ],
+      items: [
+        { key: 'never', label: 'Find the lines with no sales at all', days: 1,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'The whole trap is a join that drops rows without saying so. Ten weeks in, he will not see what is missing — nobody does the first time.' },
+          why: 'It is a query about absence, which is the one shape that fails silently. It needs somebody who checks counts.' },
+        { key: 'concentration', label: 'How much of the margin sits in how few lines', days: 2,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Straight analysis on data he knows well.' },
+        { key: 'cover', label: 'Stock cover by line', days: 1,
+          best: ['ishaan'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'A real analysis with a clear definition and a bounded blast radius.' },
+        { key: 'breadth', label: 'How many stores carry each line', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Countable, checkable, and it teaches him the estate and the range at once.' },
+      ],
+      whyRight: 'The query that fails silently went to the person who checks, and the graduate got work where being wrong is visible.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tl-302': {
+    title: 'The seven nobody has seen',
+    hint: 'He has found them and drawn the obvious conclusion. Ask what else would produce a product with no sales rows.',
+    brief: "Nadia has the seven never-sold lines and Ishaan has already written the recommendation. Read what he concluded before it goes to buying.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ishaan Varghese', fromTitle: 'Junior Data Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Nadia found seven lines with zero sales in the window. That's the easiest delist decision\nwe'll ever make — nobody has bought them once in twelve months.\n\nRecommending all seven go in the first tranche. It's clean and it gives buying an\nimmediate win.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'why', correct: true, label: 'Hold it until somebody has asked why each one has no sales', why: 'Zero sales can mean nobody wants it, or it was never ranged in a store, or it arrived last month, or it has never been in stock. Three of those are not delist decisions and one is an argument with the supply chain.' },
+          { key: 'ship', correct: false, label: 'Ship it — no sales in twelve months is unambiguous', why: 'It is unambiguous about the sales and silent about the cause, and buying will act on the cause they assume.' },
+          { key: 'some', correct: false, label: 'Recommend the four with the lowest stock and hold the rest', why: 'An arbitrary split that looks like judgement. Low stock is not evidence about why something did not sell.' },
+          { key: 'drop', correct: false, label: 'Leave the seven out of the paper entirely', why: 'They are the most interesting thing in the range. The problem is the conclusion, not the finding.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You held it because "no sales" has four causes and only one of them is a delist.',
+      },
+      reply: {
+        prompt: 'Reply to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'causes', label: 'Names at least one other reason a line shows no sales', markers: ['never ranged', 'not stocked', 'out of stock', 'new', 'arrived', 'not in any', 'carried', 'availab'], why: 'One concrete alternative is enough to make the whole class of question visible.' },
+          { key: 'check', label: 'Gives him a way to tell them apart', markers: ['stock', 'stock_count', 'which stores', 'carried', 'check', 'look at', 'when'], why: 'The stock counts and the store breadth work he already has will answer it, which makes this an afternoon rather than a project.' },
+          { key: 'win', label: 'Addresses the "immediate win" framing', markers: ['win', 'clean', 'easy', 'tempting', 'quick', 'buying will', 'looks'], why: 'Wanting to hand a stakeholder a win is why the question did not get asked. That is the thing to name, gently.' },
+        ],
+        whyRight: 'You gave him the alternative explanations, a way to distinguish them, and named the pressure that skipped the question.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tl-303': {
+    title: 'Buying want the list on Wednesday',
+    hint: 'The concentration work is what makes the list defensible. Cutting it to hit Wednesday is cutting the reason anyone should believe the list.',
+    brief: "Sneha has asked for the delist list two days early because her supplier meeting moved. Decide what actually gets done in the time.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the next two days.',
+      context: 'Tuesday. Sneha wants a list Wednesday afternoon for a supplier meeting. The concentration analysis is half done and the never-sold lines still have no cause attached.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 2, note: '' },
+      ],
+      items: [
+        { key: 'causes', label: 'Work out why each never-sold line has no sales', days: 1,
+          best: ['ishaan'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'It is his recommendation that was held, and finishing it is how the lesson lands.' },
+        { key: 'finishconc', label: 'Finish the margin concentration analysis', days: 2,
+          best: ['ravi'], acceptable: ['nadia'],
+          forbidden: { zubin: 'It is the analytical core of the paper.' },
+          why: 'This is what makes any delist list defensible rather than a list of small numbers.' },
+        { key: 'shortlist', label: 'Produce a provisional shortlist for Wednesday', days: 1,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { ravi: 'He is finishing the concentration work the shortlist depends on. Splitting him across both is how neither lands.' },
+          why: 'Somebody has to assemble what exists into something Sneha can take to a supplier, clearly marked as provisional.' },
+        { key: 'caveat', label: 'Write what the Wednesday list can and cannot be used for', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Short, high value, and it teaches him that the caveat is part of the deliverable rather than an apology attached to it.' },
+      ],
+      whyRight: 'You protected the analysis that makes the list defensible and sent a marked-provisional version rather than a rushed final one.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-304': {
+    title: 'Ravi has a rule, and the rule is the problem',
+    hint: 'Apply his rule to the seven never-sold lines and see what happens.',
+    brief: "Ravi has proposed a delist rule rather than a delist list. A rule is more useful than a list, which is exactly why it needs testing before anyone adopts it.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Rather than a list, I'd give buying a rule they can run every quarter:\n\n  \"Delist any line in the bottom decile of margin contribution.\"\n\nIt's objective, it's repeatable, and it doesn't need us in the room. Sneha would love it.",
+      },
+      decision: {
+        prompt: 'What happens to this?',
+        multi: false,
+        options: [
+          { key: 'test', correct: true, label: 'Test it against the range we already have before proposing it', why: 'A bottom-decile rule delists roughly seven lines a quarter forever, whether or not anything is wrong with them — and it would remove the never-sold lines without anyone ever asking why they never sold.' },
+          { key: 'ship', correct: false, label: 'Propose it — an objective rule beats a subjective list', why: 'Objective is not the same as correct. A rule nobody has run against real data is a proposal about arithmetic, not about the range.' },
+          { key: 'list', correct: false, label: 'Reject the rule and go back to a list', why: 'The instinct is right — a rule buying can run themselves is more valuable than a list they depend on you for. Killing it wastes the best idea of the week.' },
+          { key: 'both', correct: false, label: 'Give them the list now and the rule next quarter', why: 'Deferring the test rather than doing it. It takes an afternoon and it is the difference between a good idea and a working one.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept the idea and made him test it, which is the only thing that turns a rule into a usable one.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'backtest', label: 'Asks him to run the rule against the current range', markers: ['run it', 'test', 'apply it', 'against', 'this range', 'backtest', 'what does it'], why: 'It is a concrete, quick and interesting task, and it will show him the problem rather than being told it.' },
+          { key: 'always', label: 'Points out a bottom decile always exists', markers: ['always', 'every quarter', 'decile', 'by definition', 'forever', 'ten per cent', '10%'], why: 'It is the flaw that makes the rule dangerous rather than merely untested — a relative threshold never runs out of things to cut.' },
+          { key: 'keep', label: 'Says the idea of a rule is the right instinct', markers: ['good idea', 'right instinct', 'like the', 'better than a list', 'keep', 'worth', 'agree'], why: 'It genuinely is the most useful idea anyone has had this week and he should hear that first.' },
+        ],
+        whyRight: 'You kept the idea, named the flaw a test would expose, and sent him to find it himself.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-305': {
+    title: 'Wednesday: the stock cover measure does not work',
+    hint: 'The measure buying asked for produces the same answer for almost every line. That is a finding about the measure.',
+    brief: "Stock cover has come back and almost every product holds about the same. Either the range is uniform or the measure is not measuring anything. Staff the rest of the week around finding out which.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Wednesday onward.',
+      context: 'Stock cover as buying defined it gives nearly every line the same number. The provisional list went to Sneha yesterday marked provisional. Three days left.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 3, note: 'Testing his delist rule.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 3, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 3, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 2, note: 'One day on a course.' },
+      ],
+      items: [
+        { key: 'whyflat', label: 'Work out why stock cover is flat across the range', days: 2,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'Two days and it is the hardest question of the week.' },
+          why: 'A measure that gives everything the same answer is a data question before it is a range question.' },
+        { key: 'alternative', label: 'Propose measures that would actually discriminate', days: 1,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'It is a design question with a right shape rather than a right answer, which is where he should be working now.' },
+        { key: 'rule', label: 'Finish testing the delist rule', days: 1,
+          best: ['ravi'], acceptable: [],
+          forbidden: { nadia: 'She is on the stock cover question and it is the harder one.', zubin: 'It is Ravi’s proposal and his test to run.' },
+          why: 'His idea, his test — and he will believe the result in a way he would not believe being told.' },
+        { key: 'sneha', label: 'Tell Sneha the stock cover measure is in question', days: 1,
+          best: ['ravi'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'Telling buying their own measure may not work is not week-ten work.' },
+          why: 'She defined the measure and she is in supplier meetings using it. She needs to know today.' },
+      ],
+      whyRight: 'You put the hardest question with the most careful person, left Ravi to prove his own rule, and told buying today rather than Friday.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-306': {
+    title: 'Nadia has the answer and it is inconvenient',
+    hint: 'Her finding does not just break the measure. It breaks the list that went to buying on Wednesday.',
+    brief: "Nadia has worked out why stock cover is flat, and the reason reaches further than the measure. Decide what has to happen, including about a list that is already with a stakeholder.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Nadia Baig', fromTitle: 'Analyst, Data Quality',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Nadia Baig, Analyst, Data Quality',
+        body: "Stock cover is flat because the counts are a periodic snapshot on a fixed cycle, not a\ndaily position. Every line looks like it holds about the same because we're reading the\nsame few count dates for all of them.\n\nWhich means cover can't separate a fast seller from a dead line — and cover is one of the\ntwo measures in the provisional list Sneha took to her supplier meeting yesterday.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'tell', correct: true, label: 'Tell Sneha today that one of the two measures behind the list does not work', why: 'She is in supplier conversations using it. The list was marked provisional, which covers the numbers moving — it does not cover a measure that cannot do the job at all.' },
+          { key: 'friday', correct: false, label: 'Fix it and tell her on Friday with the final paper', why: 'Three more days of supplier conversations built on a measure you know is broken. "It was marked provisional" will not survive that conversation.' },
+          { key: 'quiet', correct: false, label: 'Rebuild the list on margin alone and send the new one without comment', why: 'The list changing without explanation is worse than the original error — she will notice, and then she will wonder what else changed quietly.' },
+          { key: 'defend', correct: false, label: 'Keep cover in with a caveat about the count cycle', why: 'A caveat on a measure that cannot discriminate is a footnote on a coin toss.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You told the stakeholder the same day, because provisional covers a number moving and not a measure that does not work.',
+      },
+      reply: {
+        prompt: 'Reply to Nadia — she found it and she will be asked to help fix it.',
+        to: 'Nadia Baig', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'value', label: 'Says what the finding is worth', markers: ['good', 'important', 'well', 'exactly', 'glad', 'this is the', 'saved'], why: 'She has just made the week harder by being right, and that has to be visibly the correct thing to have done.' },
+          { key: 'action', label: 'Says what happens with Sneha', markers: ['Sneha', 'today', 'tell her', "I'll", 'I will', 'call', 'let her know'], why: 'She has raised a stakeholder problem. Leaving the stakeholder half of it unanswered is where she stops raising them.' },
+          { key: 'next', label: 'Says what you need from her next', markers: ['can you', 'next', 'need', 'work out', 'alternative', 'instead', 'replace'], why: 'The measure still has to be replaced by Friday and she is the person who understands why it failed.' },
+        ],
+        whyRight: 'You valued the finding, took the stakeholder conversation yourself, and pointed her at the next piece.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-307': {
+    title: 'Thursday: rebuild the list on measures that work',
+    hint: 'Two people are free because their work was invalidated. Do not leave them on it out of politeness.',
+    brief: "The paper is due tomorrow and one of its two measures has gone. Staff the rebuild.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Thursday and Friday.',
+      context: 'Stock cover is out. The delist list has to be rebuilt on measures that discriminate, and the paper is due Friday. Sneha has been told.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: 'Rule test came back: it would delist the never-sold lines without asking why.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: 'Has the alternative measures.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 2, note: '' },
+      ],
+      items: [
+        { key: 'rebuild', label: 'Rebuild the delist list on the surviving measures', days: 2,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'He proposed the replacement measures, so rebuilding on them is both the fastest route and the right piece of credit.' },
+        { key: 'rulenote', label: 'Write up what the rule test showed', days: 1,
+          best: ['ravi'], acceptable: [],
+          forbidden: { ishaan: 'It is Ravi’s proposal and Ravi’s result. Handing the write-up to somebody else reads as taking it off him.' },
+          why: 'His idea failed its test and the failure is genuinely useful. Writing it up himself is how that stays a contribution rather than an embarrassment.' },
+        { key: 'validate', label: 'Check the rebuilt list against the seven never-sold lines', days: 1,
+          best: ['nadia'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'The seven are the known-hard cases. If the new list handles them, it probably works.' },
+        { key: 'assemble', label: 'Assemble the range paper', days: 1,
+          best: ['zubin'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'Assembly rather than analysis, with everything already decided — the safe end of a tight Friday.' },
+      ],
+      whyRight: 'The rebuild went to whoever designed the replacement, Ravi kept his own failed result, and the hard cases got checked.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'medium',
+  },
+
+  'tl-308': {
+    title: 'Sneha wants a number for the saving',
+    hint: 'She is asking for something the analysis can give and something it cannot. Separate them before you answer.',
+    brief: "Buying have come back asking what the delist saves. It is a fair question and half of it is answerable. Decide what goes back.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Sneha Joshi', fromTitle: 'Buying Manager',
+      prompt: 'Decide what you can give her, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Sneha Joshi, Buying Manager',
+        body: "Thanks for the heads-up on the measure.\n\nBefore Friday — can you put a number on what delisting these lines saves us annually? I\nneed a figure for the supplier negotiation and for my own budget line. Even roughly.\n\nHappy with a range if that's easier.",
+      },
+      decision: {
+        prompt: 'What do you send back?',
+        multi: false,
+        options: [
+          { key: 'split', correct: true, label: 'Give her the margin the lines currently carry, and say plainly that the saving depends on substitution', why: 'What those lines earn today is measurable. What the company saves depends on whether customers buy something else instead, and nothing in this data can tell you that.' },
+          { key: 'number', correct: false, label: 'Give her the foregone margin as the saving', why: 'It treats every delisted sale as lost, which is the most pessimistic possible assumption stated as a fact, in a supplier negotiation.' },
+          { key: 'refuse', correct: false, label: 'Tell her the analysis cannot answer it', why: 'Half of it can, and she has a negotiation on Monday. A flat no from analytics is how a function stops being asked.' },
+          { key: 'range', correct: false, label: 'Give a range, as she suggested', why: 'A range implies you know the bounds. Without a substitution assumption the upper and lower ends are equally invented, and the range would be quoted as if it were measured.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You gave her the measurable half and named exactly what the other half depends on.',
+      },
+      reply: {
+        prompt: 'Reply to Sneha.',
+        to: 'Sneha Joshi', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'give', label: 'Gives her the figure you can stand behind', markers: ['margin these', 'currently', 'today', 'carry', 'the lines earn', 'contribut', 'here is', 'can tell you'], why: 'She needs something for Monday. Leading with the limitation and never getting to a number is how the answer becomes useless.' },
+          { key: 'substitution', label: 'Names substitution as the unknown', markers: ['substitut', 'instead', 'buy something else', 'switch', 'depends on whether', 'transfer', 'move to'], why: 'It is the specific assumption that turns a measured figure into a claimed saving, and she can reason about it herself once it is named.' },
+          { key: 'usable', label: 'Says how she can use it in the negotiation', markers: ['negotiat', 'supplier', 'you can say', 'use it', 'defensible', 'stand behind', 'if they ask'], why: 'The point of answering at all is that she has a meeting. An answer she cannot deploy has not helped her.' },
+        ],
+        whyRight: 'You gave her something usable on Monday and were exact about the line between measured and assumed.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-309': {
+    title: 'Friday: the paper, and the part you write yourself',
+    hint: 'One item on this list should not be delegated at all, and it is not the longest one.',
+    brief: "The range paper goes to buying today. Decide who does the last pieces, including the section about the week's false start.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Land the paper.',
+      context: 'Friday. The paper is assembled. Two of the measures changed mid-week and one recommendation was withdrawn. All of that has to be visible to a reader who was not here.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 2, note: '' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 1, note: '' },
+      ],
+      items: [
+        { key: 'method', label: 'The methodology section, including why cover was dropped', days: 1,
+          best: ['you'], acceptable: ['nadia'],
+          forbidden: { ravi: 'It includes his rule failing its test. Asking him to write that section is asking him to write his own bad review.', ishaan: 'It also includes his never-sold recommendation being held. Same problem.' },
+          why: 'Every item in it is somebody on this team being wrong during the week. The lead writes that part.' },
+        { key: 'list', label: 'Final delist list with both measures', days: 1,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'He rebuilt it. He finishes it.' },
+        { key: 'saving', label: 'The saving figure and its assumptions', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: { nadia: 'One day and the tie-out is more valuable.' },
+          why: 'It is the number Sneha takes to a supplier, and he is the one who talks to buying.' },
+        { key: 'tie', label: 'Check every figure in the paper ties to source', days: 1,
+          best: ['nadia'], acceptable: [],
+          forbidden: { ishaan: 'He produced most of them.', ravi: 'He produced the rest.' },
+          why: 'Last check before it leaves the team, and it has to be somebody who wrote none of it.' },
+      ],
+      whyRight: 'You wrote the section about the team being wrong, and kept the final check away from everyone who produced a number.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-310': {
+    title: 'What the paper says about the week',
+    hint: 'Read the methodology section as somebody deciding whether to trust the next paper this team sends.',
+    brief: "Ishaan has drafted the methodology section rather than leaving it to you, which is initiative. Read what he has written about the week's false starts.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ishaan Varghese', fromTitle: 'Junior Data Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Had a go at the methodology section so you don't have to:\n\n  \"Stock cover was initially considered but excluded following a review of the count\n   methodology. A rule-based approach was also evaluated. The final list uses margin\n   contribution and store breadth.\"\n\nKept it neutral — didn't think the paper needed the detail of what went wrong.",
+      },
+      decision: {
+        prompt: 'Does this go in?',
+        multi: false,
+        options: [
+          { key: 'detail', correct: true, label: 'Rewrite it to say what was actually found, in plain words', why: '"Following a review of the count methodology" tells a reader nothing. That the counts are a periodic snapshot, and therefore cannot separate a fast seller from a dead line, is a fact buying needs — they use cover elsewhere.' },
+          { key: 'ship', correct: false, label: 'Ship it — neutral is appropriate for a formal paper', why: 'Neutral here means unreadable. A methodology section exists so somebody can judge the work, and nobody can judge this.' },
+          { key: 'cut', correct: false, label: 'Cut the section — the final list is what matters', why: 'It is the section that makes the list believable, and the one a careful reader turns to first.' },
+          { key: 'yours', correct: false, label: 'Take it back and write it yourself as planned', why: 'He wrote a difficult section unprompted. Taking it back wholesale teaches him not to try the next one.' },
+        ],
+        skills: { communication: 100, businessLogic: 100 },
+        whyRight: 'You kept the section and made it say something a reader could act on.',
+      },
+      reply: {
+        prompt: 'Reply to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'plain', label: 'Asks for plain words about what was found', markers: ['plain', 'say what', 'specific', 'snapshot', 'what we found', 'concrete', 'actually'], why: 'The rewrite instruction has to be concrete or he will produce more careful vagueness.' },
+          { key: 'useful', label: 'Explains that buying use cover elsewhere', markers: ['buying', 'they use', 'elsewhere', 'useful to them', 'need to know', 'other', 'their own'], why: 'It reframes the awkward paragraph as the most valuable thing in the paper, which is what it is.' },
+          { key: 'trust', label: 'Says being open about it is what makes the paper trusted', markers: ['trust', 'believe', 'credib', 'judge', 'confidence', 'honest', 'transparen'], why: 'He hid it to protect the team. He needs to see that it does the opposite.' },
+          { key: 'initiative', label: 'Credits him for writing it at all', markers: ['glad you', 'good that', 'initiative', 'thanks', 'took it on', 'unprompted', 'appreciate'], why: 'He volunteered for the hardest paragraph in the paper. That is exactly the behaviour that should be expensive to discourage.' },
+        ],
+        whyRight: 'You kept it his, made it concrete, and explained why openness is what gets the next paper believed.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-401': {
+    title: 'Staff the board pack week',
+    hint: 'Three people have submitted three different revenue figures. Whoever reconciles them cannot be one of the three.',
+    brief: "The year-end board pack. Three functions have each submitted a revenue number and none of them match. Staff the week that ends with one number the board hears.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the week.',
+      context: 'Ravi submitted a gross figure, Diya in Finance submitted a net one, and the retail system reports a third. The board meets Friday and will be given one number.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 4, note: 'Author of one of the three figures.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 5, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 5, note: '' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 5, note: 'Three months in.' },
+      ],
+      items: [
+        { key: 'reconcile', label: 'Reconcile the three revenue figures', days: 2,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { ravi: 'One of the three figures is his. A reconciliation run by an author is a defence of one number, whatever the intention.' },
+          why: 'The reconciliation decides which submission was answering which question. It has to come from somebody with nothing in it.' },
+        { key: 'bridge', label: 'Build the bridge from gross to net, step by step', days: 2,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'Mechanical, exacting, and the single most useful artefact in the pack — the right size for where he is now.' },
+        { key: 'definitions', label: 'Draft the definitions note', days: 1,
+          best: ['zubin'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'Writing down what each term means is how somebody three months in learns the business, and it is checkable line by line.' },
+        { key: 'estate', label: 'Report the estate changes on their own', days: 1,
+          best: ['ravi'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'He knows the estate best and it keeps him productive on something that is not the disputed figure.' },
+      ],
+      whyRight: 'The reconciliation went to somebody with no submission in it, and the author of a disputed figure was kept away from judging it.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tl-402': {
+    title: 'Ravi wants to know why he is not reconciling',
+    hint: 'He is asking a reasonable question about a decision that was right. Explain it without implying anything about his honesty.',
+    brief: "Ravi has noticed that the reconciliation went to Nadia and has asked why. He is not sulking — he genuinely does not see it.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide how to handle it, then answer him.',
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon, Retail Analyst',
+        body: "Why has Nadia got the reconciliation? I submitted one of the three figures, so I know\nexactly how mine was built — I'd get through it in half the time she will.\n\nIf it's a trust thing I'd rather you said so.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'structural', correct: true, label: 'Explain it as a structural rule about authorship, not a judgement about him', why: 'The reason is real and impersonal: an author reconciling their own submission cannot produce a result the board would accept, however honest they are. Said plainly, it is not an insult and he can use the rule himself later.' },
+          { key: 'trust', correct: false, label: 'Reassure him it is not about trust and leave it there', why: 'He asked a direct question. A reassurance with no reason attached is exactly what somebody says when it is about trust.' },
+          { key: 'give', correct: false, label: 'Give him the reconciliation — he is faster and he does know his own figure', why: 'Speed is the argument for doing it and independence is the argument against. One of those survives a board asking who checked it.' },
+          { key: 'both', correct: false, label: 'Have them do it together', why: 'The author being in the room is the thing the rule exists to prevent. It also wastes the team’s most careful person’s time.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You gave him the structural reason, which is both true and usable by him next time.',
+      },
+      reply: {
+        prompt: 'Answer Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'rule', label: 'States the authorship rule plainly', markers: ['author', 'own', 'submitted', 'independ', 'cannot check', "can't check", 'rule', 'anybody'], why: 'A rule that applies to everyone is not an accusation, and stating it as one is what defuses the question.' },
+          { key: 'nottrust', label: 'Answers the trust question directly', markers: ['not a trust', 'nothing to do with', 'not about you', 'would be the same', 'anyone', 'me too', 'my own'], why: 'He asked it explicitly. Dodging it confirms it.' },
+          { key: 'speed', label: 'Acknowledges he is right about being faster', markers: ['faster', 'quicker', 'half the time', 'you would', "you'd", 'true', 'right'], why: 'It is true, and conceding the true part is what makes the rest credible.' },
+          { key: 'use', label: 'Gives him something to do with the rule', markers: ['next time', 'you should', 'when you', 'apply', 'your own team', 'remember', 'use it'], why: 'He will lead a team one day. The rule is more useful to him than the reconciliation was.' },
+        ],
+        whyRight: 'You answered the real question, conceded what was true, and turned a refusal into something he can carry.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tl-403': {
+    title: 'The bridge does not tie, and the board is Friday',
+    hint: 'A bridge that does not tie is not nearly right. Staff it as the blocking problem it is.',
+    brief: "Ishaan's bridge from gross to net leaves a gap nobody can explain. Everything in the pack keys off it. Two days gone, three to go.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff the rest of the week.',
+      context: 'The bridge has an unexplained residual. Until it ties, no figure in the pack can be signed off. The definitions note and the estate section are both finished.',
+      team: [
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 3, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 3, note: 'Reconciliation done.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 3, note: 'Built the bridge.' },
+        { key: 'zubin', name: 'Zubin Wadia', title: 'Graduate Analyst', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'residual', label: 'Find the residual in the bridge', days: 2,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: { zubin: 'It is the blocking problem for the whole pack.' },
+          why: 'She has just reconciled all three figures, so she is the only person who already knows where the definitions diverge.' },
+        { key: 'pair', label: 'Work alongside her so the bridge is understood by its author', days: 1,
+          best: ['ishaan'], acceptable: [],
+          forbidden: { ravi: 'Not his bridge and not his reconciliation.', zubin: 'Three months in; he would be watching rather than working.' },
+          why: 'He has to be able to defend it. Handing it to Nadia entirely fixes Friday and leaves him unable to answer a single question about it.' },
+        { key: 'contingency', label: 'Prepare the pack version that reports gross and net separately', days: 1,
+          best: ['ravi'], acceptable: ['zubin'],
+          forbidden: {},
+          why: 'If the bridge does not tie by Thursday you need something defensible to put in front of the board. Preparing it now costs a day and buys the decision.' },
+        { key: 'defnote', label: 'Check the definitions note against the reconciliation', days: 1,
+          best: ['zubin'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'He wrote the note; checking it against what the reconciliation found is how he sees why definitions matter.' },
+      ],
+      whyRight: 'You put the blocker with the person who could solve it, kept its author attached to it, and built a fallback before you needed one.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-404': {
+    title: 'Zubin has been working weekends',
+    hint: 'The work is good. That is not the thing to respond to.',
+    brief: "Zubin's definitions note came back faster and better than expected. In passing, he mentions how. Decide what to do about it.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Zubin Wadia', fromTitle: 'Graduate Analyst',
+      prompt: 'Decide what this needs, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Zubin Wadia, Graduate Analyst',
+        body: "Definitions note is done and checked against Nadia's reconciliation — all six terms\nline up.\n\nI did most of it over the weekend so it wouldn't hold anything up. Happy to do the same\nnext week if the bridge is still causing problems, I don't mind at all.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'stop', correct: true, label: 'Tell him not to, and deal with why he thought he had to', why: 'Three months in and already trading his weekends for approval. Left alone it becomes the standard he holds himself to, and then the standard he thinks the team holds — and it is your plan that made him think the week did not fit.' },
+          { key: 'thank', correct: false, label: 'Thank him and note it in his review as commitment', why: 'It rewards the weekend rather than the work, and he will read that precisely. Next time the deadline is tight he will not ask, he will just disappear on Saturday.' },
+          { key: 'ignore', correct: false, label: 'Say nothing — he volunteered and the work is good', why: 'Saying nothing is a decision he will read as approval. Silence from a manager about unpaid weekends is permission.' },
+          { key: 'rules', correct: false, label: 'Restate the policy on working hours', why: 'A policy answer to a person. He is not confused about the rules; he is anxious about whether he is good enough.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You responded to the weekend rather than to the deliverable, and treated it as something your plan caused.',
+      },
+      reply: {
+        prompt: 'Reply to Zubin.',
+        to: 'Zubin Wadia', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'dont', label: 'Tells him clearly not to do it again', markers: ["don't", 'do not', 'not to', 'stop', 'no more', "shouldn't", 'not necessary', 'not expected'], why: 'He offered to repeat it next week. Anything short of a clear answer is a yes.' },
+          { key: 'mine', label: 'Takes responsibility for the plan not fitting', markers: ['my', 'I gave', 'I planned', 'on me', 'my job', "I'd rather", 'my problem', 'tell me'], why: 'If the week does not fit, that is the lead’s error. Letting him absorb it privately is how the fault stays hidden.' },
+          { key: 'work', label: 'Separates the work, which is good, from the weekend', markers: ['note is', 'work is', 'good', 'well', 'separate', 'not the', 'quality'], why: 'He must not hear that the note was unwelcome. The quality and the hours are two different conversations happening in one message.' },
+          { key: 'instead', label: 'Says what to do next time instead', markers: ['tell me', 'come to me', 'flag', 'next time', 'if it', "won't fit", 'let me know', 'raise'], why: 'Without an alternative, "do not work weekends" just means do it and do not mention it.' },
+        ],
+        whyRight: 'You stopped it, took the planning error yourself, and left the quality of his work in no doubt.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'tl-405': {
+    title: 'Wednesday: your own correction, three months on',
+    hint: 'The number you are about to sign contradicts something you signed in the summer.',
+    brief: "The reconciliation is in, and it shows the figure you signed off three months ago was built on the wrong definition. The board has seen that figure. Staff the rest of the week including what happens about it.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Wednesday onward.',
+      context: 'The half-year figure you signed in the summer used the gross definition. The board minuted it. The year-end pack will use net, and the two will not agree.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 3, note: '' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 3, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 3, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'tellasha', label: 'Tell Asha the half-year figure needs restating', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { ravi: 'You signed it. Sending anyone else to report your own error is the single worst thing available here.', nadia: 'She found it, which is not the same as it being hers to report.', ishaan: 'Not remotely his to carry.' },
+          why: 'You signed it, so you report it, and you report it before the board notices rather than after.' },
+        { key: 'quantify', label: 'Work out how far out the half-year figure was', days: 1,
+          best: ['nadia'], acceptable: ['ishaan'],
+          forbidden: {},
+          why: 'She holds the reconciliation. The size of the gap decides whether this is a correction or an incident.' },
+        { key: 'restate', label: 'Restate the half-year on the new basis for comparability', days: 2,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'Mechanical once the basis is fixed, and it gives the board a like-for-like comparison instead of two numbers that argue.' },
+        { key: 'standard', label: 'Write the definition standard so this cannot happen again', days: 1,
+          best: ['ravi'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'He has been on the wrong side of a definition twice this quarter, which makes him the right person to write the rule.' },
+      ],
+      whyRight: 'You reported your own error yourself, sized it before reporting it, and turned it into a standard.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-406': {
+    title: 'Asha asks whether you should be signing these at all',
+    hint: 'She is not threatening you. She is asking a real question and the honest answer is more useful than a defence.',
+    brief: "You have told Asha the half-year figure needs restating. Her reply is not what you expected and it deserves a serious answer.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Asha Rao', fromTitle: 'Line Manager',
+      prompt: 'Decide how to answer, then write to her.',
+      exhibit: {
+        kind: 'email', from: 'Asha Rao, Line Manager',
+        body: "Thanks for telling me before the board did — that mattered.\n\nQuestion though, and I want a real answer. You signed that figure off in July. Should you\nhave been signing it at all, or should it have come to me? I'm not making a point, I\ngenuinely don't know where the line is and I'd rather we decided it now than after the\nnext one.",
+      },
+      decision: {
+        prompt: 'What is the right answer to give her?',
+        multi: false,
+        options: [
+          { key: 'line', correct: true, label: 'Propose where the line should sit, with a reason, and say July was on your side of it', why: 'She has asked you to define the boundary of your own authority. Answering with a proposal — external, board-visible or cross-functional goes to her, everything else is yours — is the answer of somebody ready for the next rung.' },
+          { key: 'sorry', correct: false, label: 'Accept that it should have come to her', why: 'Safe, and it hands back authority you need. It also does not answer her question, which was where the line is rather than who is at fault.' },
+          { key: 'mine', correct: false, label: 'Argue that the sign-off was correctly yours and the error was unrelated', why: 'Defensive. It is true that the definitional error was not about authority, but she asked a structural question and this answers a different one.' },
+          { key: 'her', correct: false, label: 'Ask her to decide where the line is', why: 'She has just told you she does not know. Returning her own question is the opposite of what a lead is for.' },
+        ],
+        skills: { businessLogic: 100, communication: 100 },
+        whyRight: 'You answered with a proposal rather than an apology or a defence.',
+      },
+      reply: {
+        prompt: 'Write to Asha.',
+        to: 'Asha Rao', subject: null, maxWords: 200,
+        rubric: [
+          { key: 'proposal', label: 'Proposes a concrete boundary', markers: ['line', 'anything that', 'goes to you', 'comes to you', 'I sign', 'my call', 'threshold', 'board', 'external'], why: 'She asked for a decision, not a view. A boundary somebody could actually apply is the deliverable.' },
+          { key: 'july', label: 'Says where July sat under that rule', markers: ['July', 'that one', 'under that', 'would have', 'was mine', 'internal', 'half-year'], why: 'A rule that conveniently exempts your own mistake is not a rule. Applying it to July, out loud, is what makes it credible.' },
+          { key: 'error', label: 'Separates the authority question from the error', markers: ['separate', 'different', 'not why', 'the error was', 'definition', 'either way', 'regardless'], why: 'The definitional mistake would have happened at any level of sign-off. Conflating the two would buy a rule that fixes nothing.' },
+          { key: 'direct', label: 'Answers her directly rather than hedging', markers: ['I think', 'my view', 'I would', "I'd", 'should be', 'propose', 'suggest'], why: 'She asked for a real answer and said so. Hedging here is the thing that would actually cost you her confidence.' },
+        ],
+        whyRight: 'You proposed a boundary, applied it honestly to your own case, and kept the error and the authority question apart.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'tl-407': {
+    title: 'Thursday: the estimate somebody has already made',
+    hint: 'A number is circulating that nobody on this team produced. Staff the response before you staff the pack.',
+    brief: "Vikram has put a next-year revenue estimate in a pre-read, sourced to 'analytics'. Nobody here made it. The board reads the pre-read tomorrow.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Staff Thursday and Friday.',
+      context: 'The estimate assumes the two new stores trade at full-year rates from January. Nobody in the team produced it or was asked. It is attributed to analytics in a document the board has.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 2, note: '' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: '' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 2, note: '' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 2, note: '' },
+      ],
+      items: [
+        { key: 'vikram', label: 'Talk to Vikram about the attribution', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { ravi: 'Telling a Business Stakeholder he has misattributed a number to your team is not a thing to send an analyst to do.', ishaan: 'Same, more so.', nadia: 'Same.' },
+          why: 'A number attributed to your team that your team did not make is a question about the team, and it goes from whoever runs it.' },
+        { key: 'ourversion', label: 'Produce the estimate properly, with its assumptions visible', days: 2,
+          best: ['ishaan'], acceptable: ['ravi'],
+          forbidden: {},
+          why: 'The fastest way to replace a bad number is a better one with its workings shown, and this is exactly the piece he has earned.' },
+        { key: 'assumptions', label: 'Write out what the circulating estimate assumes', days: 1,
+          best: ['ravi'], acceptable: ['nadia'],
+          forbidden: {},
+          why: 'Naming the assumptions is what makes the correction a contribution rather than a complaint.' },
+        { key: 'packfinal', label: 'Final pack assembly and tie-out', days: 1,
+          best: ['nadia'], acceptable: ['ravi'],
+          forbidden: { ishaan: 'He is producing the estimate that is going into it.' },
+          why: 'Somebody has to check the pack ties, and it cannot be anyone whose number is in it.' },
+      ],
+      whyRight: 'You took the awkward conversation, answered a bad number with a better one, and kept the tie-out independent.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-408': {
+    title: 'The estimate, with its assumptions on the page',
+    hint: 'Compare what his estimate assumes about the new stores with what the sales window actually contains.',
+    brief: "Ishaan's version of the next-year estimate is ready. It is more careful than the one circulating. Decide whether it is careful enough to go in front of a board.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ishaan Varghese', fromTitle: 'Junior Data Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ishaan Varghese, Junior Data Analyst',
+        body: "Next-year estimate, assumptions stated:\n\n  1. Existing eleven stores grow at the observed half-on-half rate.\n  2. Sector 29 and Salt Lake trade a full year at their current run rate.\n  3. No further openings or closures.\n\nThat gives a number about 4% below Vikram's. Mine's more conservative because I've used\nthe actual run rate rather than a mature-store average.",
+      },
+      decision: {
+        prompt: 'Does this go in the pack?',
+        multi: false,
+        options: [
+          { key: 'runrate', correct: true, label: 'Challenge assumption 2 — a run rate from a few months of trading is not a year', why: 'Salt Lake opened in February and Sector 29 in October, so their "current run rate" is built on a partial year that includes opening. Annualising it is the same error as Vikram’s in a more careful costume.' },
+          { key: 'ship', correct: false, label: 'Ship it — the assumptions are stated, which is what matters', why: 'Stating an assumption is not the same as it being defensible. A visible bad assumption still produces a bad number, it is just easier to argue about afterwards.' },
+          { key: 'vikram', correct: false, label: 'Ship it because it is better than the circulating number', why: 'The bar is whether the board can act on it, not whether it beats the alternative.' },
+          { key: 'noest', correct: false, label: 'Refuse to give an estimate at all', why: 'There is a number in a pre-read attributed to your team. Declining to produce one leaves that number standing.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You caught the annualised run rate — the same error as the number you are replacing, better dressed.',
+      },
+      reply: {
+        prompt: 'Reply to Ishaan.',
+        to: 'Ishaan Varghese', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'which', label: 'Names assumption 2 specifically', markers: ['assumption 2', 'second', 'run rate', 'Salt Lake', 'Sector 29', 'full year', 'annualis', 'annualiz'], why: 'Three assumptions are listed and two are fine. Being exact about which one is wrong is the whole value of the reply.' },
+          { key: 'why', label: 'Explains why a new store’s run rate is not a year', markers: ['opened', 'February', 'October', 'ramp', 'partial', 'few months', 'not mature', 'early'], why: 'The mechanism, not the verdict. A new store’s early trading is not its steady state and that reason generalises.' },
+          { key: 'same', label: 'Points out it is the same error as the one he is correcting', markers: ['same', 'Vikram', 'too', 'also', 'both', 'as well', 'careful version'], why: 'That is the lesson worth having: stating assumptions made the error visible without making it smaller.' },
+          { key: 'better', label: 'Credits the structure of what he has done', markers: ['assumptions', 'stated', 'structure', 'right shape', 'good', 'better', 'exactly how'], why: 'Writing the assumptions on the page is exactly right and is why the error was catchable at all.' },
+        ],
+        whyRight: 'You pinned the one bad assumption, explained the mechanism, and kept the good structure intact.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'tl-409': {
+    title: 'Friday: the number the board hears',
+    hint: 'Every figure in this pack needs somebody who can answer for it in the room. Two of them are only defensible by you.',
+    brief: "Board today. Assign an owner to each item in the pack — meaning who answers if it is challenged, not who produced it.",
+    tool: 'assign',
+    datasetKey: 'retail_sales',
+    assign: {
+      prompt: 'Assign an owner to each item for the board session.',
+      context: 'Friday. You and Ravi are in the room. Nadia and Ishaan are available on chat. The pack contains a restatement of a figure you signed in July and an estimate that contradicts a stakeholder’s pre-read.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Team Lead', capacityDays: 4, note: 'In the room.' },
+        { key: 'ravi', name: 'Ravi Menon', title: 'Retail Analyst', capacityDays: 2, note: 'In the room.' },
+        { key: 'nadia', name: 'Nadia Baig', title: 'Analyst, Data Quality', capacityDays: 1, note: 'On chat only.' },
+        { key: 'ishaan', name: 'Ishaan Varghese', title: 'Junior Data Analyst', capacityDays: 1, note: 'On chat only.' },
+      ],
+      items: [
+        { key: 'restate', label: 'The July restatement', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { ravi: 'You signed the original. Handing him the explanation of your own error is indefensible in front of a board.', nadia: 'Not in the room.', ishaan: 'Not in the room.' },
+          why: 'You signed it, you restated it, you explain it.' },
+        { key: 'estimate', label: 'The next-year estimate that differs from the pre-read', days: 1,
+          best: ['you'], acceptable: ['ravi'],
+          forbidden: { ishaan: 'Not in the room, and contradicting a Business Stakeholder’s circulated number in front of the board is not a junior’s job.', nadia: 'Not in the room.' },
+          why: 'It contradicts a number the board has already read from somebody else. That disagreement is held at your level.' },
+        { key: 'yearend', label: 'The year-end revenue figure and the bridge', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: { nadia: 'Not in the room.' },
+          why: 'The core number, well understood, and a chance for him to be in front of the board on solid ground.' },
+        { key: 'defs', label: 'The definitions note', days: 1,
+          best: ['ravi'], acceptable: ['you'],
+          forbidden: { ishaan: 'Not in the room.' },
+          why: 'Unlikely to be challenged and entirely defensible by anyone who has read it.' },
+      ],
+      whyRight: 'You kept your own restatement and the disagreement with a stakeholder, and gave Ravi the ground he is strongest on.',
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'tl-410': {
+    title: 'The reporting standard, and what you are measured on',
+    hint: 'Read it as the thing that has to work when you are not there.',
+    brief: "Ravi has drafted the reporting standard — the rule meant to stop this year's definition problems recurring. It is the last thing you sign as lead on this project.",
+    tool: 'signoff',
+    datasetKey: 'retail_sales',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'This has to work without you. Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Ravi Menon, Retail Analyst',
+        body: "Reporting standard, draft:\n\n  1. All external revenue figures are reported net.\n  2. Any figure leaving the team is checked by someone who did not produce it.\n  3. Where a definition is ambiguous, the team lead decides.\n\nShort enough that people will actually follow it.",
+      },
+      decision: {
+        prompt: 'Does this go out as the standard?',
+        multi: false,
+        options: [
+          { key: 'three', correct: true, label: 'Fix rule 3 — a standard that routes every ambiguity to one person is not a standard', why: 'Rules 1 and 2 work without anybody present. Rule 3 makes the team lead a permanent dependency, which is the failure this whole year was made of — and it is the rule that will be quietly ignored the first time you are on leave.' },
+          { key: 'ship', correct: false, label: 'Ship it — three short rules is exactly right', why: 'Two of the three are excellent. The third converts a definitions problem into a bottleneck and calls it governance.' },
+          { key: 'longer', correct: false, label: 'Expand it — three rules cannot cover a year of edge cases', why: 'He is right that short gets followed. Length is not what is wrong with it.' },
+          { key: 'drop3', correct: false, label: 'Delete rule 3 and leave the two that work', why: 'Ambiguity is real and it does need a route. Deleting the rule leaves the gap that caused July.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept what works without you and fixed the rule that only works while you are there.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'rule3', label: 'Names rule 3 as the problem', markers: ['rule 3', 'third', 'ambiguous', 'team lead decides', 'me', 'bottleneck', 'one person'], why: 'Rules 1 and 2 are good and he needs to know exactly which one to rewrite.' },
+          { key: 'absent', label: 'Uses the "when I am not here" test', markers: ['not here', 'leave', 'without me', 'absent', 'someone else', 'next lead', 'holiday', 'works when'], why: 'It is the test that separates a standard from a habit, and he can apply it to the rewrite himself.' },
+          { key: 'route', label: 'Says ambiguity still needs somewhere to go', markers: ['still need', 'route', 'somewhere', 'written down', 'register', 'default', 'log', 'record'], why: 'Otherwise he deletes the rule and recreates the July gap.' },
+          { key: 'good', label: 'Says rules 1 and 2 are right', markers: ['first two', '1 and 2', 'rules are', 'good', 'keep', 'right', 'work'], why: 'He wrote a genuinely good standard with one flaw. He should not redraft the parts that work.' },
+        ],
+        whyRight: 'You applied the test that matters — does it work when you are not there — and protected the two rules that already passed it.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
   },
 
   'sa-001': {
@@ -11257,7 +12878,7 @@ function getState(userId) {
   // inbox first showed the learner an unchanged inbox on the very load where the thing
   // they had been working towards actually happened.
   const messages = db.prepare('SELECT * FROM sim_messages WHERE enrollment_id = ? ORDER BY created_at ASC').all(enrollment.id);
-  const rosterList = rosterWithAvatars(enrollment.id);
+  const rosterList = rosterWithAvatars(enrollment.id, enrollment.level);
   const aiUse = countTodaysAiUse(enrollment.id);
   const messagesRemaining = Math.max(0, DAILY_AI_LIMITS.messages - aiUse.messages);
   // The day the learner has EARNED, which may be ahead of the day the calendar has
@@ -13211,6 +14832,10 @@ function getWorkbench(userId, taskId) {
     // Coaching: the junior's work, what might be wrong with it, and the reply box. Same
     // seeded option order as any other judgement, so refreshing cannot buy a second look.
     coach: tool === 'coach' && def.coach ? tasktypes.presentCoach(def.coach, task.id) : null,
+    // The Team Lead slots: a week to staff, and somebody else's work going out with your
+    // name on it. Who should do what, and which call is right, stay on the server.
+    assign: tool === 'assign' && def.assign ? tasktypes.presentAssign(def.assign) : null,
+    signoff: tool === 'signoff' && def.signoff ? tasktypes.presentSignoff(def.signoff, task.id) : null,
     tools: tool === 'python'
       ? [TOOLS['python-notebook'], TOOLS['schema-browser']]
       : tool === 'chart'
@@ -13219,9 +14844,11 @@ function getWorkbench(userId, taskId) {
           ? [TOOLS['email-client']]
           : tool === 'choice'
             ? [TOOLS['schema-browser']]
-            : tool === 'coach'
+            : (tool === 'coach' || tool === 'signoff')
               ? [TOOLS['team-chat'], TOOLS['schema-browser']]
-              : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
+              : tool === 'assign'
+                ? [TOOLS['team-chat']]
+                : [TOOLS['sql-terminal'], TOOLS['schema-browser']],
   };
 }
 
@@ -13597,6 +15224,34 @@ function openReview(enrollment, task, question, taskId) {
 
 // Asha's question for a judgement or a piece of writing. Always about something they
 // actually did — the specific thing they missed, or the specific claim they made.
+// Asha's question about a week the learner has staffed. She manages the lead, so she asks
+// about the choice that cost the most — never about the mechanics of the allocation.
+function assignReviewQuestion(taskDef, marked) {
+  if (marked.detail.over) {
+    return `You've put more on somebody than they've got days for. Who is it, and what were you going to do when Friday came and it wasn't done — because that conversation is yours either way.`;
+  }
+  if (marked.detail.unassigned) {
+    return `Something's still unstaffed. Tell me whether that was a decision or an oversight — and if it was a decision, who have you told?`;
+  }
+  if (marked.score >= 80) {
+    return `That works on paper. Tell me which of those you'd change first if somebody called in sick on Tuesday — I want to know where the slack is, and whether you know.`;
+  }
+  return `Walk me through one of these. Pick the assignment you were least sure about and tell me what made it close.`;
+}
+
+// Asha's question about a sign-off. The point is never the document — it is whether the
+// learner understands that it went out under their name.
+function signoffReviewQuestion(taskDef, marked) {
+  const who = (taskDef.signoff && taskDef.signoff.fromName || 'they').split(' ')[0];
+  if (marked.detail.decisionScore < 60) {
+    return `I'd have made a different call on this one. Talk me through yours — what would have had to be true for it to be the right one?`;
+  }
+  if (marked.detail.replyScore < 60) {
+    return `Right call. But ${who} has to write the next one, and from what you sent I'm not sure they'd know what to do differently. What did you want them to take from it?`;
+  }
+  return `Good. One thing: this goes out with your name on it, not ${who}'s. If Vikram comes back at it in the room, which part of it are you least able to defend?`;
+}
+
 // Asha's sign-off question for a coaching task.
 //
 // She is the learner's manager, not the junior's, so she asks about the judgement rather
@@ -13681,6 +15336,50 @@ async function submitTask(userId, taskId, code, computedResult) {
   // Choice and write-up tasks are graded against an authored spec rather than a dataset
   // comparison — there is no query to run. Both still go to Asha for sign-off afterwards,
   // because being able to explain the judgement is the point of every task here.
+  // Staffing the week. One choice per piece of work, graded against who can carry it and
+  // how much time they actually have.
+  if (tool === 'assign') {
+    const answer = typeof code === 'string' ? safeJson(code) : code;
+    if (!answer || typeof answer !== 'object' || !answer.assignments) {
+      throw new Error('Staff the work before submitting.');
+    }
+    const staffed = Object.values(answer.assignments).filter(Boolean).length;
+    if (!staffed) throw new Error('Nothing is assigned yet.');
+    const marked = tasktypes.gradeAssign(taskDef.assign, answer);
+    db.prepare(`
+      UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+        submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
+      WHERE id = ?
+    `).run(JSON.stringify(answer), marked.score, marked.feedback, JSON.stringify(marked.skills), now(), taskId);
+    addMessage(enrollment.id, 'learner', 'You',
+      `Staffed ${staffed} of ${taskDef.assign.items.length} for the week.`, taskId);
+    const question = assignReviewQuestion(taskDef, marked);
+    db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+    openReview(enrollment, task, question, taskId);
+    return { inReview: true, question, result: marked.detail };
+  }
+
+  // Sign-off. Somebody else's work, your name on it.
+  if (tool === 'signoff') {
+    const answer = typeof code === 'string' ? safeJson(code) : code;
+    if (!answer || typeof answer !== 'object') throw new Error('Answer both parts before submitting.');
+    if (!Array.isArray(answer.picked) || !answer.picked.length) {
+      throw new Error('Make the call before you write to them.');
+    }
+    if (!String(answer.reply || '').trim()) throw new Error('Write your reply before submitting.');
+    const marked = tasktypes.gradeSignoff(taskDef.signoff, answer);
+    db.prepare(`
+      UPDATE sim_tasks SET status = 'in_review', submission = ?, score = ?, feedback = ?, skills_json = ?,
+        submitted_at = ?, graded_at = NULL, review_state = 'pending', review_rounds = 0
+      WHERE id = ?
+    `).run(JSON.stringify(answer), marked.score, marked.feedback, JSON.stringify(marked.skills), now(), taskId);
+    addMessage(enrollment.id, 'learner', 'You', String(answer.reply), taskId);
+    const question = signoffReviewQuestion(taskDef, marked);
+    db.prepare('UPDATE sim_tasks SET review_question = ? WHERE id = ?').run(question, taskId);
+    openReview(enrollment, task, question, taskId);
+    return { inReview: true, question, result: marked.detail };
+  }
+
   // Coaching. Two answers in one submission, because it is two skills — what you spotted,
   // and what you said. Both have to be there; a diagnosis with no reply is a private
   // opinion, and a reply with no diagnosis is a guess delivered warmly.
