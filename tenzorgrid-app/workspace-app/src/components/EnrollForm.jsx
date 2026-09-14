@@ -384,7 +384,7 @@ export default function EnrollForm({ onEnrolled }) {
       {/* On a phone the order is headline, then the choice, then the detail — the picker
           must not sit below four cards of pitch. On a wide screen the pitch takes the left
           column and the picker the right, which is the same content in two readings. */}
-      <div className="max-w-5xl mx-auto flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-start lg:gap-x-12 lg:gap-y-6">
+      <div className="max-w-5xl mx-auto flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-12 lg:gap-y-6">
         <div className="lg:col-start-1 lg:row-start-1">
           <PitchHeader
             detail={detail}
