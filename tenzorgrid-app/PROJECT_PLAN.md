@@ -4,6 +4,16 @@ This file is the persistent memory for this project across sessions/context rese
 **Read this first** before doing anything else. Update it whenever nearing a context
 limit, after finishing a phase, or after any decision that changes the plan.
 
+> **Where things stand (14 Sep 2026).** The **Data Analyst track in the Virtual Workspace
+> is complete at all four levels** — Junior, Senior, Team Lead, Manager — and merged to
+> `main` (#76, deployed and live). That is **16 projects, 480 tasks, 160 activities, 160
+> situations, 16 quizzes and 16 project briefs**, on **five seeded datasets**, verified by
+> 23 test suites and 16 full five-day walks: **2,389 assertions, all green**.
+> Four of the promised twelve weeks are authored. The learner-facing pieces still missing
+> are the weekly retro/1:1, the performance record and the interview defence — see
+> **Next immediate step**. Two things are blocking before real learners arrive:
+> `TIME_TRAVEL=1` is still set on Railway, and the database still has no backup.
+
 ## Product vision
 
 TenzorGrid is a four-pillar AI SaaS platform (from the V3 business plan):
@@ -195,6 +205,10 @@ scale).
   somewhere worth a final check.
 
 ## Phase 1 — Complete the Career Growth pillar — IN PROGRESS (Virtual Workspace)
+
+*Status: the Data Analyst track is authored end to end (Phases 8–11 below). What remains in
+this pillar is the retro/performance-record/interview-defence trio, weeks 5–12, and any
+second role.*
 
 **Virtual Workspace — build started.** Full plan is in a private Claude artifact ("Virtual
 Workspace Blueprint," not committed to the repo — re-derive from this summary if the
@@ -388,7 +402,9 @@ expensive parts are authored or generated deterministically, not called at runti
 **The validation gate for any generated content** (apply this to every new dataset/task):
 a reference query must run clean, return a non-trivial result, **and the naive wrong answer
 must differ from the correct one**. If the obvious mistake produces the same number, the
-task teaches nothing and cannot be graded.
+task teaches nothing and cannot be graded. This is now enforced by
+`scratchpad/content-gate-test.js` rather than by hand, and it has grown teeth — see
+Phase 11.
 
 ### Build phases
 
@@ -461,7 +477,14 @@ task teaches nothing and cannot be graded.
   account. Authoring it also surfaced a real data bug — the generator was resolving
   incidents *before* they started, which made any duration analysis nonsense; fixed
   without changing the random draw sequence, so every other generated value is unchanged.
-- **Phase 4b — ✅ SHIPPED. The promotion round.** The user's rule, in their words:
+- **Phase 4b — ✅ SHIPPED, then SUPERSEDED (see Phase 9).** The promotion round as first
+  built: two levels, one bar, verdict at the end. The four-level ladder and the negotiation
+  that opens a project early replaced it. What survives unchanged is the rule it was built
+  on — promote on *performance AND training done*, both criteria reported separately with
+  the arithmetic attached — and the decision to keep every earlier project on the board.
+  The original note follows, kept because the reasoning still applies.
+
+  The user's rule, in their words:
   promote on *"performance AND training done"* — both, not either. Four junior projects
   delivered **and** an average of 70 or above. The two criteria are reported separately
   with real numbers, because "you were not promoted" is a sentence that has to come with
@@ -479,6 +502,10 @@ task teaches nothing and cannot be graded.
   not a competing job title.
 
 ### The 12-week shape (the user's arithmetic, confirmed)
+
+**Superseded in part — see "The day, as finally settled" below.** The task arithmetic here
+still holds; what changed is that a day turned out to need three more currencies than tasks,
+and promotion turned out to need a conversation before the verdict.
 
 **30 tasks per project · 6 per day · 5 days per project · 4 projects per month · promote
 after month one.** Three consequences, all of which change what gets built next:
@@ -543,7 +570,7 @@ after month one.** Three consequences, all of which change what gets built next:
   each knew how to answer `da-001` and nothing else. `scratchpad/answers.js` is now the
   one place a correct answer for any task lives.
 
-- **Phase 5c — IN PROGRESS. Authoring the days.** The user tested and reported both
+- **Phase 5c — ✅ SHIPPED. Authoring the days.** The user tested and reported both
   symptoms exactly: *"per day only one task creating and same task for senior and
   junior"*. Measured, they were one real gap and one real bug, and they were different
   problems:
@@ -569,9 +596,8 @@ after month one.** Three consequences, all of which change what gets built next:
   one — Support has the lowest average pay, but **Marketing sits lowest in its own salary
   band**. A learner reasoning from day one's chart gets it wrong.
 
-  **Still to author: junior days 3–5, senior days 2–5, and all of the other four
-  projects.** Roughly 12 of 30 tasks exist on the two lead projects; days 4 and 5 remain
-  empty everywhere, so no learner has yet seen a Friday.
+  *(Written when 12 of 30 tasks existed on two projects and no learner had seen a Friday.
+  All of it is now authored — see Phase 10.)*
 
 - **Phase 6 — ✅ SHIPPED. The team is real, and chat is separate from email.** Five
   changes the user asked for, and the roster change unblocked three of them:
@@ -632,25 +658,162 @@ after month one.** Three consequences, all of which change what gets built next:
   control sends `{ workingDays }` or `{ to: 'past-deadline' }`, so every button was a no-op
   over HTTP while passing every backend test.
 
-- **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
-  interview defence. Plus the outstanding authoring: junior days 3–5, senior days 2–5, and
-  the other four projects.
+- **Phase 8 — ✅ SHIPPED. The day, as finally settled.** Six tasks was never a day. The
+  user set the shape and it is now the contract every project is held to:
+  **30 tasks · 10 activities · 10 situations · 1 quiz per project**, two of each a day,
+  the quiz on Friday, and the day does not close until all of it is done.
+  - **Activities** (`lib/dayitems.js`) are the reading and the training — Asha sends a
+    module, a colleague explains why a measure behaves the way it does. Closed by
+    acknowledging, answering in a few lines, or a comprehension choice.
+  - **Situations** are the inbound timeline. Two a day, unannounced, and **four of the ten
+    deserve no reply at all** — that is the mechanism, not padding. If everything in the
+    inbox deserves an answer then triage is not a decision, and the habit being trained is
+    "answer everything". Ignoring one that mattered has a named consequence.
+  - **They arrive, they are not a list.** An activity lands as mail mid-task; a situation
+    lands in the chat dock while you are in the workbench. The interruption *is* the skill.
+  - **Mail drips through the day** rather than arriving as a wall of ten at 09:00, released
+    against an allowance that grows with both tasks signed off and time at the desk.
+  - **The day ends and says so.** Finishing the sixth task used to roll straight into
+    tomorrow with nothing having said well done. A day now closes as an act, Asha writes to
+    say what was got through, and tomorrow waits behind a button.
+  - **A project completes on 30 + 10 + 1 + 10**, and an unfinished project cannot be
+    started over the top of another.
 
-**The real gate on all of this is content, not code.** The machinery for a week can be
-built and tested against the five tasks that exist today; authoring the ~30-task arc is a
-separate job and is what actually stands between here and a shippable twelve weeks.
+- **Phase 9 — ✅ SHIPPED. The four-level ladder, and the negotiation.** The track is now
+  **Junior → Senior → Team Lead → Manager**, and the promotion rule changed on the user's
+  instruction:
+
+  | Rung | Title | Bar |
+  | --- | --- | --- |
+  | junior → senior | Senior Data Analyst | 75 average |
+  | senior → lead | Data Analytics Team Lead | 80 average |
+  | lead → manager | Data Analytics Manager | 85 average |
+
+  **The conversation opens at project 3 and the verdict lands at project 4.** Asha opens
+  the negotiation a whole project early and names the number — the bar, the project count,
+  and where the learner stands today. The user's rule and the right one: nobody should find
+  out the bar existed on the day they are measured against it, and a target you cannot yet
+  act on is pressure rather than information. `PROMOTION_LADDER`, `PROMOTION_OPENS_AFTER`
+  and `PROMOTION_DECIDES_AFTER` are the single place this is decided.
+  At Manager there is no rung above, so the card reads *"Top of the ladder"* and the
+  machinery stays silent rather than rendering an empty progress bar — which is now a test,
+  because it was the one path nothing covered.
+  Building it surfaced **two pre-existing ordering bugs**: promotion events landed one page
+  load late, because `finishProjectIfComplete` ran after `getProjects` and the message list
+  was built before `closeCompletedRuns`. Both fixed.
+
+- **Phase 10 — ✅ SHIPPED. The whole Data Analyst track is authored.**
+  **16 projects · 480 tasks · 160 activities · 160 situations · 16 quizzes · 16 briefs.**
+  Four levels, four projects each, five working days each.
+
+  | Level | Projects | Dataset |
+  | --- | --- | --- |
+  | Junior | Q1 Compensation Review · Headcount & Hiring Trends · Outage Impact & Client Recovery · Pay Equity Audit | `hr_core`, `saas_ops` |
+  | Senior | Platform Reliability Review · Account Economics Review · Activation & Onboarding Review · Onboarding Experiment Readout | `saas_ops`, `product_events` |
+  | Team Lead | Half-Year Trading Review · Margin & Promotion Review · Range & Space Review · Year-End Board Pack | `retail_sales` |
+  | Manager | Demand & Capacity Review · Tooling & Licence Renewal · Intake & Prioritisation · The Headcount Case | `analytics_ops` |
+
+  Task mix across the whole track: **200 SQL · 155 judgement · 84 write-up · 22 chart ·
+  21 Python.** Two of six a day are queries, which is both realistic and what makes 480
+  tasks authorable at all.
+
+  **What each level actually changes**, since "different projects, not the same brief
+  written vaguer" was the user's decision and had to mean something concrete:
+  - **Junior** — compute the number correctly. The traps are population traps: leavers who
+    are still in the table, a client who has already churned.
+  - **Senior** — rates and distributions rather than totals, and deciding what to exclude.
+  - **Team Lead** — you are handed a number somebody else computed and asked whether the
+    business can be run on it. Ends with owning the figure the board hears.
+  - **Manager** — *the subject of the analysis becomes the team you manage.* That changes
+    what a wrong answer costs: a misread retail figure produces a bad range decision; a
+    misread capacity figure produces a performance conversation with a named person. The
+    hardest task in the track is Wednesday of the last project — telling your own manager
+    that the case she asked you to build should not be made.
+
+  **Every project follows the same five-day arc**, which is what made this authorable at
+  volume: *the intake · warm up on the data · the core analysis · **the wobble** (the
+  finding that overturns Monday's answer) · what gets published and what changes so it
+  cannot recur.* Wednesday is always the wobble.
+
+- **Phase 11 — ✅ SHIPPED. Three more datasets, and the harness that keeps them honest.**
+  Five seeded datasets now, all deterministic from a fixed seed, all with authored quirks:
+
+  | Dataset | Size | The characteristic mistake |
+  | --- | --- | --- |
+  | `hr_core` | 6 departments, 69 employees | leavers still counted as current staff |
+  | `saas_ops` | 16 clients, 35 incidents, 76 tickets | a client who has already churned |
+  | `product_events` | 604 users, 4,664 sessions, 5,646 events, 307 assignments | Meridian's own staff left in a customer metric |
+  | `retail_sales` | 13 stores, 68 products, 9,022 sales, 2,214 stock counts | a fixed estate when stores opened and closed; inner-joining sales to products |
+  | `analytics_ops` | 14 analysts, 384 requests, 1,226 time logs, 6 licences, 68 assignments | the manager in a delivery denominator; the leaver still in every table; timing work to first delivery rather than final close |
+
+  Two test suites are the reason this is maintainable rather than 480 hand-checked facts:
+  - **`content-gate-test.js`** holds every finished project to the shape: 30 tasks over
+    5 days, ≥3 tool kinds per day, ≥3 SQL tasks that exercise the dataset's characteristic
+    mistake **and whose naive form returns a different answer**, at most one single-row
+    query, ≥3 no-reply situations, ≥1 task flagged for rework, and the full 10/10/1.
+  - **`project-walk.js`** walks any project through all five days as a learner would and
+    asserts the whole shape holds — 6+2+2 a day, ≥10 emails, the day closing, the Friday
+    quiz, completion on 30+10+1+10.
+
+  **Current state: 23 suites, 16 five-day walks, 2,389 assertions, all green.**
+
+  *The discipline that matters and should not be dropped:* **every figure quoted in a
+  brief, option, rubric or quiz answer is measured against the generated data, not
+  assumed** — and when a measured value disagrees with authored text, the text is corrected
+  rather than the learner left to see a contradiction. Roughly a dozen figures were
+  corrected this way while authoring.
+
+  Three real data bugs the harness found, all invisible from the app:
+  - `analytics_ops` reused eight names from the simulation's own cast, so the Business
+    Stakeholder appeared as a team lead the learner was assessing and the Head of Product
+    as a junior analyst. Renamed. Asha Rao stays, because she really is the line manager.
+  - The January leaver was logging timesheets in February and opening licensed tools in
+    June. Both clamped to the leaving date. *The seats staying assigned is the authored
+    quirk and is sharper for it* — a departed person still holding four seats is the
+    finding; a departed person opening them was just the generator not knowing he had gone.
+  - `product_events` had invites travelling backwards in time, events landing in
+    zero-duration sessions, and activation uncensored where retention was censored.
+
+- **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
+  interview defence — the last three of the user's thirteen points that are not yet built.
+
+**The real gate on all of this was content, not code** — and as of Phase 10 that gate is
+cleared for Data Analyst. Four weeks of the twelve are authored end to end. The same
+sentence now applies to weeks 5–12 and to the second role, whichever the user wants first.
 
 ### Open items on this build
 
+**Blocking before real learners arrive**
+
+- **`TIME_TRAVEL=1` is still set on Railway.** It is what makes the track testable in one
+  sitting — jump a day, switch level, start any project directly. It also walks past every
+  deadline in the programme, and the deadline is most of what makes this a job. **Remove
+  the variable before the first real learner.**
 - **The database still has no backup anywhere.** `lib/backup.js` is written and tested
   (`VACUUM INTO` snapshot → gzip, ~27x → Supabase `db_backups` bucket, keep 6) but sits
   unmerged on branch `claude/tenzorgrid-project-transfer-0cm81z` along with `/api/health`,
   photos-to-disk, template character replies and the AI-escalation budget. Railway's HOBBY
   plan reports `maxBackupsCount: 0`, so there is no platform fallback. **Merge this.**
-- Character memory (`eae3fdb`) is held on cost grounds — the user wants an alternative
-  costed first.
-- Deferred by the user, don't start unprompted: Settings tab, storage migration to
-  Postgres, pandas in the notebook, 3D KPI icons, calendar meetings.
+
+**Known and not yet triaged**
+
+- `scratchpad/tmpl-test.js` is stale and failing, and was failing on `main` before this
+  work started. It is excluded from the regression run, which means nobody is watching
+  whatever it was written to watch.
+- **Weeks 5–12 do not exist.** The programme is twelve weeks and four are authored. What
+  happens after the Manager track completes is currently: nothing.
+- The activity and situation pools are **per project**, not shared. That was the right call
+  for authoring quality and it means a second role starts from zero rather than from a
+  library.
+
+**Held or deferred by the user — don't start unprompted**
+
+- Character memory (`eae3fdb`) — held on cost grounds, the user wants an alternative costed
+  first.
+- Points decay with a floor; inbox triage as a graded activity; the stand-up as a real
+  meeting; a proper cast system.
+- Settings tab, storage migration to Postgres, pandas in the notebook, 3D KPI icons,
+  calendar meetings.
 
 ## Phase 2 — Business Growth pillar — NOT STARTED
 ## Phase 3 — Smart Trading pillar — NOT STARTED (paper-trading only until compliance review)
@@ -658,11 +821,24 @@ separate job and is what actually stands between here and a shippable twelve wee
 
 ## Next immediate step
 
-**Now: finish Phase 2 of the Virtual Workspace 12-week build (see that section above), then
-Phase 3, 4 and 5 in order.** The user is not asking for further unprompted UI refinement —
-the refinement notes below are history, kept because they record decisions worth not
-relitigating. Also outstanding and independent of all of it: **merge the backup branch**, the
-database has no backup anywhere.
+**The Data Analyst track is complete at all four levels and merged to `main` (#76, deployed
+2026-09-14).** The user is testing it now, end to end, and the next move waits on what that
+testing finds.
+
+The three candidates after that, in the order they probably matter:
+
+1. **Phase 7 — the last three of the user's thirteen points.** The weekly retro/1:1, the
+   performance record, and the interview defence + certificate + employee ID. Without these
+   the learner finishes four weeks of work with no artefact to walk into an interview with,
+   which is the entire stated purpose of the product.
+2. **Weeks 5–12.** Four weeks authored against a twelve-week promise.
+3. **A second role.** Everything built for Data Analyst — the day model, the ladder, the
+   gate, the walker — is role-agnostic. `ROLE_CATALOG` has one entry.
+
+Outstanding and independent of all of it: **remove `TIME_TRAVEL=1` from Railway** before
+real learners arrive, and **merge the backup branch** — the database has no backup anywhere.
+The UI refinement notes below are history, kept because they record decisions worth not
+relitigating.
 
 ### Earlier state (history)
 
