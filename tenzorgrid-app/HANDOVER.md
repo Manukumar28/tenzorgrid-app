@@ -65,14 +65,18 @@ top; the card reads "Top of the ladder" and the machinery stays silent.
 
 ## 3. Blocking — do these before real learners arrive
 
-1. **`TIME_TRAVEL=1` is still set on Railway.** It is what makes the track testable in one
-   sitting. It also walks past every deadline in the programme, and the deadline is most of
-   what makes this a job. **Remove the variable.**
-2. **The database has no backup anywhere.** `lib/backup.js` is written and tested
+1. **The database has no backup anywhere.** `lib/backup.js` is written and tested
    (`VACUUM INTO` → gzip ~27x → Supabase `db_backups`, keep 6) but sits **unmerged** on
    branch `claude/tenzorgrid-project-transfer-0cm81z`, along with `/api/health`,
    photos-to-disk, template character replies and the AI-escalation budget. Railway's HOBBY
    plan reports `maxBackupsCount: 0`, so there is no platform fallback. **Merge it.**
+
+**`TIME_TRAVEL=1` stays for now — this is the user's decision, 14 Sep, and not an
+oversight.** It is what makes the track testable in one sitting while the product is still
+being built, and he is testing it himself daily. It walks past every deadline in the
+programme, so it comes off before the first real learner — but do not keep raising it as
+blocking until then. Settings now also carries an ungated **Reset the workspace**, which is
+a product feature rather than a testing one and is unaffected by the variable.
 
 ---
 
@@ -216,8 +220,8 @@ project exercises the one it uses:
   `88ef07a5-5817-41a1-bafa-130f384be971`, production env
   `18f4be3c-199f-4e8c-bfd7-435a0ebd6326`. Deploys on push to `main`.
 - Env vars set: `ANTHROPIC_API_KEY`, `DATA_DIR`, `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, **`TIME_TRAVEL`** (remove
-  this one — see §3).
+  `SUPABASE_SERVICE_ROLE_KEY`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, **`TIME_TRAVEL`** (stays
+  while the product is being built — see §3).
 - **Outbound HTTPS to `www.tenzorgrid.com` and Railway is blocked from the agent sandbox.**
   You cannot curl the live site. Verify deploys through the Railway MCP tools —
   `list-deployments` for status, `get-logs` for the boot line.

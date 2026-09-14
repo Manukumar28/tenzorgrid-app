@@ -11,8 +11,9 @@ limit, after finishing a phase, or after any decision that changes the plan.
 > 23 test suites and 16 full five-day walks: **2,389 assertions, all green**.
 > Four of the promised twelve weeks are authored. The learner-facing pieces still missing
 > are the weekly retro/1:1, the performance record and the interview defence — see
-> **Next immediate step**. Two things are blocking before real learners arrive:
-> `TIME_TRAVEL=1` is still set on Railway, and the database still has no backup.
+> **Next immediate step**. One thing is blocking before real learners arrive: the database
+> still has no backup. (`TIME_TRAVEL=1` stays on Railway for now by the user's decision —
+> it comes off before launch, not before then.)
 
 ## Product vision
 
@@ -785,10 +786,6 @@ sentence now applies to weeks 5–12 and to the second role, whichever the user 
 
 **Blocking before real learners arrive**
 
-- **`TIME_TRAVEL=1` is still set on Railway.** It is what makes the track testable in one
-  sitting — jump a day, switch level, start any project directly. It also walks past every
-  deadline in the programme, and the deadline is most of what makes this a job. **Remove
-  the variable before the first real learner.**
 - **The database still has no backup anywhere.** `lib/backup.js` is written and tested
   (`VACUUM INTO` snapshot → gzip, ~27x → Supabase `db_backups` bucket, keep 6) but sits
   unmerged on branch `claude/tenzorgrid-project-transfer-0cm81z` along with `/api/health`,
@@ -835,8 +832,13 @@ The three candidates after that, in the order they probably matter:
 3. **A second role.** Everything built for Data Analyst — the day model, the ladder, the
    gate, the walker — is role-agnostic. `ROLE_CATALOG` has one entry.
 
-Outstanding and independent of all of it: **remove `TIME_TRAVEL=1` from Railway** before
-real learners arrive, and **merge the backup branch** — the database has no backup anywhere.
+Outstanding and independent of all of it: **merge the backup branch** — the database has no
+backup anywhere.
+
+**`TIME_TRAVEL=1` stays on Railway for now, by the user's decision (14 Sep).** It is what
+makes the track testable in one sitting while the product is being built, and he tests it
+himself daily. It comes off before the first real learner; until then it is deliberate, not
+an oversight, and should not be re-raised as blocking.
 The UI refinement notes below are history, kept because they record decisions worth not
 relitigating.
 

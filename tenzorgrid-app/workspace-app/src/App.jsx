@@ -17,7 +17,6 @@ import { Mic } from 'lucide-react';
 import { api } from './api.js';
 import { announceArrivals, countMessages, armSound } from './sound.js';
 
-const ROLE_LABEL = { data_analyst: 'Data Analyst' };
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -30,6 +29,7 @@ export default function App() {
   // are all covered by the same four lines.
   const heard = useRef(null);
   const setState = useCallback((next) => {
+    if (!next) heard.current = null;
     if (next) {
       const counts = countMessages(next);
       if (heard.current) announceArrivals(heard.current, counts);
@@ -114,7 +114,7 @@ export default function App() {
     );
   }
 
-  const roleLabel = `${state.enrollment.level === 'senior' ? 'Senior' : 'Junior'} ${ROLE_LABEL[state.enrollment.role] || 'Data Analyst'}`;
+  const roleLabel = state.enrollment.levelTitle || state.enrollment.roleLabel || 'Data Analyst';
   const pendingCount = state.tasks.filter((t) => t.status === 'assigned').length;
 
   return (
@@ -124,8 +124,8 @@ export default function App() {
         onClose={() => setMenuOpen(false)}
         tab={tab}
         onTab={setTab}
-        roleLabel={(ROLE_LABEL[state.enrollment.role] || 'Data Analyst').toUpperCase()}
-        levelLabel={state.enrollment.level === 'senior' ? 'Senior' : 'Junior'}
+        roleLabel={(state.enrollment.roleLabel || 'Data Analyst').toUpperCase()}
+        levelLabel={state.enrollment.levelTitle || ''}
         onLogout={logout}
         unreadCount={state.inbox ? state.inbox.counts.unread : 0}
       />

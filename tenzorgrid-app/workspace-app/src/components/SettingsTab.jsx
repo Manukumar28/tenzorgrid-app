@@ -1,5 +1,6 @@
 import React from 'react';
-import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw, CheckCheck } from 'lucide-react';
+import { Keyboard, Info, FastForward, Rewind, FlaskConical, AlertTriangle, RotateCcw, CheckCheck, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { useState } from 'react';
 import { api } from '../api.js';
 import { soundEnabled, setSoundEnabled, armSound } from '../sound.js';
@@ -212,6 +213,124 @@ function TimeTravel({ tt, onStateChange }) {
   );
 }
 
+// Start the workspace again.
+//
+// Not the same thing as the testing panel's "start over", which re-enrols you at the same
+// role and level so a tester lands back on day one. This puts you back at the ROLE PICKER,
+// because wanting to start again is usually somebody saying they picked the wrong role or
+// the wrong level — and there are 153 roles to pick from now.
+//
+// It is also the one control in the app that destroys work, so it shows what it is about
+// to destroy, counted from the learner's own rows. "Are you sure?" is a question nobody
+// can answer; "this deletes 46 graded tasks and 9 days at the desk" is.
+function ResetWorkspace({ onStateChange }) {
+  const [preview, setPreview] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    api.resetPreview()
+      .then((d) => { if (alive) setPreview(d.preview); })
+      .catch(() => { /* the card still works; it just cannot show the numbers */ });
+    return () => { alive = false; };
+  }, []);
+
+  async function reset() {
+    setBusy(true); setError('');
+    try {
+      const d = await api.resetWorkspace();
+      // A null state is the point: App falls back to the role picker.
+      onStateChange(d.state);
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+      setConfirming(false);
+    }
+  }
+
+  const lines = preview ? [
+    preview.gradedTasks > 0 && `${preview.gradedTasks} graded task${preview.gradedTasks === 1 ? '' : 's'}${
+      preview.averageScore === null ? '' : `, averaging ${preview.averageScore}`}`,
+    preview.projectsCompleted > 0 && `${preview.projectsCompleted} completed project${preview.projectsCompleted === 1 ? '' : 's'}`,
+    preview.daysAttended > 0 && `${preview.daysAttended} day${preview.daysAttended === 1 ? '' : 's'} at the desk`,
+    preview.messages > 0 && `${preview.messages} message${preview.messages === 1 ? '' : 's'}`,
+    preview.skillTestTaken && 'your skills check and the baseline it set',
+  ].filter(Boolean) : [];
+
+  return (
+    <BentoCard hover={false}>
+      <div className="flex items-center gap-2 mb-1">
+        <RotateCcw size={18} className="text-rose-500" />
+        <h3 className="text-base font-bold">Reset the workspace</h3>
+      </div>
+      <p className="text-xs text-slate-500 mb-3">
+        Clear everything and start again from the role picker — a different role, a
+        different level, or the same one from day one.
+      </p>
+
+      {preview && (
+        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 mb-3">
+          <p className="text-xs font-semibold text-slate-700">
+            You joined as a {preview.level}
+            {preview.joinedOn ? ` on ${preview.joinedOn}` : ''}.
+          </p>
+          {lines.length > 0 ? (
+            <>
+              <p className="text-[11px] text-slate-500 mt-1.5">Resetting deletes:</p>
+              <ul className="text-[11px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside">
+                {lines.map((l) => <li key={l}>{l}</li>)}
+              </ul>
+            </>
+          ) : (
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              There is nothing graded yet, so there is nothing much to lose.
+            </p>
+          )}
+        </div>
+      )}
+
+      {error && <div className="text-rose-600 text-xs mb-2">{error}</div>}
+
+      {confirming ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={14} className="text-rose-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-rose-700">
+              This cannot be undone and none of it can be recovered. Your account and profile
+              stay; the workspace does not.
+            </p>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={reset}
+              disabled={busy}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg py-2 transition-colors disabled:opacity-60"
+            >
+              <Trash2 size={13} /> {busy ? 'Resetting…' : 'Yes, delete it all'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+              className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg py-2 transition-colors"
+            >
+              Keep my workspace
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => { setConfirming(true); setError(''); }}
+          className="w-full flex items-center justify-center gap-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-lg py-2.5 transition-colors"
+        >
+          <RotateCcw size={13} /> Reset and start again
+        </button>
+      )}
+    </BentoCard>
+  );
+}
+
 export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange }) {
   // Read once on mount rather than held in App state: the preference lives in this
   // browser, nothing else in the app needs to know about it, and a page that has just
@@ -256,6 +375,8 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
       {timeTravel && timeTravel.enabled && (
         <TimeTravel tt={timeTravel} onStateChange={onStateChange} />
       )}
+
+      <ResetWorkspace onStateChange={onStateChange} />
 
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-1">

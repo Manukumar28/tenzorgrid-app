@@ -422,16 +422,64 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { state: workspace.getState(user.id) });
   }
 
+  // What a reset would destroy, so the confirmation can show it rather than asking
+  // "are you sure?" about an amount of work nobody can remember.
+  if (pathname === '/api/workspace/reset-preview' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { preview: workspace.resetPreview(user.id) });
+  }
+
+  if (pathname === '/api/workspace/reset' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      // Returns null state on purpose: with no enrollment the app falls back to the role
+      // picker, which is where "start the workspace again" should land you.
+      return sendJson(res, 200, { state: workspace.resetWorkspace(user.id, { confirm: body.confirm === true }) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/catalogue' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    return sendJson(res, 200, { catalogue: workspace.getCatalogue(user.id) });
+  }
+
+  if (pathname === '/api/workspace/role-interest' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.recordRoleInterest(user.id, body.role));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/enroll' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
     const body = await readJsonBody(req);
-    const level = ['junior', 'senior'].includes(body.level) ? body.level : 'junior';
+    // Role and level are validated by startEnrollment against the role's OWN rungs. This
+    // used to clamp the level to ['junior','senior'] and silently substitute 'junior' for
+    // anything else, which made the Team Lead and Manager tracks unreachable from a fresh
+    // enrolment and said nothing about it.
     const scheduleType = ['weekdays', 'weekends', 'custom'].includes(body.scheduleType) ? body.scheduleType : 'weekdays';
     try {
-      const enrollment = workspace.startEnrollment(user.id, { level, scheduleType, scheduleDays: body.scheduleDays });
+      const enrollment = workspace.startEnrollment(user.id, {
+        role: body.role, level: body.level, scheduleType, scheduleDays: body.scheduleDays,
+      });
       return sendJson(res, 200, { enrollment, state: workspace.getState(user.id) });
     } catch (e) {
+      // A refused role or level is the learner's answer, not a server fault — say which,
+      // rather than returning a 500 that reads as "we are broken".
+      if (/isn't open yet|doesn't have a|Unknown role|Unknown level/.test(e.message)) {
+        return sendJson(res, 400, { error: e.message });
+      }
       console.error('Workspace enroll error:', e);
       return sendJson(res, 500, { error: 'Could not start Virtual Workspace right now.' });
     }
