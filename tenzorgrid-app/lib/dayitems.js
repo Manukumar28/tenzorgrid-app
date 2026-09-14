@@ -24,6 +24,890 @@
 // would write one; chat for the things a colleague would just say to you.
 
 const ACTIVITIES = {
+  'board-pack': [
+    {
+      key: 'tda-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'Why three people got three answers',
+      title: 'Read: a number is a definition with arithmetic attached',
+      body: `Diya. Three of us submitted three revenue figures and all three are correct. That is worth sitting with, because it is the normal case rather than the unusual one.
+
+Revenue for a retail year has at least three independent choices baked into it. Gross or net of returns. Whole estate or like-for-like. Known data faults corrected or left. Three binary choices gives eight defensible answers, and ours happened to be three of them.
+
+Nobody made an error. Everybody omitted the same thing: saying which choices they took.
+
+The consequence is specific and expensive. Two figures in circulation with no bridge between them does not cause a debate about definitions — it causes a debate about competence. Somebody is assumed to have got it wrong, and the meeting is about that instead of about the business.
+
+So: the definition travels with the number, always, in the same sentence. Not a footnote, not an appendix, not a conversation you had with the person who asked. Written next to the figure, every time it appears.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Two teams report different revenue for the same year. What is the most likely cause?',
+        options: [
+          { key: 'defs', correct: true, label: 'Different definitions, both unstated' },
+          { key: 'error', correct: false, label: 'An arithmetic error in one of them' },
+          { key: 'data', correct: false, label: 'A data quality problem affecting one source' },
+          { key: 'timing', correct: false, label: 'The two were run at different times' },
+        ],
+        why: 'All three happen. Definitions are by far the commonest, and the only one where both parties are right and both feel accused.',
+      },
+    },
+    {
+      key: 'tda-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Replacing three people\'s work',
+      title: 'Asha: how to pick one number without losing three people',
+      body: `You are about to tell three colleagues that the pack will not use any of their figures. Handle that badly and you will get fewer submissions next year, and they will arrive later and less finished.
+
+Two things.
+
+Say they were right before you say what you chose. It is true — each computed a correct answer to a real question — and it has to be the first sentence, not a softening clause at the end.
+
+And do not discard their work. All three figures belong in the bridge. Ravi's gross is what Finance reconciles against, Diya's net is what the tills say, Sneha's like-for-like is what the trading discussion needs. They become the explanation rather than the competition, and each of them sees their number on the page.
+
+The failure mode is the lead who quietly produces a fourth figure and presents it as the answer. Technically fine, and everybody who submitted learns that submitting was pointless.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Three colleagues submitted three correct figures. The pack needs a fourth. What do you do with theirs?',
+        options: [
+          { key: 'bridge', correct: true, label: 'Put all three in the bridge, as the explanation of the headline' },
+          { key: 'discard', correct: false, label: 'Use the new figure and explain privately why theirs were not used' },
+          { key: 'pick', correct: false, label: 'Pick the closest of the three rather than producing a fourth' },
+          { key: 'credit', correct: false, label: 'Use the new figure and credit all three in the pack' },
+        ],
+        why: 'Picking the closest publishes a figure that answers the wrong question. Crediting people for work you did not use is worse than not crediting them — the bridge uses it.',
+      },
+    },
+    {
+      key: 'tda-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'A bridge that ties',
+      title: 'Read: why reconciliation is the whole job',
+      body: `Karthik. A bridge is a sequence of steps from one figure to another where every step is named and the arithmetic is exact. Not approximately exact. Exact.
+
+The reason is not pedantry. A bridge is the artefact that converts "your number disagrees with mine" into "here is where they diverge, and here is why". It only does that if somebody can add it up in the room and get your answer. One rupee out and the entire page is suspect, including the parts that are right.
+
+Three rules I would hold you to.
+
+Every step names what it removes AND why. "Less duplicates ₹3,46,357" is half a step; "a feed fault duplicated one store-month" is the other half.
+
+Both ends are figures somebody actually quotes. A bridge from a number nobody uses to another number nobody uses is a nice piece of arithmetic that helps no one.
+
+And it comes from one computation. If the eight figures in your bridge come from eight queries, they will drift the first time a definition changes, and the drift will appear in the room rather than in your review.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Your bridge is out by ₹40 on ₹4.8 crore. What do you do?',
+        options: [
+          { key: 'find', correct: true, label: 'Find it before the pack goes out' },
+          { key: 'round', correct: false, label: 'Round every figure to the nearest lakh so it disappears' },
+          { key: 'note', correct: false, label: 'Add a rounding note' },
+          { key: 'ignore', correct: false, label: 'Ignore it — it is immaterial at that scale' },
+        ],
+        why: 'It is immaterial to the business and fatal to the bridge. Rounding to hide it is worse, because the difference is still there and now nobody can see where.',
+      },
+    },
+    {
+      key: 'tda-04', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can we simplify the bridge?',
+      title: 'Vikram wants fewer steps',
+      body: `Seven steps is a lot for a board slide. Can we collapse it to two — headline and like-for-like — and put the detail in an appendix?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['steps|explanation|why|55|lakh|appendix|nobody reads|collaps|difference|unexplain'],
+        why: 'The steps ARE the explanation. Collapsed to two, the ₹55 lakh between the ends becomes unexplainable again, which is the problem the bridge was built to solve.',
+      },
+    },
+    {
+      key: 'tda-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'Repair or exclude',
+      title: 'Read: the same fault, two correct treatments',
+      body: `You are about to find that a correction you made three months ago was wrong. It was not — it was right for what you were doing then and wrong for what you are doing now, and the difference is worth getting exactly straight.
+
+When a period is corrupt you have two moves. REPAIR it, if the fault is deterministic and you can recover the truth. EXCLUDE it, if you cannot.
+
+For the trading review you were comparing halves. Every line in that month was duplicated, so you could not tell which of each pair was real — except that both were identical, which means either one is. At the time you excluded the month, which kept the comparison clean and cost nothing, because a comparison does not need that store-month, only a consistent basis on both sides.
+
+For a total it is different. The board is being told what the business earned. Excluding the month understates it by ₹3.46 lakh of trade that genuinely happened. Correcting downward to avoid a data fault is still an error — it just feels safer, which is exactly why it is easy to defend and hard to notice.
+
+The rule: repair when you can, exclude when you cannot, and let the question decide which matters.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Every row in one store-month is duplicated exactly once. You need a total for the year. What do you do?',
+        options: [
+          { key: 'repair', correct: true, label: 'Keep one row of each pair — the trade is recoverable' },
+          { key: 'exclude', correct: false, label: 'Exclude the store-month, since the data cannot be trusted' },
+          { key: 'estimate', correct: false, label: 'Replace the month with an average of its neighbours' },
+          { key: 'flag', correct: false, label: 'Include it as loaded and flag the figure as provisional' },
+        ],
+        why: 'Both rows are identical, so either is the real one and the repair is certain. Excluding understates by real money; estimating invents a number; flagging publishes a figure you know is wrong.',
+      },
+    },
+    {
+      key: 'tda-06', day: 3, type: 'judgement', via: 'chat', from: 'finance_analyst', minutes: 6,
+      subject: 'So which of my numbers were wrong?',
+      title: 'Diya asks what else needs restating',
+      body: `If the duplicate has been in there since March, how many of my monthly reports are wrong, and do I restate them?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both parts.',
+        markers: ['march|one month|3,?46|346|only|store 3|small|material|her call|restate|going forward|not all'],
+        why: 'One store, one month, ₹3.46 lakh. Everything since is affected by that one figure and nothing else. Whether to restate is her judgement on materiality, and the useful input is the exact size rather than a blanket answer.',
+      },
+    },
+    {
+      key: 'tda-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 14,
+      subject: 'Forecasts and the word conservative',
+      title: 'Read: an estimate is assumptions with a number attached',
+      body: `Vikram. I have put next year at this year plus five percent, and you are about to tell me why that is wrong. Before you do, here is what I have learned from twenty years of being told.
+
+A forecast is not a prediction. It is a set of assumptions, and the number is an output. Which means the assumptions are the deliverable and the number is the summary.
+
+Four assumptions hide inside "this year plus five percent". That the base is right. That the estate is unchanged. That trading grows. That anything unusual in the base repeats. Every one of those is a decision, and every one of them was taken silently.
+
+The one that catches people is the word CONSERVATIVE. It gets attached to any assumption of no growth. But if trading is falling, flat is not conservative — it is optimistic, and telling a board an estimate is conservative when the risk is on the downside is the single most expensive sentence in any pack.
+
+The test: for each assumption, would the board be surprised to learn it was made? If yes, it goes on the page.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Like-for-like trading fell in the second half. Your estimate assumes it is flat next year. Is that conservative?',
+        options: [
+          { key: 'optimistic', correct: true, label: 'No — it is optimistic against the only trend evidence available' },
+          { key: 'yes', correct: false, label: 'Yes, since it assumes no growth' },
+          { key: 'neutral', correct: false, label: 'Neutral, since it neither grows nor declines' },
+          { key: 'depends', correct: false, label: 'It depends what the board expects' },
+        ],
+        why: 'Conservative means erring against yourself. With a falling trend, assuming flat errs in your favour — and a board told "conservative" will place its risk on the wrong side.',
+      },
+    },
+    {
+      key: 'tda-08', day: 4, type: 'pressure', via: 'email', from: 'stakeholder', minutes: 8,
+      subject: 'The board needs a single number',
+      title: 'Vikram will not take a range',
+      body: `I understand the two scenarios. The board will not accept a range — they want a number to plan against and they will ask me to pick one in the room.
+
+So pick one. Which is it?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you give him?',
+        options: [
+          { key: 'promo', correct: true, label: 'The figure that matches whatever the promotion decision turns out to be, and ask who takes that decision' },
+          { key: 'lower', correct: false, label: 'The lower one, as the prudent choice' },
+          { key: 'mid', correct: false, label: 'The midpoint of the two' },
+          { key: 'higher', correct: false, label: 'The higher one, since the board wants growth' },
+        ],
+        why: 'The two scenarios differ by one decision the business has not taken. Picking prudently, optimistically or splitting the difference all take that decision on their behalf, quietly, in a number.',
+      },
+    },
+    {
+      key: 'tda-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Four packs, four of the same failure',
+      title: 'Read: what the quarter actually taught',
+      body: `Look back across the four reviews you have led this quarter.
+
+Trading: a correct number under a claim it did not support. Margin: a column whose name did not match its meaning. Range: a measure that computed cleanly and described nothing. This one: three correct numbers answering three unstated questions.
+
+Not one of them was an arithmetic error. Every single one was a gap between what a number was and what somebody believed it was.
+
+That is the thing a lead is for, and it is why more careful analysts do not fix it. The gap does not live in the analysis — it lives between the analysis and the sentence somebody writes on top of it, and only the person who owns both can close it.
+
+Which is why the standard you write this week matters more than any of the four analyses. Definitions at the front. One computation behind the figures. Corrections disclosed on the page. Sign-off covering the sentences, not just the cells.
+
+Four controls, four failures, one each. Write them down and this quarter is the last time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Across four reviews, none of the problems was an arithmetic error. What does that tell you about where to spend attention?',
+        options: [
+          { key: 'meaning', correct: true, label: 'On establishing what a quantity is before computing with it' },
+          { key: 'review', correct: false, label: 'On more thorough checking of calculations' },
+          { key: 'tools', correct: false, label: 'On better tooling and automated tests' },
+          { key: 'people', correct: false, label: 'On hiring more experienced analysts' },
+        ],
+        why: 'Checking arithmetic finds arithmetic errors, and there were none. Tooling and experience both help and neither closes the gap between a number and what somebody believes it means.',
+      },
+    },
+    {
+      key: 'tda-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 9,
+      subject: 'Last one at this level',
+      title: 'Asha: what you would do differently',
+      body: `That is four projects as lead. Before the promotion conversation, one question, and I want the honest version.
+
+Across the four, where did you take longer than you needed to because you were checking something that was fine? And where did you move faster than you should have?
+
+I am not looking for modesty. I am looking for whether you can tell the difference yet — because at the next level nobody will have time to check your work, and the only control left is your own sense of which things need it.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both halves honestly.',
+        markers: ['check|time|slow|fast|assum|took|should|cover|stock|definition|bridge|estimate|trust|verif|too quick|too long'],
+        why: 'There is no right answer. What matters is whether the two halves are specific — a lead who can only name things they did well has not yet developed the sense the question is about.',
+      },
+    },
+  ],
+  'range-review': [
+    {
+      key: 'tca-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Start from the population',
+      title: 'Read: the rows that are not there',
+      body: `Karthik. One habit, and it is the single most common source of silently wrong analysis.
+
+When you ask "which products underperform", the instinct is to query sales and rank ascending. That query can only return products that have a sales row. A product that never sold has none, so it cannot be at the bottom of your list — it is not on the list at all.
+
+The general form: whenever the question is about a POPULATION, start the query from the table that defines the population, and LEFT JOIN the activity onto it. Products, then sales. Employees, then payroll. Customers, then orders. Never the other way round.
+
+The tell is that your row count matches the activity table rather than the population table. Sixty-one products in a range review of sixty-eight is a bug, and it looks exactly like a correct answer.
+
+This is why zero and NULL are different things, and why COALESCE belongs in nearly every one of these queries. A zero is a measurement. A missing row is a silence, and silence is what you were asked to find.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You rank products by sales ascending and get 61 rows. The products table has 68. What is happening?',
+        options: [
+          { key: 'missing', correct: true, label: 'Seven products have no sales rows and the join deleted them' },
+          { key: 'filter', correct: false, label: 'A filter somewhere is excluding seven products' },
+          { key: 'dupes', correct: false, label: 'Seven products are duplicated and have been collapsed' },
+          { key: 'fine', correct: false, label: 'Nothing — 61 is the number of products that trade' },
+        ],
+        why: 'The last one is the dangerous answer, because it is nearly true and it ends the investigation. The seven that do not trade are precisely what a range review is for.',
+      },
+    },
+    {
+      key: 'tca-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Delists and the arithmetic of a saving',
+      title: 'Read: a cut is a cost with a saving attached',
+      body: `Asha. You will be asked what a delist saves, and the honest answer has a shape worth learning once.
+
+Removing a line loses its margin. That number is exact and you can compute it today.
+
+It saves shelf space, buying attention and working capital. Those are real and none of them is in a sales table. Somebody can price them — a space planner, a buyer, finance — but not you, and not from this data.
+
+And the net depends on substitution: what a customer buys when the thing they came for is gone. That is the single largest term in the equation and it is unmeasurable from till data.
+
+So the structure of your answer is always: here is the cost, exactly; here is what the saving is made of and who can price it; here is the unknown that decides the sign. Never a single net figure, because you would have invented two thirds of it.
+
+Watch for the framing flip. Papers ask "what does the delist save", which presumes the answer. Say the cost first.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Asked what a delist saves, what is the first number in your reply?',
+        options: [
+          { key: 'cost', correct: true, label: 'The margin it removes' },
+          { key: 'net', correct: false, label: 'A net figure combining margin lost and space released' },
+          { key: 'space', correct: false, label: 'The shelf space freed, since that is what was asked' },
+          { key: 'none', correct: false, label: 'None — the question cannot be answered from this data' },
+        ],
+        why: 'Half of it can be answered exactly, and leading with that half is what stops the paper opening on an invented saving.',
+      },
+    },
+    {
+      key: 'tca-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Just cut the bottom 20',
+      title: 'Vikram wants a simple cut',
+      body: `Bottom twenty lines are 8.6% of margin. Cut them, keep 91% of the money with a third fewer products. That is obviously right.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['lose|cost|not save|8\\.6|18 lakh|substitut|space|not quantif|which saving|trade'],
+        why: '8.6% is what you LOSE. The saving is in space and attention, which nobody has costed, and substitution decides the net. "Keep 91%" is the same number told as though the other 8.6% were free.',
+      },
+    },
+    {
+      key: 'tca-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 7,
+      subject: 'Delist decisions and supplier relationships',
+      title: 'Neha: delists are commercial conversations',
+      body: `A note as you produce delist candidates.
+
+A delist list is commercially sensitive in a specific way: it tells a supplier which of their lines we are about to drop, before we have negotiated. That changes the negotiation, and not in our favour.
+
+Two rules. Candidate lists do not leave the buying and analytics teams until buying say so. And never confirm or deny a specific line to anybody outside that group, including in casual conversation — "I can't discuss the range review" is a complete answer and is what everyone else uses.
+
+If a supplier or an agency asks you directly, it goes to Sneha.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A supplier contact asks whether their line is on the candidate list. What do you say?',
+        options: [
+          { key: 'refer', correct: true, label: 'That you cannot discuss the range review, and refer them to Sneha' },
+          { key: 'deny', correct: false, label: 'That it is not on the list, if it genuinely is not' },
+          { key: 'vague', correct: false, label: 'That no decisions have been made yet' },
+          { key: 'ignore', correct: false, label: 'Nothing, and report the approach to Sneha afterwards' },
+        ],
+        why: 'Denying for lines that are safe means silence identifies the ones that are not. "No decisions yet" is the same problem in softer words. And a question you will not answer still needs an answer given.',
+      },
+    },
+    {
+      key: 'tca-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'When output is suspiciously tidy',
+      title: 'Read: a measure that cannot be measuring anything',
+      body: `You are about to compute stock cover, and it will produce a number for every product. Before you publish it, look at the spread.
+
+Cover for sixty-one products lands between 0.43 and 1.09 months, clustered around 0.7. Every product in the range holds roughly twenty units, whether it sells 234 a year or 482.
+
+That is not a finding about our stock policy. No replenishment system in the world holds the same quantity of a fast line and a slow one. When a measure comes out nearly uniform across a population you know to be varied, the measure is broken, not the population.
+
+Two causes here and both are fatal. The counts do not respond to demand at all, so they are not describing stock policy. And four snapshots a year cannot characterise a position that turns over monthly — a point-in-time reading on one day in January says nothing about the other eighty-nine.
+
+The discipline: before publishing a derived measure, look at its DISTRIBUTION, not just its values. A number you can compute is not the same as a number that means something, and a tidy distribution is a warning rather than a comfort.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A derived measure comes out almost identical across a population you know varies a lot. What does that suggest?',
+        options: [
+          { key: 'broken', correct: true, label: 'The measure is not capturing what it claims to' },
+          { key: 'stable', correct: false, label: 'The underlying process is well controlled' },
+          { key: 'sample', correct: false, label: 'The sample is too small to show variation' },
+          { key: 'good', correct: false, label: 'Nothing — uniformity is a neutral result' },
+        ],
+        why: 'Well-controlled processes still vary with demand. Uniformity where you expect variation means the inputs are not carrying the information you assumed.',
+      },
+    },
+    {
+      key: 'tca-06', day: 3, type: 'pressure', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can you just give me the cover number anyway?',
+      title: 'Vikram wants it with a caveat',
+      body: `I hear you on the stock counts. But the paper has a section for it and an empty section looks worse than a caveated number.
+
+Give me the figure and I will footnote it as indicative.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you do?',
+        options: [
+          { key: 'no', correct: true, label: 'Decline, and offer wording explaining why the section is empty' },
+          { key: 'give', correct: false, label: 'Supply it with the caveat he has offered' },
+          { key: 'range', correct: false, label: 'Supply a range rather than a point figure' },
+          { key: 'other', correct: false, label: 'Substitute a different stock measure without telling him' },
+        ],
+        why: 'A footnote never travels with the number. A range implies the uncertainty is statistical when the measure is simply not measuring stock. And swapping in something else silently is worse than either.',
+      },
+    },
+    {
+      key: 'tca-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
+      subject: 'Distribution is not performance',
+      title: 'Read: the two reasons a line looks weak',
+      body: `Diya. A line at the bottom of your margin table is there for one of two reasons and they need opposite responses.
+
+Nobody wants it. It is in twelve stores, customers walk past it, it earns little. Delist.
+
+Almost nobody stocks it. It is in seven stores, sells perfectly well in those seven, and looks small only because it is nowhere. That is a distribution decision somebody already made, and delisting it confirms a judgement rather than testing one.
+
+Total margin cannot tell these apart. Margin per carrying store can, and the two rankings will disagree — which is the useful part, because a candidate that fails BOTH tests is robust and a candidate that fails only one needs a conversation.
+
+The trap on the other side: a low-distribution line performing well per store looks like an obvious rollout candidate. It usually is not, because the stores carrying it are rarely a random sample. If it is only in flagships, its per-store performance tells you about flagship customers, not about the product.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A line is in seven stores, earns little in total and performs well per store. What is it?',
+        options: [
+          { key: 'unclear', correct: true, label: 'Ambiguous — its total is low because of distribution, and where it is stocked is not random' },
+          { key: 'delist', correct: false, label: 'A delist candidate, since total margin is what the business earns' },
+          { key: 'rollout', correct: false, label: 'A rollout candidate, since it performs where it is stocked' },
+          { key: 'fine', correct: false, label: 'Performing as intended — nothing to do' },
+        ],
+        why: 'Both confident answers are available and neither is supported. Which stores carry it decides everything, and this data cannot say whether they chose it or it chose them.',
+      },
+    },
+    {
+      key: 'tca-08', day: 4, type: 'judgement', via: 'email', from: 'engineering_manager', minutes: 8,
+      subject: 'Should we build a range dashboard?',
+      title: 'Arjun offers to automate the range review',
+      body: `This looks like it should be a dashboard rather than a week of somebody's time every season.
+
+I can build one. What should be on it, and is there anything that should deliberately NOT be?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the most important thing to tell him?',
+        options: [
+          { key: 'population', correct: true, label: 'It must start from products, or it will silently omit lines that never sold' },
+          { key: 'cover', correct: false, label: 'Leave stock cover off until the counts improve' },
+          { key: 'margin', correct: false, label: 'Use margin on the cost that applied, not current cost' },
+          { key: 'all', correct: false, label: 'All of these matter equally' },
+        ],
+        why: 'All three belong in the spec. But the other two produce visibly wrong numbers somebody can challenge; the population error produces a dashboard that looks perfect and is missing the worst lines in the range, every season, forever.',
+      },
+    },
+    {
+      key: 'tca-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 10,
+      subject: 'Sign-off means the sentences',
+      title: 'Read: what comes back in after you take it out',
+      body: `You told buying on Wednesday that stock cover cannot be computed from these counts. It will be in their draft on Friday.
+
+This is not bad faith. A paper has a section for stock, somebody needs to fill it, and your email is in a different thread from the document. Things you remove in conversation come back in writing unless you remove them in writing too.
+
+Two habits that prevent most of it.
+
+Put the refusal in the document, not only in the reply. One line — "stock cover is not included; the counts do not vary with demand and cannot support it" — is far harder to delete than an absence.
+
+And when you sign off, read the draft as though you had never seen the analysis. Every sentence is a claim. Ask of each one: which table did this come from? "Confirms the range is over-extended" came from nowhere, and it is sitting on top of your name.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You told a stakeholder verbally that a measure cannot be used. How do you stop it reappearing?',
+        options: [
+          { key: 'document', correct: true, label: 'Put the exclusion and its reason into the document itself' },
+          { key: 'repeat', correct: false, label: 'Repeat it at sign-off' },
+          { key: 'email', correct: false, label: 'Send a written summary of the conversation' },
+          { key: 'escalate', correct: false, label: 'Raise it with their manager' },
+        ],
+        why: 'A separate email lives in a separate thread. Repeating at sign-off relies on you seeing every draft. The absence has to be visible in the artefact or somebody will fill it in good faith.',
+      },
+    },
+    {
+      key: 'tca-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Three reviews, three of the same thing',
+      title: 'Asha: notice the pattern across your three projects',
+      body: `Step back across the three reviews you have led.
+
+Trading: a number that was right and a claim on top of it that was not. Margin: a column that meant something other than its name. Range: a measure that computed cleanly and described nothing.
+
+Different data, same failure — the number was never the problem. Every time, it was the gap between what the number was and what somebody believed it was.
+
+Which suggests where your attention goes at this level. Not on computing more carefully. On establishing, before anything else, what a quantity actually is: as of when, over what population, counting what.
+
+One question. Of the three, which would you have been least likely to catch if nobody had pointed you at it?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer honestly, and say what would have made you catch it.',
+        markers: ['cover|stock|uniform|distribution|margin|cost|basis|claim|slide|population|never sold|left join|spread|check'],
+        why: 'The stock one is the usual answer, because it produces a plausible number rather than an odd one. The habit that catches it is looking at the spread of a derived measure before publishing its values.',
+      },
+    },
+  ],
+  'margin-review': [
+    {
+      key: 'tba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'Cost is a date, not a number',
+      title: 'Read: which cost, and when',
+      body: `Diya. Before you compute a margin, the thing nobody tells you: a product does not have a cost. It has a cost on a date.
+
+Our products table carries unit_cost, and that is the cost right now. It also carries previous_unit_cost and cost_changed_on, which exist precisely because the current one is not what we paid all year. Fifteen of sixty-eight products moved, all upward, by 19% on average.
+
+Two questions get asked of the same table and they want different answers.
+
+WHAT HAPPENED wants the cost that applied on the day of the sale. Restating last year at today's cost rewrites history and always in the same direction — it makes the past look worse than it was, because costs rise.
+
+WHAT SHOULD WE DO wants today's cost, because next year's margin depends on next year's costs. It should also use undiscounted price, or you project forward a promotion nobody has decided to repeat.
+
+Produce both, label both, never blend them. A single column headed "margin" with no basis stated is how two teams end up with different numbers and no way to reconcile.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are asked which products to stock next year. Which cost basis?',
+        options: [
+          { key: 'current', correct: true, label: "Today's cost, and undiscounted price" },
+          { key: 'applied', correct: false, label: 'The cost that applied at the time of each sale' },
+          { key: 'avg', correct: false, label: 'An average of the two, weighted by volume' },
+          { key: 'either', correct: false, label: 'Either — the difference is immaterial for a planning exercise' },
+        ],
+        why: 'It is a forward-looking decision, so the historical cost is irrelevant to it. Averaging produces a figure correct for neither question and impossible to explain. And 26.6% of revenue sits on the products that moved.',
+      },
+    },
+    {
+      key: 'tba-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Rate and contribution',
+      title: 'Read: the two numbers that get confused',
+      body: `Asha. The single most expensive confusion in retail analytics, and you will meet it this week.
+
+MARGIN RATE is margin over revenue — a percentage. MARGIN CONTRIBUTION is margin in rupees. They answer different questions and they frequently rank things in opposite orders.
+
+Here, Merchandise earns 65% and contributes ₹28 lakh. Equipment earns 34.7% and contributes ₹1.08 crore. Rank by rate and Equipment is worst in the book. Rank by contribution and it is the business.
+
+A range review that acts on the rate table cuts the category paying the rent.
+
+The rule: whenever you publish a rate, publish the contribution beside it. It costs one column and it prevents the entire class of decision where somebody improves a percentage by shrinking the company.
+
+The same applies to targets, which you will be asked about on Tuesday. A blended rate target can always be hit by selling a different mix. Pair it with an absolute figure and it stops being gameable in the one direction that matters.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A category has the lowest margin rate and the highest margin contribution. What does that tell you?',
+        options: [
+          { key: 'both', correct: true, label: 'Nothing on its own — you need to know what the decision is before either number matters' },
+          { key: 'cut', correct: false, label: 'It is a candidate for reduction' },
+          { key: 'grow', correct: false, label: 'It should be grown, since it contributes most' },
+          { key: 'normal', correct: false, label: 'It is normal for a large category and needs no comment' },
+        ],
+        why: 'A pricing decision cares about the rate. A range decision cares about the contribution. A capacity decision cares about neither. The mistake is reading a number before knowing the question.',
+      },
+    },
+    {
+      key: 'tba-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Just the margin percentage',
+      title: 'Vikram wants one number per category',
+      body: `For the range slide I want one number per category. Margin percentage. Clean.
+
+Contribution is a second column and the slide is already busy.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['equipment|contribution|rupee|crore|1\\.08|rank|order|revers|cut|largest|merchandise|65'],
+        why: 'A rate-only slide puts Merchandise top and Equipment bottom. Equipment is ₹1.08 crore of margin. The second column is what stops somebody cutting the category that pays the rent.',
+      },
+    },
+    {
+      key: 'tba-04', day: 2, type: 'policy', via: 'email', from: 'finance_analyst', minutes: 8,
+      subject: 'Margin figures leaving the team',
+      title: 'Diya: margin numbers are commercially sensitive',
+      body: `A standing note now that you are producing margin by category.
+
+Product-level and category-level margin is commercially sensitive. It must not appear in anything that goes to suppliers, and that includes range review documents that get shared during negotiation.
+
+If a supplier learns what we make on their line, the next cost conversation starts from a different place. Aggregate figures at total-business level are fine; anything that lets a supplier infer their own line is not.
+
+If in doubt, send it to me before it leaves the building.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A supplier asks for the range review document that contains category margin. What do you do?',
+        options: [
+          { key: 'check', correct: true, label: 'Do not send it, and route the request to Diya' },
+          { key: 'send', correct: false, label: 'Send it — they supply the category, so it is their own data' },
+          { key: 'redact', correct: false, label: 'Redact their line and send the rest' },
+          { key: 'total', correct: false, label: 'Send total-business margin instead' },
+        ],
+        why: 'Redacting one line still lets them infer it from the total. Substituting a different figure without being asked to is a decision that is not yours to take alone.',
+      },
+    },
+    {
+      key: 'tba-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'Errors that shift and errors that distort',
+      title: 'Read: why an uneven error is worse than a big one',
+      body: `Karthik. You have found that the naive cost method understates margin by about 4% overall. Before you decide whether that matters, look at how it is distributed.
+
+Equipment 6.99%. Coffee 3.22%. Bakery 1.46%. Tea and Merchandise exactly nothing.
+
+If the error were a uniform 4% everywhere, every ranking, every ratio and every trend would be intact. You could publish the numbers with a note and nothing built on them would be wrong.
+
+It is not uniform. It sits wherever the repriced products are, which is wherever it likes. So it moves categories relative to each other, and the range review is a decision about categories relative to each other.
+
+The same thing happens across time, and this one is nastier. Before a cost change the two methods differ; after it they agree. So the naive method always penalises the past and never the present, which manufactures an improving trend out of nothing at all.
+
+Rule of thumb: ask whether an error is a shift or a distortion. A shift you can caveat. A distortion you have to fix.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which error is more dangerous in a comparison?',
+        options: [
+          { key: 'uneven', correct: true, label: 'A 7% error in one category and none in another' },
+          { key: 'uniform', correct: false, label: 'A uniform 15% error across every category' },
+          { key: 'random', correct: false, label: 'A random error averaging 10% with no pattern' },
+          { key: 'same', correct: false, label: 'They are equally dangerous — size is what matters' },
+        ],
+        why: 'A uniform error preserves every ranking and ratio. A random one averages out across a large table. A structured, uneven one moves things relative to each other, which is exactly what a comparison measures.',
+      },
+    },
+    {
+      key: 'tba-06', day: 3, type: 'pressure', via: 'chat', from: 'finance_analyst', minutes: 6,
+      subject: 'How many old reports are wrong?',
+      title: 'Diya realises what this means for history',
+      body: `If margin has always been computed on current cost, then every margin figure we have published is wrong.
+
+How far back does this go, and do I have to restate?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Answer both parts.',
+        markers: ['every|all|since|reprice|september|uneven|categor|restate|which|material|forward|from now|not all'],
+        why: 'Everything computed since the first reprice in September is affected, unevenly. Whether to restate is her call, and the useful input is which figures moved enough to matter — not a blanket yes or no.',
+      },
+    },
+    {
+      key: 'tba-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'Reading a promotion',
+      title: 'Read: three numbers, not one',
+      body: `Vikram. Every promotion readout I have seen in fifteen years is argued with one number, and it is always the wrong one.
+
+Marketing quotes revenue. Finance quotes margin rate. Both are true and neither settles anything.
+
+The only honest readout has three: volume, revenue and absolute margin, each against a normal period. Here that is 55% more units, 39% more revenue, 12% more margin. Three numbers, and the shape of them tells you everything — volume rising fastest and margin slowest is the signature of buying turnover with discount.
+
+Whether that is good depends entirely on what the promotion was for. Clearing stock that would otherwise be written off: excellent. Buying customers who come back: possibly excellent, and you cannot tell from till data. Hitting a revenue target: you succeeded at a cost you should be able to state.
+
+Which is why the readout should never end in a recommendation. State the trade and the objective it was measured against. If nobody wrote down the objective, that is the finding.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A promotion delivers 55% more units, 39% more revenue and 12% more margin. Was it worth it?',
+        options: [
+          { key: 'depends', correct: true, label: 'Unanswerable from this data — it depends what it was for' },
+          { key: 'yes', correct: false, label: 'Yes, margin went up' },
+          { key: 'no', correct: false, label: 'No, the margin rate collapsed' },
+          { key: 'marginal', correct: false, label: 'Marginally, since margin rose less than costs of the discount' },
+        ],
+        why: 'Margin rising is a fact, not a verdict. So is the rate falling. Clearing dead stock, buying share and hitting a target are three objectives judged on three different numbers, and nobody recorded which applied.',
+      },
+    },
+    {
+      key: 'tba-08', day: 4, type: 'judgement', via: 'email', from: 'engineering_manager', minutes: 8,
+      subject: 'The discount curve',
+      title: 'Arjun wants to model the discount curve',
+      body: `Your discount table is interesting. Margin falls with discount up to 20% and then flattens — 25.4% and 26.6% at the two deepest bands.
+
+I could fit a curve to that and give pricing a model. Worth doing?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What do you tell him?',
+        options: [
+          { key: 'thin', correct: true, label: 'Not on this data — the two deepest bands are 326 lines out of 9,022' },
+          { key: 'yes', correct: false, label: 'Yes, a fitted curve would be more useful than a table' },
+          { key: 'shape', correct: false, label: 'Yes, but constrain it to be monotonic' },
+          { key: 'never', correct: false, label: 'No — discount curves cannot be modelled from transaction data' },
+        ],
+        why: 'Constraining the shape means imposing the answer you wanted. And the objection is not that it cannot be done — it is that the region he is most interested in is the region with almost no data in it.',
+      },
+    },
+    {
+      key: 'tba-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Words that survive being forwarded',
+      title: 'Read: "held up", "accretive", and other load-bearing words',
+      body: `You are about to sign off a note. Watch for words that are technically defensible and leave the wrong impression, because those are much harder to challenge than plain errors.
+
+"Margin held up at 35.5%" — against a normal 44%. Nothing held up. The word is doing all the work and it is unfalsifiable, because nobody said what it held up against.
+
+"Margin-accretive" — absolute margin rose, so it is true. Everyone reads it as margin improving. The rate fell nine points.
+
+"Analytics confirm" — you did not confirm anything, you measured something. That phrase converts a measurement into an endorsement and attaches your team's name to a decision you did not make.
+
+The test I use: if this sentence were forwarded on its own, with no table under it and nobody to ask, what would the reader believe? If the answer is something you would not say out loud, the sentence is wrong even if every word in it is accurate.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which phrase is most dangerous in a note you sign off?',
+        options: [
+          { key: 'confirm', correct: true, label: '"Analytics confirm the promotion was margin-accretive and recommend repeating it"' },
+          { key: 'held', correct: false, label: '"Margin held up at 35.5%"' },
+          { key: 'best', correct: false, label: '"November was our strongest trading month"' },
+          { key: 'rev', correct: false, label: '"39% more revenue than a typical month"' },
+        ],
+        why: 'All but the last are slippery. But that one attributes a recommendation to your team that you never made, and it is the sentence that will be quoted when the decision is questioned.',
+      },
+    },
+    {
+      key: 'tba-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Before the range review',
+      title: 'Asha: you changed a number everyone was using',
+      body: `Worth noticing what happened this week.
+
+Margin has been reported on the wrong cost basis for as long as anyone has been reporting it. Nobody was careless — the column is called unit_cost and it behaves like a cost. The failure was that nobody asked WHEN.
+
+That question, "as of when", is most of what separates a number that is right from a number that is nearly right. Cost as of when. Estate as of when. Price as of when. Almost every quantity in a business has a date attached and almost every table drops it.
+
+One question before you send the range review: which other figures your team publishes have a hidden "as of when" in them that nobody has asked about?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Name one, and say what could be wrong with it.',
+        markers: ['store|estate|open|clos|price|list|categor|product|band|target|stock|count|as of|when|change|histor|current'],
+        why: 'Store format and the estate itself both change. List price changes. A product\'s category can be reclassified. Any of them applied retrospectively rewrites history the same way the cost did.',
+      },
+    },
+  ],
+  'trading-review': [
+    {
+      key: 'taa-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'What changes now you are the lead',
+      title: 'Read: you own what leaves the team',
+      body: `Asha. First project at this level, so let me be direct about what is different.
+
+As an analyst you were judged on the work you produced. As a lead you are judged on the work that leaves the team, whether or not you wrote it. Ravi's draft going to the board with a wrong transaction count is your problem now, and "he sent it before I saw it" is not a defence anybody accepts twice.
+
+That has a practical consequence. Most of your week is spent reading other people's numbers rather than making your own, and reading a number properly means asking three things: what is it counting, what population is it over, and what would make it wrong.
+
+The third one is the habit that takes longest to build. It is not scepticism for its own sake — it is that a number which flatters somebody has already passed one filter that a number which embarrasses them has not. Somebody wanted the star performer to be real. Nobody wanted the decline to be real. Guess which one got checked.
+
+So: check the flattering number hardest. Every time.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A draft shows nine stores declining and one growing strongly. Which figure do you verify first?',
+        options: [
+          { key: 'growing', correct: true, label: 'The one that is growing' },
+          { key: 'declining', correct: false, label: 'The nine declining, since that is the bigger business impact' },
+          { key: 'total', correct: false, label: 'The estate total, since everything rolls up to it' },
+          { key: 'all', correct: false, label: 'All of them equally — there is no reason to prefer one' },
+        ],
+        why: 'The exception is where the error is, and the flattering exception is the one nobody has already questioned. Checking everything equally sounds rigorous and is how limited time gets spent uniformly on the wrong things.',
+      },
+    },
+    {
+      key: 'taa-02', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Gross, net, and why Finance keeps correcting you',
+      title: 'Read: the words retail arguments are made of',
+      body: `Diya. You are about to publish a revenue figure, so here are the three definitions that cause most of the arguments between Finance and Analytics.
+
+GROSS revenue is what was rung through the till on sales. NET is gross minus returns. Neither is more correct; they answer different questions. Gross tells you what the stores sold, net tells you what the business kept. The unforgivable thing is publishing one without saying which.
+
+A TRANSACTION, to a board, means a customer buying something. In a till table a refund is also a row. Counting it as a transaction inflates the count and deflates the average, and both errors point the same way, so the average transaction value comes out low twice over.
+
+LIKE-FOR-LIKE means the same stores in both periods. The moment an estate opens or closes anything, the total and the like-for-like diverge, and a pack that does not carry both will be asked for the other one in the room.
+
+Get these three right and most of the reconciliation meetings stop happening.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which pair of figures should always appear together in a retail pack?',
+        options: [
+          { key: 'both', correct: true, label: 'Total estate revenue and like-for-like revenue' },
+          { key: 'grossonly', correct: false, label: 'Gross revenue and units sold' },
+          { key: 'netatv', correct: false, label: 'Net revenue and average transaction value' },
+          { key: 'lfl', correct: false, label: 'Like-for-like revenue alone, since it is the cleaner measure' },
+        ],
+        why: 'Like-for-like says whether the shops are trading better. The total says what the business actually earned. Publish one and you will be asked for the other before the end of the meeting.',
+      },
+    },
+    {
+      key: 'taa-03', day: 2, type: 'judgement', via: 'chat', from: 'stakeholder', minutes: 6,
+      subject: 'Can I just have a league table?',
+      title: 'Vikram wants stores ranked, full stop',
+      body: `I do not need per-day anything. I need a list of stores best to worst so I know who to call.
+
+Can you just send that?`,
+      check: {
+        kind: 'answer',
+        prompt: 'Reply in a sentence or two.',
+        markers: ['open|day|february|october|part|new|normalis|per day|format|not compar|salt lake|sector'],
+        why: 'A raw league table puts a store that opened in February at the bottom and a store that closed in January in the middle. He would call the wrong people. Send the ranking, per day open, with the format beside it.',
+      },
+    },
+    {
+      key: 'taa-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 7,
+      subject: 'Store performance data and individual managers',
+      title: 'Neha: store numbers are about people too',
+      body: `Now that you are producing store-level performance reporting, one thing to be aware of.
+
+A store is a person. Every figure you publish about a store is, in practice, a figure about its manager, and it will be read that way whether or not you intend it. That does not mean you should soften anything — it means the figure has to be right, and it has to be normalised so that a manager is not marked down for having opened in February.
+
+Two practical rules. Never circulate a store ranking without the normalisation that makes it fair. And if a store's numbers are affected by something outside the manager's control — a refit, a closure next door, a data fault — that note goes on the same page as the number, not in a follow-up.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A store looks worst in the estate because it opened four months ago. What do you publish?',
+        options: [
+          { key: 'norm', correct: true, label: 'The normalised figure, with the opening date on the same page' },
+          { key: 'raw', correct: false, label: 'The raw figure — it is what actually happened' },
+          { key: 'omit', correct: false, label: 'Leave the store out until it has a full year' },
+          { key: 'later', correct: false, label: 'The raw figure now, with a note circulated separately' },
+        ],
+        why: 'Omitting them hides a new investment the board approved. A note circulated separately never catches up with the number it was meant to qualify.',
+      },
+    },
+    {
+      key: 'taa-05', day: 3, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
+      subject: 'How feeds break, and how to tell',
+      title: 'Read: the shapes of a broken load',
+      body: `Karthik. You have found a store-month that looks too good. Before you call it a data fault, here is how the common failures actually look, because they are distinguishable.
+
+A DOUBLE LOAD gives you exact duplicate rows — every field identical except the surrogate key — covering one contiguous window for one source. Line count and value both exactly double. This is the one you have.
+
+A PARTIAL LOAD gives you a window with far too few rows and nothing duplicated. It looks like a bad month, which is why it is more dangerous than a double load: nobody questions a bad month.
+
+A LATE LOAD gives you rows arriving with an old business date. Totals for a closed period change after you have published them, which is how you discover it.
+
+A SCHEMA DRIFT gives you a column that changes meaning partway through — prices suddenly ex-VAT, quantities suddenly in cases. No duplicates, no gaps, just a step change in a ratio.
+
+The diagnostic in every case is the same: group by source and period, and look for the period that does not behave like its neighbours. One query, and it should run every month whether or not anybody is suspicious.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which of these failures is most likely to go unnoticed?',
+        options: [
+          { key: 'partial', correct: true, label: 'A partial load — it looks like a bad month, and bad months get accepted' },
+          { key: 'double', correct: false, label: 'A double load, because the numbers look plausible' },
+          { key: 'late', correct: false, label: 'A late load, because published totals change quietly' },
+          { key: 'drift', correct: false, label: 'Schema drift, because no rows are missing or repeated' },
+        ],
+        why: 'All four hide well. But a double load gets caught the moment somebody celebrates it, and drift and late arrival both change something visible. A missing week just looks like trade was soft, and nobody investigates soft.',
+      },
+    },
+    {
+      key: 'taa-06', day: 3, type: 'judgement', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Ravi is going to be embarrassed',
+      title: 'Asha: correcting someone on your own team',
+      body: `You are about to tell Ravi that the headline he was proudest of is a data fault. He drafted it, he called it out specifically, and he sent it to you to check.
+
+Two things matter here and they pull in different directions.
+
+He has to hear it from you, clearly, today. Softening it into "we might want to look at March" means it goes in the pack.
+
+And he has to still send you the next draft. He did the right thing — he circulated early and asked. If being checked costs him something, the next one arrives finished, or does not arrive at all.
+
+The way through is to make the fault the subject, not him. "March is loaded twice" is about the feed. "You did not spot the duplicate" is about Ravi. The first one is also more useful, because the feed is the thing that needs fixing.`,
+      check: {
+        kind: 'choice',
+        prompt: 'How do you open the message to Ravi?',
+        options: [
+          { key: 'fault', correct: true, label: 'With the fault: March is loaded twice in the source' },
+          { key: 'soft', correct: false, label: 'With a suggestion that March might be worth another look' },
+          { key: 'praise', correct: false, label: 'With praise for the draft, then the problem' },
+          { key: 'ask', correct: false, label: 'By asking him how he calculated the 21%' },
+        ],
+        why: 'Asking how he calculated it implies the arithmetic was wrong. It was not — the source is. Leading with praise before a correction reads as a setup, and softening it means it ships.',
+      },
+    },
+    {
+      key: 'taa-07', day: 4, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'When you are asked to name a cause',
+      title: 'Read: "pick one" is not a question you have to answer',
+      body: `Vikram will ask you why the estate declined, and he will frame it so that not answering looks like evasion. That framing is the thing to notice.
+
+You have sales, products, stores and stock counts. Footfall is not in there. Competitors are not in there. Pricing decisions, marketing spend, the weather, the economy — none of it. You can say with confidence WHERE the decline sits. You cannot say WHY, and no amount of pressure changes which tables exist.
+
+The failure mode is picking the most plausible-sounding cause because the room needs one. It feels helpful. What it actually does is put your name on an assertion that will be repeated in three more meetings, acted on in a budget, and never traced back.
+
+The answer that works is three parts: here is what I can show, here is what I cannot, here is what would settle it. The third part is what stops it sounding like a refusal. "Footfall counters would answer this in a month" turns you from an obstacle into the person with the plan.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are pressed to name a cause the data cannot establish. What is the complete answer?',
+        options: [
+          { key: 'three', correct: true, label: 'What you can show, what you cannot, and what would settle it' },
+          { key: 'refuse', correct: false, label: 'That the data cannot answer the question' },
+          { key: 'likely', correct: false, label: 'The most likely cause, flagged as a hypothesis' },
+          { key: 'defer', correct: false, label: 'That you will come back once you have more data' },
+        ],
+        why: 'Stopping at the refusal is accurate and leaves the room stuck. A hypothesis offered under pressure gets quoted without the flag. Coming back later means the decision gets made without you.',
+      },
+    },
+    {
+      key: 'taa-08', day: 4, type: 'judgement', via: 'email', from: 'finance_analyst', minutes: 8,
+      subject: 'Your number does not tie to mine',
+      title: 'Diya cannot reconcile your total',
+      body: `I have ₹4.85 crore net for the year from the warehouse. You have ₹4.78 crore.
+
+Seven lakh apart is not a rounding difference. One of us has a filter the other does not. Which is it?`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the difference, and what do you do about it?',
+        options: [
+          { key: 'disclose', correct: true, label: 'You excluded the duplicated store-month; tell her exactly what and why' },
+          { key: 'hers', correct: false, label: 'Her figure is wrong because it includes the duplicates' },
+          { key: 'adopt', correct: false, label: 'Adopt her figure so the pack ties to the warehouse' },
+          { key: 'note', correct: false, label: 'Add a note to the pack saying figures may differ from the warehouse' },
+        ],
+        why: 'Her figure is what the warehouse says, which is a fact about the warehouse rather than an error on her part. Adopting it puts a known-wrong number in the pack. A vague note tells nobody how to reproduce either figure.',
+      },
+    },
+    {
+      key: 'taa-09', day: 5, type: 'learning', via: 'email', from: 'stakeholder', minutes: 10,
+      subject: 'How a slide gets wrong without a wrong number',
+      title: 'Read: arithmetic right, claim wrong',
+      body: `Vikram. A thing worth internalising before you sign anything off.
+
+Most bad slides do not contain a bad number. They contain a correct number with a sentence built on top of it that the number does not support. Three patterns cover nearly all of it.
+
+CAUSAL DRIFT. "Revenue fell, driven by Equipment." Equipment is the biggest category, so of course it moves the total most. "Driven by" turns arithmetic into a cause and invites a decision about Equipment.
+
+COMPARISON DRIFT. "The new store is outperforming the estate average." True only if you compare an express store with an average that is mostly flagships. The number is right and the comparison is not.
+
+DISCLOSURE DRIFT. "Data quality issues have been corrected." Nobody can reproduce your figure from that sentence, and next quarter the difference will be found by somebody who does not know where to look.
+
+When you sign something off you are signing the sentences, not the cells.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A slide says "revenue fell 17%, driven by a slowdown in Equipment". Equipment is 64% of revenue. What is wrong?',
+        options: [
+          { key: 'causal', correct: true, label: '"Driven by" claims a cause; being the largest category is arithmetic' },
+          { key: 'pct', correct: false, label: 'The 17% should be stated per category' },
+          { key: 'nothing', correct: false, label: 'Nothing — Equipment did decline and it is the largest category' },
+          { key: 'scope', correct: false, label: 'It should say which stores are included' },
+        ],
+        why: 'Scope does belong on the slide, and that is a separate fix. The load-bearing error is that "driven by" will send somebody to review the Equipment range when the decline is broad.',
+      },
+    },
+    {
+      key: 'taa-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'Before the pack goes',
+      title: 'Asha: what would you change about how this gets made?',
+      body: `Step back from the numbers for a moment.
+
+This week you found a duplicated month that nobody had noticed in three months of reporting, three undefined terms in a board pack, and a store ranking that was really a ranking of trading days. None of those were hard to find. All of them had shipped before.
+
+That is the part that should bother you, and it is the part a lead is actually responsible for. Finding it once is analysis. Making sure it cannot ship again is the job.
+
+So: what is the one change you would make to how this reporting is produced? Not a list — one, the one you would actually put in place on Monday.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Name the single change you would make, and why that one.',
+        markers: ['duplicat|check|test|automat|definition|glossary|agree|like.for.like|review|before|sign.?off|monthly|routine'],
+        why: 'Any of them is defensible. What is not defensible is a list of five — a lead who cannot say which change matters most has not decided, and nothing gets implemented.',
+      },
+    },
+  ],
   'experiment-readout': [
     {
       key: 'ea-01', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 14,
@@ -1669,6 +2553,957 @@ The people who get good at this are the ones who can say what changed.`,
       },
     },
   ],
+  'capacity-review': [
+    {
+      key: 'maa-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Your first week with the team as the subject',
+      title: 'Asha: what changes when the data is about people you manage',
+      body: `Congratulations on the job. Here is the part nobody puts in the handover note.
+
+Every review you have run so far was about something — a market, a product, a payroll. This one is about thirteen people who report to you, and that changes what a wrong answer costs. A misread retail figure produces a bad range decision and somebody notices in a month. A misread capacity figure produces a performance conversation with a named person, and that lands on them the same afternoon.
+
+So two rules, and they are not optional at this level.
+
+First: no measure leaves your desk attached to a person's name unless you would defend it in a room with them in it. Not "unless it is accurate" — accurate is not the bar. Defensible in front of the person.
+
+Second: when somebody asks you to rank the team, the honest answer is usually that ranking them is your job and not the data's. You are the instrument. That is uncomfortable and it is what you are paid for.
+
+You will get asked for the table this week. Everybody does.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the bar for publishing a measure with somebody\'s name against it?',
+        options: [
+          { key: 'defend', correct: true, label: 'You would defend it in a room with that person present' },
+          { key: 'accurate', correct: false, label: 'It is arithmetically accurate' },
+          { key: 'caveat', correct: false, label: 'It carries a caveat about what it does and does not show' },
+          { key: 'asked', correct: false, label: 'Somebody senior has asked for it twice' },
+        ],
+        why: 'Accuracy is cheap — the hours table is accurate. A caveat does not travel with the document. And being asked twice is pressure, not evidence.',
+      },
+    },
+    {
+      key: 'maa-02', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'How a budget round actually reads numbers',
+      title: 'Diya: a rate is a weapon, not a fact',
+      body: `You are about to hand figures into a budget round for the first time. A short warning about what happens to them in there.
+
+A budget round does not read your analysis. It reads one number per cost line and compares it to the other cost lines. Whatever you send, the thing that survives is the rate — cost per something, per head, per output. It gets lifted out of your email, put on a slide, and repeated in rooms you are not in.
+
+So the question to ask before you publish a rate is not "is this correct". It is: what will this number be used to argue, by someone who has read nothing else?
+
+A cost per analysis that is eight times too high will be used to argue that analytics is expensive. It will not be used to argue that the timesheets are incomplete, however clearly you say so, because the sentence about timesheets does not fit on the slide and the rate does.
+
+If a rate cannot survive being quoted alone, do not produce it. Give them the thing that can.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What question should you ask before publishing a rate?',
+        markers: ['argue|used|quoted|alone|without|context|slide|read nothing|survive|on its own'],
+        why: 'Correctness is the easy test and it is not the binding one. The binding test is what the number does once it is separated from everything you wrote around it.',
+      },
+    },
+    {
+      key: 'maa-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Why the timesheets look like that',
+      title: 'Rahul: self-reported data measures the reporting, not the thing',
+      body: `Before you draw conclusions from the time logs, some history on where they come from.
+
+Nobody is required to fill them in. There is no approval step, no reminder, and no consequence for an empty week. They exist because a tool we bought in 2023 had the feature switched on by default.
+
+That gives you a classic self-reported dataset, and self-reported datasets have one property worth memorising: the variation between people is mostly variation in reporting behaviour, not in the underlying thing. When response is voluntary and unenforced, whoever answers is whoever finds answering easy.
+
+Two practical consequences.
+
+Proportions survive better than totals. If somebody logs half their time, the SHAPE of what they logged is probably roughly right even though the level is badly wrong. What people work on is more recoverable than how much.
+
+And comparisons between people do not survive at all. A total that is uniformly short can be scaled by a factor you estimate. A comparison between a diligent logger and a lax one cannot be rescued by any factor, because you would need a different factor for each of them and the data cannot tell you either.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which use of a voluntary, unenforced timesheet is least damaged by its coverage?',
+        options: [
+          { key: 'mix', correct: true, label: 'The mix — what proportion of effort went to each requesting function' },
+          { key: 'rate', correct: false, label: 'Cost per hour, scaled up to allow for the missing time' },
+          { key: 'rank', correct: false, label: 'Ranking analysts by hours, with people present less than a year excluded' },
+          { key: 'total', correct: false, label: 'Total hours worked by the team this year' },
+        ],
+        why: 'Scaling needs a factor you do not have. Ranking needs a different factor per person. The total is simply eight times short. The mix is the one thing a partial sample can still carry.',
+      },
+    },
+    {
+      key: 'maa-04', day: 2, type: 'policy', via: 'email', from: 'people_partner', minutes: 9,
+      subject: 'Before you use timesheet data about individuals',
+      title: 'Neha: the rules on individual performance data',
+      body: `Flagging this now because you have pulled the time logs and the budget round is coming.
+
+The policy is short. Data collected for one purpose is not automatically available for another. The time logs were switched on to attribute effort to projects. Using them to assess individual performance is a different purpose, and it needs the people concerned to know it is happening.
+
+That is not a bureaucratic point. If thirteen people learn in a budget round that their timesheets were used to rank them, two things follow: the ones who look bad are being assessed on an administrative habit, and everybody starts logging strategically from the following Monday. You lose the data and the trust in one move.
+
+If you do intend to use it that way, tell the team first, in writing, before it leaves your desk. If you do not intend to, tell them that too — they will hear that analytics timesheets came up in a budget round either way, and the version they hear from you is better than the version they hear from somebody else.`,
+      check: {
+        kind: 'choice',
+        prompt: 'You are using team timesheet data in a budget conversation. What does the team need from you?',
+        options: [
+          { key: 'before', correct: true, label: 'To hear it from you, in writing, before it leaves your desk' },
+          { key: 'after', correct: false, label: 'A summary afterwards of what was said and decided' },
+          { key: 'nothing', correct: false, label: 'Nothing, as long as no individual is named' },
+          { key: 'consent', correct: false, label: 'Individual sign-off from each of the thirteen' },
+        ],
+        why: 'Afterwards is too late to be a choice. Aggregation helps but the team still hears their timesheets came up. Individual consent turns a management decision into a negotiation.',
+      },
+    },
+    {
+      key: 'maa-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 15,
+      subject: 'Denominators',
+      title: 'Asha: the same cost, divided two ways',
+      body: `You have found the coverage problem. Now the harder half: what to do with two numbers that are both arithmetically correct and eight times apart.
+
+The team costs roughly ₹3.09 crore a year. Divide by the 3,193 hours anyone bothered to log and you get about ₹9,664 an hour. Divide by the hours the company actually paid for — days present, working days, eight hours a day — and you get about ₹1,241.
+
+Neither is a mistake. They answer different questions. The first answers "what does an hour of recorded analyst time cost", which is a question about the timesheet. The second answers "what does an hour of analyst capacity cost", which is a question about the business.
+
+The instinct is to publish the second and call the first wrong. Do not do that. Publish the second and SHOW the first, because somebody else will compute the first within a week and you want them to find your version of it rather than discover it themselves and wonder what else you left out.
+
+The general rule: when a figure has a defensible alternative, the alternative goes on the same page. A number that only survives because nobody else has done the arithmetic is not a number you own.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why show the naive rate rather than only the defensible one?',
+        markers: ['somebody|someone|else|will|compute|find|discover|own|transparen|same page|credib|trust|later|themselves'],
+        why: 'Because the arithmetic is two lines and someone will do it. A figure you did not mention, found by someone else, costs more than the figure itself ever could.',
+      },
+    },
+    {
+      key: 'maa-06', day: 3, type: 'learning', via: 'chat', from: 'stakeholder', minutes: 8,
+      subject: 'What I actually do with your numbers',
+      title: 'Vikram: how a rate gets used once it leaves you',
+      body: `Since we are going to disagree this week, here is my side, so you know what you are arguing with.
+
+I am not trying to catch anybody out. I sit in a room with six cost lines and I have to say something about each of them. For most of them I have a rate. Cost per order, cost per ticket, cost per hire. When analytics has no rate, the room does not conclude that analytics is unmeasurable. It concludes that analytics has not done the work, and the cut lands there rather than somewhere else.
+
+So when I push you for a number, that is what I am pushing for. Something I can put next to the other five lines.
+
+What actually helps me is a rate you will defend, plus one sentence on what it does not mean. What does not help me is being told the question is wrong, because I still have to say something in that room.
+
+Give me something I can carry.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the strongest response to "I need a rate for the room"?',
+        options: [
+          { key: 'defensible', correct: true, label: 'Give the capacity-hour rate, with the naive one shown beside it and one line on the difference' },
+          { key: 'refuse', correct: false, label: 'Explain that no rate is defensible until timesheet coverage improves' },
+          { key: 'naive', correct: false, label: 'Give the logged-hour rate with a clear health warning attached' },
+          { key: 'defer', correct: false, label: 'Ask for the budget conversation to be deferred to the next round' },
+        ],
+        why: 'Refusing leaves him with nothing and the cut lands on analytics anyway. The naive rate with a warning is the rate without the warning by the second retelling. The answer is a rate you will stand behind.',
+      },
+    },
+    {
+      key: 'maa-07', day: 4, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Headcount, capacity and the word establishment',
+      title: 'Neha: fourteen people is not fourteen people',
+      body: `You are being asked whether fourteen is the right number, so it is worth being precise about what fourteen means.
+
+Establishment is the number of posts. Headcount is the number of humans in them on a given day. Capacity is what those humans were actually present to do over a period, and it is the only one of the three that belongs in the denominator of anything.
+
+This year they are all different. Somebody left at the end of January and somebody joined in March. Thirteen people below manager level bought you 11.92 person-years — a whole person short of what the headcount suggests, from ordinary joining and leaving nobody did anything wrong in.
+
+That gap is also why "we are at fourteen and still behind" is not the argument it sounds like. Some of the shortfall is not a shortfall in establishment at all; it is the six weeks a post sat empty and the three months before a March joiner was useful. Hiring does not fix that. Faster replacement does, and it is cheaper.
+
+The sentence worth having ready: a post is not a person, and a person is not a person-year.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Thirteen people below manager level, 11.92 person-years present. What does that gap chiefly show?',
+        options: [
+          { key: 'churn', correct: true, label: 'Ordinary joining and leaving, which hiring more posts does not fix' },
+          { key: 'absence', correct: false, label: 'Unrecorded absence that should be investigated' },
+          { key: 'under', correct: false, label: 'That the team is under-established by about one post' },
+          { key: 'error', correct: false, label: 'A data problem in the start and leave dates' },
+        ],
+        why: 'A leaver in January and a joiner in March account for it exactly. Reading it as under-establishment turns a replacement-speed problem into a hiring request.',
+      },
+    },
+    {
+      key: 'maa-08', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 10,
+      subject: 'Cancelled work in a budget conversation',
+      title: 'Diya: the cheapest capacity in the building',
+      body: `You have found 485 hours logged against work that was later cancelled — about 15% of everything recorded. A word on how to use that, because it is the most useful thing in your whole review and the easiest to waste.
+
+Do not present it as waste. The moment it is called waste, the conversation becomes about who cancelled what, and the requesting functions become defensive, and nothing changes.
+
+Present it as available capacity. Fifteen per cent of effort went to work the business stopped wanting. Recovering even half of that is worth more than a hire, costs nothing, and is in the gift of the people in the room rather than the people in your team.
+
+That reframes the whole establishment question. "Do we need more analysts" becomes "do we want to keep paying for work we cancel", and the second question is one an exec can act on this quarter.
+
+One caution. The 15% is a floor, not an estimate. It is 15% of LOGGED hours, and logged hours are an eighth of the real ones. The proportion is the reliable part.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why present cancelled effort as available capacity rather than as waste?',
+        markers: ['defensive|blame|who|actionable|act|capacity|hire|cheaper|reframe|room|their gift|change|argument'],
+        why: 'Waste is an accusation and produces a search for the guilty. Available capacity is an offer, and it turns a hiring request into a decision the room can actually take.',
+      },
+    },
+    {
+      key: 'maa-09', day: 5, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'Writing for a budget round',
+      title: 'Asha: what a slide does to a sentence',
+      body: `Last thing before this goes in. A note on the medium, because the budget pack is not an email and will not behave like one.
+
+A slide is read for four seconds by someone who is thinking about the next slide. Whatever is largest and most quotable is what survives; everything else is decoration. That is not a failure of the audience, it is what packs are for.
+
+So: whatever you most need to be true about how your figures are read has to be the biggest thing on the page, not a qualifier under it. If the coverage caveat matters more than the rate — and here it does — then the coverage is the line and the rate is the supporting detail, not the other way round.
+
+And be specific about the failure you are preventing. "Utilisation is low at 13%, suggesting spare capacity" is a sentence somebody will write with no bad intent at all. It reads as an observation. It is actually a recommendation to cut, dressed as arithmetic, and it will be read as one.
+
+Your job on a slide is not to be accurate. It is to make the wrong reading harder than the right one.`,
+      check: {
+        kind: 'choice',
+        prompt: 'The slide says "utilisation is low at 13%, suggesting spare capacity". What is wrong with it?',
+        options: [
+          { key: 'recommend', correct: true, label: 'It reads as an observation but functions as a recommendation to cut' },
+          { key: 'rounding', correct: false, label: 'The figure should be 12.8% rather than 13%' },
+          { key: 'vague', correct: false, label: 'It does not say what period the utilisation covers' },
+          { key: 'jargon', correct: false, label: 'Utilisation is a term the board will not know' },
+        ],
+        why: 'The rounding is the least of it. The number is not utilisation at all — it is timesheet coverage — and the second clause converts a measurement error into a resourcing decision.',
+      },
+    },
+    {
+      key: 'maa-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'End of your first review as manager',
+      title: 'Asha: what you refused',
+      body: `Week done. One reflection rather than a debrief.
+
+The technical work this week was not hard. Coverage, a denominator, a couple of group-bys. Any of your team could have written the queries.
+
+What you did that they could not was refuse the table. Vikram asked twice, politely, with a good reason, and offered to read it sensibly. Saying no to that costs something — he is senior, he is not being unreasonable, and the refusal makes you look obstructive for about a day.
+
+That is most of the job now. Not finding the number. Deciding which numbers are allowed to exist with names attached to them, and carrying the cost of the ones you withhold.
+
+Have a think over the weekend about what else in the team's reporting would not survive the test you applied this week.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What was the hardest part of this week, and why?',
+        markers: ['refus|no|decline|table|withhold|say no|vikram|cost|obstruct|unpopular|judgement|stand'],
+        why: 'The queries were routine. Declining a reasonable request from a senior person, twice, with no data to hide behind, is the part that is new at this level.',
+      },
+    },
+  ],
+  'tooling-review': [
+    {
+      key: 'mba-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 12,
+      subject: 'How a renewal actually works',
+      title: 'Diya: auto-renewal is a decision somebody already made',
+      body: `Before you open the contracts, the mechanics, because they decide what your week looks like.
+
+Every one of these is an auto-renewing annual term. That means nobody has to approve the spend for it to happen. The only action that requires a decision is CHANGING it, and that decision has a deadline written into the contract rather than into anybody's calendar.
+
+The practical effect is that inertia has a price and the price is exact. Miss 15 August and the BI platform costs ₹21.6 lakh for another year, and nobody will have done anything wrong. There is no meeting where that gets decided. There is only a date after which it is decided.
+
+So the first thing to do with any renewing estate is not analysis. It is a list of dates. Then you know which questions have a deadline and which are merely important, and you answer them in that order rather than in order of how interesting they are.
+
+The interesting question here is what the whole estate is worth. The urgent one is fifteen or thirty seats by Friday.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What does an auto-renewal clause change about the analysis?',
+        options: [
+          { key: 'default', correct: true, label: 'Doing nothing is an active choice with a price, and the deadline is the contract\'s, not yours' },
+          { key: 'urgent', correct: false, label: 'It makes the whole estate review urgent rather than important' },
+          { key: 'nothing', correct: false, label: 'Nothing — the analysis is the same whenever the contract renews' },
+          { key: 'vendor', correct: false, label: 'It gives the vendor the stronger position in any negotiation' },
+        ],
+        why: 'The clause does not change what is true about the tools. It changes which truths you have time to act on, and it turns inaction into a decision.',
+      },
+    },
+    {
+      key: 'mba-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 11,
+      subject: 'Cutting the line nobody defends',
+      title: 'Asha: why tooling cuts go wrong more often than headcount cuts',
+      body: `A warning that will sound backwards.
+
+Headcount cuts are hard to get wrong, in one narrow sense: everybody involved fights, every assumption is challenged, and a bad one usually dies on the way. The process is brutal and it functions as review.
+
+Tooling cuts have none of that. Nobody's job depends on a seat. Nobody will read your analysis carefully, argue with your denominator, or point out that the tool you are cutting is the only one that does the thing. It goes through on the strength of a number on a slide, and the cost shows up four months later as a request that took three days instead of three hours.
+
+So the review has to be done properly precisely because nothing will stop you if it is not. You are the only check in the process.
+
+Concretely: for every seat you propose to remove, be able to say what would have been impossible last year without it. If the answer is nothing, remove it with confidence. If the answer is "I do not know", that is a conversation, not a saving.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why do tooling cuts need more care than the size of the numbers suggests?',
+        markers: ['nobody|no one|defend|challenge|review|check|fight|argue|unopposed|through|only|later|surface'],
+        why: 'Nothing in the process pushes back. The analyst is the whole review, and the cost of a wrong cut appears months later attached to a request rather than to the decision.',
+      },
+    },
+    {
+      key: 'mba-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 13,
+      subject: 'Seats, assignments and use',
+      title: 'Rahul: three tables, three different questions',
+      body: `You are about to compare numbers from three places, so it is worth being precise about what each one records.
+
+The licence table records what Procurement bought. It is a contract fact and it is exactly right — it is what we are invoiced for.
+
+The assignment table records what IT handed out. It is an administrative fact. It is right about what was done and silent about whether it was needed, and it is only updated when somebody remembers to update it.
+
+The last-used date records telemetry. It is a behavioural fact, it is the only one of the three with a human in it, and it is the least reliable — it records opening the tool, not using it well, and some tools report it lazily.
+
+A count that mixes them silently is the commonest error in this kind of review. "Fourteen users" can mean fourteen seats bought, fourteen people given access, or fourteen people who opened it this quarter, and in our estate those are 30, 14 and 13 for the same tool.
+
+Always say which of the three you counted. It takes four words and it is the difference between an analysis and an assertion.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which of the three counts is furthest from what a budget conversation usually means by "users"?',
+        options: [
+          { key: 'seats', correct: true, label: 'Seats contracted — it is a purchasing decision with no person in it at all' },
+          { key: 'assigned', correct: false, label: 'Assignments — because they are only updated when somebody remembers' },
+          { key: 'used', correct: false, label: 'Active users — because opening a tool is not the same as using it' },
+          { key: 'none', correct: false, label: 'None of them; the three are close enough that the distinction rarely matters' },
+        ],
+        why: 'Assignments and active use are both imperfect records of people. Seats are a record of a purchase order, and on the BI platform that is 30 against 13.',
+      },
+    },
+    {
+      key: 'mba-04', day: 2, type: 'learning', via: 'chat', from: 'stakeholder', minutes: 9,
+      subject: 'Per-unit numbers',
+      title: 'Vikram: what a denominator is for',
+      body: `Watching you find the same thing twice this month, so here is the general version.
+
+Every per-unit figure is a claim about what drives the cost. Cost per seat says the thing we buy is seats. Cost per active user says the thing we buy is people being able to work. Those are different claims and only one of them is about the business.
+
+The test I use: if this number improves, has anything got better?
+
+Cost per seat improves when we buy more seats. Nothing got better; the bill went up. That single test would have caught it on Monday.
+
+Cost per active user improves when more people use the tool or when we stop paying for seats nobody uses. Both of those are genuinely better.
+
+It is the same test you used on the timesheets. Cost per logged hour improves when people log less, which is why it read at eight times the real rate. Learn the test rather than the two examples — you will meet it again on cost per report, cost per dashboard, and cost per ticket, and it fails in exactly the same way each time.`,
+      check: {
+        kind: 'answer',
+        prompt: 'State the test, and apply it to cost per seat.',
+        markers: ['improve|better|worse|buy more|seat|nothing|goes up|bill|rewards|game'],
+        why: 'If the number improves, has anything got better? Cost per seat improves by buying seats nobody uses, so the answer is no and the measure is unusable for the decision it is being asked to support.',
+      },
+    },
+    {
+      key: 'mba-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Correcting somebody else\'s number',
+      title: 'Asha: how to do it without making an enemy',
+      body: `You have to tell Diya that the ranking she sent on Monday points at the wrong vendor. Some rules I have learned the hard way.
+
+Do it privately and do it early. A correction made on Wednesday is information. The same correction made in a meeting in September is a public demonstration that she got it wrong, whatever your tone.
+
+Lead with the replacement, not the error. "Northlake is our best-used tool, fourteen seats and thirteen active users" lands completely differently from "cost per seat was the wrong measure". The first gives her something to say; the second gives her something to defend.
+
+Take your share. You reproduced the same ranking on Monday morning and it took you until Tuesday to see the problem. Saying so is not false modesty, it is the actual sequence of events, and it converts a correction into a joint finding.
+
+And give her somewhere to go. She came to you asking where to cut. If you remove her target and hand back nothing, you have made her job harder, and she will remember that far longer than she remembers being wrong.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the single most useful thing to lead a correction with?',
+        options: [
+          { key: 'replace', correct: true, label: 'The replacement finding, stated as a fact she can repeat' },
+          { key: 'method', correct: false, label: 'An explanation of why the original measure was unsound' },
+          { key: 'share', correct: false, label: 'An acknowledgement that you made the same mistake first' },
+          { key: 'soften', correct: false, label: 'A note that the original was a perfectly reasonable first cut' },
+        ],
+        why: 'The other three all belong in the note. Only the replacement gives her something to say in the meeting she is walking into, which is what she actually needs from you.',
+      },
+    },
+    {
+      key: 'mba-06', day: 3, type: 'policy', via: 'email', from: 'it_ops', minutes: 10,
+      subject: 'Offboarding and licence reclamation',
+      title: 'IT: what is meant to happen when somebody leaves',
+      body: `Following your query about the January leaver, the honest position.
+
+The offboarding checklist covers identity: account disabled, building pass returned, device collected, mail forwarded. All of that ran correctly on 30 January.
+
+Licence seats are not on it. They live with the owning function, on the reasonable-sounding grounds that the function knows which tools its people actually need. In practice that means nobody, because a function notices a missing seat immediately and a spare one never.
+
+The cost is asymmetric and that is why it persists. If we remove a seat somebody needs, we hear within an hour. If we keep one nobody needs, we hear in a year, during a review like yours, if somebody happens to join the two tables.
+
+We will reclaim the four. For the standing fix we would need the owning function to confirm that seats can be removed on the leaving date without a check, and that is a decision for you rather than for us — you are the one who carries it if somebody was mid-handover.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why do unreclaimed seats persist even where offboarding otherwise works?',
+        options: [
+          { key: 'asym', correct: true, label: 'A missing seat is noticed in an hour; a spare one is noticed in a year' },
+          { key: 'lazy', correct: false, label: 'The offboarding checklist is not followed consistently' },
+          { key: 'unknown', correct: false, label: 'IT cannot tell which tools a leaver actually had' },
+          { key: 'cost', correct: false, label: 'The cost of any individual seat is too small to be worth a process' },
+        ],
+        why: 'The checklist ran correctly; seats simply are not on it. The asymmetry is why nobody ever put them on it, and why the fix has to be automatic rather than diligent.',
+      },
+    },
+    {
+      key: 'mba-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Recoverable, recommended, realised',
+      title: 'Diya: the three numbers a saving has',
+      body: `You are about to publish a savings figure, so here is how Finance will read it and what happens to each version.
+
+RECOVERABLE is the arithmetic maximum — every seat above what is actively used. It is a real number and it is not a plan. If you publish it alone, it becomes the target and the shortfall is yours.
+
+RECOMMENDED is what you will actually do: recoverable, minus the headroom you deliberately keep, minus anything still needing a conversation, minus anything that renews after the year ends. It is smaller and it is the only one you should be held to.
+
+REALISED is what the invoices show twelve months later, and it is always lower than recommended, because a vendor raises the unit price when the volume drops and because at least one conversation goes the other way.
+
+The useful discipline: publish recommended as the headline, show recoverable beside it, and say in one line why they differ. That way nobody discovers the bigger number on their own — which they will, because the arithmetic is one query — and you are not carrying a target you did not set.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Which figure should be the headline of a savings note?',
+        options: [
+          { key: 'rec', correct: true, label: 'Recommended, with recoverable shown beside it and the gap explained' },
+          { key: 'max', correct: false, label: 'Recoverable, since it is what the data supports' },
+          { key: 'real', correct: false, label: 'A conservative estimate of what will be realised' },
+          { key: 'both', correct: false, label: 'Both, without choosing, so the reader can decide' },
+        ],
+        why: 'Recoverable alone becomes a target you did not set. Realised cannot be known yet. Publishing both without choosing is a way of not making the recommendation you were asked for.',
+      },
+    },
+    {
+      key: 'mba-08', day: 4, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 8,
+      subject: 'Headroom is not waste',
+      title: 'Rahul: why I want you to keep some spare seats',
+      body: `One plea before you set the seat counts.
+
+Lakshmi joined on 2 March. She had every tool she needed on her first morning, because there were spare seats sitting there. That is the only reason. If we had been at exactly the active count, her first week would have been a procurement ticket, a quote, an approval and about nine days of borrowing someone else's screen.
+
+I am not arguing for thirty seats. Sixteen unassigned is not headroom, it is a purchase nobody revisited. But going to exactly the active count converts every joiner, every contractor and every "can you look at this by Thursday" into a procurement conversation, and those cost more than the seats.
+
+Two spare per tool is the number I would ask for. It is about ₹6.5 lakh across the estate at current rates, which is a real cost and worth naming as a choice rather than leaving as slack nobody mentions.
+
+Name it in the note. Unexplained spare capacity becomes next year's saving; explained spare capacity is a decision somebody has to argue with.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why should headroom be named in the note rather than just left in the seat counts?',
+        markers: ['next year|future|saving|target|cut|explain|decision|argue|visible|unexplained|slack|justify'],
+        why: 'Spare capacity nobody has explained looks exactly like the waste you have just finished removing, and the next review removes it. Naming it as a choice makes somebody argue with the choice instead.',
+      },
+    },
+    {
+      key: 'mba-09', day: 5, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'Negotiating when you have done the work',
+      title: 'Vikram: what a vendor is actually responding to',
+      body: `You are about to go back to Clearview. A few things about how the other side of that conversation works.
+
+Their account manager is measured on renewal value, not on your satisfaction. A proposal to halve the seat count is a threat to their number, and the standard play is not to argue with your analysis — it is to change what the comparison is against. Note that their offer is framed against ₹21.6 lakh, the figure you are trying to move away from, rather than against your proposal.
+
+Watch the term length too. The concession they want is not really the discount, it is the two years. A multi-year lock removes your ability to do this exercise again next year, which is worth far more to them than ₹2.4 lakh.
+
+What you have that most buyers do not is checkable counts. Sixteen seats never assigned is not an opinion and they cannot argue with it. Lead with it and stay on it.
+
+And do not bluff. Saying you are evaluating alternatives when you are not costs everything the first time it is tested, and these are people you will negotiate with again in twelve months.`,
+      check: {
+        kind: 'choice',
+        prompt: 'In the vendor\'s counter-offer, what is the concession they most want?',
+        options: [
+          { key: 'term', correct: true, label: 'The two-year term, because it removes next year\'s decision' },
+          { key: 'seats', correct: false, label: 'Keeping all thirty seats on the account' },
+          { key: 'price', correct: false, label: 'Protecting the per-seat unit price at ₹64,000' },
+          { key: 'timing', correct: false, label: 'Settling before 15 August so the renewal is clean' },
+        ],
+        why: 'The seats are this year\'s revenue; the term is every year after it. A lock is what stops the buyer repeating the exercise that just cost them a third of the account.',
+      },
+    },
+    {
+      key: 'mba-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 7,
+      subject: 'Second review done',
+      title: 'Asha: the same shape twice',
+      body: `Worth noticing before you close this off: you have now done the same analysis twice on two completely different cost lines.
+
+Last month it was cost per logged hour, where the denominator was an eighth of the real one. This week it was cost per seat, where the denominator was a purchase order rather than a person. Both times the published rate was wrong in the direction that flattered whoever produced it, and both times the fix was to put people in the denominator.
+
+That is not a coincidence about this company. Per-unit figures get built from whatever is easiest to count, and what is easiest to count is almost always a thing we bought rather than a thing that happened.
+
+Next time somebody hands you a rate, go straight to the denominator. You will be right more often than is comfortable.
+
+Think over the weekend about which other numbers this function publishes have that shape.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What do the two bad denominators have in common?',
+        markers: ['easy|easiest|count|available|bought|purchase|contract|not people|no person|convenient|record|flatter'],
+        why: 'Both were built from the thing that was easiest to count — hours somebody typed in, seats somebody ordered — rather than from the people or the work the cost is actually for.',
+      },
+    },
+  ],
+  'intake-review': [
+    {
+      key: 'mca-01', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 13,
+      subject: 'When a complaint arrives',
+      title: 'Asha: the most valuable email you will get this year',
+      body: `Ravi has told you his team stopped bothering. Before you start work, understand what you have been handed.
+
+Most dissatisfaction never arrives. A function decides analytics is slow, stops raising things, and builds a spreadsheet instead. Nobody tells you, demand quietly falls, and the falling demand gets read as the team having capacity. That is the normal case and it is invisible from inside.
+
+A complaint is the abnormal case. Somebody has spent social capital to tell you something is wrong, which means they still think it is worth fixing. That is worth more than any survey you could run.
+
+Two things follow. Settle the factual parts fast — within a day if you can — because the value of his goodwill decays quickly. And tell him the answer even if the answer is that he is wrong, because the thing you are protecting is his willingness to tell you the next thing.
+
+The one response that guarantees he never writes again is a thoughtful reply in three weeks.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why is a complaint from a requesting function unusually valuable?',
+        options: [
+          { key: 'rare', correct: true, label: 'Most dissatisfaction shows up as quietly falling demand, which is invisible and reads as spare capacity' },
+          { key: 'severe', correct: false, label: 'It indicates a more serious problem than the ones nobody mentions' },
+          { key: 'formal', correct: false, label: 'It creates a record that the issue was raised and when' },
+          { key: 'senior', correct: false, label: 'It comes from somebody senior enough to get the problem prioritised' },
+        ],
+        why: 'The silent version of this is a function that builds its own spreadsheet and stops asking. You never find out, and the drop in requests looks like good news.',
+      },
+    },
+    {
+      key: 'mca-02', day: 1, type: 'learning', via: 'email', from: 'data_engineer', minutes: 12,
+      subject: 'Survivorship in a request queue',
+      title: 'Rahul: the requests that are not in your averages',
+      body: `A structural warning before you compute anything about how long work takes.
+
+Any average lead time is computed over work that finished. Requests that were cancelled have no lead time. Requests nobody ever started have no lead time. Requests somebody decided not to raise because they had given up do not exist at all.
+
+So the measure is taken over exactly the population that did best, and it improves as the service gets worse. If the team stops picking up hard requests, they sit in the queue, they never enter the average, and the average falls. That reads as improvement.
+
+This is the same shape as the retention curves you did at Senior and the same shape as the timesheet coverage. It turns up everywhere: whenever a measure is computed over completions, ask what did not complete and whether there is more of it than there used to be.
+
+The practical fix here is not clever. Report the queue alongside the lead time, always, as a count and an age. One number cannot see the other's failure mode, and together they cannot both be gamed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A team stops picking up its hardest requests. What happens to average lead time?',
+        options: [
+          { key: 'falls', correct: true, label: 'It falls, because the hard work never enters the average at all' },
+          { key: 'rises', correct: false, label: 'It rises, because the backlog grows' },
+          { key: 'same', correct: false, label: 'It stays the same until the unstarted work is eventually picked up' },
+          { key: 'depends', correct: false, label: 'It depends on whether the queue is counted as open or closed' },
+        ],
+        why: 'The measure is computed over survivors. Refusing the difficult work is the fastest way to improve it, which is why it must never be published without the queue beside it.',
+      },
+    },
+    {
+      key: 'mca-03', day: 2, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Levers people can always pull',
+      title: 'Neha: why every free priority field ends up meaningless',
+      body: `You are about to discover that everybody marks everything urgent. This is not a fact about your requesters, so it is worth knowing the general version before you write anything about it.
+
+A priority field given to requesters has three properties. It is free to use. It is invisible to everyone except the person filling it in. And the person filling it in bears none of the cost of choosing the highest value.
+
+Any control with those three properties converges to its maximum. Not because people are dishonest — because the expected value of choosing "urgent" is positive and the expected cost is zero, and over a year everybody works that out independently. We have watched exactly the same thing happen with meeting invitations marked high importance and with the recruitment system's "critical hire" flag, which is now 70% of requisitions.
+
+So the fix is never an instruction. Telling people to use it responsibly works for one quarter, in the teams that were already careful.
+
+The fix is to make the choice cost something: a date somebody can check, a reason somebody reads, a named trade against something else the requester wants. Anything the requester bears rather than absorbs.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What makes a priority field converge to "everything is urgent"?',
+        markers: ['free|cost|nothing|no cost|invisible|bear|expected|rational|maximum|nobody|zero'],
+        why: 'Free to use, invisible to others, and the requester bears none of the cost. Any control with those three properties ends up at its maximum without anybody behaving badly.',
+      },
+    },
+    {
+      key: 'mca-04', day: 2, type: 'learning', via: 'chat', from: 'finance_analyst', minutes: 9,
+      subject: 'Statistically real, operationally invisible',
+      title: 'Diya: six days out of twenty-six',
+      body: `You have a difference that is real in the data and undetectable in life. That combination comes up constantly and it is worth having language for.
+
+Urgent closes in 25.5 days and low in 31.3. The ordering is right, it is consistent across all four levels, and with 263 delivered requests it is not noise. Everything about it says the field works.
+
+And nobody could ever feel it. A requester waiting four weeks does not experience four and a half weeks as a different service. It is inside the variation between two requests with the same priority, so their own experience of "urgent" is roughly the same as their experience of "low".
+
+When a measured effect is smaller than the variation somebody personally experiences, the effect does not exist for them, and telling them the data says otherwise makes you sound like you are managing them rather than listening.
+
+The sentence I would use: it is real, it is too small to notice, and a control nobody can feel is a control that stops meaning anything.`,
+      check: {
+        kind: 'choice',
+        prompt: 'The priority effect is statistically clear and six days wide. What should the write-up say?',
+        options: [
+          { key: 'both', correct: true, label: 'That the field works and the effect is too small for any requester to perceive' },
+          { key: 'works', correct: false, label: 'That the field works, since the ordering is correct at all four levels' },
+          { key: 'broken', correct: false, label: 'That the field does not work and is being ignored by the team' },
+          { key: 'noise', correct: false, label: 'That six days is within noise and the difference cannot be relied upon' },
+        ],
+        why: 'Only the both-halves version is true and only it explains the behaviour. "It works" contradicts everybody\'s experience; "it is ignored" contradicts the data and blames the team.',
+      },
+    },
+    {
+      key: 'mca-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Choosing which date to stop the clock on',
+      title: 'Asha: first delivery or final close',
+      body: `You have found that our lead time measures to the first delivery. Before you propose changing it, the argument for each, because somebody will make the other one.
+
+FIRST DELIVERY is defensible. It is when the requester got something they could use. If a reopen was a small correction to a fundamentally complete piece of work, stopping the clock at first delivery is closer to their experience than waiting for the final close three weeks later.
+
+FINAL CLOSE is the one I want, for a reason that has nothing to do with accuracy. First delivery can be improved by sending something out before it is ready. Final close cannot be improved by anything except doing the work properly.
+
+That is the test for any operational measure: not which is more accurate, but which one behaves badly when somebody tries hard to improve it. Both these numbers are true. Only one of them is safe to put on a wall.
+
+Expect the change to make us look slower — 26.4 becomes 28.6 overall, and worse again for reports. Put that in the note yourself.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What is the deciding argument for measuring to final close?',
+        options: [
+          { key: 'game', correct: true, label: 'First delivery can be improved by sending work out before it is ready; final close cannot' },
+          { key: 'accurate', correct: false, label: 'It is a more accurate record of how long the work took' },
+          { key: 'requester', correct: false, label: 'It matches what the requester experienced' },
+          { key: 'standard', correct: false, label: 'It is the more conventional definition of lead time' },
+        ],
+        why: 'Accuracy is arguable — first delivery genuinely is when the requester got something. What settles it is how each measure behaves when somebody sets out to improve it.',
+      },
+    },
+    {
+      key: 'mca-06', day: 3, type: 'learning', via: 'chat', from: 'data_engineer', minutes: 10,
+      subject: 'Why data fixes never come back',
+      title: 'Rahul: the reopen rate is an intake measure',
+      body: `Data fixes reopen at 1.6% and reports at 18.8%. I have a strong view about why, having done a lot of both.
+
+A data fix arrives complete. "The September figure in the finance dashboard is wrong." There is one right answer, everybody agrees what it is, and you can tell when you have got there. Nothing about that depends on having understood what somebody wanted.
+
+A report request arrives as a sentence. "Can we get a view of returns by category." That sentence contains none of: which categories, over what window, against what comparison, net or gross, for whom, to decide what. The analyst fills in six blanks and has maybe a one-in-three chance of filling them all the way the requester had imagined.
+
+The reopen is not a mistake being corrected. It is the specification being written, late, by iteration, at full analyst cost.
+
+Which makes the reopen rate a measure of how well work is specified at intake, not of how well it is done. Twenty minutes at the start against eleven days of rework is the trade, and it is not close.`,
+      check: {
+        kind: 'answer',
+        prompt: 'Why does the reopen rate point at intake rather than at delivery?',
+        markers: ['spec|scope|question|unclear|blank|ambiguous|start|intake|iterat|late|define|understood|brief'],
+        why: 'A reopen on a report is usually the specification being written late, by iteration, at full cost — not an error in work that was correctly understood.',
+      },
+    },
+    {
+      key: 'mca-07', day: 4, type: 'learning', via: 'email', from: 'stakeholder', minutes: 11,
+      subject: 'Removing a control people rely on',
+      title: 'Vikram: how to take something away',
+      body: `You are going to propose removing the priority field. As somebody who will lose it, here is what will make me say yes.
+
+Do not open with the evidence that it does not work. I will hear that as an argument, and my instinct will be to find the case where it did. Open with what I get instead — a date you will hold to, and a reason somebody actually reads. If the replacement is better, the evidence is just support.
+
+Tell me what happens in my worst case. Mine is a board paper with a fixed date. If your proposal has no answer for that, I will assume it has no answer for anything and argue with all of it.
+
+Give it an end date. "We will review this in six months" is what turns a fight about principle into an experiment I can tolerate losing.
+
+And do not make me the reason. If the note says some functions were over-using the flag, every function reads that as being about them, and you will spend the quarter on that instead of on the change.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What should a proposal to remove a control lead with?',
+        options: [
+          { key: 'gain', correct: true, label: 'What the person gets instead' },
+          { key: 'evidence', correct: false, label: 'The evidence that the control does not work' },
+          { key: 'cost', correct: false, label: 'What the current control is costing the organisation' },
+          { key: 'review', correct: false, label: 'The commitment to review the change in six months' },
+        ],
+        why: 'All four belong in the note. Leading with evidence invites a search for counter-examples; leading with the replacement makes the evidence supporting material rather than the argument.',
+      },
+    },
+    {
+      key: 'mca-08', day: 4, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'Work in progress',
+      title: 'Asha: forty-three things started, and a queue a year old',
+      body: `One thing in your numbers that nobody has mentioned and that I think matters more than the priority field.
+
+Forty-three requests are in progress. Thirteen people. The oldest has been open for 340 days. Meanwhile thirty-two things have never been started at all, averaging 191 days in the queue.
+
+That combination is not a prioritisation problem. It is a flow problem. Work is being started faster than it is being finished, so everything is in progress and nothing is finished, and the wait a requester experiences is mostly queueing rather than working.
+
+The uncomfortable part is that starting something feels like responsiveness. Somebody asks, you open it, you do an hour, you tell them it is underway. Everybody feels well served for about a week. Then it sits.
+
+A cap on how much can be open at once is the only intervention I have seen work, and it is unpopular for exactly one quarter, because it forces the conversation about what to stop. Which is the conversation this function has been avoiding for a year.
+
+Put it in the proposal. It will do more than the intake form will.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Forty-three open items across thirteen people, with a 191-day queue. What kind of problem is that?',
+        options: [
+          { key: 'flow', correct: true, label: 'A flow problem — work is started faster than it is finished, so the wait is mostly queueing' },
+          { key: 'priority', correct: false, label: 'A prioritisation problem — the wrong things are being worked on first' },
+          { key: 'capacity', correct: false, label: 'A capacity problem — there are too few people for the demand' },
+          { key: 'skill', correct: false, label: 'A delivery problem — individual requests are taking too long to complete' },
+        ],
+        why: 'Re-ordering a queue that nothing leaves does not shorten it. Neither does hiring, until the started-and-stalled pile is cleared, because new people start more things.',
+      },
+    },
+    {
+      key: 'mca-09', day: 5, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Baselines',
+      title: 'Diya: write down the before, today',
+      body: `You are about to change four things at once. A word about the number nobody remembers to record.
+
+In six months somebody will ask whether this worked. At that point you will need what the measures were the day before the change, computed exactly the way you compute them now. If you do not write them down today you will reconstruct them, and reconstruction always flatters — not dishonestly, but because you will define the baseline while knowing which direction you want the answer to go.
+
+Write them into a document now: the four numbers, the exact query, and the date. Then the six-month review is a comparison rather than an argument.
+
+The second half of this, which people miss: say in advance which direction each is expected to move and by roughly how much. Lead time will RISE, because you are changing which date stops the clock. If that prediction is not recorded, the rise will be read as the changes having failed, and somebody will propose reverting them.
+
+A prediction written down beforehand is the difference between a result and a debate.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why record the expected direction of each measure, not just its current value?',
+        options: [
+          { key: 'predict', correct: true, label: 'Lead time will rise by design, and without the prediction that reads as failure' },
+          { key: 'rigour', correct: false, label: 'It makes the analysis more rigorous and harder to challenge' },
+          { key: 'targets', correct: false, label: 'It gives the team targets to work towards over the six months' },
+          { key: 'blame', correct: false, label: 'It protects you if the changes do not deliver what was hoped' },
+        ],
+        why: 'The measure is deliberately changing definition, so it must get worse before it means anything. Unrecorded, that rise is the argument for reverting the whole thing.',
+      },
+    },
+    {
+      key: 'mca-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager',
+      minutes: 7,
+      subject: 'Third one done',
+      title: 'Asha: three reviews, one shape',
+      body: `Notice what these three have had in common, because there is a fourth coming and it will be the same.
+
+Timesheets: a measure everybody relied on, covering an eighth of what it claimed. Licences: a rate that improved when we wasted money. Intake: a control that everybody used and that moved the outcome by a fifth of nothing.
+
+None of these were broken by anyone. Each was built for a reason, worked at the time, and quietly stopped meaning what it said while continuing to be used. Nobody was ever going to notice, because the person using a measure is not the person who would check it.
+
+That checking is now your job and I do not think it has a natural home anywhere else. An analyst checks the number they were asked for. Only a manager gets to ask whether the number should exist.
+
+One thing to sit with over the weekend: you have now told three different people that a figure they relied on was wrong. Which of those went well, and what did you do differently that time.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What did the three broken measures have in common?',
+        markers: ['built|reason|worked|once|stopped|drift|quietly|nobody|check|user|relied|assumed|still used|meaning'],
+        why: 'Each was built sensibly, worked when it was built, and drifted out of meaning while still being used — because the person relying on a measure is never the person who would think to test it.',
+      },
+    },
+  ],
+  'headcount-case': [
+    {
+      key: 'mda-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'How establishment actually gets decided',
+      title: 'Diya: what a budget round does with a headcount ask',
+      body: `Your first establishment submission, so here is what happens to it after you press send.
+
+Six functions submit. Every one of them asks for something, because asking is free and the person who does not ask is compared against the people who did. The round has less money than the sum of the asks, always, by design.
+
+So the decision is not whether your case is good. It is how your case ranks against five others, all of which are also good, and the ranking is done by people who cannot check any of them in the time available.
+
+Two things follow, and they are not what people expect.
+
+A case that is checkable beats a case that is strong. If a reader can verify one of your numbers in two minutes, they extend credit to the rest. If they cannot verify any of them, the whole thing is a claim.
+
+And a function that has ever said no gets read differently from one that has never said no. Not fairly, not consistently, but it is real, and it is worth more than one year's headcount.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What most helps a headcount submission in a competitive round?',
+        options: [
+          { key: 'check', correct: true, label: 'Numbers a reader can verify in two minutes' },
+          { key: 'size', correct: false, label: 'A modest ask, since large ones are cut first' },
+          { key: 'urgency', correct: false, label: 'A clear statement of what will fail without it' },
+          { key: 'detail', correct: false, label: 'Thorough working, so the analysis can be inspected' },
+        ],
+        why: 'Nobody has time to inspect thorough working. One checkable figure buys credit for everything else in the document, which is the only mechanism available in the time the reader has.',
+      },
+    },
+    {
+      key: 'mda-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'I have told you the answer',
+      title: 'Asha: what to do when your manager pre-decides',
+      body: `I sent you a conclusion this morning and asked you to build the case for it. That is a normal thing for a manager to do and it is worth us both being honest about what it does.
+
+It means the analysis is now being marked against a target. Everything that supports two analysts will feel like a finding, and everything that does not will feel like a problem to be worked around. That happens without anybody deciding to be dishonest — it is just what having an answer in advance does to a week of work.
+
+What I want from you is the version where that has not happened. If the number is two, tell me two. If it is none, tell me none, and tell me on Wednesday rather than on Friday.
+
+The thing I would find hard to forgive is a case for two that falls over when Vikram reads it, because then I have spent my own credibility on your analysis and neither of us gets it back.
+
+You are allowed to disagree with me. I would rather find out here than in the round.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What does a pre-decided conclusion do to an analysis?',
+        markers: ['support|confirm|bias|mark|target|toward|findings|problem|work around|without|honest|unconscious'],
+        why: 'Evidence that supports it registers as a finding and evidence that does not registers as an obstacle, without anybody choosing to be dishonest.',
+      },
+    },
+    {
+      key: 'mda-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 13,
+      subject: 'Little\'s law, without the maths',
+      title: 'Rahul: why adding people to a queue often does not shorten it',
+      body: `You have falling demand and a growing backlog, so here is the thing that explains it.
+
+The length of a queue is set by two numbers: how fast work arrives, and how fast it leaves. Not how many people there are. Headcount affects the second number, but only if the people are the constraint on it — and very often they are not.
+
+What is usually the constraint is how much is open at once. Thirteen people with forty-three things in progress are each switching between three or four, which means each item spends most of its life waiting for its owner to come back to it rather than being worked on. Add two people and you get fifteen people with fifty-five things in progress, and the average item waits about as long as it did before.
+
+That is why a backlog can grow while demand falls. Nothing about arrival rate explains it. Everything about work-in-progress does.
+
+The test is simple and you can do it today: is the oldest open item old because it is hard, or old because nobody has touched it in two months? If it is the second, the constraint is not people.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A backlog grows while demand falls. What does that most strongly indicate?',
+        options: [
+          { key: 'wip', correct: true, label: 'Too much is open at once, so items spend most of their life waiting rather than being worked on' },
+          { key: 'people', correct: false, label: 'The team is below the headcount the workload requires' },
+          { key: 'hard', correct: false, label: 'The work arriving is harder than the work that used to arrive' },
+          { key: 'data', correct: false, label: 'Requests are being left open after the work is finished' },
+        ],
+        why: 'Arrival rate is falling, so nothing about arrivals explains it. Adding people to a system already switching between three or four items each mostly adds more items in progress.',
+      },
+    },
+    {
+      key: 'mda-04', day: 2, type: 'learning', via: 'chat', from: 'people_partner', minutes: 10,
+      subject: 'What a post actually costs',
+      title: 'Neha: the number on the requisition is not the number',
+      body: `If you do put in for a post, cost it properly, because the day rate is about two thirds of it.
+
+A junior analyst at ₹6,000 a day over 261 working days is ₹15.76 lakh, and that is the figure the day rate gives you. On top of it: recruitment, which for an analyst runs eight to twelve weeks of somebody's time plus agency fees if we use one; the three months before they are productive, during which they also consume about a day a week of a senior person; and the fact that a post, once created, is very hard to remove.
+
+That last one matters most and gets mentioned least. Establishment is sticky. A post granted in a good year stays through the bad ones, which is exactly why rounds are cautious about granting them and why a well-evidenced ask is worth more than a large one.
+
+None of that means do not ask. It means that a post is a multi-year commitment being made in a one-year conversation, and the case has to be the kind that is still true in eighteen months.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why does the stickiness of establishment matter to how a case is written?',
+        options: [
+          { key: 'multi', correct: true, label: 'A post is a multi-year commitment made in a one-year conversation, so the case has to still be true in eighteen months' },
+          { key: 'cost', correct: false, label: 'The true cost is higher than the day rate suggests' },
+          { key: 'slow', correct: false, label: 'Recruitment takes long enough that the need may pass before the person arrives' },
+          { key: 'ramp', correct: false, label: 'A new joiner consumes senior time for the first three months' },
+        ],
+        why: 'The other three are real costs and they are one-off. Stickiness is the one that changes what the case has to argue, because a temporary spike cannot justify a permanent post.',
+      },
+    },
+    {
+      key: 'mda-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Telling me I am wrong',
+      title: 'Asha: how to do this so it works',
+      body: `You are about to tell me the submission should ask for nobody. I asked for a case for two on Monday and I have said it out loud in at least one meeting since.
+
+So here is how to do it in a way that lands, from the person receiving it.
+
+In person and today. Not in the draft, not on Friday. If the first I see of it is a document, I will read it as having been decided without me, and I will spend the conversation on that rather than on whether you are right.
+
+Bring what survived. Three of my four reasons hold up — the replacement gap was real, the backlog is real, the pressure is real. Start there. It is true and it tells me you have actually read what I sent rather than looked for the flaw in it.
+
+Bring the alternative. I have to put something in the round. "No" leaves me with nothing; "no, and here is the submission" leaves me with a position.
+
+And say out loud that not asking has a cost. I raised it on Monday and if you have quietly decided it does not matter, I will assume you have not thought about my job.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why in person and today rather than in Friday\'s draft?',
+        options: [
+          { key: 'surprise', correct: true, label: 'A document is read as a decision taken without her, and the conversation goes to that instead of the evidence' },
+          { key: 'time', correct: false, label: 'She needs time to prepare the other functions for the change' },
+          { key: 'record', correct: false, label: 'A verbal conversation leaves less of a record if it goes badly' },
+          { key: 'soften', correct: false, label: 'Difficult news lands better in person than in writing' },
+        ],
+        why: 'She has committed to two in a meeting. The cost of finding out from a document is not the discomfort, it is that the argument stops being about whether the analysis is right.',
+      },
+    },
+    {
+      key: 'mda-06', day: 3, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'The shape of a good no',
+      title: 'Vikram: deferral beats refusal',
+      body: `You may end up not asking for headcount. If so, one piece of advice about the form of it, because there are two kinds of no and only one of them survives a budget round.
+
+A refusal says we do not need it. It is read as a claim about the present, it invites somebody to test it by cutting you, and if you come back in twelve months asking for two the obvious question is what changed, to which "we were wrong" is the only honest answer and a bad one.
+
+A deferral says: not on this evidence, here are the four numbers that would change it, here is what they are today, and I will bring this back in January. It is read as a threshold rather than a verdict. It also does something quietly useful — it tells the room that this function has a bar and knows where it is, which is more than most submissions manage.
+
+The difference is entirely in whether the conditions are written down with today's values against them. Without the numbers it is a refusal with an optimistic sentence at the end, and everybody has seen enough of those to discount it.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What turns a refusal into a deferral?',
+        markers: ['condition|number|value|today|written|measur|threshold|test|date|specific|january|record'],
+        why: 'Conditions written down with their current values and a date. Without the numbers it is a refusal with a hopeful sentence attached, and readers discount those.',
+      },
+    },
+    {
+      key: 'mda-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Writing for ninety seconds',
+      title: 'Diya: what survives a budget pack',
+      body: `Your submission goes into a pack with five others. Here is the reading behaviour it has to survive.
+
+The first pass is the recommendation line and nothing else. If it is not in the first two lines, half the room does not know what you asked for.
+
+The second pass, for the two or three submissions that got attention, is a hunt for the weakest number. Not the strongest — nobody checks the strongest. Somebody looks for the figure that seems too convenient and tests that one.
+
+Which gives you the most counter-intuitive rule in this whole exercise: put your weakest number in yourself, with its weakness named. A caveat you volunteered is a sign of rigour. The identical caveat found by a reader is a sign you were hiding it, and it contaminates everything else on the page.
+
+In your case the vulnerable figure is demand being down twenty per cent, because it could be people giving up rather than people needing less. Write that sentence yourself. It costs you nothing — you are not asking for headcount anyway — and it is the single thing most likely to make the rest of the document believed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What should you do with the weakest figure in a submission?',
+        options: [
+          { key: 'own', correct: true, label: 'Put it in yourself with its weakness named' },
+          { key: 'omit', correct: false, label: 'Leave it out, since it is not load-bearing for the recommendation' },
+          { key: 'appendix', correct: false, label: 'Move it to an appendix where it can be examined if anybody wants to' },
+          { key: 'strengthen', correct: false, label: 'Find additional evidence for it before submitting' },
+        ],
+        why: 'The second pass is a hunt for the weakest number. Volunteered, it reads as rigour; found by the reader, it contaminates everything else on the page.',
+      },
+    },
+    {
+      key: 'mda-08', day: 4, type: 'learning', via: 'chat', from: 'line_manager', minutes: 9,
+      subject: 'Before you send the team note',
+      title: 'Asha: what thirteen people will hear',
+      body: `You are about to tell the team there is no headcount ask. Think about what they will actually hear, which is not what you will write.
+
+They know you spent the week on it. They know the answer was going to be two. Whatever your note says, the first interpretation available to them is that you tried and lost, and the second is that you did not try.
+
+Neither is true and neither can be dislodged by saying it is not true. The only thing that displaces them is the mechanism — that more people would not have cleared this particular backlog, because the constraint is finishing rather than starting.
+
+So lead with the mechanism, not with the decision and not with reassurance. "Two more people would have given us fifty-five things open instead of forty-three" is a sentence somebody can check against their own week, and it is the only kind that survives the version of the story they will hear in the kitchen.
+
+And be careful with January. Anything that sounds like a promise will be remembered as one.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What displaces "she tried and lost" as the team\'s explanation?',
+        options: [
+          { key: 'mech', correct: true, label: 'The mechanism — that more people would not have cleared this backlog, stated so they can check it against their own week' },
+          { key: 'deny', correct: false, label: 'Saying directly that this was your recommendation rather than a defeat' },
+          { key: 'jan', correct: false, label: 'The commitment to review it again in January' },
+          { key: 'data', correct: false, label: 'Sharing the full analysis so they can see the evidence' },
+        ],
+        why: 'A denial cannot displace an interpretation and the full analysis will not be read. A single checkable sentence about why more people would not have helped is the only thing that competes.',
+      },
+    },
+    {
+      key: 'mda-09', day: 5, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Writing a test you will be held to',
+      title: 'Neha: conditions that survive six months',
+      body: `You are writing conditions for a January review. Most of these documents are useless by the time they are needed, and the failure modes are predictable.
+
+Vague direction. "If demand increases materially" — everybody has a different idea of material, and the argument in January is about that word rather than about the number.
+
+No baseline. "If the backlog grows" — grows from what? Somebody will produce a figure computed a slightly different way and it will take an afternoon to work out whether it is comparable.
+
+One-sided. Four conditions that all point towards asking, none that point towards confirming the answer was right. Written that way, the review is a plan to ask with a delay attached, and it will be read as one.
+
+No owner. A review nobody is named for happens in whichever month somebody remembers.
+
+Fix all four and it takes one extra paragraph: the number today, the direction, the threshold, what it triggers, who brings it, and when. Six things. Anything less and you will be having this entire conversation again from the beginning.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Four conditions all point towards asking for headcount. What is wrong with that?',
+        options: [
+          { key: 'onesided', correct: true, label: 'It is a plan to ask with a delay attached, and will be read that way' },
+          { key: 'many', correct: false, label: 'Four conditions is too many to track meaningfully' },
+          { key: 'vague', correct: false, label: 'Conditions about future states cannot be made precise enough' },
+          { key: 'weak', correct: false, label: 'It makes the current recommendation look provisional' },
+        ],
+        why: 'A test with only one possible outcome written down is not a test. At least one condition has to be able to confirm that no ask is needed, or the review is a formality.',
+      },
+    },
+    {
+      key: 'mda-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'End of the track',
+      title: 'Asha: sixteen weeks',
+      body: `Last one. Not a debrief — a thing worth noticing.
+
+You arrived able to write a query. The first project was a department average and the thing you got wrong was leaving the leavers in. That was sixteen weeks ago.
+
+What changed since is not technique. The SQL in this week's submission is easier than the SQL in your third week. What changed is what you do before writing any of it: who is in the population, what the denominator is, what the number will be used to argue, and whether it should exist at all.
+
+And this week you told your own manager that the thing she asked for was the wrong thing, brought her an alternative, and put a number you could not defend out of a budget round. I would not have predicted that in week one and I do not say it lightly.
+
+You are at the top of this track now. There is nothing above Manager on the analyst ladder, which means the next thing you learn will not come from a project brief.
+
+Have a think about what you want it to be.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What changed most between week one and now?',
+        markers: ['before|first|population|denominator|used|argue|should exist|question|not technique|judgement|what|refus|decide|order'],
+        why: 'Not the technique — the SQL got easier, not harder. What changed is the set of questions asked before any of it is written, and the willingness to act on the answers.',
+      },
+    },
+  ],
 };
 
 // ---- Situations ---------------------------------------------------------------------
@@ -1680,6 +3515,444 @@ The people who get good at this are the ones who can say what changed.`,
 // for the choice to be real, and has to cost nothing for the noise.
 
 const SITUATIONS = {
+  'board-pack': [
+    {
+      key: 'tds-01', day: 1, type: 'scope', via: 'email', from: 'line_manager',
+      subject: 'How much of the pack do you want to own?',
+      body: `You can reconcile the three revenue figures and hand the rest back, or you can own the whole pack including the forward estimate.
+
+Owning it means you carry the estimate into the room. Your call.`,
+      needsReply: true,
+      expect: ['choose', 'say what owning it requires'],
+      markers: ['own|whole|all|estimate|assumption|reconcil|both|yes|scope|room|carry'],
+      ifIgnored: 'Asha assumes the narrow scope, and the estimate goes in as this year plus five percent with nobody having checked it.',
+      note: 'Owning the estimate is the right call and it has a condition: the assumptions go on the page or you cannot defend it.',
+    },
+    {
+      key: 'tds-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Board papers — circulation deadline',
+      body: `A reminder that all board papers must reach the company secretary five working days before the meeting.
+
+Function heads have been notified directly of their deadlines.`,
+      expect: ['archive it'],
+      note: 'Directed at function heads, who have been told separately. Nothing to do.',
+    },
+    {
+      key: 'tds-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Revenue number, now',
+      body: `Someone has asked me for the year revenue figure for an external filing. What do I give them?`,
+      needsReply: true,
+      expect: ['net, whole estate', 'and say why not like-for-like'],
+      markers: ['net|whole|all store|entire|estate|not like.for.like|48|4\\.81|statutory|external|dedup'],
+      ifIgnored: 'A like-for-like figure ends up in an external filing, understating the business by ₹36 lakh with no way to explain it later.',
+      note: 'External filings want what the business earned: net, every store, corrected. Like-for-like is a management measure.',
+    },
+    {
+      key: 'tds-04', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Turning the bridge into a scheduled view',
+      body: `Since you are building it as one computation this year, I am wrapping it in a scheduled view with the window dates and the like-for-like test as parameters rather than literals.
+
+Next year it is a refresh instead of a rebuild. Nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has read the shape of what you built and drawn the right conclusion. Nothing to answer.',
+    },
+    {
+      key: 'tds-05', day: 3, type: 'judgement', via: 'email', from: 'finance_analyst',
+      subject: 'You are changing the correction again',
+      body: `The trading review excluded that whole month. Now you are halving it instead.
+
+I have to explain to my team why the same fault has been treated two different ways in two documents. Help me out.`,
+      needsReply: true,
+      expect: ['explain the two treatments', 'say why both are right'],
+      markers: ['comparison|total|repair|exclude|question|different|both|earned|clean|recover|identical'],
+      ifIgnored: 'Finance conclude the analytics team changes its mind, and every future correction is challenged on principle.',
+      note: 'Repair for a total, exclude for a comparison. Same fault, different question, both defensible — and that is a sentence worth her having.',
+    },
+    {
+      key: 'tds-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: duplicate-load check now active',
+      body: `The scheduled duplicate-load check for the retail feed is now active and will run on the first of each month.
+
+Alerts route to the retail analytics distribution list. No action required.`,
+      expect: ['archive it'],
+      note: 'The control you asked for, now live. Nothing to reply to — and worth noticing that it exists because somebody asked.',
+    },
+    {
+      key: 'tds-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'The board will want growth',
+      body: `I have been doing this a long time and a flat number does not land. They will ask what we are doing about it and the answer cannot be "nothing".
+
+Can we not find a growth assumption we can justify?`,
+      needsReply: true,
+      expect: ['decline to invent one', 'offer what would justify one'],
+      markers: ['cannot|no evidence|declin|fell|17|justif|would need|plan|initiative|not from this|separate'],
+      ifIgnored: 'A growth assumption goes into the estimate with analytics\' name on it and no evidence behind it.',
+      note: 'A growth assumption has to come from a plan somebody owns — a new store, a range change, a price move — not from the analysis.',
+    },
+    {
+      key: 'tds-08', day: 4, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'Store targets from your estimate',
+      body: `If the board accepts your number, it becomes next year's store targets.
+
+Is there anything about how you built it that would make a per-store split unfair?`,
+      needsReply: true,
+      expect: ['name what would make a naive split unfair'],
+      markers: ['new store|annualis|salt lake|sector|part year|closed|promotion|november|flat|assum|not evenly|daily rate'],
+      ifIgnored: 'Store targets are set by splitting the total evenly, and two new stores get targets built on an annualised opening peak.',
+      note: 'The new stores are annualised from a few months at their opening rate, and the estimate assumes flat trading everywhere. Neither survives being turned into a store target unexamined.',
+    },
+    {
+      key: 'tds-09', day: 5, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'A board member has pre-read it',
+      body: `One of the non-executives has read the pack early and come back with a question: why is revenue different from the figure in the half-year pack?
+
+I need an answer before Thursday.`,
+      needsReply: true,
+      expect: ['the basis changed, not the figure', 'point at the bridge'],
+      markers: ['basis|definition|bridge|not wrong|different question|page|reconcil|both|gross|net|like.for.like'],
+      ifIgnored: 'Vikram answers from memory in the meeting and the board spends its time on which number is right.',
+      note: 'The figure did not change — the basis did, and the bridge is on the page precisely so this question has a one-sentence answer.',
+    },
+    {
+      key: 'tds-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the board summary',
+      body: `One line from you at the top of the summary. What does the board need to know before anything else?`,
+      needsReply: true,
+      expect: ['one thing', 'stated as what it changes'],
+      markers: ['like.for.like|declin|fell|17|trading|estate|new store|growth|not|headline|basis'],
+      ifIgnored: 'Asha writes it from the definitions note, which is the least interesting page in the pack.',
+      note: 'The business is larger and the shops are trading worse. That is the sentence, and everything else in the pack supports it.',
+    },
+  ],
+  'range-review': [
+    {
+      key: 'tcs-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'How wide is this review?',
+      body: `Range review or full space review? The second one means bringing in the planogram system and that is a fortnight, not a week.
+
+What do you want to take on?`,
+      needsReply: true,
+      expect: ['pick a scope', 'say what the narrower one cannot answer'],
+      markers: ['range|week|not space|planogram|cannot|space|saving|scope|delist|narrower|without'],
+      ifIgnored: 'Vikram assumes a full space review, and the paper arrives expecting a saving figure the range data cannot produce.',
+      note: 'Scoping to the range is the right call for a week. Say what it means you will not be able to answer — which is the saving side of the delist.',
+    },
+    {
+      key: 'tcs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Spring reset dates confirmed',
+      body: `Store reset dates for the spring range change have been confirmed and published to the operations calendar.
+
+Store teams have been briefed directly. No action for support functions.`,
+      expect: ['archive it'],
+      note: 'Useful context, no action.',
+    },
+    {
+      key: 'tcs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Bottom twenty, this afternoon',
+      body: `Can you send me the bottom twenty lines by margin? Putting a slide together for the buying meeting.`,
+      needsReply: true,
+      expect: ['send it with the cost framing', 'name what is missing'],
+      markers: ['8\\.6|lose|cost|not save|substitut|space|seven|never sold|separate|context'],
+      ifIgnored: 'A bottom-twenty list goes into a buying meeting framed as a saving, with none of the seven never-sold lines on it.',
+      note: 'The list is fine to send. What it must not go out as is a saving, and it should not exclude the seven that never sold.',
+    },
+    {
+      key: 'tcs-04', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Scheduling a range-completeness check',
+      body: `The seven never-ranged lines would be caught by a one-line check, so I am scheduling it monthly and pointing the alert at buying rather than us — they are the ones who can act on it.
+
+Live from next month. Nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has decided and told you. Useful to know, nothing to answer.',
+    },
+    {
+      key: 'tcs-05', day: 3, type: 'judgement', via: 'email', from: 'finance_analyst',
+      subject: 'Stock cover for the working capital paper',
+      body: `I am writing the working capital paper and I was told you have stock cover by product now.
+
+Can you send it? I need it by Thursday.`,
+      needsReply: true,
+      expect: ['decline', 'explain why and what would fix it'],
+      markers: ['cannot|not|uniform|same|twenty|20|regardless|quarterly|snapshot|counts|movement|weekly|do not'],
+      ifIgnored: 'The cover figure ends up in a working capital paper, where a wrong number has a direct financial consequence.',
+      note: 'This is the second team asking for it. Declining in writing, with the reason, is what stops it circulating.',
+    },
+    {
+      key: 'tcs-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: stock count file received',
+      body: `The quarterly stock count file for the current period has been received and loaded.
+
+Records processed: 613. No errors. No action required.`,
+      expect: ['archive it'],
+      note: 'Automated and successful — and quietly the reason the cover calculation cannot work. Nothing to reply to.',
+    },
+    {
+      key: 'tcs-07', day: 4, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Supplier has heard about the review',
+      body: `One of our coffee suppliers has heard there is a range review and asked me directly whether their lines are affected.
+
+You have the list. What do I tell them?`,
+      needsReply: true,
+      expect: ['do not confirm or deny', 'route it to buying'],
+      markers: ['sneha|buying|cannot|not discuss|refer|route|negotiat|commercial|no comment|them'],
+      ifIgnored: 'Vikram answers on instinct, and the supplier enters the next cost negotiation knowing which of their lines we were about to drop.',
+      note: 'Not yours to answer, and a denial for safe lines makes silence identify the unsafe ones. It goes to Sneha.',
+    },
+    {
+      key: 'tcs-08', day: 4, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'Is the candidate list defensible?',
+      body: `Before this goes to buying — if Sneha challenges a specific line, can you say why it is on the list?`,
+      needsReply: true,
+      expect: ['yes, and say on what basis'],
+      markers: ['never sold|margin|120|threshold|which test|both|per store|rule|stated|each'],
+      ifIgnored: 'The list goes over with no stated basis, and the first challenged line collapses the whole paper.',
+      note: 'Each candidate fails a named test: never sold, or under the margin floor. Being able to say which is what makes it survive a meeting.',
+    },
+    {
+      key: 'tcs-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'Buying team and the never-ranged lines',
+      body: `The seven lines that were never ranged were signed off by a buyer who still works here.
+
+Your note frames it as a process gap, which I think is right. But it will be read by her manager. Anything you want to change before it goes wider?`,
+      needsReply: true,
+      expect: ['keep the process framing', 'say what makes it not an individual failure'],
+      markers: ['process|system|not|individual|nobody|no check|invisible|gap|anyone|would have|blameless'],
+      ifIgnored: 'A process finding becomes a performance conversation about one buyer, and the process stays unfixed.',
+      note: 'Nobody could see them — every review used a query that deletes them. That is the sentence that keeps it about the process.',
+    },
+    {
+      key: 'tcs-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the buying meeting agenda',
+      body: `Buying meet Monday. One line from you on the agenda.`,
+      needsReply: true,
+      expect: ['one thing', 'the one that changes the decision'],
+      markers: ['seven|never|cost|not saving|6\\.8|cover|cannot|framing|lose'],
+      ifIgnored: 'Asha writes it from the paper\'s first paragraph, which is the methodology note.',
+      note: 'Either the seven invisible lines or the fact that the delist is a cost rather than a saving. Both change what happens in the room.',
+    },
+  ],
+  'margin-review': [
+    {
+      key: 'tbs-01', day: 1, type: 'scope', via: 'email', from: 'finance_analyst',
+      subject: 'Do you need supplier invoices?',
+      body: `If the cost column is not reliable I can request the actual invoice history from procurement. It is about a week to get it.
+
+Do you need it, or can you work with what is in the table?`,
+      needsReply: true,
+      expect: ['answer yes or no', 'say what the table already supports'],
+      markers: ['previous_unit_cost|cost_changed_on|two point|enough|no|not need|table|sufficient|later|history|already'],
+      ifIgnored: 'Procurement spend a week on an extract that arrives after the range review, and the review uses the naive figure anyway.',
+      note: 'The table has the previous cost and the date it changed. That is a two-point history and it is enough for this.',
+    },
+    {
+      key: 'tbs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly all-hands — slides due Friday',
+      body: `A reminder that slides for the quarterly all-hands are due with Comms by Friday.
+
+Function leads have been contacted directly where a contribution is expected.`,
+      expect: ['archive it'],
+      note: 'Directed at people who have been contacted directly. You have not been.',
+    },
+    {
+      key: 'tbs-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Range slide, this afternoon',
+      body: `Range review prep is at four. Send me margin by category — I will put it straight on the slide.`,
+      needsReply: true,
+      expect: ['send rate and contribution together', 'say why both'],
+      markers: ['contribution|rupee|both|two column|crore|lakh|equipment|rank|revers|1\\.08'],
+      ifIgnored: 'The rate-only table goes on the slide, Equipment ranks last, and the range review opens with a proposal to cut it.',
+      note: 'Rate alone ranks Merchandise first and the largest margin contributor last. Send both columns.',
+    },
+    {
+      key: 'tbs-04', day: 2, type: 'question', via: 'chat', from: 'data_engineer',
+      subject: 'Which cost do you want in the view?',
+      body: `Building the cost view you asked about. Quick question — do you want it to carry the applicable cost, the current cost, or both?
+
+Both is barely more work if you tell me now.`,
+      needsReply: true,
+      expect: ['answer', 'say what each is for'],
+      markers: ['both|two|applicable|current|report|forward|range|purpose|label|column'],
+      ifIgnored: 'The view ships with one cost, and the range review rebuilds the other one by hand three weeks later.',
+      note: 'Both, clearly named. One is for reporting what happened, the other for deciding what to stock.',
+    },
+    {
+      key: 'tbs-05', day: 3, type: 'noise', via: 'email', from: 'security',
+      subject: 'Automated: supplier portal certificate renewed',
+      body: `The certificate for the supplier pricing portal has been renewed and will expire in twelve months.
+
+No action required. Access is unaffected.`,
+      expect: ['archive it'],
+      note: 'Automated, renewed, nothing to do.',
+    },
+    {
+      key: 'tbs-06', day: 3, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: query timeout threshold raised',
+      body: `The analytics warehouse query timeout has been raised from 60 to 180 seconds following a review of long-running reports.
+
+No action required.`,
+      expect: ['archive it'],
+      note: 'Automated, helpful, nothing to answer.',
+    },
+    {
+      key: 'tbs-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Marketing want the November number',
+      body: `Marketing are writing up the November promotion and want a line from us.
+
+They have asked for "the revenue uplift". Can I just give them 39%?`,
+      needsReply: true,
+      expect: ['say what else has to go with it', 'give the other figures'],
+      markers: ['margin|12|units|55|rate|35\\.5|44|three|alone|context|not just'],
+      ifIgnored: 'A 39% uplift figure enters circulation with no margin beside it, and next year\'s promotion is planned on it.',
+      note: 'The revenue number alone is the most flattering of the three and it will be the only one anybody remembers.',
+    },
+    {
+      key: 'tbs-08', day: 4, type: 'question', via: 'email', from: 'people_partner',
+      subject: 'Store manager bonus and margin',
+      body: `Store manager bonuses are partly on margin percentage. Now that the cost basis is changing, some managers will see their figure move through no action of their own.
+
+Does that affect anyone materially, and what should I tell them?`,
+      needsReply: true,
+      expect: ['say the restatement is a basis change, not performance', 'say who is most affected'],
+      markers: ['basis|not performance|no action|equipment|categor|mix|restate|same period|both|compar|explain'],
+      ifIgnored: 'Managers see their margin percentage change with no explanation and conclude the numbers are arbitrary.',
+      note: 'Stores selling more Equipment move most, because that is where the reprices are. It is a basis change and both bases should be shown for the same period.',
+    },
+    {
+      key: 'tbs-09', day: 5, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'Planning want a recommendation',
+      body: `Planning have asked again for a straight recommendation on repeating November. They say a trade-off table is not a decision.
+
+They are not wrong about that. What do we do?`,
+      needsReply: true,
+      expect: ['hold the line on who decides', 'say what would let you recommend'],
+      markers: ['objective|what it was for|stock|repeat|came back|would need|if|then|their decision|cannot|missing'],
+      ifIgnored: 'Analytics is recorded as having recommended the promotion, and owns the outcome.',
+      note: 'They are right that a table is not a decision. The answer is what is missing — the objective, and whether those customers returned.',
+    },
+    {
+      key: 'tbs-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the range review agenda',
+      body: `Range review is Monday. One line from you on the agenda — what does the team need to know before they start?`,
+      needsReply: true,
+      expect: ['one thing', 'the one that changes the decision'],
+      markers: ['cost basis|restate|contribution|rate|equipment|crore|both|margin moved|not what|basis'],
+      ifIgnored: 'The review opens on the old margin figures and the correction comes out halfway through.',
+      note: 'Every margin figure they have seen was on the wrong basis, and Equipment is the largest contributor despite the lowest rate. One of those two.',
+    },
+  ],
+  'trading-review': [
+    {
+      key: 'tas-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
+      subject: 'How deep does this go?',
+      body: `Board is Tuesday. Do you want to do the full job on this pack, or check the headline figures and leave the rest?
+
+Your call — I would rather you told me what is realistic than promised the lot and delivered half.`,
+      needsReply: true,
+      expect: ['pick a scope', 'say what you are leaving out'],
+      markers: ['headline|figure|definition|like.for.like|store|check|scope|full|not|leave|tuesday|priorit'],
+      ifIgnored: 'Vikram assumes a full review, tells the board the pack has been audited, and finds out in the room what was not looked at.',
+      note: 'He has asked you to scope your own work, which is the lead question. Name what you will cover and what you will not.',
+    },
+    {
+      key: 'tas-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Automated: warehouse refresh completed',
+      body: `The nightly retail warehouse refresh completed successfully at 03:14.
+
+No action required.`,
+      expect: ['archive it'],
+      note: 'Automated, successful, nothing to do. Which is worth noticing later in the week — this is the job that loaded March twice and reported success.',
+    },
+    {
+      key: 'tas-03', day: 2, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Building a store_days view this afternoon',
+      body: `Noticed everyone computes days-open from opened_on and closed_on by hand, and three people have three versions of it.
+
+Putting it in a view this afternoon — store_days, one row per store per reporting window. No action needed from you, just so you know it will be there tomorrow.`,
+      expect: ['archive it'],
+      note: 'He is telling you, not asking you. Useful to know, nothing to answer.',
+    },
+    {
+      key: 'tas-04', day: 2, type: 'pressure', via: 'email', from: 'stakeholder',
+      subject: 'Store league table for the ops call',
+      body: `Ops call is in an hour and I want to open with the store ranking.
+
+Send me whatever you have — I will caveat it.`,
+      needsReply: true,
+      expect: ['send the normalised version', 'name what makes it comparable'],
+      markers: ['per day|open|normalis|format|salt lake|sector|february|october|compar|caveat|which'],
+      ifIgnored: 'The raw ranking goes to the ops call, and the manager of a store that opened in February is asked to explain why they are bottom of the estate.',
+      note: '"I will caveat it" never survives the room. Send the version that does not need one.',
+    },
+    {
+      key: 'tas-05', day: 3, type: 'judgement', via: 'email', from: 'engineering_manager',
+      subject: 'You think our loader is broken?',
+      body: `Karthik mentioned you found duplicate rows in the retail feed.
+
+Before this becomes a ticket — are you certain, or is it possible two customers bought the same thing on the same day? That happens.`,
+      needsReply: true,
+      expect: ['state the evidence', 'distinguish it from coincidence'],
+      markers: ['52|104|every|all|contiguous|month|one store|pattern|elsewhere|2|coincidence|concentrat'],
+      ifIgnored: 'Arjun closes it as expected behaviour, and March 2026 stays wrong in every report built on it.',
+      note: 'He is right that coincidental matches happen. The answer is the concentration: every line in one store-month, against at most two anywhere else.',
+    },
+    {
+      key: 'tas-06', day: 3, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Fire drill — Thursday 11:00',
+      body: `A routine fire drill will take place on Thursday at 11:00.
+
+Please leave the building by the nearest exit and reassemble in the car park. Expect to be out for about twenty minutes.`,
+      expect: ['archive it'],
+      note: 'Nothing to answer.',
+    },
+    {
+      key: 'tas-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Just give me a reason',
+      body: `I have asked twice now. Nine stores down and I cannot walk into the board and say "we do not know".
+
+Footfall, pricing, range or economy. Pick the most likely one and I will present it as a hypothesis.`,
+      needsReply: true,
+      expect: ['decline to pick', 'give him what you can show and what would settle it'],
+      markers: ['cannot|can.t|no footfall|not in|no data|categor|where|equipment|show|would need|counter|competitor|promotion|november'],
+      ifIgnored: 'He picks one himself, presents it as analytics\' view, and a budget decision follows from it.',
+      note: 'Naming a cause "as a hypothesis" is how it gets quoted without the hedge. Give him where the decline sits and what would establish why.',
+    },
+    {
+      key: 'tas-08', day: 4, type: 'question', via: 'email', from: 'finance_analyst',
+      subject: 'Which number goes in the statutory pack?',
+      body: `I need one revenue figure for the statutory reporting and I cannot use two.
+
+Gross or net? And is it the whole estate or your like-for-like set?`,
+      needsReply: true,
+      expect: ['answer both questions', 'give a reason'],
+      markers: ['net|whole|all|total|estate|statutory|not like.for.like|every store|entire|include'],
+      ifIgnored: 'Diya picks one, and the statutory figure and the board figure differ with no explanation on record.',
+      note: 'Statutory reporting wants what the business actually earned: net, whole estate. Like-for-like is a management measure, not an accounting one.',
+    },
+    {
+      key: 'tas-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'Ashok Nagar\'s manager has seen the draft',
+      body: `The earlier draft with the 21% growth went out on a distribution list wider than intended. Ashok Nagar's manager has seen it and has told her team.
+
+She is going to see the corrected version on Tuesday. How do you want to handle that?`,
+      needsReply: true,
+      expect: ['say she should be told before Tuesday', 'and by whom'],
+      markers: ['before|today|tomorrow|tell|direct|call|her|advance|not the board|data fault|not her|no reflection'],
+      ifIgnored: 'A store manager finds out in a board pack that her celebrated result was a data error, having already told her team about it.',
+      note: 'She has to hear it before the room does, and she has to hear that it was a feed fault rather than anything she did.',
+    },
+    {
+      key: 'tas-10', day: 5, type: 'question', via: 'chat', from: 'line_manager',
+      subject: 'One line for the leadership summary',
+      body: `I need a single line from you for the leadership summary that goes out with the pack.
+
+Not the caveats. The thing that changes what we do.`,
+      needsReply: true,
+      expect: ['one finding', 'stated as a decision'],
+      markers: ['like.for.like|17|decline|nine|estate|down|second half|check|duplicat|definition'],
+      ifIgnored: 'Asha writes it from the pack\'s opening paragraph, which is the definitions section.',
+      note: 'One sentence. The estate declined, it was not visible in the draft, and that is the thing leadership needs.',
+    },
+  ],
   'experiment-readout': [
     {
       key: 'es-01', day: 1, type: 'scope', via: 'email', from: 'stakeholder',
@@ -2566,6 +4839,443 @@ Nominations for the quarterly shout-outs close next Friday.`,
       ifIgnored: 'Nothing. It is a newsletter.',
     },
   ],
+  'capacity-review': [
+    {
+      key: 'mas-01', day: 1, type: 'scope', via: 'email', from: 'line_manager',
+      subject: 'How much of this do you want to take on?',
+      body: `Vikram has asked you three questions and only one of them is a data question.
+
+You can answer the cost question and leave the establishment case to me, or you can own the whole thing into the budget round. If you own it, you present it.
+
+Tell me which by tonight.`,
+      needsReply: true,
+      expect: ['choose', 'say what owning it requires'],
+      markers: ['own|whole|all three|establishment|present|both|yes|scope|round|carry|coverage|condition'],
+      ifIgnored: 'Asha takes the narrow scope, and the establishment case goes into the round built on a cost per analysis nobody has checked.',
+      note: 'Owning it is right, and it has a condition: the coverage problem goes in first, or the rate you produce gets used without it.',
+    },
+    {
+      key: 'mas-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Budget round — submission window and templates',
+      body: `The FY27 budget submission window opens on the 6th and closes on the 24th.
+
+Cost centre owners will receive their templates directly from Finance. No action is required from anyone else at this stage.`,
+      expect: ['archive it'],
+      note: 'Cost centre owners get their templates directly. Nothing here for you yet.',
+    },
+    {
+      key: 'mas-03', day: 2, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Quick one — who is your strongest?',
+      body: `Informal, not for anything official. Out of your thirteen, who would you say is carrying the most?
+
+I am putting a cross-functional group together and I want your best person on it.`,
+      needsReply: true,
+      expect: ['answer from your own judgement', 'not from the hours table'],
+      markers: ['my view|I think|judge|assess|not the|hours|timesheet|log|would not|based on|know them|work|delivered'],
+      ifIgnored: 'He picks from the hours table he has already seen, and the best administrator in the team gets volunteered for a project they did not ask for.',
+      note: 'A perfectly reasonable question, and the answer is yours rather than the data\'s. Naming somebody is fine; naming them because they logged 444 hours is not.',
+    },
+    {
+      key: 'mas-04', day: 2, type: 'noise', via: 'chat', from: 'it_ops',
+      subject: 'Time logging tool — maintenance window',
+      body: `The time logging tool will be unavailable between 22:00 and 01:00 on Saturday for a scheduled upgrade.
+
+Entries submitted before the window are unaffected.`,
+      expect: ['archive it'],
+      note: 'A maintenance notice on a Saturday night for a tool nobody uses at the weekend.',
+    },
+    {
+      key: 'mas-05', day: 3, type: 'judgement', via: 'email', from: 'stakeholder',
+      subject: 'The ₹9,664 figure',
+      body: `You sent me a cost per hour on Monday and now you are telling me it is out by a factor of eight.
+
+I have already used it once, in passing, with Finance. What do I tell them?`,
+      needsReply: true,
+      expect: ['give him the correction and the sentence to use', 'own the Monday figure'],
+      markers: ['my|mine|I sent|apolog|correct|1,?241|1241|capacity|coverage|12\\.8|denominator|both|same cost|tell them|say'],
+      ifIgnored: 'The ₹9,664 rate circulates in Finance uncorrected and comes back in the budget pack, where it is far harder to withdraw.',
+      note: 'He needs a sentence he can send, not an explanation of your method. Own the Monday figure, give him the capacity rate, and say the difference is the denominator rather than the cost.',
+    },
+    {
+      key: 'mas-06', day: 3, type: 'pressure', via: 'chat', from: 'people_partner',
+      subject: 'One of the team has asked me something',
+      body: `Somebody in your team has asked me, off the record, whether their timesheet is being looked at for the budget round. They are worried.
+
+I have not said anything. But you should know the question is being asked.`,
+      needsReply: true,
+      expect: ['tell the team directly rather than answering through Neha'],
+      markers: ['tell|write|team|all|everyone|directly|today|note|before|myself|not through|transparen|will not|ranking'],
+      ifIgnored: 'The question spreads as a rumour for three days before your note arrives, and the note then reads as a response to the rumour rather than as the plan.',
+      note: 'Answering Neha answers one person. The other twelve are having the same thought, and the note you owe them is due today rather than Friday.',
+    },
+    {
+      key: 'mas-07', day: 4, type: 'scope', via: 'email', from: 'engineering_manager',
+      subject: 'Can I borrow your capacity method?',
+      body: `I hear you are doing days-present rather than headcount for the analytics capacity number.
+
+Engineering has the same problem and I would like to use the same method so the two are comparable in the round. Can you send me how you did it?`,
+      needsReply: true,
+      expect: ['yes, with the caveat about his own time data'],
+      markers: ['yes|happy|send|method|days present|working days|caveat|your|timesheet|coverage|capacity|denominator|comparab'],
+      ifIgnored: 'Engineering submits a headcount-based capacity figure, analytics submits a presence-based one, and the two cost lines are compared as though they were computed the same way.',
+      note: 'Worth saying yes to — two cost lines computed the same way is worth more than either one being slightly better. The capacity method is portable; anything built on his time logs is not.',
+    },
+    {
+      key: 'mas-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Desk moves — analytics floor',
+      body: `The analytics team will move from the fourth floor to the sixth on the weekend of the 18th.
+
+Crates will be delivered on the 16th. Personal items only; monitors and docks stay with the desks.`,
+      expect: ['archive it'],
+      note: 'A desk move in three weeks. Nothing that needs you this week.',
+    },
+    {
+      key: 'mas-09', day: 5, type: 'pressure', via: 'chat', from: 'finance_analyst',
+      subject: 'Slide deadline is 4pm',
+      body: `I need the analytics slide signed off by four. If I do not hear from you I will send the version I drafted.
+
+It is one slide. Is it really worth another round?`,
+      needsReply: true,
+      expect: ['yes', 'send the replacement wording rather than a list of objections'],
+      markers: ['yes|worth|replac|wording|here is|rewrite|send|instead|13%|utilisation|coverage|9,?664|cut|misread'],
+      ifIgnored: 'Her draft goes in: ₹9,664 an hour, utilisation at 13%, headcount above requirement, and a recommendation to review individual performance.',
+      note: 'She is not being difficult — she has a deadline and a draft. Objections cost her time she does not have; replacement wording costs her nothing.',
+    },
+    {
+      key: 'mas-10', day: 5, type: 'noise', via: 'email', from: 'comms',
+      subject: 'Internal newsletter — analytics mention',
+      body: `We are running a short piece on the analytics team in next month's internal newsletter, focused on the dashboard work for Support.
+
+Copy has been agreed with Sneha and nothing further is needed from you.`,
+      expect: ['archive it'],
+      note: 'Already agreed with the person who owns it. Nothing to add.',
+    },
+  ],
+  'tooling-review': [
+    {
+      key: 'mbs-01', day: 1, type: 'scope', via: 'chat', from: 'line_manager',
+      subject: 'Just the BI seat count, or all six?',
+      body: `Diya needs one number by Friday. You could give her that and stop.
+
+Or you could do the whole estate while you are in there, which is more work this week and a much better answer for the round.
+
+Which are you doing?`,
+      needsReply: true,
+      expect: ['all six', 'and say why it is not much more work'],
+      markers: ['all|six|whole|estate|everything|same quer|one quer|little more|both|yes|round|while'],
+      ifIgnored: 'Asha assumes the narrow answer, and the other five contracts renew across the year without anybody looking at them.',
+      note: 'Six contracts is barely more work than one — it is the same query with no WHERE clause — and it is the difference between an answer and a review.',
+    },
+    {
+      key: 'mbs-02', day: 1, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Password rotation — analytics tooling',
+      body: `Password rotation for third-party analytics tools is scheduled for the first weekend of next month.
+
+Single sign-on users are unaffected, which is everyone in your team.`,
+      expect: ['archive it'],
+      note: 'Says in its own second line that it does not apply to anybody you manage.',
+    },
+    {
+      key: 'mbs-03', day: 2, type: 'pressure', via: 'chat', from: 'finance_analyst',
+      subject: 'Can I put the Northlake line in the draft?',
+      body: `I am drafting the tooling section now. Can I say Northlake is our most expensive tool per seat and we are reviewing it?
+
+It is true, isn't it?`,
+      needsReply: true,
+      expect: ['say not yet', 'and why'],
+      markers: ['not yet|hold|wait|no|don\'t|true but|per seat|use|active|13|thirteen|misle|tomorrow|by'],
+      ifIgnored: 'It goes into the draft, and by Wednesday the correction has to travel further than the original did.',
+      note: 'It is arithmetically true and it points at the tool you least want to disturb. Saying "true but not yet" costs one message today and saves a retraction on Friday.',
+    },
+    {
+      key: 'mbs-04', day: 2, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Vendor security attestations — annual refresh',
+      body: `All third-party vendors handling company data are being asked to refresh their security attestations this quarter.
+
+Procurement is running this centrally and will contact vendors directly. No action is needed from budget holders.`,
+      expect: ['archive it'],
+      note: 'Run centrally, vendors contacted directly, budget holders explicitly excluded.',
+    },
+    {
+      key: 'mbs-05', day: 3, type: 'judgement', via: 'chat', from: 'stakeholder',
+      subject: 'Heard you are cutting the stats tool',
+      body: `Somebody mentioned the Kestrel suite might go. I use the outputs of that for the quarterly pricing work — not often, but when I need it there is nothing else.
+
+Is that decided?`,
+      needsReply: true,
+      expect: ['nothing is decided', 'and ask him to tell you what it is used for'],
+      markers: ['not decided|nothing|no decision|not yet|asking|conversation|october|time|tell me|what you|useful|before'],
+      ifIgnored: 'He assumes it is going, escalates it to Asha over the weekend, and the conversation restarts as a dispute rather than a question.',
+      note: 'Exactly the information the usage data cannot hold, arriving unprompted. The right answer is that nothing is decided and that this is the kind of thing that decides it.',
+    },
+    {
+      key: 'mbs-06', day: 3, type: 'noise', via: 'chat', from: 'data_engineer',
+      subject: 'Pulling the assignment table nightly',
+      body: `Since you are joining licences to assignments to analysts, I am scheduling that as a nightly view so it is there next time.
+
+No change to anything, and nothing needed from you.`,
+      expect: ['archive it'],
+      note: 'He has read what you are building and made it permanent. Nothing to answer.',
+    },
+    {
+      key: 'mbs-07', day: 4, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Can we have your spare BI seats?',
+      body: `I hear you are handing back BI seats. Before they go back to Clearview — engineering would take four of them. We are at our cap and adding people.
+
+Same company, same contract, no extra cost. Seems obvious?`,
+      needsReply: true,
+      expect: ['say it is not yours to give and route it properly'],
+      markers: ['not mine|not my|procurement|diya|finance|contract|central|route|ask|transfer|happy|support|but'],
+      ifIgnored: 'The seats are quietly moved, the analytics line still carries the cost, and the saving you reported to Finance does not appear on any invoice.',
+      note: 'Reasonable ask, wrong mechanism. Seats moved informally stay on your cost line, so the saving you have just published evaporates and you are the one who has to explain it.',
+    },
+    {
+      key: 'mbs-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Meeting room booking system — new version',
+      body: `The room booking system moves to a new version on the 22nd. Existing recurring bookings carry over automatically.
+
+Training is not required.`,
+      expect: ['archive it'],
+      note: 'Carries over automatically, no training. Nothing to do.',
+    },
+    {
+      key: 'mbs-09', day: 5, type: 'judgement', via: 'email', from: 'line_manager',
+      subject: 'Clearview have called me',
+      body: `Their account director rang me directly about the renewal. Very friendly, wanted to check I was aware of the two-year offer and whether analytics had "the full picture on growth".
+
+I said you were handling it. What do I need to know before they ring again?`,
+      needsReply: true,
+      expect: ['the counts', 'and that going around you is what is happening'],
+      markers: ['16|sixteen|never|assigned|13|thirteen|active|two.year|lock|6\\.6|worse|around|direct|position|hold'],
+      ifIgnored: 'Asha takes the next call without the counts, sounds uncertain about growth, and the two-year offer becomes the path of least resistance.',
+      note: 'Going over the buyer\'s head is a standard play and it works when the person above has no numbers. Two sentences of ammunition is all she needs.',
+    },
+    {
+      key: 'mbs-10', day: 5, type: 'noise', via: 'email', from: 'comms',
+      subject: 'Supplier of the year nominations',
+      body: `Nominations for the annual supplier awards close at the end of the month. Any budget holder may nominate a vendor they have worked well with.
+
+Entirely optional.`,
+      expect: ['archive it'],
+      note: 'Optional, and nominating a vendor mid-renewal would be an odd move in any case.',
+    },
+  ],
+  'intake-review': [
+    {
+      key: 'mcs-01', day: 1, type: 'scope', via: 'chat', from: 'line_manager',
+      subject: 'How far does this go?',
+      body: `Ravi's mail could be answered in a paragraph — it is not just you, here are your three items.
+
+Or it could be a review of how work reaches this team at all, which is a proposal I would have to take to five other functions.
+
+Which one am I expecting on Friday?`,
+      needsReply: true,
+      expect: ['the review', 'and say what it would change'],
+      markers: ['review|whole|intake|proposal|bigger|all|five|six|function|priority|field|queue|yes|both'],
+      ifIgnored: 'Asha answers Ravi herself with the narrow version, and the priority field survives another year.',
+      note: 'The paragraph answer is true and changes nothing. The field, the queue and the lead-time measure are all in scope of the same week of work.',
+    },
+    {
+      key: 'mcs-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Quarterly review — calendar holds',
+      body: `Calendar holds for the quarterly business review have been issued to function heads and their direct reports.
+
+Materials deadlines will follow separately from the programme office.`,
+      expect: ['archive it'],
+      note: 'A calendar hold with a follow-up promised. Nothing to act on.',
+    },
+    {
+      key: 'mcs-03', day: 2, type: 'pressure', via: 'email', from: 'engineering_manager',
+      subject: 'Urgent — dashboard for tomorrow',
+      body: `Can someone pick up a quick dashboard for me? Marking it urgent in the system.
+
+It is for a meeting tomorrow afternoon.`,
+      needsReply: true,
+      expect: ['ask what it is for and what it displaces'],
+      markers: ['what|which|for|meeting|decid|displace|instead|who|swap|scope|need|by when|tomorrow|ask'],
+      ifIgnored: 'Somebody picks it up because it says urgent, drops a piece of work that was nearly finished, and the meeting is postponed on Thursday morning.',
+      note: 'The exact behaviour you are analysing, arriving live. Asking what it is for and what it should displace is the replacement mechanism, tried once by hand.',
+    },
+    {
+      key: 'mcs-04', day: 2, type: 'noise', via: 'chat', from: 'it_ops',
+      subject: 'Request form — field ordering',
+      body: `We are reordering the fields on the analytics request form so the description box is above the category dropdown.
+
+Cosmetic only, no change to the data. Going out Thursday.`,
+      expect: ['archive it'],
+      note: 'Cosmetic, no data change, and it does not touch the field you care about.',
+    },
+    {
+      key: 'mcs-05', day: 3, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'The lead time number is in the pack',
+      body: `Your team's lead time figure — 26.4 days — is on the people dashboard and in the quarterly pack that goes out Monday.
+
+You mentioned it might be changing. Do I need to pull it?`,
+      needsReply: true,
+      expect: ['not pull it', 'flag it and give her the corrected one'],
+      markers: ['not|leave|keep|no need|flag|footnote|note|28\\.6|28|corrected|final close|reopen|next|going forward|change'],
+      ifIgnored: 'The old figure goes out unqualified, and the corrected one lands in the next pack as an unexplained jump.',
+      note: 'Pulling a number from a pack that is already circulating causes more questions than it answers. Flagging it and naming the replacement costs one line.',
+    },
+    {
+      key: 'mcs-06', day: 3, type: 'noise', via: 'email', from: 'security',
+      subject: 'Phishing simulation — results',
+      body: `Last month's phishing simulation results are available. The analytics team's click rate was zero.
+
+No follow-up training is required for your team.`,
+      expect: ['archive it'],
+      note: 'Zero click rate and no follow-up required. Nothing to do.',
+    },
+    {
+      key: 'mcs-07', day: 4, type: 'pressure', via: 'chat', from: 'stakeholder',
+      subject: 'Are you closing my requests?',
+      body: `I hear old queued items are being closed. Two of those are mine and I still want them.
+
+Before you start deleting things, can we talk?`,
+      needsReply: true,
+      expect: ['nothing is deleted', 'and tell him what actually happens'],
+      markers: ['not delet|nothing|no|closed not|re.raise|raise again|straight|pick up|still want|keep|record|ask|tell me which'],
+      ifIgnored: 'He escalates to Asha before Friday, and the queue clear-out is paused in a meeting rather than done.',
+      note: 'He has heard "closing" and understood "deleting". Two sentences on what actually happens — and an offer to pick his two up now — ends it.',
+    },
+    {
+      key: 'mcs-08', day: 4, type: 'noise', via: 'email', from: 'facilities',
+      subject: 'Fire alarm test — Thursday 11am',
+      body: `A routine fire alarm test will take place on Thursday at 11am across all floors.
+
+No evacuation is required and no action is needed.`,
+      expect: ['archive it'],
+      note: 'No evacuation, no action. Nothing to do.',
+    },
+    {
+      key: 'mcs-09', day: 5, type: 'judgement', via: 'email', from: 'data_engineer',
+      subject: 'Can I build the WIP cap into the tool?',
+      body: `If you are capping work in progress, I can enforce it in the request tool — nobody can move a seventh item into in-progress.
+
+Cleaner than asking people to remember. Want me to build it?`,
+      needsReply: true,
+      expect: ['not yet', 'try it as an agreement first'],
+      markers: ['not yet|wait|first|try|agree|manual|soft|month|before|hard|enforce|rigid|learn|too early|then'],
+      ifIgnored: 'The cap ships as a hard block, the first person who genuinely needs a seventh item routes around the tool, and nobody says so.',
+      note: 'A limit enforced by software before anybody has agreed the number produces a workaround rather than a conversation. Run it as an agreement for a month, then automate whatever survived.',
+    },
+    {
+      key: 'mcs-10', day: 5, type: 'noise', via: 'chat', from: 'comms',
+      subject: 'Intranet page for analytics',
+      body: `We are refreshing the function pages on the intranet. Yours is being updated from the org chart automatically.
+
+Nothing needed unless you want to change the description, which currently reads "Data & Analytics".`,
+      expect: ['archive it'],
+      note: 'Automatic, and the description is already right.',
+    },
+  ],
+  'headcount-case': [
+    {
+      key: 'mds-01', day: 1, type: 'pressure', via: 'chat', from: 'engineering_manager',
+      subject: 'What are you putting in for?',
+      body: `Comparing notes before submissions. Engineering is going in for four.
+
+What is analytics asking for? Useful to know so we are not both fighting over the same pot.`,
+      needsReply: true,
+      expect: ['say you do not know yet'],
+      markers: ['don\'t know|do not know|not yet|working|deciding|depends|evidence|no number|tell you|once|open'],
+      ifIgnored: 'He tells the round that analytics is going in for two, having heard it from Asha, and the number is in circulation before you have tested it.',
+      note: 'A number given now becomes the number, whatever Wednesday says. "I do not know yet" is a complete and accurate answer on Monday.',
+    },
+    {
+      key: 'mds-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Budget submission templates',
+      body: `FY27 submission templates are now available on the finance portal.
+
+Cost centre owners have been notified directly. Templates must be submitted through the portal rather than by email.`,
+      expect: ['archive it'],
+      note: 'Templates you will get through Diya anyway, and the instruction is about the mechanism rather than the content.',
+    },
+    {
+      key: 'mds-03', day: 2, type: 'judgement', via: 'chat', from: 'data_engineer',
+      subject: 'You asked what stops things finishing',
+      body: `Honest answer: I have six things open and three of them are waiting on somebody else. I pick them up, find the blocker is still there, and put them down again.
+
+Not sure that is a headcount problem. Might be the opposite.`,
+      needsReply: true,
+      expect: ['thank him', 'and say it changes the analysis'],
+      markers: ['thank|useful|exactly|helps|blocker|waiting|wip|open|flow|change|analysis|not headcount|right'],
+      ifIgnored: 'The most useful thing anybody says all week gets no acknowledgement, and the next time you ask the team a question you get "we are busy".',
+      note: 'The qualitative evidence for the whole conclusion, volunteered by somebody who thought it might be unwelcome. Say so.',
+    },
+    {
+      key: 'mds-04', day: 2, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Laptop refresh cycle',
+      body: `Devices older than four years will be refreshed over the next quarter. Affected users will be contacted directly with a booking link.
+
+No action required from managers.`,
+      expect: ['archive it'],
+      note: 'Users contacted directly, no manager action. Nothing to do.',
+    },
+    {
+      key: 'mds-05', day: 3, type: 'pressure', via: 'email', from: 'line_manager',
+      subject: 'Where are we on the case?',
+      body: `I mentioned to Vikram yesterday that analytics is coming in for two.
+
+Do you have enough to draft? I would like to see something by tomorrow morning.`,
+      needsReply: true,
+      expect: ['ask for a conversation today', 'and say the answer has changed'],
+      markers: ['today|now|talk|call|15 min|before|changed|different|not two|conversation|speak|come to you'],
+      ifIgnored: 'The draft arrives on Thursday saying no, after she has repeated the figure to the exec team, and the conversation is about why she was not told.',
+      note: 'She has now said it out loud to Vikram. The window for telling her without embarrassment is today, and it closes.',
+    },
+    {
+      key: 'mds-06', day: 3, type: 'noise', via: 'chat', from: 'comms',
+      subject: 'Function headcount on the intranet',
+      body: `The org chart feed now updates function headcounts automatically, so the analytics page will show thirteen rather than fourteen from next week.
+
+Nothing needed — flagging in case anyone asks.`,
+      expect: ['archive it'],
+      note: 'A correction to a page nobody reads, and it is already right.',
+    },
+    {
+      key: 'mds-07', day: 4, type: 'judgement', via: 'chat', from: 'finance_analyst',
+      subject: 'Are you sure about this?',
+      body: `I have read the submission. It is the only one in the round not asking for anything.
+
+You do know that means analytics is the easiest line to cut if the round comes up short? I am not arguing with the analysis. I am asking whether you have thought about that.`,
+      needsReply: true,
+      expect: ['yes, it is deliberate', 'and say what protects against it'],
+      markers: ['yes|deliberate|thought|aware|risk|condition|january|threshold|backlog|not fine|protect|explicit|bar'],
+      ifIgnored: 'She reads the silence as you not having considered it, and softens the submission herself when she presents it.',
+      note: 'A real risk raised by somebody trying to help. The protection is in the document — conditions with values, and an explicit statement that this is not a claim the service is where it should be.',
+    },
+    {
+      key: 'mds-08', day: 4, type: 'noise', via: 'email', from: 'security',
+      subject: 'Access review — quarterly attestation',
+      body: `The quarterly access attestation for analytics systems has been completed on your behalf using the licence assignment data you supplied last month.
+
+No further action required.`,
+      expect: ['archive it'],
+      note: 'Done on your behalf, using work you already did. Nothing to answer.',
+    },
+    {
+      key: 'mds-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'One of your team has asked about progression',
+      body: `Following your note about no headcount ask, somebody has asked me whether that also means no promotions this year.
+
+They have not asked you directly. I think they were not sure how it would land.`,
+      needsReply: true,
+      expect: ['answer it to the whole team, not just that person'],
+      markers: ['all|everyone|team|whole|note|separate|different|budget|promotion|not the same|address|directly|clarify'],
+      ifIgnored: 'The assumption that a flat establishment means a frozen ladder spreads unchallenged, and two people start looking.',
+      note: 'Establishment and progression are different budgets and the team has no reason to know that. One person asked; thirteen are wondering.',
+    },
+    {
+      key: 'mds-10', day: 5, type: 'noise', via: 'chat', from: 'facilities',
+      subject: 'Desk allocation for next year',
+      body: `Confirming the analytics floor allocation is unchanged for FY27 at sixteen desks.
+
+No action needed.`,
+      expect: ['archive it'],
+      note: 'Unchanged, and no action needed. Nothing to do.',
+    },
+  ],
 };
 
 // ---- The Friday quiz -----------------------------------------------------------------
@@ -2578,6 +5288,470 @@ Nominations for the quarterly shout-outs close next Friday.`,
 // makes the right answer findable without knowing anything.
 
 const QUIZZES = {
+  'board-pack': {
+    key: 'tdq-board', title: 'Year-End Board Pack — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'Three colleagues submit ₹5.00, ₹4.85 and ₹4.45 crore for the same year. What is the most likely explanation?',
+        options: [
+          { key: 'c', label: 'Three correct computations of three different definitions, none of them stated', correct: true },
+          { key: 'a', label: 'Two of the three contain errors' },
+          { key: 'b', label: 'They queried the data at different times' },
+          { key: 'd', label: 'One of them used a corrupted source' },
+        ],
+        why: 'Gross or net, whole estate or like-for-like, corrected or not. Three binary choices give eight defensible answers, and nobody wrote down which they took.',
+      },
+      {
+        id: 'q2', topic: 'business-sense',
+        q: 'Which figure belongs in an external filing?',
+        options: [
+          { key: 'b', label: 'Net of returns, every store, with the known fault corrected', correct: true },
+          { key: 'a', label: 'Gross revenue, since it is the most complete' },
+          { key: 'c', label: 'Like-for-like, since it is the cleanest comparison' },
+          { key: 'd', label: 'Whichever figure Finance already published' },
+        ],
+        why: 'It is what the business earned. Gross counts money that was refunded; like-for-like excludes ₹36 lakh of trade from stores the company owns.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'What must be true of a bridge before it goes in a pack?',
+        options: [
+          { key: 'a', label: 'Every step reconciles to the rupee, and names both what it removes and why', correct: true },
+          { key: 'b', label: 'It is simplified to two or three steps for a board audience' },
+          { key: 'c', label: 'It starts and ends on the two most conservative figures' },
+          { key: 'd', label: 'It is rounded consistently to the nearest lakh' },
+        ],
+        why: 'A bridge exists so somebody can add it up in the room and get your answer. Collapsing the steps removes the explanation; rounding to hide a gap leaves the gap and hides where it is.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Every row in one store-month is duplicated exactly once. You need the year total. What do you do?',
+        options: [
+          { key: 'd', label: 'Keep one row of each pair — the trade is recoverable with certainty', correct: true },
+          { key: 'a', label: 'Exclude the whole store-month' },
+          { key: 'b', label: 'Replace the month with the average of its neighbours' },
+          { key: 'c', label: 'Include it as loaded and mark the figure provisional' },
+        ],
+        why: 'Both rows are identical, so either is the real one. Excluding the month understates by ₹3.46 lakh of trade that genuinely happened — correcting downward to avoid a fault is still an error.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'The trading review excluded that month and this pack halves it. Was the earlier treatment wrong?',
+        options: [
+          { key: 'c', label: 'No — exclusion is right for a comparison, repair is right for a total', correct: true },
+          { key: 'a', label: 'Yes, and the trading review should be reissued' },
+          { key: 'b', label: 'Yes, but it is immaterial at that scale' },
+          { key: 'd', label: 'No, and the pack should exclude it too for consistency' },
+        ],
+        why: 'A comparison needs a consistent basis on both sides and does not need that store-month at all. A total has to include money that was earned. Same fault, different question.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why should every published figure in a pack come from one computation?',
+        options: [
+          { key: 'a', label: 'Figures from one computation cannot disagree, and a definition change propagates everywhere at once', correct: true },
+          { key: 'b', label: 'It runs faster' },
+          { key: 'c', label: 'It is easier to write' },
+          { key: 'd', label: 'It is required for audit' },
+        ],
+        why: 'Eight figures from eight queries is exactly how three people produced three revenue numbers. The structural fix is one computation, not three more careful people.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'Like-for-like trading fell in the second half. Your estimate assumes it is flat next year. Is that conservative?',
+        options: [
+          { key: 'b', label: 'No — flat errs in your favour against the only trend evidence there is', correct: true },
+          { key: 'a', label: 'Yes, since it assumes no growth' },
+          { key: 'c', label: 'Neutral, since it neither grows nor declines' },
+          { key: 'd', label: 'It depends on what the board expects' },
+        ],
+        why: 'Conservative means erring against yourself. Telling a board an estimate is conservative when the risk is on the downside is the most expensive sentence in any pack.',
+      },
+      {
+        id: 'q8', topic: 'business-sense',
+        q: 'Your two scenarios differ by ₹15.2 lakh depending on whether the promotion repeats. The board wants one number. What do you give them?',
+        options: [
+          { key: 'd', label: 'The figure matching whichever way that decision goes, and ask who takes it', correct: true },
+          { key: 'a', label: 'The lower one, as the prudent choice' },
+          { key: 'b', label: 'The midpoint' },
+          { key: 'c', label: 'The higher one, since the board wants growth' },
+        ],
+        why: 'Picking prudently, optimistically or splitting the difference all take a business decision on the board\'s behalf, quietly, inside a number.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A summary says "like-for-like declined, offset by two successful new store openings". What is wrong?',
+        options: [
+          { key: 'a', label: 'A trading trend and added capacity are not commensurable, and "successful" is a judgement nobody made', correct: true },
+          { key: 'b', label: 'Nothing — both statements are supported by the figures' },
+          { key: 'c', label: 'The new stores should be excluded from the summary entirely' },
+          { key: 'd', label: 'It should quantify the decline' },
+        ],
+        why: '"Offset" implies one compensated for the other. And whether an opening was successful is a question about capital returns that this analysis never asked.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'A board member asks why revenue differs from the half-year pack. What is the answer?',
+        options: [
+          { key: 'c', label: 'The figure did not change — the basis did, and both are on the page', correct: true },
+          { key: 'a', label: 'The earlier pack used an incorrect methodology' },
+          { key: 'b', label: 'The difference is technical and not material to the decision' },
+          { key: 'd', label: 'A data quality issue has since been corrected' },
+        ],
+        why: 'The earlier pack used an unstated basis, not an incorrect one — and blaming colleagues in front of a board costs more than it buys. ₹55 lakh across the four bases is not technical, and the correction is only part of the gap.',
+      },
+    ],
+  },
+  'range-review': {
+    key: 'tcq-range', title: 'Range & Space Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'sql',
+        q: 'You rank products by sales ascending to find the weakest lines. What does that query structurally miss?',
+        options: [
+          { key: 'b', label: 'Products with no sales rows — they are absent, not bottom-ranked', correct: true },
+          { key: 'a', label: 'Products sold in only one store' },
+          { key: 'c', label: 'Products whose sales are all returns' },
+          { key: 'd', label: 'Nothing, if the join is written correctly' },
+        ],
+        why: 'Seven of sixty-eight lines have never sold. They have no row to rank, so every previous range review was blind to the worst lines in the book.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'What is the general rule for a question about a population?',
+        options: [
+          { key: 'c', label: 'Start from the table that defines the population and LEFT JOIN the activity onto it', correct: true },
+          { key: 'a', label: 'Start from the largest table for performance' },
+          { key: 'b', label: 'Start from the activity table and filter' },
+          { key: 'd', label: 'Use a FULL OUTER JOIN so nothing is lost' },
+        ],
+        why: 'Products then sales; employees then payroll; customers then orders. The tell that you got it backwards is a row count matching the activity table rather than the population.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'The bottom twenty lines carry 8.6% of margin. What does delisting them do?',
+        options: [
+          { key: 'a', label: 'Loses 8.6% of margin, against a saving in space and capital that is not in this data', correct: true },
+          { key: 'b', label: 'Saves 8.6% of margin' },
+          { key: 'c', label: 'Is broadly neutral, since the lines barely contribute' },
+          { key: 'd', label: 'Cannot be assessed at all' },
+        ],
+        why: 'The margin is exactly computable and it is a cost. The saving is real and lives in space, buying time and working capital — none of which a sales table holds.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Stock cover comes out between 0.43 and 1.09 months for all 61 products, while annual sales run 234 to 482 units. What does that tell you?',
+        options: [
+          { key: 'd', label: 'The measure is not capturing stock policy — holdings do not vary with demand', correct: true },
+          { key: 'a', label: 'Replenishment is unusually well controlled' },
+          { key: 'b', label: 'The range is running dangerously low on cover' },
+          { key: 'c', label: 'The stock counts need weighting by store' },
+        ],
+        why: 'Every product holds about twenty units whether it sells 234 a year or 482. No replenishment system behaves that way, and no weighting recovers information that was never recorded.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'A stakeholder asks for the cover figure anyway, offering to footnote it as indicative. What do you do?',
+        options: [
+          { key: 'b', label: 'Decline, and give him wording explaining why the section is empty', correct: true },
+          { key: 'a', label: 'Supply it with his caveat' },
+          { key: 'c', label: 'Supply a range instead of a point figure' },
+          { key: 'd', label: 'Substitute a different stock measure' },
+        ],
+        why: 'A footnote does not travel with the number. A range implies statistical uncertainty when the measure is simply not measuring stock. Substituting silently is worse than either.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why does a delist rule expressed as "under 1.5% of category margin" fail?',
+        options: [
+          { key: 'a', label: 'It cannot see the never-sold lines, and run twice it delists the whole range', correct: true },
+          { key: 'b', label: 'The threshold is arbitrary' },
+          { key: 'c', label: 'It should be based on revenue, not margin' },
+          { key: 'd', label: 'It ignores stock cover' },
+        ],
+        why: 'Every threshold is chosen, so arbitrariness is not the objection. A share-based rule leaves nothing to be a share of for a line that never sold, and after each cut the survivors re-share 100% and a new bottom appears.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'A line is in seven stores, earns little in total and performs well per store. What is it?',
+        options: [
+          { key: 'c', label: 'Ambiguous — its total is low because of distribution, and the stores carrying it are not a random sample', correct: true },
+          { key: 'a', label: 'A delist candidate' },
+          { key: 'b', label: 'A rollout candidate' },
+          { key: 'd', label: 'Performing as intended' },
+        ],
+        why: 'Total margin and margin per carrying store measure different things. If it is only in flagships, its per-store figure describes flagship customers rather than the product.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A paper says "stock cover analysis confirms the range is over-extended", after you told them the measure does not work. What went wrong?',
+        options: [
+          { key: 'b', label: 'The refusal lived in an email rather than in the document', correct: true },
+          { key: 'a', label: 'Bad faith by the author' },
+          { key: 'c', label: 'You should have escalated to their manager' },
+          { key: 'd', label: 'Nothing — sign-off is the point at which to catch it' },
+        ],
+        why: 'A paper has a section, somebody fills it, and your reply is in a different thread. An absence with a stated reason in the document itself is much harder to overwrite than a silence.',
+      },
+      {
+        id: 'q9', topic: 'data-ethics',
+        q: 'A supplier asks whether their line is on the delist candidate list. What do you say?',
+        options: [
+          { key: 'd', label: 'That you cannot discuss the range review, and refer them to buying', correct: true },
+          { key: 'a', label: 'That it is not on the list, if that is true' },
+          { key: 'b', label: 'That no decisions have been made' },
+          { key: 'c', label: 'Nothing, and report it afterwards' },
+        ],
+        why: 'Denying for safe lines means silence identifies the unsafe ones. "No decisions yet" has the same problem in softer words, and an unanswered question still needs an answer given.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'Seven lines were listed and never ranged. How should that be written up?',
+        options: [
+          { key: 'a', label: 'As a process gap — no report could show them, so nobody could have seen them', correct: true },
+          { key: 'b', label: 'As a buying error by whoever signed them off' },
+          { key: 'c', label: 'Not at all, since the delist resolves it' },
+          { key: 'd', label: 'As a data quality problem in the products table' },
+        ],
+        why: 'The data is correct — the lines genuinely exist and genuinely never sold. What failed is that every report used a query that deletes them, and a monthly completeness check fixes that permanently.',
+      },
+    ],
+  },
+  'margin-review': {
+    key: 'tbq-margin', title: 'Margin & Promotion Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'products.unit_cost is the cost today. You are reporting what last year earned. Which cost do you use?',
+        options: [
+          { key: 'b', label: 'The cost that applied on the day of each sale', correct: true },
+          { key: 'a', label: 'The current cost, since it is the most accurate figure available' },
+          { key: 'c', label: 'An average of current and previous cost' },
+          { key: 'd', label: 'Either — the difference is immaterial' },
+        ],
+        why: 'Restating history at current cost rewrites it, always in the same direction, because costs rise. And 26.6% of revenue sits on products that were repriced upward by 19% on average.',
+      },
+      {
+        id: 'q2', topic: 'business-sense',
+        q: 'You are deciding what to stock NEXT year. Which cost basis?',
+        options: [
+          { key: 'c', label: 'Current cost, and undiscounted price', correct: true },
+          { key: 'a', label: 'The cost that applied at the time of each historical sale' },
+          { key: 'b', label: 'Current cost, and the prices actually realised' },
+          { key: 'd', label: 'Whichever was used in the last range review, for consistency' },
+        ],
+        why: 'A forward decision depends on forward costs. Using realised prices bakes in a promotion nobody has decided to repeat — half the Equipment revenue was discounted.',
+      },
+      {
+        id: 'q3', topic: 'statistics',
+        q: 'The naive cost method understates Equipment margin by 7%, Coffee by 3%, and Tea by nothing. Why is that worse than a uniform 15% error?',
+        options: [
+          { key: 'a', label: 'An uneven error moves categories relative to each other, which is what the comparison measures', correct: true },
+          { key: 'b', label: 'It is not worse — 15% is a larger absolute distortion' },
+          { key: 'c', label: 'Because Equipment is the largest category' },
+          { key: 'd', label: 'Because the error cannot be corrected without invoice data' },
+        ],
+        why: 'A uniform error preserves every ranking and every ratio and can be caveated. A structured one has to be fixed, because the range review is a decision about categories relative to each other.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Why does the naive method manufacture an improving trend?',
+        options: [
+          { key: 'd', label: 'The two methods diverge before a cost change and agree after it, so the past is penalised and the present is not', correct: true },
+          { key: 'a', label: 'Because costs rise faster than prices' },
+          { key: 'b', label: 'Because more products were repriced in the second half' },
+          { key: 'c', label: 'It does not — the distortion is constant over time' },
+        ],
+        why: 'It is systematic, not random. The naive figure understated the first half by 6.5% and the second by 2.3%, so a real decline reads as a mild one.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'Equipment has the lowest margin RATE in the book and the highest margin CONTRIBUTION. What follows?',
+        options: [
+          { key: 'b', label: 'Nothing until you know what decision is being made', correct: true },
+          { key: 'a', label: 'It should be de-emphasised in favour of higher-rate categories' },
+          { key: 'c', label: 'Its pricing needs review' },
+          { key: 'd', label: 'The blended rate should be the reported measure' },
+        ],
+        why: 'A pricing decision cares about the rate, a range decision about the contribution. Halving Equipment loses half of ₹1.08 crore, and Merchandise would have to quadruple to replace it.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Why is a blended gross margin target of 46% a bad target?',
+        options: [
+          { key: 'c', label: 'It can be hit by selling less Equipment, with no product trading better', correct: true },
+          { key: 'a', label: 'It is too ambitious given the category mix' },
+          { key: 'b', label: 'Targets should always be absolute, never rates' },
+          { key: 'd', label: 'It does not account for returns' },
+        ],
+        why: 'Equipment is 64% of revenue at the lowest rate, so shrinking it lifts the blend and shrinks the business — and the target records that as success. Pairing it with an absolute figure fixes it.',
+      },
+      {
+        id: 'q7', topic: 'statistics',
+        q: 'November delivered 55% more units, 39% more revenue and 12% more margin than a normal month. What is the shape of that telling you?',
+        options: [
+          { key: 'a', label: 'Turnover was bought with discount — volume rose fastest and margin slowest', correct: true },
+          { key: 'b', label: 'The promotion failed, since the margin rate fell nine points' },
+          { key: 'c', label: 'The promotion succeeded, since it was the best revenue month' },
+          { key: 'd', label: 'Nothing — three measures moving together is normal seasonality' },
+        ],
+        why: 'The ordering of the three rises is the signature. Whether the trade was worth it depends on what the promotion was for, which nobody recorded.',
+      },
+      {
+        id: 'q8', topic: 'statistics',
+        q: 'Margin falls steadily with discount to 20%, then rises slightly at the 25% and 30% bands. What is that?',
+        options: [
+          { key: 'd', label: 'Noise — those two bands hold 326 lines out of 9,022', correct: true },
+          { key: 'a', label: 'A floor below which margin stops eroding' },
+          { key: 'b', label: 'Evidence that deep discounts are safe' },
+          { key: 'c', label: 'A data error in the discount field' },
+        ],
+        why: 'Under 2% of the data each, and which products happened to be discounted drives the difference. Fitting a curve through the thinnest region is how a table becomes a licence to discount harder.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'A draft note says "Analytics confirm the promotion was margin-accretive and recommend repeating it". What is the worst part?',
+        options: [
+          { key: 'b', label: '"Recommend" — you measured a trade, you did not make a recommendation', correct: true },
+          { key: 'a', label: '"Margin-accretive", which is misleading about the rate' },
+          { key: 'c', label: '"Confirm", which overstates certainty' },
+          { key: 'd', label: 'Nothing — absolute margin did rise' },
+        ],
+        why: 'All three phrases are slippery. But attributing a recommendation to your team puts your name on a decision you did not make, and that is the sentence quoted when it is questioned.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'Store manager bonuses depend partly on margin percentage, and the cost basis is being corrected. What do you tell People Ops?',
+        options: [
+          { key: 'a', label: 'That it is a basis change, not performance, and both bases should be shown for the same period', correct: true },
+          { key: 'b', label: 'That the new figures are correct and the old ones should be discarded' },
+          { key: 'c', label: 'That bonuses should be frozen until the basis is settled' },
+          { key: 'd', label: 'Nothing — the change is technical and does not concern them' },
+        ],
+        why: 'Stores selling more Equipment move most, through no action of their own. Showing both bases for one period is what makes the change legible instead of arbitrary.',
+      },
+    ],
+  },
+  'trading-review': {
+    key: 'taq-trading', title: 'Half-Year Trading Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A draft shows nine stores declining and one growing strongly. Which do you verify first?',
+        options: [
+          { key: 'a', label: 'The one that is growing', correct: true },
+          { key: 'b', label: 'The nine declining, since that is the larger business impact' },
+          { key: 'c', label: 'The estate total, since everything rolls up to it' },
+          { key: 'd', label: 'All equally — there is no reason to prefer one' },
+        ],
+        why: 'The exception is where the error is, and a flattering exception has already passed one filter that an unflattering one has not. Somebody wanted the star to be real.',
+      },
+      {
+        id: 'q2', topic: 'sql',
+        q: 'Returns are stored as negative quantities in the sales table. What does COUNT(*) give you?',
+        options: [
+          { key: 'c', label: 'Till lines, including refunds — not transactions in the sense a board means', correct: true },
+          { key: 'a', label: 'The number of transactions' },
+          { key: 'b', label: 'The number of items sold' },
+          { key: 'd', label: 'The number of transactions, net of returns' },
+        ],
+        why: '9,022 lines against 8,530 sale lines. Counting refunds as transactions inflates the count and deflates the average value, and both errors push the same way.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Two stores opened during the reporting year and one closed. What must the pack carry?',
+        options: [
+          { key: 'b', label: 'Both a total-estate figure and a like-for-like figure over a stable set of stores', correct: true },
+          { key: 'a', label: 'The total estate figure, since that is what the business earned' },
+          { key: 'c', label: 'Like-for-like only, since it is the cleaner comparison' },
+          { key: 'd', label: 'The total with the part-year stores scaled up to a full year' },
+        ],
+        why: 'Like-for-like says whether the shops are trading better; the total says what the business earned. Publish one and you will be asked for the other in the room. Scaling a four-month store to twelve is a forecast presented as a result.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Revenue per trading day and revenue per day open give different rankings. Which is the better productivity measure, and why?',
+        options: [
+          { key: 'd', label: 'Per day open — a day with no sales is a bad day, not an absent one', correct: true },
+          { key: 'a', label: 'Per trading day, because it only counts days the store actually traded' },
+          { key: 'b', label: 'Neither — use the annual total' },
+          { key: 'c', label: 'They are equivalent for a busy estate' },
+        ],
+        why: 'Dividing by days with a sale deletes the worst days from the average, and it flatters exactly the quietest stores. Baner records a sale on 268 days of roughly 365 open.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'How do you distinguish a double-loaded feed from two customers coincidentally buying the same thing?',
+        options: [
+          { key: 'a', label: 'By concentration — every line in one contiguous store-month, against one or two anywhere else', correct: true },
+          { key: 'b', label: 'By checking whether the rows have sequential ids' },
+          { key: 'c', label: 'By whether the duplicated revenue is material' },
+          { key: 'd', label: 'You cannot — identical rows are always ambiguous' },
+        ],
+        why: 'Coincidental matches are scattered and rare. Fifty-two duplicate groups covering all 104 of one store\'s March lines is a feed replayed.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'You exclude the duplicated store-month from your figures. What else must you do?',
+        options: [
+          { key: 'c', label: 'Disclose the exclusion, so the figure can be reproduced and reconciled', correct: true },
+          { key: 'a', label: 'Nothing — the corrected figure is the right one' },
+          { key: 'b', label: 'Delete the duplicate rows from the warehouse' },
+          { key: 'd', label: 'Use the warehouse figure instead, so the pack ties' },
+        ],
+        why: 'Finance has the uncorrected figure. An undisclosed filter means the two never reconcile and nobody knows which to believe — and you should not have write access to the source anyway.',
+      },
+      {
+        id: 'q7', topic: 'communication',
+        q: 'You are pressed to name a cause for the decline. Footfall, competitor and market data are all absent. What is the complete answer?',
+        options: [
+          { key: 'b', label: 'What you can show, what you cannot, and what data would settle it', correct: true },
+          { key: 'a', label: 'The most plausible cause, clearly flagged as a hypothesis' },
+          { key: 'c', label: 'That the data cannot answer the question' },
+          { key: 'd', label: 'That you will investigate and come back' },
+        ],
+        why: 'A hypothesis offered under pressure gets repeated without its flag. Stopping at the refusal leaves the room stuck. The third part is what makes it a plan rather than an obstacle.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A slide reads "revenue fell 17%, driven by a slowdown in Equipment". Equipment is the largest category. What is wrong?',
+        options: [
+          { key: 'd', label: '"Driven by" asserts a cause; being the biggest category is arithmetic', correct: true },
+          { key: 'a', label: 'Nothing — Equipment declined and it is the largest category' },
+          { key: 'b', label: 'The figure should be stated per category' },
+          { key: 'c', label: 'It should name the stores included' },
+        ],
+        why: 'Scope belongs on the slide too, but the load-bearing error is that "driven by" will send somebody to review the Equipment range when the decline is broad.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'Half-on-half comparison shows a 17.3% decline. The first half contains a discount-driven promotion month. What does that mean?',
+        options: [
+          { key: 'a', label: 'The comparison overstates the decline, and the pack has to say so', correct: true },
+          { key: 'b', label: 'Nothing — both halves are six months' },
+          { key: 'c', label: 'The promotion month should be excluded from both halves' },
+          { key: 'd', label: 'The decline is understated, since the promotion cost margin' },
+        ],
+        why: 'November is the biggest revenue month of the year and it sits entirely in the first half. Excluding it is defensible too — silently leaving it in and calling the result like-for-like is not.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'A store manager has already told her team about a growth figure that turns out to be a data fault. When does she find out?',
+        options: [
+          { key: 'c', label: 'Before the board pack circulates, and told that it was a feed fault, not her result', correct: true },
+          { key: 'a', label: 'In the corrected pack, along with everyone else' },
+          { key: 'b', label: 'She does not need to be told — the figure was never hers' },
+          { key: 'd', label: 'After the board meeting, so the correction is settled first' },
+        ],
+        why: 'She acted on a number your team published. Letting her discover the correction in a room, or after it, is a cost your error imposed on somebody who did nothing wrong.',
+      },
+    ],
+  },
   'experiment-readout': {
     key: 'eq-experiment', title: 'Onboarding Experiment Readout — end of project',
     intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
@@ -3503,6 +6677,470 @@ const QUIZZES = {
           { key: 'd', label: 'Neither — you should average the two figures' },
         ],
         why: 'Finance is measuring spend; you are measuring what we pay people now. Both are defensible and they are not interchangeable — the job is to name the difference and get one chosen before the meeting, not to win it. Averaging two different questions produces a number that answers neither.',
+      },
+    ],
+  },
+  'capacity-review': {
+    key: 'maq-capacity', title: 'Demand & Capacity Review — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'An exec asks what an analysis costs, who is most productive, and whether all fourteen people are needed. What kind of request is that?',
+        options: [
+          { key: 'b', label: 'A resourcing question asked in the shape of a productivity question', correct: true },
+          { key: 'a', label: 'Three separate questions that happen to share an email' },
+          { key: 'c', label: 'A performance question with a cost question attached to it' },
+          { key: 'd', label: 'A straightforward reporting request on data you already hold' },
+        ],
+        why: 'The decision behind all three is whether to fund the team at its current size. Answering the productivity question on its own terms is how you spend a week being responsive and useless.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'The team logged 3,193 hours against 24,857 hours of paid capacity. What does that 12.8% most directly invalidate?',
+        options: [
+          { key: 'c', label: 'Any rate with logged hours in the denominator', correct: true },
+          { key: 'a', label: 'The record of which requests people worked on' },
+          { key: 'b', label: 'The proportion of effort going to each requesting function' },
+          { key: 'd', label: 'The count of delivered requests' },
+        ],
+        why: 'A missing eighth of the denominator multiplies every rate built on it by about eight. What people worked on survives far better than how much.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'Why does every capacity query in this review carry WHERE level <> \'manager\'?',
+        options: [
+          { key: 'a', label: 'The manager does not deliver requests, so including her adds cost and capacity that produce no output', correct: true },
+          { key: 'b', label: 'Manager-level time logs are recorded in a different system' },
+          { key: 'c', label: 'Her day rate is high enough to distort any average' },
+          { key: 'd', label: 'Data about your own line manager should not appear in a budget pack' },
+        ],
+        why: 'She is real cost and real capacity, but not delivery capacity. Leaving her in makes every per-person figure quietly worse in a way nobody reading the output would spot.',
+      },
+      {
+        id: 'q4', topic: 'data-ethics',
+        q: 'A senior stakeholder asks twice for per-person logged hours, promising to read it sensibly. What do you do?',
+        options: [
+          { key: 'd', label: 'Decline that table, and offer delivered work per person-year by level instead', correct: true },
+          { key: 'a', label: 'Send it with a written health warning at the top' },
+          { key: 'b', label: 'Send it with the two part-year people removed' },
+          { key: 'c', label: 'Send it to his manager instead so the request is on the record' },
+        ],
+        why: 'He probably would read it sensibly. The document outlives the conversation, and the next reader will not have been in it. The health warning does not travel; the ranking does.',
+      },
+      {
+        id: 'q5', topic: 'statistics',
+        q: 'Logged-day coverage across the team runs from 19.2% to 49.1%. What does a ranking of analysts by hours logged mostly measure?',
+        options: [
+          { key: 'b', label: 'How diligently each person fills in a timesheet', correct: true },
+          { key: 'a', label: 'How much work each person was assigned' },
+          { key: 'c', label: 'How much each person actually worked' },
+          { key: 'd', label: 'How long each person has been with the team' },
+        ],
+        why: 'Assignment and time present are in there too, and both are outside the person\'s control. Actual work done is not in the top three.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Thirteen people below manager level. 11.92 person-years present. What follows?',
+        options: [
+          { key: 'c', label: 'Ordinary joining and leaving cost about a person-year, which faster replacement fixes and hiring does not', correct: true },
+          { key: 'a', label: 'The team is under-established by roughly one post' },
+          { key: 'b', label: 'There is about a person-year of unexplained absence to investigate' },
+          { key: 'd', label: 'Headcount should be reported as twelve rather than thirteen' },
+        ],
+        why: 'A January leaver and a March joiner account for it exactly. Reading it as under-establishment converts a replacement-speed problem into a hiring request.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: '485 hours — 15% of all logged effort — went to requests later cancelled. How should that enter a budget conversation?',
+        options: [
+          { key: 'a', label: 'As capacity available without hiring, and as a floor rather than an estimate', correct: true },
+          { key: 'b', label: 'As waste, quantified by requesting function' },
+          { key: 'c', label: 'As a reason to exclude cancelled work from every cost figure' },
+          { key: 'd', label: 'As evidence that intake needs an approval step' },
+        ],
+        why: 'Called waste it produces a search for the guilty. Called available capacity it is an offer the room can accept this quarter. And it is 15% of logged hours, so the real figure is larger.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'A budget slide reads: "Utilisation across the team is low at 13%, suggesting spare capacity." What is the most serious problem with it?',
+        options: [
+          { key: 'd', label: 'The 13% is timesheet coverage, not utilisation, and the second clause turns a measurement gap into a case for cutting', correct: true },
+          { key: 'a', label: 'It should say 12.8% rather than rounding to 13%' },
+          { key: 'b', label: 'It does not state the period the figure covers' },
+          { key: 'c', label: 'Utilisation is a term the audience will not recognise' },
+        ],
+        why: 'Every option is a real flaw and only one of them cuts the team. The sentence reads as an observation and functions as a recommendation.',
+      },
+      {
+        id: 'q9', topic: 'data-ethics',
+        q: 'You are about to use the team\'s timesheet data in a budget conversation. When do they hear about it?',
+        options: [
+          { key: 'b', label: 'Before it leaves your desk, in writing, from you', correct: true },
+          { key: 'a', label: 'Afterwards, with a summary of what was said' },
+          { key: 'c', label: 'Only if an individual is named in what you send' },
+          { key: 'd', label: 'Not at all, since it is aggregated' },
+        ],
+        why: 'Data gathered to attribute effort to projects is being used for something else. Afterwards is too late to be a choice, and they will hear it came up either way.',
+      },
+      {
+        id: 'q10', topic: 'business-sense',
+        q: 'The same annual cost gives ₹9,664 per logged hour and about ₹1,241 per capacity hour. What do you publish?',
+        options: [
+          { key: 'c', label: 'The capacity rate, with the naive one shown beside it and one line on why they differ', correct: true },
+          { key: 'a', label: 'The capacity rate only, since the other is built on a broken denominator' },
+          { key: 'b', label: 'The naive rate only, since it is the one derived from real recorded work' },
+          { key: 'd', label: 'Neither, until timesheet coverage is good enough to support a rate' },
+        ],
+        why: 'The naive figure is two lines of arithmetic away and somebody will find it. Far better they find your version of it than discover it themselves and wonder what else was left out. Publishing nothing leaves the room with no analytics rate at all, and the cut lands there.',
+      },
+    ],
+  },
+  'tooling-review': {
+    key: 'mbq-tooling', title: 'Tooling & Licence Renewal — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A ₹21.6 lakh contract auto-renews in forty-six days. What does the auto-renewal clause change about your week?',
+        options: [
+          { key: 'b', label: 'Doing nothing becomes a priced decision, and the deadline belongs to the contract rather than to you', correct: true },
+          { key: 'a', label: 'It gives the vendor the stronger negotiating position' },
+          { key: 'c', label: 'It makes the whole tooling estate urgent rather than important' },
+          { key: 'd', label: 'Nothing — the analysis is the same whenever it renews' },
+        ],
+        why: 'Nothing about the tools changes. What changes is which findings you still have time to act on, and that inaction now has a price of ₹21.6 lakh.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Apply the test: if cost per seat improves, has anything got better?',
+        options: [
+          { key: 'c', label: 'No — it improves when we buy seats nobody uses, which raises the bill', correct: true },
+          { key: 'a', label: 'Yes — a lower unit price is always a better contract' },
+          { key: 'b', label: 'Sometimes, depending on whether the extra seats are later assigned' },
+          { key: 'd', label: 'Yes, provided the seat count is compared against headcount' },
+        ],
+        why: 'Both terms come from the contract. Buying sixteen spare BI seats halved the per-seat figure and cost ₹11.52 lakh, which is the measure rewarding the mistake it should catch.',
+      },
+      {
+        id: 'q3', topic: 'sql',
+        q: 'The same tool gives 30, 14 and 13 for "users". What are the three numbers?',
+        options: [
+          { key: 'a', label: 'Seats contracted, assignments made, and assignments held by current staff who used it recently', correct: true },
+          { key: 'b', label: 'Seats contracted, seats paid for this year, and seats in use today' },
+          { key: 'c', label: 'Assignments made, logins this year, and logins this quarter' },
+          { key: 'd', label: 'Seats contracted, headcount, and headcount below manager level' },
+        ],
+        why: 'A purchasing fact, an administrative fact and a behavioural fact. Saying which of the three you counted takes four words and is the difference between an analysis and an assertion.',
+      },
+      {
+        id: 'q4', topic: 'business-sense',
+        q: 'Cost per seat ranks Warehouse compute worst in the estate. Cost per active user ranks it third. What is actually true of it?',
+        options: [
+          { key: 'd', label: 'It is the best-used tool we own — fourteen seats, thirteen active users', correct: true },
+          { key: 'a', label: 'It is genuinely overpriced, and both rankings agree it is near the top' },
+          { key: 'b', label: 'It is fairly priced but assigned to more people than need it' },
+          { key: 'c', label: 'The two rankings measure different things and neither describes it well' },
+        ],
+        why: 'It topped the per-seat table because it has almost no spare seats — which is the same thing as being well bought. The measure punished the contract that was got right.',
+      },
+      {
+        id: 'q5', topic: 'business-sense',
+        q: 'Sixteen BI seats never assigned to anybody, and five Statistical suite seats unopened since February. Why should these not be added into one waste figure?',
+        options: [
+          { key: 'b', label: 'One is recoverable with no consequence for anybody; the other takes a capability away from named people', correct: true },
+          { key: 'a', label: 'They fall in different financial years' },
+          { key: 'c', label: 'The BI figure is reliable and the usage telemetry is not' },
+          { key: 'd', label: 'They are owned by different vendors and negotiated separately' },
+        ],
+        why: 'A single total hides exactly the part a reader needs in order to judge the risk — and the combined headline is the one that gets quoted.',
+      },
+      {
+        id: 'q6', topic: 'data-ethics',
+        q: 'Five people have not opened the Statistical suite since February. What should happen before those seats are cut?',
+        options: [
+          { key: 'a', label: 'Ask the five — the data records opens, and cannot distinguish disuse from twice-a-year necessity', correct: true },
+          { key: 'c', label: 'Cut them; five months without opening a tool is evidence enough' },
+          { key: 'b', label: 'Leave them; usage telemetry is too weak to support any change' },
+          { key: 'd', label: 'Reassign the seats to people who will use them more often' },
+        ],
+        why: 'Five conversations against ₹4.6 lakh is a good trade, and it renews on 5 October so there is time. Too weak to decide alone is not the same as useless — it tells you which five conversations to have.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Somebody left on 30 January and still held four seats worth ₹2.76 lakh. Why did nobody notice?',
+        options: [
+          { key: 'c', label: 'A missing seat is noticed within an hour and a spare one within a year, so only one of the two errors ever gets reported', correct: true },
+          { key: 'a', label: 'The offboarding checklist was not followed for that leaver' },
+          { key: 'b', label: 'IT has no record of which tools a leaver was assigned' },
+          { key: 'd', label: 'Individual seats are too small to justify a reclamation process' },
+        ],
+        why: 'Offboarding ran correctly — seats simply are not on the checklist. The asymmetry is why nobody ever put them there, and why the fix has to be automatic rather than diligent.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'The table says ₹20.43 lakh is recoverable and you intend to recommend ₹13.89 lakh. What do you publish?',
+        options: [
+          { key: 'd', label: 'The recommendation as the headline, the recoverable figure beside it, and one line on why they differ', correct: true },
+          { key: 'a', label: 'The recoverable figure, since it is what the data supports' },
+          { key: 'b', label: 'The recommendation alone, with the workings available on request' },
+          { key: 'c', label: 'Both without choosing, so the reader can form their own view' },
+        ],
+        why: 'Recoverable alone becomes a target you did not set. Recommended alone invites the question "is that all there is" and somebody will find the bigger number in one query. The gap IS the analysis.',
+      },
+      {
+        id: 'q9', topic: 'business-sense',
+        q: 'The vendor offers all thirty seats at ₹64,000 — ₹19.2 lakh a year against ₹21.6 lakh — on a two-year term. What is wrong with it?',
+        options: [
+          { key: 'b', label: 'It is ₹6.6 lakh a year worse than fifteen seats at their own step-up price, and the term removes next year\'s decision', correct: true },
+          { key: 'a', label: 'The unit price is still above market for a contract of that size' },
+          { key: 'c', label: 'A two-year commitment cannot be approved inside a one-year budget' },
+          { key: 'd', label: 'Nothing — it is a genuine saving for no change on our side' },
+        ],
+        why: 'Fifteen seats at ₹84,000 is ₹12.6 lakh. The offer is framed against ₹21.6 lakh, the figure you are trying to leave, and the concession they actually want is the two years.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You are keeping two spare seats per tool. What should the note say about them?',
+        options: [
+          { key: 'a', label: 'Name them as a deliberate choice and what they buy — a March joiner had every tool on day one', correct: true },
+          { key: 'b', label: 'Nothing — they are within the recommended seat counts already' },
+          { key: 'c', label: 'Flag them as a further saving available if required' },
+          { key: 'd', label: 'Describe them as a contingency against vendor price rises' },
+        ],
+        why: 'Unexplained spare capacity looks exactly like the waste you just finished removing, and the next review removes it. Explained spare capacity is a decision somebody has to argue with.',
+      },
+    ],
+  },
+  'intake-review': {
+    key: 'mcq-intake', title: 'Intake & Prioritisation — end of project',
+    intro: 'Ten questions on the week. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'A requesting function emails to say it has stopped sending work. Why is that email worth more than a satisfaction survey?',
+        options: [
+          { key: 'c', label: 'Most dissatisfaction never arrives — it shows up as quietly falling demand, which reads as spare capacity', correct: true },
+          { key: 'a', label: 'It identifies a more serious problem than the ones nobody raises' },
+          { key: 'b', label: 'It comes from somebody senior enough to get the issue prioritised' },
+          { key: 'd', label: 'It creates a record of when the problem was first raised' },
+        ],
+        why: 'The silent version is a function that builds its own spreadsheet and stops asking. You never find out, and the drop in requests looks like good news.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Urgent work closes in 25.5 days and low-priority work in 31.3. What is the right summary?',
+        options: [
+          { key: 'b', label: 'The field works and the effect is far too small for any requester to perceive', correct: true },
+          { key: 'a', label: 'The field works — the ordering is correct at all four levels' },
+          { key: 'c', label: 'The field does not work and the team is ignoring it' },
+          { key: 'd', label: 'Six days is within noise and the difference cannot be relied on' },
+        ],
+        why: 'Only the both-halves version is true. "It works" contradicts everybody\'s experience of it; "it is ignored" contradicts the data and blames thirteen people.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Urgent requests are delivered 53.4% of the time and cancelled 21.9%. High-priority requests cancel at 5.9%. What does the urgent flag predict?',
+        options: [
+          { key: 'd', label: 'Cancellation better than speed — it records the requester\'s state of mind rather than the work\'s importance', correct: true },
+          { key: 'a', label: 'That the work was genuinely time-critical and got deprioritised anyway' },
+          { key: 'b', label: 'Nothing — the four priority levels are used interchangeably' },
+          { key: 'c', label: 'That marking a request urgent causes it to be handled badly' },
+        ],
+        why: 'Work raised in a hurry is likelier to stop being needed. It also means honouring the flag harder would front-load the work most likely to be thrown away.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'A team stops picking up its hardest requests. What happens to its average lead time?',
+        options: [
+          { key: 'a', label: 'It falls, because the hard work never enters the average at all', correct: true },
+          { key: 'b', label: 'It rises as the backlog grows' },
+          { key: 'c', label: 'It is unchanged until the unstarted work is eventually picked up' },
+          { key: 'd', label: 'It depends whether queued work is counted as open or closed' },
+        ],
+        why: 'Lead time is computed over survivors. Refusing difficult work is the fastest way to improve it, which is why it must never be published without the queue beside it.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: 'Reopened requests average 25.3 days to first delivery and 43.3 to final close; clean ones average 26.5. Which date should stop the clock, and why?',
+        options: [
+          { key: 'c', label: 'Final close — first delivery can be improved by sending work out before it is ready', correct: true },
+          { key: 'a', label: 'First delivery — it is when the requester got something they could use' },
+          { key: 'b', label: 'Final close — it is the more accurate record of how long the work took' },
+          { key: 'd', label: 'Both, reported separately, so the reader can choose' },
+        ],
+        why: 'Accuracy is genuinely arguable. What settles it is how each measure behaves when somebody sets out to improve it, and only one of the two is safe on a wall.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'Data fixes reopen at 1.6% and reports at 18.8%. What is the reopen rate mostly measuring?',
+        options: [
+          { key: 'a', label: 'How completely the request was specified before work started', correct: true },
+          { key: 'b', label: 'The technical difficulty of each category of work' },
+          { key: 'c', label: 'The experience level of whoever was assigned it' },
+          { key: 'd', label: 'How demanding each requesting function is' },
+        ],
+        why: 'A data fix arrives with one right answer everybody agrees on. A report arrives as a sentence with six blanks in it, and the reopen is the specification being written late at full analyst cost.',
+      },
+      {
+        id: 'q7', topic: 'business-sense',
+        q: 'Forty-three requests are in progress across thirteen people, and thirty-two have never been started, averaging 191 days waiting. What kind of problem is this?',
+        options: [
+          { key: 'b', label: 'A flow problem — more is started than finished, so the wait is mostly queueing', correct: true },
+          { key: 'a', label: 'A prioritisation problem — the wrong things are being worked on first' },
+          { key: 'c', label: 'A capacity problem — there are too few people for the demand' },
+          { key: 'd', label: 'A delivery problem — individual requests take too long to complete' },
+        ],
+        why: 'Re-ordering a queue that nothing leaves does not shorten it, and neither does hiring until the started-and-stalled pile clears, because new people start more things.',
+      },
+      {
+        id: 'q8', topic: 'data-ethics',
+        q: 'Why does a free, invisible priority field always end up meaning nothing?',
+        options: [
+          { key: 'd', label: 'The requester bears none of the cost of choosing the highest value, so over a year everybody independently chooses it', correct: true },
+          { key: 'a', label: 'Requesters do not understand what the levels are meant to mean' },
+          { key: 'b', label: 'Delivery teams stop trusting it and start ignoring it' },
+          { key: 'c', label: 'Some functions abuse it and others are penalised for honesty' },
+        ],
+        why: 'Free to use, invisible to others, no cost borne by the chooser. Any control with those three properties converges to its maximum without anybody behaving badly, which is why an instruction to use it responsibly never works.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'You are proposing to remove the priority field. What should the proposal lead with?',
+        options: [
+          { key: 'a', label: 'What the requester gets instead — a date you will hold to, and a reason somebody reads', correct: true },
+          { key: 'b', label: 'The evidence that the current field moves delivery by six days' },
+          { key: 'c', label: 'The cost of the current system in cancelled and stalled work' },
+          { key: 'd', label: 'A commitment to review the change after six months' },
+        ],
+        why: 'All four belong in the note. Leading with evidence invites a search for the counter-example; leading with the replacement makes the evidence supporting material rather than the argument.',
+      },
+      {
+        id: 'q10', topic: 'communication',
+        q: 'You are changing four things and recording the before-figures. What else must be written down today?',
+        options: [
+          { key: 'c', label: 'Which direction each measure is expected to move — lead time will rise by design', correct: true },
+          { key: 'a', label: 'Targets for each measure at the six-month review' },
+          { key: 'b', label: 'Who is accountable for each of the four changes' },
+          { key: 'd', label: 'The exact queries, so the figures can be reproduced' },
+        ],
+        why: 'The queries matter too, but the prediction is the one that decides the six-month conversation: switching to final close makes the team look slower, and unrecorded that rise becomes the argument for reverting everything.',
+      },
+    ],
+  },
+  'headcount-case': {
+    key: 'mdq-headcount', title: 'The Headcount Case — end of project',
+    intro: 'Ten questions on the week, and the last of the track. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'Your manager asks you to build the case for two more analysts. What has that already done to the week?',
+        options: [
+          { key: 'c', label: 'Evidence that supports two now registers as a finding and evidence that does not registers as an obstacle', correct: true },
+          { key: 'a', label: 'Nothing, provided the analysis is done the same way it would otherwise have been' },
+          { key: 'b', label: 'It has removed the need to establish whether demand is growing' },
+          { key: 'd', label: 'It has made the submission her responsibility rather than yours' },
+        ],
+        why: 'Nobody decides to be dishonest. Having an answer in advance is simply what it does to a week of work, which is why it is worth naming on day one.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Demand fell from 213 requests to 171 between the two halves of the year. What does that establish?',
+        options: [
+          { key: 'b', label: 'That the simplest case for hiring does not hold — and nothing about whether people gave up instead', correct: true },
+          { key: 'a', label: 'That the team has spare capacity relative to last year' },
+          { key: 'c', label: 'That requesters are finding the service harder to use' },
+          { key: 'd', label: 'Nothing, since suppressed demand cannot be measured' },
+        ],
+        why: 'The same number supports two contradictory stories and the data cannot separate them. Leaving it out is not an option either — it is the first thing any reader will check.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Demand is falling and the backlog is growing. What does that combination rule out?',
+        options: [
+          { key: 'd', label: 'Demand growth as the cause — whatever is driving the backlog, it is not more work arriving', correct: true },
+          { key: 'a', label: 'That the team is short of people' },
+          { key: 'b', label: 'That the work arriving has got harder' },
+          { key: 'c', label: 'That requests are being left open after the work is done' },
+        ],
+        why: 'Throughput is below intake even at the reduced intake. Twenty-two closed per person-year against roughly thirty-two arriving — the gap is the backlog, and it is a finishing problem.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Why does adding two analysts often fail to shorten a queue like this one?',
+        options: [
+          { key: 'a', label: 'Forty-three items are already open across thirteen people; two more people mostly means more items open at once', correct: true },
+          { key: 'b', label: 'New joiners take three months to become productive' },
+          { key: 'c', label: 'The backlog is mostly requests that were never going to be needed' },
+          { key: 'd', label: 'Queue length is determined by arrival rate, which hiring does not change' },
+        ],
+        why: 'Each item already spends most of its life waiting for its owner to come back to it. Fifteen people with fifty-five things open gives about the same wait as thirteen with forty-three.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: '15.2% of logged effort went on work later cancelled. What is the honest way to express that as capacity?',
+        options: [
+          { key: 'c', label: '15.2% of the 11.92 person-years present — about 1.81 — because the proportion survives the coverage problem and the hours do not', correct: true },
+          { key: 'a', label: '485 hours, converted to person-years at 261 days of eight hours' },
+          { key: 'b', label: '485 hours divided by the 12.8% coverage rate, to gross it back up' },
+          { key: 'd', label: 'It cannot be expressed as capacity, since the timesheets cover an eighth of the time' },
+        ],
+        why: 'The face-value hours give 0.23 person-years and understate it eightfold. Grossing up by the coverage rate is arithmetic on a number you do not trust. Applying the share to person-years uses only the part that survives.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'A junior analyst costs ₹15.76 lakh a year. What is the strongest comparison to put beside that?',
+        options: [
+          { key: 'b', label: '1.81 person-years already going on work later cancelled, which is more and costs nothing to recover', correct: true },
+          { key: 'a', label: 'The ₹3.09 crore the team already costs, against which it is small' },
+          { key: 'c', label: 'A senior at ₹24.62 lakh, who closes more requests per person-year' },
+          { key: 'd', label: 'The thirty-two queued requests the hire would be brought in to clear' },
+        ],
+        why: 'Costing a senior on closures per person-year reads assignment as productivity. "Small against the whole line" is the argument that produced thirty BI seats. The cancelled work is the only comparison that is both larger and free.',
+      },
+      {
+        id: 'q7', topic: 'communication',
+        q: 'You are going to tell your manager the submission should ask for nobody. When and how?',
+        options: [
+          { key: 'a', label: 'Today, in person, leading with the parts of her reasoning that held up, and bringing the alternative submission', correct: true },
+          { key: 'c', label: 'In Friday\'s draft, so the argument is on the record and can be examined' },
+          { key: 'b', label: 'As an open question, so she reaches the conclusion herself' },
+          { key: 'd', label: 'After checking it with Finance, so the recommendation arrives already supported' },
+        ],
+        why: 'She has said two out loud in a meeting. If the first she sees of it is a document, the conversation is about having been gone around rather than about whether you are right.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'What turns a refusal into a deferral?',
+        options: [
+          { key: 'd', label: 'Conditions written down with today\'s values, a direction, what each triggers, and a date', correct: true },
+          { key: 'a', label: 'A statement that the position will be reviewed if circumstances change' },
+          { key: 'b', label: 'Framing the recommendation as a recommendation rather than a decision' },
+          { key: 'c', label: 'Committing to bring the question back at the next budget round' },
+        ],
+        why: 'Without the numbers it is a refusal with a hopeful sentence at the end, and readers have seen enough of those to discount them. The values have to be recorded while they are known.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'Your submission has one vulnerable figure — demand down 20%, which could be suppression rather than lower need. What do you do with it?',
+        options: [
+          { key: 'b', label: 'Put it in yourself, with the weakness named', correct: true },
+          { key: 'a', label: 'Leave it out, since it is not load-bearing for the recommendation' },
+          { key: 'c', label: 'Move it to an appendix where it can be examined on request' },
+          { key: 'd', label: 'Find more evidence before submitting either way' },
+        ],
+        why: 'The second pass over a budget pack is a hunt for the weakest number. Volunteered, it reads as rigour; found by a reader, it contaminates everything else on the page.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'You are telling thirteen people there is no headcount ask. What displaces "she tried and lost"?',
+        options: [
+          { key: 'c', label: 'The mechanism — more people would have meant fifty-five things open instead of forty-three — stated so they can check it against their own week', correct: true },
+          { key: 'a', label: 'Saying directly that this was your recommendation rather than a defeat' },
+          { key: 'b', label: 'Sharing the full analysis so they can see the evidence themselves' },
+          { key: 'd', label: 'The commitment to review the question again in January' },
+        ],
+        why: 'A denial cannot displace an interpretation and the full analysis will not be read. One checkable sentence about why more people would not have helped is the only thing that competes with the version told in the kitchen.',
       },
     ],
   },

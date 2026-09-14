@@ -365,6 +365,292 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'product_events',
   },
+
+  'trading-review': {
+    projectTitle: 'Half-Year Trading Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'You own what leaves the team, whether or not you wrote it.',
+      'Check the number that flatters somebody hardest, not least.',
+      'Say what you can show and refuse, out loud, to say what you cannot.',
+    ],
+    scenario:
+      'Ravi has drafted the half-year pack and sent it for a sanity check. It has a revenue figure with no definition, a transaction count that includes refunds, a store ranking that is really a ranking of trading days, and one celebrated star performer. The board meets Tuesday.',
+    estimatedMinutes: 120,
+    difficulty: 'Hard',
+    primaryObjective: 'A trading picture the board can act on: defined figures, a like-for-like comparison, and no claim the data cannot carry.',
+    constraints: [
+      { label: 'Data scope', value: 'Twelve months to 30 June 2026. The estate changed during it — two openings and a closure.' },
+      { label: 'Counting rule', value: 'Returns are negative rows in the same table. Decide what a transaction is and say so.' },
+      { label: 'Reporting rule', value: 'Any figure you correct has to be disclosed, or the pack stops reconciling with the warehouse.' },
+    ],
+    deliverables: [
+      { text: 'A defined gross-to-net bridge for the year.', via: 'sql-terminal' },
+      { text: 'A like-for-like half-on-half comparison across a stable estate.', via: 'sql-terminal' },
+      { text: 'Sign-off, or a rewrite, of the trading slide.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The one store growing against a uniformly declining estate is the one to check first, not last.',
+      'Revenue per trading day and revenue per day open are different denominators, and they disagree most for the quietest stores.',
+      'The comparison period contains a discount-driven promotion month. Half-on-half against it overstates the decline.',
+      'A slide can be arithmetically right and still claim something the analysis never established.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
+
+  'margin-review': {
+    projectTitle: 'Margin & Promotion Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Know which version of a number answers which question, and label both.',
+      'Refuse measures that can be hit without anything improving.',
+      'Give a decision-maker the trade, not your opinion of the trade.',
+    ],
+    scenario:
+      'Finance are rebuilding the range plan and want gross margin by category. There is no margin column, and the cost column is today\'s cost rather than the cost when each sale happened — fifteen products were repriced upward during the year and they carry a quarter of revenue. Somewhere in the middle of it, one month turns out to have been a promotion nobody wrote down.',
+    estimatedMinutes: 130,
+    difficulty: 'Hard',
+    primaryObjective: 'Margin the range review can be planned on, and an honest account of what the promotion bought.',
+    constraints: [
+      { label: 'Cost basis', value: 'Reporting uses the cost that applied on the day of sale. A forward-looking view uses current cost. Never one table for both.' },
+      { label: 'Data scope', value: 'Comparisons across periods use the stable estate — two stores opened inside the window and one closed.' },
+      { label: 'Measure rule', value: 'A rate that can be improved by changing the sales mix is not, on its own, a target.' },
+    ],
+    deliverables: [
+      { text: 'Margin by category on the cost that applied, with contribution beside rate.', via: 'sql-terminal' },
+      { text: 'A quantified account of what the promotion cost and bought.', via: 'python-notebook' },
+      { text: 'Replacement wording for the planning note.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The naive cost error is uneven — 7% in Equipment, nothing in Tea — so it distorts the comparison between categories rather than shifting the total.',
+      'It also flatters the present against the past, because the two methods agree after a cost change and diverge before it.',
+      'Equipment has the lowest margin rate and the largest margin contribution. A range review that confuses those loses a crore.',
+      'The discount curve reverses at the deepest band, on 326 lines out of 9,022. That tail is the thinnest part of the data and the easiest place to lose money.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
+
+  'range-review': {
+    projectTitle: 'Range & Space Review',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Start from the population, not from the rows that happen to exist.',
+      'Refuse a measure that produces suspiciously tidy output, and say why in writing.',
+      'State a delist as a cost to be justified, never as a saving nobody computed.',
+    ],
+    scenario:
+      'Buying want a delist list for the spring reset and have asked for stock cover to support it. Seven of the sixty-eight lines in the range have never sold a unit anywhere, and no previous review has seen them. The stock counts will produce a cover figure, and it will not mean anything.',
+    estimatedMinutes: 125,
+    difficulty: 'Hard',
+    primaryObjective: 'A delist candidate list built only on measures this data can defend, costed honestly.',
+    constraints: [
+      { label: 'Population', value: 'Range reporting starts from products. A product with no sales has no row in sales, and an inner join deletes it.' },
+      { label: 'Cost basis', value: 'Margin uses the cost that applied on the day of sale.' },
+      { label: 'Framing', value: 'The margin a delist removes is computable. The space and capital it frees is not, and must not be estimated.' },
+    ],
+    deliverables: [
+      { text: 'A range table covering every product, including those that never sold.', via: 'sql-terminal' },
+      { text: 'A delist candidate list with the test each line fails.', via: 'python-notebook' },
+      { text: 'A written refusal of the stock cover measure, with the evidence.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Seven lines have no sales rows at all. Every previous review ranked products by sales and never saw them.',
+      'Average stock is 14.8 to 24.0 units for every product while annual sales run 234 to 482. Stock does not respond to demand here, so cover is not measuring anything.',
+      'A delist rule expressed as a share of category margin never terminates — every cut creates a new bottom.',
+      'Total margin and margin per carrying store rank the candidates differently. Both are correct measures of different things.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
+
+  'board-pack': {
+    projectTitle: 'Year-End Board Pack',
+    companyName: 'Meridian Retail',
+    companyBlurb: 'Meridian\'s thirteen-store retail arm. You lead the analytics team that reports on it.',
+    yourRole: 'Data Analytics Team Lead',
+    roleResponsibilities: [
+      'Own the number the board hears, and be able to explain every other number in circulation.',
+      'Build figures that reconcile to the rupee, from one computation.',
+      'Publish an estimate with its assumptions on the same page, or do not publish it.',
+    ],
+    scenario:
+      'Three people have submitted three different revenue figures for the year — ₹5.00 crore, ₹4.85 crore and ₹4.45 crore. None of them is wrong. The board meets in ten days and needs one headline, a bridge to the others, and a figure for next year that somebody has already drafted as this year plus five percent.',
+    estimatedMinutes: 140,
+    difficulty: 'Hard',
+    primaryObjective: 'One headline the board can act on, a bridge that reconciles exactly, and an estimate whose assumptions are visible.',
+    constraints: [
+      { label: 'Reconciliation', value: 'Every step of the bridge must tie to the rupee. A bridge that nearly adds up is worse than none.' },
+      { label: 'Single source', value: 'Every figure the pack quotes comes from one computation, so no two can disagree.' },
+      { label: 'Estimates', value: 'A forecast is a set of assumptions with a number attached. Present the assumptions or do not present the number.' },
+    ],
+    deliverables: [
+      { text: 'A bridge from gross revenue to like-for-like, step by step.', via: 'sql-terminal' },
+      { text: 'Every published figure from a single computation.', via: 'python-notebook' },
+      { text: 'A board summary and a standing reporting standard.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The correction you made to the duplicated month last time was right for a comparison and wrong for a total — excluding the month throws away ₹3.46 lakh of real trade.',
+      'Two stores traded part of the year and one closed. An estimate that ignores the estate is not an estimate of anything.',
+      'Assuming flat like-for-like trading is optimistic here, not conservative. The second half fell.',
+      'A summary can be arithmetically perfect and still tell a board that a decline was offset, that openings were successful, and that an estimate was cautious.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'retail_sales',
+  },
+
+  'capacity-review': {
+    projectTitle: 'Demand & Capacity Review',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function itself — fourteen people, the work the business asks of them, and what it costs. This time the subject of the analysis is your own team.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Answer the establishment question honestly, including the part of it that the data cannot answer.',
+      'Refuse measures that rank people on something other than their work, and say why in one checkable sentence.',
+      'Judge the team yourself. That is what the job is, and it is not something a table can be asked to do for you.',
+    ],
+    scenario:
+      'The budget round opens in three weeks and analytics is one of the larger cost lines. A business stakeholder has asked three questions in one email — what an analysis costs, who is most productive, and whether all fourteen people are needed — and pointed at the timesheets as the place to find out. The timesheets account for 12.8% of the hours the company pays for.',
+    estimatedMinutes: 150,
+    difficulty: 'Hard',
+    primaryObjective: 'A defensible answer on cost and demand, an honest answer on establishment, and no per-person ranking built on a measure that cannot carry one.',
+    constraints: [
+      { label: 'Coverage first', value: 'The 12.8% has to be stated before any rate is, or the rate gets quoted without it.' },
+      { label: 'No individual ranking', value: 'Hours logged ranks timesheet discipline. It does not leave your desk attached to names.' },
+      { label: 'Capacity, not headcount', value: 'One person left in January and one joined in March. Thirteen people bought 11.92 person-years.' },
+    ],
+    deliverables: [
+      { text: 'Coverage, cost and demand from the timesheets, with the coverage on the same page as the cost.', via: 'sql-terminal' },
+      { text: 'The rate both ways — against logged hours and against capacity hours.', via: 'python-notebook' },
+      { text: 'An answer to the exec, a correction to the budget slide, and a note to the team.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Hours per person ranks people by how diligently they fill in a timesheet. Nobody in the team logs even half their working days.',
+      'Cost per logged hour comes out at \u20b99,664. Against capacity hours it is about \u20b91,241. The same cost, two denominators, and only one of them describes anything real.',
+      'Cancelled work carries real logged time — 15% of all effort. Filtering to delivered work hides it, which is the opposite of what a budget conversation needs.',
+      'Finance submits many small requests and Product submits few large ones. Ranked by count Finance leads; ranked by hours Product does. Neither ranking is the answer on its own.',
+      'The question you were asked is about resourcing. Answering the productivity question instead is the easy way to look responsive and be useless.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
+
+  'tooling-review': {
+    projectTitle: 'Tooling & Licence Renewal',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function\u2019s six tooling contracts \u2014 \u20b961.14 lakh a year, 16.5% of what the team costs, and the part of the cost line nobody is defending.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Decide what each contract renews at, before the renewal date decides for you.',
+      'Separate seats nobody has ever held from seats a real person might need next week. They are the same rupees and completely different decisions.',
+      'Hand back what is genuinely spare, and be able to say what the spare you kept is for.',
+    ],
+    scenario:
+      'A \u20b921.6 lakh BI contract auto-renews in forty-six days and Finance needs a seat count by Friday. Sixteen of its thirty seats have never been assigned to anybody. Finance has also sent a cost-per-seat ranking that points squarely at the one contract in the estate that is fully used, and has already repeated it to somebody.',
+    estimatedMinutes: 150,
+    difficulty: 'Hard',
+    primaryObjective: 'A seat count for every contract, split into what can be handed back with no consequence and what needs a conversation first.',
+    constraints: [
+      { label: 'The clock', value: 'An auto-renewal is a decision that gets made by default. Friday is the last day the default can be changed.' },
+      { label: 'Two kinds of spare', value: 'A seat nobody has ever held and a seat somebody stopped opening in February are not the same finding and must not be added up without saying so.' },
+      { label: 'Recoverable vs recommendable', value: 'Publish the theoretical maximum and what you are actually proposing, with the gap explained.' },
+    ],
+    deliverables: [
+      { text: 'Seats contracted, assigned and actively used, per tool, from one query.', via: 'sql-terminal' },
+      { text: 'The two rankings \u2014 cost per seat and cost per active user \u2014 and how far each tool moves between them.', via: 'python-notebook' },
+      { text: 'A renewal recommendation, a correction to Finance, and a reply to the vendor.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'Cost per seat divides the contract by the contract. It improves every time we buy a seat nobody uses, which is how the estate got here.',
+      'The per-seat ranking puts Warehouse compute first. It has fourteen seats and thirteen active users and is the best-used tool we own.',
+      'Somebody left on 30 January and still holds four seats worth \u20b92.76 lakh a year. Nobody noticed for five months, because reclaiming them is a step that does not exist.',
+      'The Statistical suite has five seats unopened since February. It is the biggest single-tool saving on the page and the only tool that does what it does.',
+      'The vendor\u2019s counter-offer is a discount measured against the wrong baseline. Against your own proposal it is a \u20b96.6 lakh a year increase, locked in for two years.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
+
+  'intake-review': {
+    projectTitle: 'Intake & Prioritisation',
+    companyName: 'Meridian Group',
+    companyBlurb: 'A year of work asked of the analytics team \u2014 384 requests from six functions, the priority everybody attached to them, and what became of each one.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Find out whether the controls this function relies on actually control anything.',
+      'Answer a complaint fast enough that the person keeps complaining next time.',
+      'Propose a replacement before removing a control, and say what each change should move.',
+    ],
+    scenario:
+      'Retail Ops has largely stopped sending work. Their view is that nothing marked urgent comes back faster than anything else, that three things they raised last year have never been looked at, and that their team now marks everything urgent because it is the only lever the form offers. They would like to know whether it is them or whether it is everyone.',
+    estimatedMinutes: 155,
+    difficulty: 'Hard',
+    primaryObjective: 'Settle the complaint with evidence, establish what the priority field actually does, and propose what replaces it \u2014 with the before-figures recorded.',
+    constraints: [
+      { label: 'Speed of reply', value: 'The factual half of a complaint is worth settling within a day. Goodwill decays faster than analysis improves.' },
+      { label: 'Survivorship', value: 'Every lead-time average is computed over work that finished. Publish the queue beside it or the number improves as the service gets worse.' },
+      { label: 'Replace before removing', value: 'A control taken away with nothing in its place gets reinstated. Lead with what the requester gets instead.' },
+    ],
+    deliverables: [
+      { text: 'Demand, outcomes and the queue, from one query per question.', via: 'sql-terminal' },
+      { text: 'How much of the variation in lead time the priority field actually accounts for.', via: 'python-notebook' },
+      { text: 'A reply to the complaint, a proposal to your manager, and the note to six functions.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The priority field works \u2014 urgent closes in 25.5 days and low in 31.3. Six days out of twenty-six is not a difference any requester could perceive.',
+      'Urgent predicts cancellation rather than speed: 21.9% of urgent work is cancelled against 5.9% of high-priority work. Honouring the flag harder would do the most-abandoned work first.',
+      'The reported lead time stops the clock at first delivery. Reopened requests take 25.3 days to first delivery and 43.3 to final close, so the published figure flatters exactly the work that went wrong.',
+      'Thirty-two requests have never been picked up, averaging 191 days in the queue, and the oldest was raised on 4 July 2025.',
+      'Data fixes reopen at 1.6% and reports at 18.8%. That gap is about how completely the request was specified, not about who did the work.',
+      'Forty-three requests are in progress across thirteen people. Re-ordering a queue that nothing leaves does not shorten it.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
+
+  'headcount-case': {
+    projectTitle: 'The Headcount Case',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function at budget time. Six functions submit, every one of them asks for something, and there is less money than the sum of the asks.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Answer the establishment question from the evidence, including when the evidence disagrees with the person who asked for the answer.',
+      'Tell your own manager, early and in person, when the thing she has asked for is the wrong thing.',
+      'Record the conditions that would change the answer, with today\u2019s values against them, while they are still known.',
+    ],
+    scenario:
+      'Your manager wants analytics to go into the budget round for two additional analysts. Her reasoning is that the team has been under pressure all year, that a January leaver took three months to replace, that there is a visible backlog, and that a function which does not ask is assumed not to need. Demand fell 19.7% between the two halves of the year, and the backlog grew from 35 to 89 over the same period.',
+    estimatedMinutes: 160,
+    difficulty: 'Hard',
+    primaryObjective: 'An establishment submission that is true, checkable, and survives being read by somebody who wanted a different answer.',
+    constraints: [
+      { label: 'Checkable beats strong', value: 'Nobody has time to inspect the working. One figure a reader can verify in two minutes buys credit for the rest.' },
+      { label: 'Own your weakest number', value: 'A caveat you volunteer reads as rigour. The same caveat found by a reader contaminates the whole document.' },
+      { label: 'No is a deferral, not a verdict', value: 'Conditions with today\u2019s values, a direction, what each triggers, and a date \u2014 or it is a refusal with a hopeful sentence at the end.' },
+    ],
+    deliverables: [
+      { text: 'Demand, throughput and the backlog, month by month, from one query each.', via: 'sql-terminal' },
+      { text: 'The backlog projected forward under no change, one more analyst, and halving cancelled work.', via: 'python-notebook' },
+      { text: 'The submission, the conversation with your manager in writing, and the note to the team.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The conclusion arrived before the analysis. Evidence that supports two people will register as a finding and evidence that does not will register as an obstacle.',
+      'Demand fell by a fifth, which removes the simplest case for hiring and is also exactly what people quietly giving up looks like. Both readings fit the same number.',
+      'The backlog grew while demand fell, so nothing about arrivals explains it. Forty-three items are open across thirteen people and the oldest has been open 340 days.',
+      '15.2% of effort goes on work later cancelled \u2014 about 1.81 person-years, more than the ask would add and already paid for. Use the share of person-years, not the face-value hours.',
+      'Exec demand grew by two thirds and is the worst served at 54.2%. It is fifteen requests in six months: a routing problem, not a headcount one.',
+      '\u20b913.89 lakh of tooling was handed back last month. It is the only banked number available and it is what makes \u201cno ask\u201d read as discipline rather than low ambition.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no

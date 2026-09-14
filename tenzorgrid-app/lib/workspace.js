@@ -384,6 +384,277 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 3,
     },
+
+    // ---- Team Lead track ----------------------------------------------------------
+    // The work changes shape here. A lead is rarely the first person to compute a number
+    // — they are handed one somebody else computed and asked whether the business can be
+    // run on it. So these projects open with a draft, a claim or a slide, and the task is
+    // to establish what it is worth before it reaches a room.
+    {
+      key: 'trading-review',
+      title: 'Half-Year Trading Review',
+      description: 'The board pack has a draft headline, a star performer and three definitions nobody agreed. Sign it off or fix it.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — the headline counts refunds as transactions.
+        'ta-101', 'ta-102', 'ta-103', 'ta-104', 'ta-105', 'ta-106',
+        // Day 2 — the store ranking is a ranking of trading days.
+        'ta-110', 'ta-111', 'ta-112', 'ta-113', 'ta-114', 'ta-115',
+        // Day 3 — the wobble. The estate's one growing store is a double-loaded month.
+        'ta-120', 'ta-121', 'ta-122', 'ta-123', 'ta-124', 'ta-125',
+        // Day 4 — rebuild it like for like, and refuse to name a cause you cannot show.
+        'ta-130', 'ta-131', 'ta-132', 'ta-133', 'ta-134', 'ta-135',
+        // Day 5 — the pack, the sign-off, and what changes about how this gets produced.
+        'ta-140', 'ta-141', 'ta-142', 'ta-143', 'ta-144', 'ta-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 42000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Drafted the pack you are checking', day: 1 },
+        { name: null, role: 'Data Analytics Team Lead', does: 'Owns what leaves the team', day: 1, throughDay: 5 },
+        { name: 'Priya Menon', role: 'Head of Product', does: 'Presents the trading slide', day: 5, needsYou: true },
+      ],
+      unlockAfter: 0,
+    },
+    {
+      key: 'margin-review',
+      title: 'Margin & Promotion Review',
+      description: 'Finance want margin by category. The cost column is today\'s cost, and one month of the year was a promotion nobody documented.',
+      kind: 'audit',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — there is no margin column, and unit_cost is the cost today.
+        'tb-101', 'tb-102', 'tb-103', 'tb-104', 'tb-105', 'tb-106',
+        // Day 2 — Equipment is two thirds of revenue at the worst rate in the book.
+        'tb-110', 'tb-111', 'tb-112', 'tb-113', 'tb-114', 'tb-115',
+        // Day 3 — the wobble. The naive cost understates margin UNEVENLY, so it distorts
+        // the comparison rather than shifting it, and invents an improving trend.
+        'tb-120', 'tb-121', 'tb-122', 'tb-123', 'tb-124', 'tb-125',
+        // Day 4 — November: 55% more units, 39% more revenue, 12% more margin.
+        'tb-130', 'tb-131', 'tb-132', 'tb-133', 'tb-134', 'tb-135',
+        // Day 5 — whether to do it again, and what to instrument before anyone does.
+        'tb-140', 'tb-141', 'tb-142', 'tb-143', 'tb-144', 'tb-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 46000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Owns the range review this feeds', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Team Lead', does: 'The margin and promotion analysis', day: 1, throughDay: 5 },
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Drafts the planning note', day: 5 },
+      ],
+      unlockAfter: 1,
+    },
+    {
+      key: 'range-review',
+      title: 'Range & Space Review',
+      description: 'Buying want a delist list. Seven lines in the range have never been stocked anywhere, and the stock table cannot answer the question they asked.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — seven products no store has ever carried, invisible to an inner join.
+        'tc-101', 'tc-102', 'tc-103', 'tc-104', 'tc-105', 'tc-106',
+        // Day 2 — ten of sixty-one lines carry 55% of the margin, and a delist rule that
+        // cannot see the worst lines in the book.
+        'tc-110', 'tc-111', 'tc-112', 'tc-113', 'tc-114', 'tc-115',
+        // Day 3 — the wobble. Stock cover is computable and meaningless: every product
+        // holds about twenty units whether it sells 234 a year or 482.
+        'tc-120', 'tc-121', 'tc-122', 'tc-123', 'tc-124', 'tc-125',
+        // Day 4 — distribution against performance, and what a delist actually saves.
+        'tc-130', 'tc-131', 'tc-132', 'tc-133', 'tc-134', 'tc-135',
+        // Day 5 — the paper, the sign-off, and what would make the next one answerable.
+        'tc-140', 'tc-141', 'tc-142', 'tc-143', 'tc-144', 'tc-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 44000,
+      contributors: [
+        { name: 'Sneha Joshi', role: 'Buying Manager', does: 'Owns the range and the delist decision', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Team Lead', does: 'The range and space analysis', day: 1, throughDay: 5 },
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Proposes the delist rule', day: 2 },
+      ],
+      unlockAfter: 2,
+    },
+    {
+      key: 'board-pack',
+      title: 'Year-End Board Pack',
+      description: 'Three people submitted three different revenue figures. You own the one the board hears, and the estimate for next year.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'lead',
+      datasetKey: 'retail_sales',
+      taskKeys: [
+        // Day 1 — three submissions, three correct answers to three unstated questions.
+        'td-101', 'td-102', 'td-103', 'td-104', 'td-105', 'td-106',
+        // Day 2 — the bridge, which has to reconcile to the rupee.
+        'td-110', 'td-111', 'td-112', 'td-113', 'td-114', 'td-115',
+        // Day 3 — the wobble. The learner's own earlier correction was right for a
+        // comparison and wrong for a total, and cost three and a half lakh of real trade.
+        'td-120', 'td-121', 'td-122', 'td-123', 'td-124', 'td-125',
+        // Day 4 — an estimate for next year that has to survive being asked what it assumes.
+        'td-130', 'td-131', 'td-132', 'td-133', 'td-134', 'td-135',
+        // Day 5 — the pack, the board question, and the standard that stops this recurring.
+        'td-140', 'td-141', 'td-142', 'td-143', 'td-144', 'td-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 52000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Submitted the gross figure', day: 1 },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Submitted the net figure', day: 1 },
+        { name: null, role: 'Data Analytics Team Lead', does: 'Owns the number the board hears', day: 1, throughDay: 5 },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Presents the pack to the board', day: 5, needsYou: true },
+      ],
+      unlockAfter: 3,
+    },
+    {
+      key: 'capacity-review',
+      title: 'Demand & Capacity Review',
+      description: 'The budget round wants a cost per analysis and a view on whether fourteen people is right. The timesheets cover an eighth of the paid time.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — the intake. A resourcing question arrives dressed as a productivity one.
+        'ma-101', 'ma-102', 'ma-103', 'ma-104', 'ma-105', 'ma-106',
+        // Day 2 — who looks busy, which turns out to rank people by timesheet discipline.
+        'ma-110', 'ma-111', 'ma-112', 'ma-113', 'ma-114', 'ma-115',
+        // Day 3 — the wobble. Coverage is 12.8%, so every rate built on logged hours is
+        // out by a factor of eight, including the one already sent.
+        'ma-120', 'ma-121', 'ma-122', 'ma-123', 'ma-124', 'ma-125',
+        // Day 4 — capacity from presence rather than headcount, and the cost of work
+        // nobody ended up wanting.
+        'ma-130', 'ma-131', 'ma-132', 'ma-133', 'ma-134', 'ma-135',
+        // Day 5 — what the exec is told, what the budget pack may say, and what gets
+        // instrumented so the next budget round is not this one again.
+        'ma-140', 'ma-141', 'ma-142', 'ma-143', 'ma-144', 'ma-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 61000,
+      contributors: [
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Asks the budget-round question', day: 1, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns the answer and the team it is about', day: 1, throughDay: 5 },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Drafts the analytics slide for the budget pack', day: 5, needsYou: true },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Takes the establishment case into the round', day: 5 },
+      ],
+      unlockAfter: 0,
+    },
+    {
+      key: 'tooling-review',
+      title: 'Tooling & Licence Renewal',
+      description: 'A ₹21.6 lakh BI contract auto-renews in forty-six days. Sixteen of its thirty seats have never been assigned to anybody.',
+      kind: 'review',
+      stakeholder: 'finance_analyst',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — the estate, and cost per seat, which is where everybody starts.
+        'mb-101', 'mb-102', 'mb-103', 'mb-104', 'mb-105', 'mb-106',
+        // Day 2 — seats, assignments and active users turn out to be three numbers, and
+        // the per-seat ranking inverts when the denominator has people in it.
+        'mb-110', 'mb-111', 'mb-112', 'mb-113', 'mb-114', 'mb-115',
+        // Day 3 — the wobble. Monday's ranking pointed at the best-used tool in the
+        // estate, and the most visible cut is the one that removes a capability.
+        'mb-120', 'mb-121', 'mb-122', 'mb-123', 'mb-124', 'mb-125',
+        // Day 4 — the recovery in three buckets, and the gap between what is recoverable
+        // and what you are willing to recommend.
+        'mb-130', 'mb-131', 'mb-132', 'mb-133', 'mb-134', 'mb-135',
+        // Day 5 — the renewal, a vendor who would rather you did not, and the checks that
+        // stop next year being this week again.
+        'mb-140', 'mb-141', 'mb-142', 'mb-143', 'mb-144', 'mb-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 1389000,
+      contributors: [
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Owns the renewal and the budget line', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Decides the seat counts', day: 1, throughDay: 5 },
+        { name: 'Rahul Verma', role: 'Data Engineer', does: 'Reclaims the seats once they are agreed', day: 4 },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Signs off what becomes standing process', day: 5, needsYou: true },
+      ],
+      unlockAfter: 1,
+    },
+    {
+      key: 'intake-review',
+      title: 'Intake & Prioritisation',
+      description: 'A requesting function has stopped sending work. The priority field moves delivery by six days, and thirty-two requests have never been picked up at all.',
+      kind: 'review',
+      stakeholder: 'stakeholder',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — a complaint with four claims in it, the shape of a year of demand, and
+        // the thirty-two requests nobody ever started.
+        'mc-101', 'mc-102', 'mc-103', 'mc-104', 'mc-105', 'mc-106',
+        // Day 2 — what the urgent flag buys, which is six days, and what it predicts,
+        // which turns out to be cancellation.
+        'mc-110', 'mc-111', 'mc-112', 'mc-113', 'mc-114', 'mc-115',
+        // Day 3 — the wobble. The published lead time measures to first delivery and
+        // understates the work that went wrong by eighteen days.
+        'mc-120', 'mc-121', 'mc-122', 'mc-123', 'mc-124', 'mc-125',
+        // Day 4 — the load, what replaces the field, and the queue that has to be closed.
+        'mc-130', 'mc-131', 'mc-132', 'mc-133', 'mc-134', 'mc-135',
+        // Day 5 — the proposal, the exception the exec wants, and the baseline recorded
+        // before anything changes so the review in six months means something.
+        'mc-140', 'mc-141', 'mc-142', 'mc-143', 'mc-144', 'mc-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 74000,
+      contributors: [
+        { name: 'Ravi Menon', role: 'Retail Analyst', does: 'Raises the complaint that starts it', day: 1, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns intake and what replaces the priority field', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Wants an escalation route kept', day: 5, needsYou: true },
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Takes the intake change to the other functions', day: 5 },
+      ],
+      unlockAfter: 2,
+    },
+    {
+      key: 'headcount-case',
+      title: 'The Headcount Case',
+      description: 'Your manager wants a case for two more analysts. Demand fell by a fifth this year and the backlog grew anyway.',
+      kind: 'review',
+      stakeholder: 'line_manager',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — a conclusion arrives before the analysis. Demand turns out to be falling.
+        'md-101', 'md-102', 'md-103', 'md-104', 'md-105', 'md-106',
+        // Day 2 — falling demand and a growing backlog together, which rules out the
+        // simplest case for hiring and points at flow instead.
+        'md-110', 'md-111', 'md-112', 'md-113', 'md-114', 'md-115',
+        // Day 3 — the wobble, and the hardest one in the track: there is more capacity
+        // inside the team than the ask would add, so the honest submission asks for
+        // nobody, and the person who has to be told that is your own manager.
+        'md-120', 'md-121', 'md-122', 'md-123', 'md-124', 'md-125',
+        // Day 4 — the submission, and an exec who has found the one number in it that
+        // points the other way.
+        'md-130', 'md-131', 'md-132', 'md-133', 'md-134', 'md-135',
+        // Day 5 — the team, the January test written down while the values are known,
+        // and the end of the track.
+        'md-140', 'md-141', 'md-142', 'md-143', 'md-144', 'md-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 3152880,
+      contributors: [
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Wants the case for two analysts', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns the establishment submission', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Reads the submission and finds the counter-evidence', day: 4, needsYou: true },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Takes the submission into the round', day: 5 },
+      ],
+      unlockAfter: 3,
+    },
   ],
 };
 
@@ -4826,6 +5097,3864 @@ const TASKS = {
       skills: { communication: 100, statistics: 100, businessLogic: 100 },
     },
     estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 1 · Half-Year Trading Review (retail_sales) ---------------------------
+  // First project at Team Lead, and the difference shows in what is being asked. Nobody
+  // asks the learner to compute a number here — they are handed numbers other people
+  // computed and asked whether the estate can be run on them. Monday the headline double
+  // counts returns. Tuesday the ranking is a ranking of trading days. Wednesday the best
+  // performing store in the estate turns out to be a double-loaded feed. Thursday the
+  // comparison has to be rebuilt like for like. Friday it goes to the board.
+
+  'ta-101': {
+    title: 'What the headline is counting',
+    hint: "Look at what a return does to each of the three numbers in the note before you check any of them.",
+    brief: "Ravi has sent the half-year headline. Before verifying anything, work out which of his three figures can survive contact with the sales table.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'H1 numbers for the board pack',
+        body: "Rough cut for Tuesday:\n\n- Revenue for the year: ₹5.00 crore\n- Transactions: 9,022\n- Average transaction value: ₹5,546\n\nBest store is Indiranagar at ₹74.8 lakh, and the star of the half is Ashok Nagar, up 21% on the second half. Worth calling out.\n\nCan you sanity check before it goes in?",
+      },
+      prompt: 'Tick every problem you can already see, before running a query.',
+      options: [
+        { key: 'returns', correct: true, label: 'A return is a row in the sales table, so "transactions" counts refunds as sales', why: '9,022 lines include 492 returns. A refund is not a transaction in the sense a board reads that word, and nothing in his note says which he means.' },
+        { key: 'atv', correct: true, label: 'Average transaction value computed over all rows is dragged down by negative lines', why: 'Dividing net revenue by a line count that includes refunds is two errors compounding — a smaller numerator over a larger denominator.' },
+        { key: 'grossnet', correct: true, label: '"Revenue" needs to say whether it is gross or net of returns', why: 'The two differ by ₹15.7 lakh here. Both are legitimate figures; publishing one unlabelled is what makes it wrong.' },
+        { key: 'store', correct: false, label: 'Indiranagar cannot be the best store — flagships always are', why: 'It is the best store on revenue, and checking that is a query rather than a prejudice. Guessing the answer before looking is the habit this whole project is against.' },
+        { key: 'crore', correct: false, label: 'Reporting in crore is imprecise and should be avoided', why: 'The unit is fine for a board. What is missing is the definition, not the precision.' },
+        { key: 'ashok', correct: false, label: 'A 21% rise is implausible and must be an error', why: 'It IS an error, and you do not know that yet. "Implausible therefore wrong" is a guess that happens to be right, which is the worst kind of analysis to be rewarded for.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ta-102': {
+    title: 'Gross, returns and net in one row',
+    hint: "A return has a negative quantity. Separate the two directions with CASE inside the SUM rather than filtering the whole query.",
+    brief: "Establish the figures properly, as a bridge a board can follow. Write ONE SQL SELECT returning one row PER MEASURE, with columns measure and value, in this order: gross_revenue, returns_value (positive), net_revenue, units_sold, units_returned (positive), sale_lines.",
+    referenceSql: "SELECT 'gross_revenue' AS measure, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS value FROM sales UNION ALL SELECT 'returns_value', -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales UNION ALL SELECT 'net_revenue', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'units_sold', SUM(CASE WHEN quantity > 0 THEN quantity ELSE 0 END) FROM sales UNION ALL SELECT 'units_returned', -SUM(CASE WHEN quantity < 0 THEN quantity ELSE 0 END) FROM sales UNION ALL SELECT 'sale_lines', SUM(CASE WHEN quantity > 0 THEN 1 ELSE 0 END) FROM sales",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ta-103': {
+    title: 'Return rate by category',
+    hint: "Two different rates — one on lines, one on value — and they rank the categories differently.",
+    brief: "Ravi will be asked which categories come back. Write ONE SQL SELECT returning, per category: the number of lines, returned lines as a percentage of all lines to two places, and returned value as a percentage of gross revenue to two places. Worst by value first.",
+    referenceSql: "SELECT p.category, COUNT(*) AS lines, ROUND(SUM(CASE WHEN s.quantity < 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS return_line_pct, ROUND(-SUM(CASE WHEN s.quantity < 0 THEN s.quantity * s.unit_price ELSE 0 END) * 100.0 / SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END), 2) AS return_value_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY return_value_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ta-104': {
+    title: 'Average transaction value, done properly',
+    hint: "Decide what a transaction is first. Then the query is short.",
+    brief: "Rebuild Ravi's third figure, and show him where it bites. Write ONE SQL SELECT returning, per store: his version — net revenue over all lines — the defensible version — gross revenue over sale lines only — and the gap between them. Round each to the nearest rupee, label them naive_atv, sale_atv and gap, and put the biggest gap first.",
+    referenceSql: "SELECT st.name, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(*)) AS naive_atv, ROUND(SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END) * 1.0 / SUM(CASE WHEN s.quantity > 0 THEN 1 ELSE 0 END)) AS sale_atv, ROUND(SUM(CASE WHEN s.quantity > 0 THEN s.quantity * s.unit_price ELSE 0 END) * 1.0 / SUM(CASE WHEN s.quantity > 0 THEN 1 ELSE 0 END)) - ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(*)) AS gap FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY st.id ORDER BY gap DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ta-105': {
+    title: 'Which definition goes in the pack',
+    hint: "There is no single right answer here. There is a right way to present whichever you pick.",
+    brief: "You have both versions. Decide what the board pack should say.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the pack.',
+      options: [
+        { key: 'label', correct: true, label: 'Whichever figure is used, the definition sits beside it', why: 'Net of returns or gross, sale lines or all lines — a board cannot tell from the number, and next quarter somebody will compute the other one and the two will be compared.' },
+        { key: 'both', correct: true, label: 'Gross and net both, with returns shown as the bridge between them', why: 'It is one extra row and it makes the return rate visible as a business fact rather than a definitional footnote.' },
+        { key: 'sales', correct: true, label: 'Transaction counts and average values should use sale lines only', why: 'A refund is a transaction in the till system and not in the sense a board means. Counting it as one drags the average down by about ₹300 for no reason anybody could explain in the room.' },
+        { key: 'net', correct: false, label: 'Use net revenue everywhere — it is the conservative choice', why: 'Conservative is not the same as correct, and a "conservative" figure quoted against a gross target is exactly how two teams end up arguing about whether a number was hit.' },
+        { key: 'drop', correct: false, label: 'Exclude returns from the analysis entirely', why: 'Returns are 3.1% of gross revenue and they are real money leaving. Removing them makes every figure on the page optimistic.' },
+        { key: 'footnote', correct: false, label: 'Put the definitions in an appendix so the headline stays clean', why: 'Nobody reads the appendix and the headline is the bit that gets quoted. The definition has to travel with the number.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ta-106': {
+    title: 'Reply to Ravi',
+    hint: "He asked for a sanity check, not a rewrite. Tell him which figures move and by how much.",
+    brief: "Write back on day one. Two of his three numbers change and one needs a definition attached. Be specific and do not make him feel stupid for asking. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'H1 headline — two of the three need changing', maxWords: 160,
+      prompt: 'Which figures are wrong, what they should be, and the one definition that has to go in the pack.',
+      rubric: [
+        { key: 'txn', label: 'That the transaction count includes returns', markers: ['return|refund|492|8,?530|negative|not transaction'], why: 'The clearest of the three and the easiest for him to fix.' },
+        { key: 'atv', label: 'The corrected average transaction value', markers: ['5,?8|average|atv|transaction value|per sale'], why: 'Replacing a wrong figure with no figure leaves him nothing for Tuesday.' },
+        { key: 'define', label: 'That revenue has to say gross or net', markers: ['gross|net|define|definition|label|state|which'], why: 'The difference is ₹15.7 lakh, and both numbers are defensible — only the silence is not.' },
+        { key: 'specific', label: 'Actual numbers, not just categories of problem', markers: ['\\d{3}|lakh|crore|%|percent'], why: 'A sanity check that returns adjectives is not a sanity check.' },
+        { key: 'tone', label: 'Written so he asks again next time', markers: ['good|worth|glad|thanks|right to|useful|easy fix|small'], why: 'He circulated a draft for checking, which is exactly the behaviour you want. Making that expensive for him is how drafts stop being circulated.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ta-110': {
+    title: 'The estate, with its dates',
+    hint: "opened_on and closed_on are the point of this one. Two stores are younger than the reporting window.",
+    brief: "Before ranking anything, look at what the estate did this year. Write ONE SQL SELECT returning, per store: name, format, opened_on, closed_on, the number of distinct days it recorded a sale, and net revenue. Biggest revenue first.",
+    referenceSql: "SELECT st.name, st.format, st.opened_on, st.closed_on, COUNT(DISTINCT s.sold_at) AS trading_days, SUM(s.quantity * s.unit_price) AS net_revenue FROM stores st LEFT JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ta-111': {
+    title: 'Three stores that break the ranking',
+    hint: "Two opened during the window and one closed during it. Ask what an annual total means for each.",
+    brief: "Your estate table has three stores that cannot be compared with the rest on an annual total. Say what to do about each.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'partial', correct: true, label: 'Sector 29 and Salt Lake opened inside the window, so their totals are part-year', why: 'October and February openings. Ranking them against a full year is ranking them on how long they have existed.' },
+        { key: 'closed', correct: true, label: 'Park Street closed in January and is still in the estate table', why: 'It trades for seven months and then stops. Included in a per-store average it drags the estate down; excluded without saying so, the totals no longer reconcile.' },
+        { key: 'normalise', correct: true, label: 'A per-trading-day figure makes them comparable, and has to be labelled as such', why: 'It is the right normalisation and it changes the ranking, which means somebody will notice and ask. Say it on the chart.' },
+        { key: 'exclude', correct: true, label: 'Any like-for-like growth comparison has to exclude all three', why: 'You cannot compute a half-on-half change for a store that did not trade in both halves. Like-for-like means the same estate in both periods, and that is ten stores here, not thirteen.' },
+        { key: 'drop', correct: false, label: 'Drop the three from the pack entirely', why: 'They are a quarter of the estate and two of them are new investments the board specifically wants to see. Excluded from like-for-like, reported separately.' },
+        { key: 'annualise', correct: false, label: 'Scale the part-year stores up to a full year so the totals compare', why: 'A February opening annualised on four months of trading is a forecast presented as a result. Show the rate and call it a rate.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-112': {
+    title: 'Revenue per trading day',
+    hint: "Divide by the days the store actually recorded sales, not by 365.",
+    brief: "Normalise the ranking. Write ONE SQL SELECT returning, per store: name, format, distinct trading days, net revenue, and net revenue per trading day rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.format, COUNT(DISTINCT s.sold_at) AS trading_days, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / COUNT(DISTINCT s.sold_at)) AS revenue_per_day FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-113': {
+    title: 'Set the denominator standard',
+    hint: "Baner records a sale on 268 days out of roughly 365 open. A flagship records one on nearly every day. That gap is the whole argument.",
+    brief: "You have used days-with-a-sale as the denominator. There is another — days the store was open — and the two disagree most for exactly the stores the ranking is used to judge. Write to Ravi setting the standard the team will use, and say why. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Store productivity — which denominator we use', maxWords: 150,
+      prompt: 'Which denominator, why it is the right one, and where the two disagree.',
+      rubric: [
+        { key: 'pick', label: 'A clear decision, not a comparison', markers: ['days open|use|standard|we will|going forward|I want|should be'], why: 'Ravi needs a rule he can apply, not a discussion of two options.' },
+        { key: 'why', label: 'Why days open is the honest denominator', markers: ['bad day|no sale|zero|absent|quiet|delete|remove|worst day|still open'], why: 'A day with no sales is a bad day, not a day that did not happen. Dividing by sale-days quietly deletes the worst days from every average.' },
+        { key: 'where', label: 'Where the two disagree, with a store named', markers: ['baner|express|268|quiet|low volume|100|hundred'], why: 'The abstract argument convinces nobody. Baner loses nearly a hundred days between the two definitions.' },
+        { key: 'derive', label: 'That it is derivable from columns we already have', markers: ['opened_on|closed_on|derive|comput|two column|already|window'], why: 'Pre-empts the "we do not have that data" answer, which is the usual reason the worse denominator survives.' },
+        { key: 'scope', label: 'When the annual total is still the right figure', markers: ['total|absolute|board|still|both|alongside|scale|size'], why: 'Per-day is a productivity measure. It does not replace knowing which store is biggest, and a rule that pretends otherwise gets ignored.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-114': {
+    title: 'Revenue per day open',
+    hint: "julianday() on the two dates, bounded by the window, and remember a store open all year gets the full span.",
+    brief: "Do it the better way. Write ONE SQL SELECT returning, per store: name, the number of days it was open within 1 July 2025 to 30 June 2026 inclusive, net revenue, and revenue per day open rounded to the nearest rupee. Best first.",
+    referenceSql: "SELECT st.name, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-115': {
+    title: 'What the normalised ranking changed',
+    hint: "Compare the two orderings you now have, and look hardest at the stores that moved.",
+    brief: "You have the raw ranking and the per-day-open ranking. Read the difference.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your own tables support.',
+      options: [
+        { key: 'flagships', correct: true, label: 'The four flagships lead on both measures, so that part of the story is robust', why: 'Worth saying explicitly. A normalisation that changed everything would be suspicious; one that confirms the obvious part and corrects the rest is doing its job.' },
+        { key: 'saltlake', correct: true, label: 'Salt Lake looks far stronger per day than its annual total suggests', why: 'Last in the estate on a five-month total and ahead of all three express stores on a daily rate. That is a new store trading normally, and the raw ranking makes it look like the worst thing in the business.' },
+        { key: 'baner', correct: true, label: 'Baner is the weakest store per day open, and the normalisation does not rescue it', why: 'It is not the smallest store by annual revenue — Salt Lake is, because Salt Lake opened in February. On a per-day basis Baner is last by a distance, and a finding that survives the correction is worth more than one that depends on it.' },
+        { key: 'format', correct: true, label: 'Format explains most of the spread, so the ranking should be read within format', why: 'Comparing an express store with a flagship on revenue per day is comparing floor space. The useful question is which store is weak FOR ITS FORMAT.' },
+        { key: 'close', correct: false, label: 'Park Street should be closed, given where it ranks', why: 'It closed in January. Recommending an action already taken is the clearest possible sign of not having read the estate table.' },
+        { key: 'sector', correct: false, label: 'Sector 29 is underperforming and the opening should be reviewed', why: 'Eight months of trading for an express store, mid-table on a daily rate. There is no evidence of underperformance here and an opening review is an expensive thing to trigger.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ta-120': {
+    title: 'The star of the half',
+    hint: "Ravi called out one store as up 21%. Restrict to stores that traded the whole window, then split the year in two.",
+    brief: "Check the claim. Write ONE SQL SELECT over stores that were open before 1 July 2025 and have not closed, returning per store: net revenue in the first half, net revenue in the second half, and the percentage change to one place. Fastest growing first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY pct_change DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'ta-121': {
+    title: 'One store up, nine down',
+    hint: "Every other store in the estate moved the same way. Ask what would make one store an exception.",
+    brief: "Ashok Nagar is up 21.1%. Every other like-for-like store is flat or down, four of them by more than 20%. Decide what to do before you write that up.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is a sound response.',
+      options: [
+        { key: 'suspicious', correct: true, label: 'A single store moving against a uniform estate trend is worth checking before reporting', why: 'Not because it is impossible, but because the cost of checking is an hour and the cost of being wrong in a board pack is the next six months of people checking your work instead of reading it.' },
+        { key: 'monthly', correct: true, label: 'Break that store down by month — a real trend and a data fault look different', why: 'A store that genuinely improved improves gradually. A feed problem is a step change in one month and normal either side of it.' },
+        { key: 'estate', correct: true, label: 'The estate-wide decline is itself the more important finding', why: 'Nine stores down and the second half weaker across the board. That is the sentence the board needs, and it was not in Ravi\'s note at all.' },
+        { key: 'praise', correct: false, label: 'Call it out as the success story, as Ravi suggested', why: 'This is the whole test. A number that flatters somebody is the one you check hardest, not the one you check least.' },
+        { key: 'ignore', correct: false, label: 'Leave the store out of the pack until it can be explained', why: 'Silently dropping the one store that does not fit is how an analysis becomes a story. Check it, then report what you find.' },
+        { key: 'assume', correct: false, label: 'Assume it is a data fault and exclude it', why: 'You would be right, and you would have guessed. Being right by accident is not repeatable and will not survive the first time the guess is wrong.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-122': {
+    title: 'Ashok Nagar, month by month',
+    hint: "Lines as well as revenue. If both double in the same month, it is not a trading story.",
+    brief: "Break it down. Write ONE SQL SELECT for store 3 only, returning per month: the number of sale lines and net revenue. Oldest month first.",
+    referenceSql: "SELECT substr(sold_at, 1, 7) AS month, COUNT(*) AS lines, SUM(quantity * unit_price) AS net_revenue FROM sales WHERE store_id = 3 GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.35, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'ta-123': {
+    title: 'Find the duplicates',
+    hint: "Two rows are suspect when store, product, date, quantity and price all match. Group on all five and count.",
+    brief: "March has twice the lines of a normal month. Test whether they are duplicates. Write ONE SQL SELECT returning, per store and month, the number of groups where the same store, product, date, quantity and price appear more than once. Worst first, and only where there are two or more such groups.",
+    referenceSql: "SELECT store_id, substr(sold_at, 1, 7) AS month, COUNT(*) AS dup_groups FROM (SELECT store_id, product_id, sold_at, quantity, unit_price, COUNT(*) AS c FROM sales GROUP BY store_id, product_id, sold_at, quantity, unit_price HAVING c > 1) GROUP BY store_id, month HAVING dup_groups >= 2 ORDER BY dup_groups DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-124': {
+    title: 'Duplicate, or two people buying the same thing',
+    hint: "A few matching rows in a year of till data is arithmetic. Fifty-two in one store-month is not.",
+    brief: "Identical rows exist elsewhere in the estate too. Decide what distinguishes the March problem from ordinary coincidence.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'pattern', correct: true, label: 'It is the concentration that identifies it: 52 groups in one store-month against at most 2 anywhere else', why: 'Two customers buying the same product at the same price on the same day is ordinary. It happening to every line in a month is a load, not a coincidence.' },
+        { key: 'all', correct: true, label: 'Every one of Ashok Nagar\'s 104 March lines sits in a duplicate group', why: 'That is the decisive test. A partial overlap would be ambiguous; total coverage of one contiguous month is a feed replayed.' },
+        { key: 'lines', correct: true, label: 'Line count doubling alongside revenue rules out a trading explanation', why: 'A genuinely strong month has more lines OR bigger baskets. Exactly twice the lines and exactly twice the revenue is a copy.' },
+        { key: 'corrected', correct: true, label: 'Corrected, March is about ₹3.46 lakh, in line with the other months', why: 'The correction lands the month exactly where its neighbours are, which is the confirmation that the diagnosis is right.' },
+        { key: 'delete', correct: false, label: 'Delete the duplicate rows and carry on', why: 'You do not have write access to the source and should not want it. Report it, quantify it, and exclude it from your own figures.' },
+        { key: 'allstores', correct: false, label: 'The other stores with duplicate groups need investigating too', why: 'One or two matching rows across a year is what you would expect by chance. Raising them as incidents is how a real finding gets lost in noise.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-125': {
+    title: 'Tell Ravi his star is a double load',
+    hint: "He put this in a draft and invited a check. Make the correction easy to carry and give him the real story to replace it.",
+    brief: "Write to Ravi. The store he wanted to celebrate is a data fault, the estate-wide picture is worse than his draft implied, and both go in the same note. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Ashok Nagar — the 21% is a duplicated month', maxWords: 180,
+      prompt: 'What the fault is, how you know, what the corrected picture looks like, and the finding that replaces it.',
+      rubric: [
+        { key: 'what', label: 'That March is loaded twice', markers: ['duplicat|twice|double|loaded|march|repeat'], why: 'Say it plainly in the first line. Everything else is support.' },
+        { key: 'evidence', label: 'The evidence, with numbers', markers: ['52|104|every line|all of|twice the lines|group'], why: '"It looks wrong" is an opinion. "Every one of 104 lines appears twice" is a finding.' },
+        { key: 'corrected', label: 'What the store actually did', markers: ['3\\.4|346|flat|in line|normal|no growth|not up'], why: 'Correcting a number without replacing it leaves him with a hole in the pack.' },
+        { key: 'estate', label: 'The estate-wide decline, which is the real story', markers: ['nine|9|every other|estate|down|decline|second half|weaker'], why: 'The reason this matters is not the one store — it is that the pack was about to celebrate growth in a half that fell.' },
+        { key: 'ask', label: 'A specific ask about the feed', markers: ['feed|load|source|systems|reload|check|who|raise|confirm'], why: 'The duplicate is still in the warehouse. Naming who fixes it is what turns a finding into a fix.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ta-130': {
+    title: 'The estate trend, corrected',
+    hint: "Same like-for-like population, but exclude the duplicated store-month rather than the whole store.",
+    brief: "Rebuild the half-on-half table with the fault removed. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, EXCLUDING store 3's March 2026 rows, returning per store: first-half revenue, second-half revenue and the percentage change to one place. Fastest growing first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03') GROUP BY st.id ORDER BY pct_change DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-131': {
+    title: 'Region and format',
+    hint: "Careful with the denominator. Joining sales to stores repeats each store's days_open once per till line, so the days have to be summed separately from the revenue.",
+    brief: "The board will ask where the decline is concentrated. Write ONE SQL SELECT returning, per region: the number of stores, net revenue, and net revenue divided by the region's total store-days open, rounded to the nearest rupee. Biggest revenue first.",
+    referenceSql: "WITH d AS (SELECT st.id, st.region, julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS days FROM stores st), r AS (SELECT st.region, SUM(s.quantity * s.unit_price) AS net_revenue FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY st.region) SELECT d.region, COUNT(*) AS stores, r.net_revenue, ROUND(r.net_revenue * 1.0 / SUM(d.days)) AS revenue_per_day_open FROM d JOIN r ON r.region = d.region GROUP BY d.region ORDER BY r.net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-132': {
+    title: 'The chart the board will read',
+    hint: "Ranked comparison across named stores, and the axis has to start at zero or the gaps lie.",
+    brief: "Build the visual: revenue per day open, by store, for the whole estate. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT st.name AS store, SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1) AS revenue_per_day FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY revenue_per_day DESC",
+      prompt: 'Revenue per day open, by store, for the board pack.',
+      answer: { type: 'bar', x: 'store', y: 'revenue_per_day', sort: 'desc', baselineZero: true },
+      why: 'Thirteen named categories compared on one measure is a bar chart, and sorting it is what turns a list into a ranking. A zero baseline is not optional here — the estate spans roughly four thousand to twenty thousand rupees a day, and truncating the axis would make the weakest store look like it sells nothing.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ta-133': {
+    title: 'The number Ravi will be asked for',
+    hint: "One figure for the estate, like for like, with the fault out. Say what it covers.",
+    brief: "Produce the single headline. Write ONE SQL SELECT returning one row: first-half revenue, second-half revenue and the percentage change to one place, across like-for-like stores only and excluding the duplicated store-month. Label them h1, h2 and pct_change.",
+    referenceSql: "SELECT SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Ravi accepts the figure and then asks for it with
+    // the new stores added back in, because the board will want the total business too.
+    rework: true,
+  },
+
+  'ta-134': {
+    title: 'Vikram wants a reason',
+    hint: "He is asking you to name a cause. Check what this dataset can and cannot attribute.",
+    brief: "The decline is real. Decide what you can say about why.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Second half decline — cause?',
+        body: "Nine of ten stores down, some by a quarter. That is going to be the first question in the room and I need an answer, not a table.\n\nIs it footfall, pricing, the range, the economy? Pick one.",
+      },
+      prompt: 'Tick everything that is an honest response.',
+      options: [
+        { key: 'cannot', correct: true, label: 'This data cannot separate those causes — there is no footfall, no competitor and no market data in it', why: 'Sales, products, stores, stock. Every candidate cause he listed lives outside all four tables.' },
+        { key: 'promo', correct: true, label: 'Part of the first half is a promotion month, which flatters the comparison', why: 'November is the biggest month of the year by revenue and it is discount-driven. Half-on-half against a period containing it is not a like-for-like period, even across like-for-like stores.' },
+        { key: 'what', correct: true, label: 'You can say what declined — which categories, which formats — without saying why', why: 'That is genuinely useful in the room and it is defensible. "I can tell you where, not why" is a complete answer.' },
+        { key: 'offer', correct: true, label: 'Name what data would answer his question', why: 'Footfall counters and a competitor opening schedule would settle it. Saying so turns a refusal into a request.' },
+        { key: 'pick', correct: false, label: 'Pick the most plausible cause so he has something to say', why: 'He asked you to pick one, and picking one you cannot evidence is how an analyst becomes the source of a wrong answer with their name on it.' },
+        { key: 'economy', correct: false, label: 'Attribute it to the wider market, which is safest', why: 'It is the least falsifiable answer available and therefore the most dangerous. Nothing in the data speaks to the market at all.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-135': {
+    title: 'Category movement, half on half',
+    hint: "Same like-for-like restriction, grouped by category instead of store.",
+    brief: "Answer the half of Vikram's question you can. Write ONE SQL SELECT over like-for-like stores, excluding the duplicated store-month, returning per category: first-half revenue, second-half revenue and percentage change to one place. Worst decline first.",
+    referenceSql: "SELECT p.category, SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h1, SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) AS h2, ROUND((SUM(CASE WHEN s.sold_at >= '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END) - SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END)) * 100.0 / SUM(CASE WHEN s.sold_at < '2026-01-01' THEN s.quantity * s.unit_price ELSE 0 END), 1) AS pct_change FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL AND NOT (s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03') GROUP BY p.category ORDER BY pct_change ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ta-140': {
+    title: 'The new stores, reported separately',
+    hint: "These three are excluded from like-for-like, which is exactly why they need their own line.",
+    brief: "The board invested in two openings and closed one store. Write ONE SQL SELECT over stores that opened after 1 July 2025 or have closed, returning per store: name, opened_on, closed_on, days open in the window, net revenue, and revenue per day open rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.opened_on, st.closed_on, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-141': {
+    title: 'Every figure, and what it covers',
+    hint: "Build the reconciliation: total business, like-for-like, and the difference between them.",
+    brief: "A board pack has to reconcile. In the notebook, compute three figures for the whole window: total net revenue across the entire estate, net revenue across like-for-like stores only, and net revenue from stores excluded from like-for-like — all with store 3's March 2026 rows removed. Assign a dict with keys total, like_for_like and excluded, each rounded to the nearest rupee, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      let total = 0, lfl = 0, excluded = 0;
+      for (const s of tables.sales) {
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') continue;
+        const value = s.quantity * s.unit_price;
+        const store = stores.get(s.store_id);
+        total += value;
+        if (store.opened_on <= '2025-07-01' && store.closed_on == null) lfl += value;
+        else excluded += value;
+      }
+      return { total: Math.round(total), like_for_like: Math.round(lfl), excluded: Math.round(excluded) };
+    },
+  },
+
+  'ta-142': {
+    title: 'What the pack says',
+    hint: "Five candidate headlines. Two of them are things you established and two are things you were asked to say.",
+    brief: "Decide what the board actually hears.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the pack.',
+      options: [
+        { key: 'decline', correct: true, label: 'Like-for-like trading declined in the second half across nine of ten stores', why: 'The central finding, and it was not in the draft you were sent to check.' },
+        { key: 'fault', correct: true, label: 'One store-month is duplicated in the source and has been excluded', why: 'Disclosing your own correction is what lets somebody reproduce your number. Quietly excluding it means the figures never reconcile with the warehouse again.' },
+        { key: 'new', correct: true, label: 'The two new stores are trading in line with their format, reported separately', why: 'They are excluded from like-for-like for a methodological reason, not a performance one, and the board approved the capital.' },
+        { key: 'nocause', correct: true, label: 'That the cause cannot be established from this data, and what would establish it', why: 'The question will be asked. Having the answer to "what would you need" ready is the difference between a limit and an excuse.' },
+        { key: 'ashokstar', correct: false, label: 'Ashok Nagar as the standout performer', why: 'It is flat once corrected. This is the line the draft opened with and the reason the check was worth doing.' },
+        { key: 'economy', correct: false, label: 'That the decline reflects wider market conditions', why: 'Nothing in four tables of till data speaks to the market. It is the most quotable unfalsifiable sentence available and it would be yours.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-143': {
+    title: 'Sign off Priya\'s slide',
+    hint: "Read what the words claim on top of the numbers. The numbers are yours and they are right.",
+    brief: "Priya has drafted the trading slide using your figures. Tick every problem with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Priya Menon', subject: 'Trading slide — sign off?',
+        body: "\"Like-for-like revenue fell 17.3% in H2, driven by a category-wide slowdown in Equipment. Two new stores are already outperforming the estate average. Data quality issues in one store have been corrected.\"\n\nThat's your numbers. OK to go?",
+      },
+      prompt: 'What needs changing before this goes in?',
+      options: [
+        { key: 'driven', correct: true, label: '"Driven by" claims a cause the analysis does not establish', why: 'Equipment declined and Equipment is the largest category, so of course it moves the total. That is arithmetic, not a driver, and the word invites a decision about Equipment.' },
+        { key: 'outperform', correct: true, label: '"Outperforming the estate average" compares an express store to a flagship average', why: 'Sector 29 is mid-table for its format and below the estate average per day. The claim is flattering and false, and it is about the board\'s own capital decision.' },
+        { key: 'vague', correct: true, label: '"Data quality issues have been corrected" hides what was excluded', why: 'One store-month was dropped from the figures. If the next person reruns this and gets a different number, that sentence is why they will not know where to look.' },
+        { key: 'promo', correct: true, label: 'The comparison period contains a promotion month and the slide does not say so', why: 'November is the biggest month of the year and discount-driven. Half-on-half against it overstates the decline, and the board will not know unless it is written down.' },
+        { key: 'figure', correct: false, label: 'The 17.3% figure is wrong', why: 'It is your figure and it is right. The problem is everything built on top of it.' },
+        { key: 'nothing', correct: false, label: 'It is fine — the numbers are correct and she is the one presenting', why: 'Your name is on the data. A slide that is arithmetically right and rhetorically wrong is still wrong, and sign-off is exactly the moment to say so.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-144': {
+    title: 'Rewrite the slide',
+    hint: "Same four facts, none of the claims. Shorter than hers.",
+    brief: "Send Priya a replacement for the slide text. It has to survive being read aloud with you not in the room. Under 110 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Priya Menon', subject: 'Trading slide — suggested wording', maxWords: 110,
+      prompt: 'The decline, the scope it covers, the new stores stated fairly, and the exclusion named.',
+      rubric: [
+        { key: 'lfl', label: 'The decline, scoped to like-for-like', markers: ['like.for.like|lfl|ten store|10 store|same store|17|decline|fell'], why: 'The number means nothing without the population it covers.' },
+        { key: 'nocause', label: 'No causal claim', markers: ['largest|biggest|share|arithmetic|not|cannot|where|concentrat'], why: 'Describe where the decline sits without asserting what caused it.' },
+        { key: 'newstores', label: 'The new stores stated against their own format', why: 'Comparing an express store to an estate average that is mostly flagships is the error in her draft.', markers: ['format|express|for its|comparable|own|like|separate'] },
+        { key: 'exclusion', label: 'The excluded store-month named', markers: ['march|ashok|store 3|duplicat|excluded|one month'], why: 'So the figure can be reproduced by anyone who tries.' },
+        { key: 'promo', label: 'The promotion in the comparison period', markers: ['promotion|november|discount|promo'], why: 'The single most important caveat on a half-on-half figure this year.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ta-145': {
+    title: 'What you would do next quarter',
+    hint: "You have found one data fault and one reporting habit. Both have a fix that outlives this pack.",
+    brief: "Asha wants your view as the lead, not as the analyst. What changes about how this reporting is produced? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Trading review — what I would change', maxWords: 200,
+      prompt: 'The process changes that would have caught this week\'s problems before they reached a draft.',
+      rubric: [
+        { key: 'dupcheck', label: 'A duplicate check that runs before the pack is built', markers: ['check|test|automat|before|monitor|alert|routine|each month|validat'], why: 'The fault was findable in one query. The problem was that nobody ran it, and that is fixable permanently.' },
+        { key: 'definitions', label: 'Agreed definitions for revenue, transactions and like-for-like', markers: ['definition|define|agree|document|standard|glossary|consistent'], why: 'Three of this week\'s problems were one team meaning something different by a common word.' },
+        { key: 'lfl', label: 'Like-for-like as a standing rule when the estate changes', markers: ['like.for.like|lfl|open|clos|estate|new store|exclude'], why: 'Two openings and a closure in one year, and nothing in the reporting knew about any of them.' },
+        { key: 'review', label: 'That drafts get checked before they reach a board, not after', markers: ['draft|check|review|before|sign.?off|circulat|early'], why: 'Ravi did the right thing by sending it. Making that a step rather than a favour is the lead\'s job.' },
+        { key: 'own', label: 'Written as decisions you would make, not suggestions', markers: ['I would|we should|I will|propose|put in place|add|introduce|make'], why: 'This is the first thing you are asked as a lead. Hedging it reads as declining the responsibility.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 2 · Margin & Promotion Review (retail_sales) --------------------------
+  // The week the learner finds out that the cost column is a lie of timing. Monday there
+  // is no margin column and the cost that exists is today's. Tuesday Equipment turns out
+  // to be two thirds of revenue and the worst margin in the book. Wednesday the naive
+  // cost understates margin UNEVENLY — 7% in Equipment, nothing in Tea — so it distorts
+  // the ranking rather than shifting it. Thursday November: 55% more units, 39% more
+  // revenue, 12% more margin. Friday, whether to do it again.
+
+  'tb-101': {
+    title: 'There is no margin column',
+    hint: "Look at what products actually carries, and at the two columns next to unit_cost.",
+    brief: "Finance want margin by category before the range review. Establish what you can compute and what the cost column actually means before writing anything.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Margin by category — before the range review',
+        body: "We are rebuilding the range plan and I need gross margin by category for the year.\n\nI assume it is unit_price minus unit_cost times quantity? If it is that simple just send me the table and I will stop bothering you.",
+      },
+      prompt: 'Tick everything that is true before you run her query.',
+      options: [
+        { key: 'today', correct: true, label: 'unit_cost is the cost TODAY, not the cost when the sale happened', why: 'The table carries previous_unit_cost and cost_changed_on beside it. Those two columns exist precisely because the current cost is not what we paid all year.' },
+        { key: 'fifteen', correct: true, label: 'Fifteen products were repriced during the year, and they are a quarter of revenue', why: '26.6% of turnover sits on products whose cost moved. That is far too much to wave through as immaterial.' },
+        { key: 'direction', correct: true, label: 'Applying current cost to old sales will understate margin, because the reprices were increases', why: 'Every one of the fifteen went up, by 19% on average. Charging this year\'s cost against last year\'s sales makes the earlier period look less profitable than it was.' },
+        { key: 'simple', correct: false, label: 'Her formula is right — it is that simple', why: 'It is right for the 53 products that never moved and wrong for the 15 that did, which is the quarter of revenue she most cares about.' },
+        { key: 'cannot', correct: false, label: 'Margin cannot be computed at all without a proper cost history', why: 'You have the previous cost and the date it changed. That is a cost history — a two-point one, but enough to do this properly.' },
+        { key: 'returns', correct: false, label: 'Returns make margin impossible to compute', why: 'A return reverses a sale at the price paid, so the margin reverses with it. Negative quantities handle themselves here, which is unusual and worth noticing.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tb-102': {
+    title: 'What moved, and by how much',
+    hint: "Only the repriced rows matter here. The percentage is against the OLD cost.",
+    brief: "Size the problem. Write ONE SQL SELECT over products whose cost changed, returning: name, category, previous_unit_cost, unit_cost, the increase as a percentage of the previous cost rounded to one place, and the date it changed. Biggest rise first.",
+    referenceSql: "SELECT name, category, previous_unit_cost, unit_cost, ROUND((unit_cost - previous_unit_cost) * 100.0 / previous_unit_cost, 1) AS rise_pct, cost_changed_on FROM products WHERE cost_changed_on IS NOT NULL ORDER BY rise_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tb-103': {
+    title: 'How much revenue sits on moved costs',
+    hint: "One row, two figures, and the share is the point.",
+    brief: "Establish materiality. Write ONE SQL SELECT over products THAT SOLD, split by whether the product was ever repriced, returning: the number of such products, net revenue, and that revenue as a percentage of the total rounded to one place. Label the split column repriced with values yes and no.",
+    referenceSql: "SELECT CASE WHEN p.cost_changed_on IS NOT NULL THEN 'yes' ELSE 'no' END AS repriced, COUNT(DISTINCT p.id) AS products, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 100.0 / (SELECT SUM(quantity * unit_price) FROM sales), 1) AS pct_of_revenue FROM products p JOIN sales s ON s.product_id = p.id GROUP BY repriced ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'tb-104': {
+    title: 'Margin, with the cost that applied',
+    hint: "A CASE on the sale date against cost_changed_on. Write it once and you will reuse it every day this week.",
+    brief: "Build the expression the whole project rests on. Write ONE SQL SELECT returning, per category: net revenue, gross margin using the cost that applied on the day of sale, and margin as a percentage of revenue to one place. Biggest margin first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY margin DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tb-105': {
+    title: 'Answer Diya',
+    hint: "She offered to stop bothering you if it was simple. It nearly is, and the exception is a quarter of revenue.",
+    brief: "Write back on day one. Tell her what is wrong with the formula, how wrong, and give her the version that works. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Margin — the cost column is today\'s cost', maxWords: 150,
+      prompt: 'What her formula misses, how material it is, and the corrected expression.',
+      rubric: [
+        { key: 'today', label: 'That unit_cost is current, not historical', markers: ['today|current|now|not.*time of sale|changed|historic'], why: 'The whole finding in one sentence, and it is not obvious from the column name.' },
+        { key: 'size', label: 'How much revenue it affects', markers: ['15|fifteen|26|quarter|27%|material'], why: 'Materiality is what decides whether she cares. A quarter of revenue does.' },
+        { key: 'fix', label: 'The corrected rule, stated so she can apply it', markers: ['previous_unit_cost|cost_changed_on|before|case|date|which cost'], why: 'Give her the expression. A description of the problem leaves her unable to run anything.' },
+        { key: 'direction', label: 'Which way the error goes', markers: ['understate|lower|worse|too low|below|increase|rose|up'], why: 'The reprices were increases, so the naive figure makes the past look less profitable. Knowing the direction tells her which of her old numbers to distrust.' },
+        { key: 'yes', label: 'That she was nearly right', markers: ['right|correct|close|nearly|almost|53|most product|otherwise'], why: 'She asked a good question and 53 of 68 products behave exactly as she assumed. Saying so is accurate and keeps the questions coming.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tb-106': {
+    title: 'Which cost belongs in which question',
+    hint: "Two different questions are being asked of the same table, and they want different costs.",
+    brief: "Diya replies asking a sharper question: if she is planning NEXT year's range, should she still use the historical cost?",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Re: Margin — one more thing',
+        body: "Understood for reporting what happened. But the range review is about what to stock NEXT year.\n\nFor that, surely I want today's cost, not what we paid in September?",
+      },
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'forward', correct: true, label: 'She is right for the forward-looking question — current cost is the relevant one', why: 'What a product will earn next year depends on what it will cost next year. The historical cost is irrelevant to a stocking decision.' },
+        { key: 'backward', correct: true, label: 'And wrong for the reporting question, where the historical cost is the only honest one', why: 'Last year\'s performance has to be measured against last year\'s costs. Restating it at current cost rewrites history.' },
+        { key: 'both', correct: true, label: 'The two figures should be produced separately and labelled by purpose', why: 'One table headed "margin" with no statement of which cost basis it uses is how two teams end up with different numbers and no way to reconcile them.' },
+        { key: 'volume', correct: true, label: 'A forward view should also use current PRICE, not the discounted prices actually charged', why: 'Half the year\'s Equipment revenue was sold at a discount. Projecting forward on realised prices bakes in a promotion nobody has decided to repeat.' },
+        { key: 'never', correct: false, label: 'Current cost should never be used — it is not what happened', why: 'Too rigid. It is exactly right for a decision about the future, which is what a range review is.' },
+        { key: 'avg', correct: false, label: 'Average the two costs, so one figure serves both purposes', why: 'That produces a number that is correct for neither question and is impossible to explain in a meeting.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tb-110': {
+    title: 'Where the money actually is',
+    hint: "Revenue share and margin share are different columns and they will not agree.",
+    brief: "Set up the category picture. Write ONE SQL SELECT returning, per category: net revenue, its share of total revenue to one place, margin on the cost that applied, and margin's share of total margin to one place. Biggest revenue first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 100.0 / (SELECT SUM(quantity * unit_price) FROM sales), 1) AS revenue_share, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / (SELECT SUM(s2.quantity * (s2.unit_price - CASE WHEN p2.cost_changed_on IS NOT NULL AND s2.sold_at < p2.cost_changed_on THEN p2.previous_unit_cost ELSE p2.unit_cost END)) FROM sales s2 JOIN products p2 ON p2.id = s2.product_id), 1) AS margin_share FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'tb-111': {
+    title: 'Equipment is the business',
+    hint: "Two thirds of revenue at the worst rate in the book. Ask what follows and what does not.",
+    brief: "Equipment is 63.9% of revenue and 34.7% margin — the lowest rate of the five categories. Read that properly.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'dominant', correct: true, label: 'Equipment is the business by revenue and still the largest margin contributor', why: '₹3.1 crore of revenue and ₹1.08 crore of margin. The worst RATE in the book is also the biggest absolute contribution, and confusing the two is how a range gets cut.' },
+        { key: 'rate', correct: true, label: 'Merchandise earns 65% margin and contributes a fraction of the money', why: '₹28 lakh of margin against Equipment\'s ₹1.08 crore. A high rate on a small base is a nice thing to have, not a strategy.' },
+        { key: 'mix', correct: true, label: 'The blended margin rate is mostly a statement about the sales mix', why: 'Shift a little revenue between Equipment and Merchandise and the blended rate moves without any product changing price or cost. Any target set on the blended rate can be hit by mix alone.' },
+        { key: 'kill', correct: false, label: 'Equipment should be de-emphasised in favour of higher-margin categories', why: 'Sell half as much Equipment and you lose half of ₹1.08 crore. Merchandise would have to quadruple to replace it, and there is no evidence anybody wants four times as many mugs.' },
+        { key: 'bad', correct: false, label: 'A 34.7% margin on the largest category is a problem to fix', why: 'It may be entirely normal for hardware. Nothing in this data says what the category should earn, and calling it a problem assumes an answer.' },
+        { key: 'target', correct: false, label: 'The blended rate is the right measure to set a target on', why: 'It is the one number in the table that can be improved by selling a different mix rather than trading better. Targets set on it get hit without anything improving.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-112': {
+    title: 'Margin by store, like for like',
+    hint: "Restrict to the stable estate — a store that opened in February cannot be compared on a year of margin.",
+    brief: "Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per store: net revenue, margin on the cost that applied, and margin percentage to one place. Best rate first.",
+    referenceSql: "SELECT st.name, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY margin_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-113': {
+    title: 'The margin chart',
+    hint: "Two things per category — the size of the money and the rate it earns. Only one of them is what a bar length should mean here.",
+    brief: "Build the visual for the range review: margin contribution by category, so the reader sees where the money comes from before they see which rate is highest. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT p.category, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS margin FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY margin DESC",
+      prompt: 'Gross margin contribution by category, for the range review.',
+      answer: { type: 'bar', x: 'category', y: 'margin', sort: 'desc', baselineZero: true },
+      why: 'Five named categories compared on one quantity is a bar chart, sorted so the contribution order is the first thing read. Margin in rupees rather than margin rate, because the decision the review is about is where the money comes from — a rate chart would put Merchandise first and Equipment last, which is the exact inversion that gets a range cut.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tb-114': {
+    title: 'Ravi has a margin target',
+    hint: "Ask what somebody could do to hit this target without anything actually improving.",
+    brief: "Ravi proposes a target. Decide what is wrong with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Ravi Menon', subject: '#retail-analytics',
+        body: "Proposing we set the team a blended gross margin target of 46% for next year, up from 44.1%.\n\nSimple, one number, everyone understands it. Thoughts?",
+      },
+      prompt: 'Tick every problem with the target as proposed.',
+      options: [
+        { key: 'mix', correct: true, label: 'It can be hit by selling less Equipment, with no product trading better', why: 'Equipment is 64% of revenue at the lowest rate. Shrinking it lifts the blend and shrinks the business, and the target would record that as success.' },
+        { key: 'absolute', correct: true, label: 'It sets a rate target on a business that needs absolute margin', why: 'Rent and payroll are paid in rupees, not percentages. A higher rate on a smaller base can be a worse year in every way that matters.' },
+        { key: 'basis', correct: true, label: 'It does not say which cost basis it is measured on', why: 'Current cost or cost at time of sale changes the whole-year figure by more than four percent — which is twice the improvement he is asking for.' },
+        { key: 'pair', correct: true, label: 'A rate target needs a volume or absolute-margin figure beside it', why: 'Two numbers that cannot both be gamed in the same direction. That is the whole fix and it costs one extra line.' },
+        { key: 'low', correct: false, label: '46% is too ambitious given the category mix', why: 'You have no basis for that. Nothing in this data says what margin is achievable, and guessing at ambition is the same error as guessing at causes.' },
+        { key: 'category', correct: false, label: 'Targets should be set per category instead', why: 'Reasonable and it does not fix the main problem — per-category rate targets are still hit by shifting mix within the category.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tb-115': {
+    title: 'Reply to Ravi in the channel',
+    hint: "He proposed something in public and asked for thoughts. Give him a better version, not a veto.",
+    brief: "Answer in the channel. The idea is right and the measure is gameable. Propose the fix. Under 120 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: blended margin target', maxWords: 120,
+      prompt: 'Why the blended rate alone is gameable, and what to pair it with.',
+      rubric: [
+        { key: 'game', label: 'How the target can be hit without improving', markers: ['mix|equipment|less|shift|sell fewer|shrink|without'], why: 'Concrete and specific. "Gameable" on its own sounds like a theoretical objection.' },
+        { key: 'pair', label: 'A specific pairing', markers: ['absolute|rupee|total margin|volume|alongside|both|pair|second'], why: 'The fix, in one line, so the proposal survives rather than dying.' },
+        { key: 'basis', label: 'That the cost basis has to be stated', markers: ['cost basis|which cost|time of sale|current|historic|define'], why: 'Otherwise the baseline moves by more than the target.' },
+        { key: 'yes', label: 'Support for the underlying idea', markers: ['good|agree|right|worth|like|yes|support|sensible'], why: 'A target is a good instinct. Replying with only objections is how people stop proposing things in the open.' },
+      ],
+      skills: { communication: 100 },
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tb-120': {
+    title: 'Both versions, side by side',
+    hint: "Same query twice, one with the CASE and one without. The difference is the column that matters.",
+    brief: "Quantify what Diya's original formula would have cost her. Write ONE SQL SELECT returning, per category: margin using current cost only, margin using the cost that applied, and how much the naive figure understates it as a percentage of the correct margin, to two places. Most understated first.",
+    referenceSql: "SELECT p.category, ROUND(SUM(s.quantity * (s.unit_price - p.unit_cost))) AS margin_naive, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin_correct, ROUND((SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) - SUM(s.quantity * (s.unit_price - p.unit_cost))) * 100.0 / SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 2) AS understated_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY p.category ORDER BY understated_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-121': {
+    title: 'An error that is not a shift',
+    hint: "Compare the size of the error across the five categories. It is not the same anywhere.",
+    brief: "The naive method understates Equipment by 6.99%, Coffee by 3.22%, Bakery by 1.46% and Tea and Merchandise by nothing at all. Work out why that matters more than the size of the error.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'uneven', correct: true, label: 'Because it is uneven, it distorts the comparison between categories, not just the totals', why: 'A uniform 4% error would leave every ranking and every ratio intact. This one moves Equipment relative to Tea, which is exactly the comparison a range review is built on.' },
+        { key: 'where', correct: true, label: 'The error sits wherever the repriced products are, which is not evenly spread', why: 'Tea and Merchandise had no reprices at all. Equipment carries most of them and most of the revenue, so it absorbs almost all the distortion.' },
+        { key: 'trend', correct: true, label: 'It also distorts any comparison across time, because the error grows the further back you look', why: 'Before a cost change the two methods differ; after it they agree. So the naive method penalises the past and flatters the present, which manufactures an improving trend.' },
+        { key: 'small', correct: false, label: 'At under 7% it is within tolerance for a range review', why: 'The decision is between categories whose rates differ by 30 points, but the CHANGES being argued about are two or three points. A 7% distortion on one category swamps the thing being measured.' },
+        { key: 'uniform', correct: false, label: 'It could be corrected with a flat adjustment to the total', why: 'A flat adjustment fixes the total and leaves every category comparison wrong. The error has structure, so the correction has to as well.' },
+        { key: 'ignore', correct: false, label: 'Since Tea and Merchandise are unaffected, their figures can be used as published', why: 'Their absolute margins are fine and their SHARES of total margin are not, because the denominator moved.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-122': {
+    title: 'The trend the naive method invents',
+    hint: "Half on half, like for like, both methods. Look at what the naive version says about the direction.",
+    brief: "Test whether the distortion creates a false trend. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per half: margin using current cost only, margin using the cost that applied, and the understatement as a percentage of the correct figure to two places. First half first.",
+    referenceSql: "SELECT CASE WHEN s.sold_at < '2026-01-01' THEN 'H1' ELSE 'H2' END AS half, ROUND(SUM(s.quantity * (s.unit_price - p.unit_cost))) AS margin_naive, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin_correct, ROUND((SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) - SUM(s.quantity * (s.unit_price - p.unit_cost))) * 100.0 / SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 2) AS understated_pct FROM sales s JOIN products p ON p.id = s.product_id JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY half ORDER BY half",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-123': {
+    title: 'The decline the naive method hides',
+    hint: "Work out the half-on-half change under each method. They are not the same number.",
+    brief: "The naive method understates the first half by 6.5% and the second by 2.3%. Say what that does to anyone reading a trend.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'flatter', correct: true, label: 'The naive method makes the margin decline look smaller than it is', why: 'It penalises the earlier period by 6.5% and the later one by only 2.3%, so the gap between them narrows. A real decline reads as a mild one.' },
+        { key: 'direction', correct: true, label: 'Both methods still show a decline — the distortion changes the size, not the sign', why: 'Worth stating plainly. Overclaiming that the naive method reverses the finding would be the same sin as the naive method itself.' },
+        { key: 'grow', correct: true, label: 'With a larger reprice the same mechanism could invert the trend entirely', why: 'The direction of the distortion is systematic, not random. It will always flatter the present relative to the past, and how much depends only on how big the reprices were.' },
+        { key: 'restate', correct: true, label: 'Any margin figure published before this was found needs restating', why: 'Every earlier report used the naive basis. They are not slightly off — they are off by different amounts in different categories.' },
+        { key: 'reverse', correct: false, label: 'The naive method reverses the direction of the trend', why: 'Check your own numbers rather than assuming the error is maximal. Both show a fall.' },
+        { key: 'noone', correct: false, label: 'Since the direction is unchanged, nothing needs correcting', why: 'The direction is unchanged this half. The category ranking is not, and that is what the range review is deciding on.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tb-124': {
+    title: 'A cost basis everybody can apply',
+    hint: "Karthik can build it once. Say what it should contain and who has to use it.",
+    brief: "This will keep happening while every analyst writes their own CASE expression. Write to Karthik specifying what to build. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Karthik Iyer', subject: 'Cost-at-time-of-sale — can we make this a view', maxWords: 150,
+      prompt: 'What the view should contain, why it matters, and what it prevents.',
+      rubric: [
+        { key: 'what', label: 'What the view holds', markers: ['cost|line|sale|join|applicable|at the time|effective|per row|view'], why: 'Specific enough for him to build without another round trip.' },
+        { key: 'why', label: 'Why hand-written expressions are the problem', markers: ['everyone|each|own|different|inconsisten|reproduc|three version|hand'], why: 'The case for the work. Without it this reads as a preference.' },
+        { key: 'both', label: 'That both cost bases are needed, for different questions', markers: ['both|current|historic|forward|report|two|purpose|range review'], why: 'A view that only carries the historical cost breaks the range review two weeks later.' },
+        { key: 'size', label: 'The materiality, so it gets prioritised', markers: ['26|quarter|15|fifteen|7%|6\\.2|material|crore|lakh'], why: 'Engineers prioritise by impact. Give him the number.' },
+        { key: 'clear', label: 'A specific ask rather than a discussion', markers: ['can you|could you|please|would you|propose|suggest|build|add'], why: 'Something he can say yes or no to.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'tb-125': {
+    title: 'Margin per product, both bases',
+    hint: "One pass over the sales, two accumulators per product. Do not query twice.",
+    brief: "Give the range review its working table. In the notebook, compute for every product that sold: name, category, units sold (positive quantities only), net revenue, margin on the cost that applied, and margin on current cost. Round the money to whole rupees. Assign the ten products with the LOWEST margin-at-time-of-sale, as a list of dicts with keys name, category, units, revenue, margin_applied and margin_current, sorted ascending by margin_applied, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      const acc = new Map();
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const applied = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        if (!acc.has(p.id)) acc.set(p.id, { name: p.name, category: p.category, units: 0, revenue: 0, margin_applied: 0, margin_current: 0 });
+        const row = acc.get(p.id);
+        if (s.quantity > 0) row.units += s.quantity;
+        row.revenue += s.quantity * s.unit_price;
+        row.margin_applied += s.quantity * (s.unit_price - applied);
+        row.margin_current += s.quantity * (s.unit_price - p.unit_cost);
+      }
+      return [...acc.values()]
+        .map((r) => ({ ...r, revenue: Math.round(r.revenue), margin_applied: Math.round(r.margin_applied), margin_current: Math.round(r.margin_current) }))
+        .sort((a, b) => a.margin_applied - b.margin_applied)
+        .slice(0, 10);
+    },
+  },
+
+  'tb-130': {
+    title: 'The month that does not fit',
+    hint: "Revenue, margin, margin rate and average discount, by month. One row will not look like the others.",
+    brief: "Before the promotion question, find it in the data. Write ONE SQL SELECT returning, per month: net revenue, margin on the cost that applied, margin percentage to one place, units sold on positive lines, and average discount to one place. Oldest month first.",
+    referenceSql: "SELECT substr(s.sold_at, 1, 7) AS month, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, ROUND(AVG(s.discount_pct), 1) AS avg_discount FROM sales s JOIN products p ON p.id = s.product_id GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-131': {
+    title: 'What November bought',
+    hint: "Compare November against the average of the other eleven months on three measures, not one.",
+    brief: "November has a 16.9% average discount against about 4% everywhere else — a promotion nobody documented. Read what it did.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your monthly table supports.',
+      options: [
+        { key: 'units', correct: true, label: 'It moved about 55% more units than a normal month', why: '2,638 against roughly 1,700. The discount worked, in the sense that it shifted stock.' },
+        { key: 'revenue', correct: true, label: 'Revenue was up about 39%, less than the volume rise', why: 'Because each unit went out cheaper. Revenue rising less than volume is the signature of a discount-driven month.' },
+        { key: 'margin', correct: true, label: 'Gross margin was up only about 12%', why: '₹19.3 lakh against a normal ₹17.2 lakh. Fifty-five percent more units for twelve percent more margin is the whole finding.' },
+        { key: 'rate', correct: true, label: 'The margin rate fell from about 44% to 35.5%', why: 'Nearly nine points. Whether that is a good trade depends on what the volume was for, and nothing in the data says.' },
+        { key: 'failed', correct: false, label: 'The promotion failed — margin rate collapsed', why: 'Absolute margin went up. A promotion that increases margin has not failed; it may simply have been an expensive way to do it.' },
+        { key: 'succeeded', correct: false, label: 'The promotion succeeded — it was the best month of the year', why: 'Best on revenue, twelfth of twelve on margin rate, and barely ahead on margin. "Best month" is exactly the framing this analysis exists to interrogate.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-132': {
+    title: 'Margin at every discount level',
+    hint: "Group by the discount column itself. Watch the two deepest bands — there are very few lines in them.",
+    brief: "Establish the trade-off curve. Write ONE SQL SELECT returning, per discount level: lines, units on positive quantities, net revenue, margin on the cost that applied, and margin percentage to one place. Shallowest discount first.",
+    referenceSql: "SELECT s.discount_pct, COUNT(*) AS lines, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct FROM sales s JOIN products p ON p.id = s.product_id GROUP BY s.discount_pct ORDER BY s.discount_pct",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-133': {
+    title: 'Where the discount landed',
+    hint: "November only, by category. The category carrying the discount is the one that can least afford it.",
+    brief: "Write ONE SQL SELECT over November 2025 only, returning per category: net revenue, margin percentage to one place, and average discount to one place. Biggest revenue first.",
+    referenceSql: "SELECT p.category, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) * 100.0 / SUM(s.quantity * s.unit_price), 1) AS margin_pct, ROUND(AVG(s.discount_pct), 1) AS avg_discount FROM sales s JOIN products p ON p.id = s.product_id WHERE substr(s.sold_at, 1, 7) = '2025-11' GROUP BY p.category ORDER BY net_revenue DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tb-134': {
+    title: 'The 25% band earns more than the 30%',
+    hint: "Look at how many lines sit in each of those two bands before deciding what the curve is doing.",
+    brief: "Your discount curve falls steadily and then goes back up at the deepest level. Decide what that is.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'small', correct: true, label: 'Both bands are tiny — 151 and 175 lines out of 9,022', why: 'Under 2% of the data each. The difference between 25.4% and 26.6% on those volumes is not a signal about anything.' },
+        { key: 'mix', correct: true, label: 'Which products happened to be discounted at each level drives the difference', why: 'A deep discount on a high-margin mug and a deep discount on a low-margin grinder land in the same band and earn completely different rates.' },
+        { key: 'report', correct: true, label: 'The curve should be reported as monotonic down to 20% and unreliable beyond it', why: 'Honest and useful. The shape is clear where the data is thick and the tail should be marked as thin rather than smoothed away.' },
+        { key: 'floor', correct: false, label: 'There is a floor around 25% below which margin stops falling', why: 'That is a model fitted to 326 lines with no mechanism behind it, and it would be quoted as a reason to discount harder.' },
+        { key: 'deeper', correct: false, label: 'Deeper discounts are therefore safe', why: 'The one conclusion that would actually cost money, drawn from the thinnest part of the data.' },
+        { key: 'error', correct: false, label: 'It indicates a data error in the discount field', why: 'Nothing is wrong with the data. Small samples are noisy, which is not the same as broken.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-135': {
+    title: 'Diya asks whether to run it again',
+    hint: "She wants a yes or no. Work out what would have to be true for either answer.",
+    brief: "Diya wants a yes or no on repeating the November promotion, and calls it our biggest revenue month. Answer the question she actually asked, state the trade, and be clear about what this data cannot settle. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Repeating the November promotion', maxWords: 160,
+      prompt: 'The trade in numbers, what it cannot settle, and the one change worth making if it runs again.',
+      rubric: [
+        { key: 'trade', label: 'The trade in three numbers', markers: ['55|39|12|units|revenue|margin'], why: 'Three figures carry the decision, and she can act on them without following any of the method.' },
+        { key: 'notno', label: 'That it did add margin, so the answer is not simply no', why: 'Absolute margin rose about ₹2 lakh. Discount-driven volume that still grows margin is a legitimate tactic, just an expensive one.', markers: ['add|rose|up|more margin|accretive|higher|2 lakh|12'] },
+        { key: 'rate', label: 'The rate fall, stated plainly', markers: ['35\\.5|44|nine|rate|fell|down'], why: 'The number she is least likely to have been shown.' },
+        { key: 'cannot', label: 'What this data cannot settle', markers: ['stock|clear|competitor|repeat|came back|cannot|do not have|don.t have|depends|objective'], why: 'Whether it was worth it turns on whether those customers returned, and four tables of till data say nothing about that.' },
+        { key: 'equipment', label: 'Where the discount landed', markers: ['equipment|25\\.7|lowest|least margin|hardest|63'], why: 'If it runs again, this is the single actionable change available.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tb-140': {
+    title: 'The promotion, per store',
+    hint: "Like-for-like stores only. Compare each store's November against its own other months, not against the estate.",
+    brief: "Planning will ask whether it worked everywhere. Write ONE SQL SELECT over stores open before 1 July 2025 and not closed, returning per store: November net revenue, average monthly net revenue across its other months, and November as a percentage of that average, to one place. Biggest uplift first.",
+    referenceSql: "SELECT st.name, SUM(CASE WHEN substr(s.sold_at, 1, 7) = '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) AS nov_revenue, ROUND(SUM(CASE WHEN substr(s.sold_at, 1, 7) <> '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) / 11.0) AS other_month_avg, ROUND(SUM(CASE WHEN substr(s.sold_at, 1, 7) = '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) * 100.0 / (SUM(CASE WHEN substr(s.sold_at, 1, 7) <> '2025-11' THEN s.quantity * s.unit_price ELSE 0 END) / 11.0), 1) AS nov_vs_avg_pct FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL GROUP BY st.id ORDER BY nov_vs_avg_pct DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-141': {
+    title: 'The promotion summary',
+    hint: "One pass, two buckets: November and everything else. Report both and the ratio.",
+    brief: "Build the figure planning will quote. In the notebook, compare November 2025 against the average of the other eleven months on four measures: units sold on positive lines, net revenue, margin on the cost that applied, and margin percentage. Round money and units to whole numbers and percentages to one decimal place. Assign a dict with keys nov and other_month_avg — each a dict with keys units, revenue, margin and margin_pct — to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      const bucket = { nov: { units: 0, revenue: 0, margin: 0 }, other: { units: 0, revenue: 0, margin: 0 } };
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const cost = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        const b = s.sold_at.slice(0, 7) === '2025-11' ? bucket.nov : bucket.other;
+        if (s.quantity > 0) b.units += s.quantity;
+        b.revenue += s.quantity * s.unit_price;
+        b.margin += s.quantity * (s.unit_price - cost);
+      }
+      const shape = (b, months) => ({
+        units: Math.round(b.units / months),
+        revenue: Math.round(b.revenue / months),
+        margin: Math.round(b.margin / months),
+        margin_pct: Math.round((b.margin / b.revenue) * 1000) / 10,
+      });
+      return { nov: shape(bucket.nov, 1), other_month_avg: shape(bucket.other, 11) };
+    },
+  },
+
+  'tb-142': {
+    title: 'What the range review is told',
+    hint: "Separate what you measured from what you were asked to conclude.",
+    brief: "Decide what goes to Diya's range review.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'basis', correct: true, label: 'That margin is stated on the cost that applied at the time of sale, and why', why: 'Every earlier figure used a different basis. Without the statement, hers and yours will differ and nobody will know which is right.' },
+        { key: 'contribution', correct: true, label: 'Margin contribution in rupees alongside margin rate', why: 'The decision is where the money comes from. A rate table alone ranks Merchandise first and Equipment last, which is the inversion that gets a range cut.' },
+        { key: 'promo', correct: true, label: 'That a discount month sits inside the year and distorts any annual rate', why: 'One month at 35.5% pulls the annual blend down. Anybody comparing this year to a year without a promotion is comparing two different trading strategies.' },
+        { key: 'forward', correct: true, label: 'A forward-looking view at current cost and undiscounted price, separately labelled', why: 'She asked for this explicitly and she was right to. Stocking decisions are about next year, and it must not be confused with the reporting figure.' },
+        { key: 'target', correct: false, label: 'A recommended blended margin target', why: 'You argued against exactly this on Tuesday. Nothing in the data says what margin is achievable.' },
+        { key: 'cut', correct: false, label: 'A recommendation to reduce the Equipment range', why: 'Equipment is the largest margin contributor in the business. The rate is the lowest and the money is the biggest, and a range review that confuses those loses ₹1.08 crore.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+    // Deliberately flagged for rework: Diya accepts the summary and then wants the same
+    // margin table with current cost as well, for the forward view.
+    rework: true,
+  },
+
+  'tb-143': {
+    title: 'Sign off the planning note',
+    hint: "The numbers came from you. Read what the sentences claim on top of them.",
+    brief: "Planning have drafted the note that goes with the promotion decision. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'Promotion note — OK to send?',
+        body: "\"November remains our strongest trading month, delivering 39% more revenue than a typical month. Margin held up at 35.5%. Analytics confirm the promotion was margin-accretive and recommend repeating it. Discounts beyond 25% show no further margin erosion.\"",
+      },
+      prompt: 'What has to change before this goes out?',
+      options: [
+        { key: 'held', correct: true, label: '"Margin held up at 35.5%" describes a nine-point fall as stability', why: 'Every other month is around 44%. "Held up" is doing an enormous amount of work in that sentence and it is the opposite of what happened to the rate.' },
+        { key: 'recommend', correct: true, label: 'You did not recommend repeating it', why: 'You said it added margin and that whether it was worth it depends on things this data does not hold. Attributing a recommendation to analytics is the line to strike.' },
+        { key: 'tail', correct: true, label: 'The claim about discounts beyond 25% rests on 326 lines', why: 'It is the thinnest part of the data and the sentence turns it into a licence to discount harder. Of everything in the note, this one could actually cost money.' },
+        { key: 'accretive', correct: true, label: '"Margin-accretive" is true and will be read as "margin-improving"', why: 'Absolute margin rose 12%; the rate fell nine points. The word is defensible and the impression it leaves is not, which is worse than a plain error.' },
+        { key: 'revenue', correct: false, label: 'The 39% revenue figure is wrong', why: 'It is your figure and it is right. As usual the problem is the sentences built on top.' },
+        { key: 'units', correct: false, label: 'It should lead with the 55% volume rise', why: 'Arguable, and a matter of emphasis rather than accuracy. Fix the four claims that are wrong before rewriting the ones that are merely a choice.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-144': {
+    title: 'Rewrite the promotion note',
+    hint: "Same decision, none of the four claims. Give planning the trade and let them decide.",
+    brief: "Send Ravi replacement wording. It has to be usable by someone deciding whether to run the promotion again, with you not in the room. Under 130 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Promotion note — suggested wording', maxWords: 130,
+      prompt: 'The trade stated in three numbers, the rate fall stated honestly, and the decision left where it belongs.',
+      rubric: [
+        { key: 'trade', label: 'The trade in numbers', markers: ['55|39|12|units|revenue|margin'], why: 'Three figures carry the entire decision and nobody needs the method.' },
+        { key: 'rate', label: 'The rate fall stated as a fall', markers: ['35\\.5|44|fell|down|nine|lower|drop'], why: 'The sentence the draft was written to avoid.' },
+        { key: 'nodecide', label: 'The decision left with planning', markers: ['depend|for planning|their call|decide|whether|if the aim|context'], why: 'Analytics supplies the trade. Whether it is worth it needs stock, competitor and repeat-purchase information nobody has.' },
+        { key: 'tail', label: 'The deep-discount claim removed or qualified', markers: ['thin|few|326|151|175|small|unreliable|cannot|not enough|below 20'], why: 'The only sentence in the draft that could directly cause a loss.' },
+        { key: 'equipment', label: 'Where the discount landed', markers: ['equipment|25\\.7|lowest|least margin|hardest'], why: 'If it runs again, this is the single actionable change available.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tb-145': {
+    title: 'What you would measure next time',
+    hint: "Every gap you hit this week was a measurement that does not exist. Name the ones worth building.",
+    brief: "Asha wants your view as the lead. If the promotion runs again, what has to be in place before it starts so the readout is not another week of this? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'If the promotion runs again — what to instrument first', maxWords: 200,
+      prompt: 'What to record before it starts, and what question each thing answers.',
+      rubric: [
+        { key: 'flag', label: 'That promotions should be recorded as such, not inferred', markers: ['flag|record|mark|table|calendar|know|documented|inferred|discover'], why: 'You found this one by noticing a discount column. The next one should not need finding.' },
+        { key: 'baseline', label: 'A pre-agreed comparison period', markers: ['baseline|compar|before|prior|control|which month|agree'], why: 'Otherwise the readout is an argument about which months count as normal.' },
+        { key: 'repeat', label: 'Whether discounted customers come back', markers: ['repeat|return|again|retention|subsequent|later|next month|cohort'], why: 'The single biggest unknown in this week\'s answer, and the one that decides whether the trade was good.' },
+        { key: 'stock', label: 'What the promotion was FOR', markers: ['stock|clear|objective|aim|purpose|why|goal|intent'], why: 'Clearing old stock and buying market share are different objectives that would be judged on different numbers.' },
+        { key: 'basis', label: 'The cost basis agreed in advance', markers: ['cost basis|time of sale|current|view|standard|agree'], why: 'Half of this week went on establishing which cost to use. That is a decision that can be made once.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 3 · Range & Space Review (retail_sales) -------------------------------
+  // The delist week. Monday the range has seven products in it that no store has ever
+  // stocked, and an inner join makes them invisible. Tuesday the money is concentrated in
+  // ten of sixty-one lines. Wednesday the stock table offers a cover calculation that
+  // looks computable and is not — every product holds about twenty units regardless of
+  // how fast it sells. Thursday the express stores carry a third of the range. Friday a
+  // delist list that has to survive somebody asking what each removal is worth.
+
+  'tc-101': {
+    title: 'Count the range',
+    hint: "The number in the products table and the number anybody has ever sold are different numbers.",
+    brief: "Buying want a delist list. Start by establishing what is actually in the range. Write ONE SQL SELECT returning one row per measure, with columns measure and value, in this order: in_range, ever_sold, never_sold.",
+    referenceSql: "SELECT 'in_range' AS measure, COUNT(*) AS value FROM products UNION ALL SELECT 'ever_sold', COUNT(DISTINCT product_id) FROM sales UNION ALL SELECT 'never_sold', (SELECT COUNT(*) FROM products) - (SELECT COUNT(DISTINCT product_id) FROM sales)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tc-102': {
+    title: 'The seven nobody has seen',
+    hint: "An inner join to sales deletes them. You need a LEFT JOIN or a NOT EXISTS.",
+    brief: "Seven products are in the range and have never sold a single unit. Write ONE SQL SELECT listing them: name, category, subcategory, list_price and unit_cost. Most expensive first.",
+    referenceSql: "SELECT p.name, p.category, p.subcategory, p.list_price, p.unit_cost FROM products p WHERE NOT EXISTS (SELECT 1 FROM sales s WHERE s.product_id = p.id) ORDER BY p.list_price DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.45, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'tc-103': {
+    title: 'Why the usual query would have missed them',
+    hint: "Think about what happens to a product with no matching rows when you JOIN rather than LEFT JOIN.",
+    brief: "Every previous range review ranked products by sales and took the bottom of the list. Work out what that misses.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'invisible', correct: true, label: 'An inner join makes a product with no sales invisible, not bottom-ranked', why: 'There is no row to rank. The seven worst-performing products in the range have never appeared in a single performance report.' },
+        { key: 'worst', correct: true, label: 'They are unambiguously the worst lines in the book', why: 'Zero units, zero margin, and they still occupy a slot in the range plan and somebody\'s buying time.' },
+        { key: 'why', correct: true, label: 'The interesting question is why they were listed and never ranged', why: 'Buying signed them off and nobody put them on a planogram. That is a process failure worth more than the seven delists.' },
+        { key: 'zero', correct: false, label: 'They would appear with zero units in any correctly written query', why: 'Only with a LEFT JOIN or NOT EXISTS. The phrase "correctly written" is doing the work — the point is that the obvious query is the wrong one.' },
+        { key: 'new', correct: false, label: 'They are probably new lines that have not launched yet', why: 'Nothing in the data says when a product was listed, so that is a guess. It is also checkable by asking buying, which is the right next step rather than an assumption.' },
+        { key: 'delete', correct: false, label: 'They should be deleted from the products table', why: 'Delisting is a commercial decision and the table is not yours. Flagging them is the job.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tc-104': {
+    title: 'Range and performance in one table',
+    hint: "LEFT JOIN from products, and COALESCE the aggregates so a never-sold line reads zero rather than NULL.",
+    brief: "Build the working table for the review. Write ONE SQL SELECT returning, for EVERY product: name, category, units sold on positive lines, net revenue, margin on the cost that applied, and how many stores have ever sold it. Zeros for products that never sold. Weakest margin first.",
+    referenceSql: "SELECT p.name, p.category, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, COALESCE(SUM(s.quantity * s.unit_price), 0) AS net_revenue, ROUND(COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0)) AS margin, COUNT(DISTINCT s.store_id) AS stores FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id ORDER BY margin ASC, units ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'tc-105': {
+    title: 'Range gaps by category',
+    hint: "Count products in the range and products that sold, per category. The gap is not evenly spread.",
+    brief: "Write ONE SQL SELECT returning, per category: products in the range, products that have ever sold, and the number that never have. Biggest gap first.",
+    referenceSql: "SELECT p.category, COUNT(DISTINCT p.id) AS in_range, COUNT(DISTINCT s.product_id) AS ever_sold, COUNT(DISTINCT p.id) - COUNT(DISTINCT s.product_id) AS never_sold FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.category ORDER BY never_sold DESC, in_range DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tc-106': {
+    title: 'Tell buying what you found',
+    hint: "Seven delists is the small news. The process that listed them is the big news.",
+    brief: "Write to Sneha in buying. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Seven lines in the range that no store has ever stocked', maxWords: 150,
+      prompt: 'What you found, why nobody had seen it, and the question you need her to answer.',
+      rubric: [
+        { key: 'seven', label: 'The seven products, named or counted', markers: ['seven|7|never sold|no store|zero|not ranged'], why: 'Specific and checkable in one line.' },
+        { key: 'why', label: 'Why previous reviews missed them', markers: ['join|no row|invisible|not appear|rank|bottom|left join|absent'], why: 'Without this it looks like nobody was paying attention, rather than that the standard query cannot see them.' },
+        { key: 'ask', label: 'The question only buying can answer', markers: ['were they|why|intended|planogram|launch|discontinued|deliberate|should they'], why: 'They may be deliberate — a launch that slipped, a supplier commitment. You cannot tell and she can.' },
+        { key: 'process', label: 'That the listing process is the larger finding', markers: ['process|how|listed|sign.?off|planogram|gap between|system|again'], why: 'Seven delists is worth very little. A range that can carry lines nobody stocks is worth fixing.' },
+        { key: 'concrete', label: 'A next step', markers: ['confirm|tell me|let me know|come back|check|review|by'], why: 'A finding with no next step gets acknowledged and filed.' },
+      ],
+      skills: { communication: 100, businessLogic: 90 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'tc-110': {
+    title: 'Where the margin actually sits',
+    hint: "Rank products by margin, then ask how much of the total the top few carry.",
+    brief: "Establish the concentration. Write ONE SQL SELECT over products that sold, returning one row per band with columns band and pct_of_margin — the share of total margin, to one place — for top_10, top_20 and bottom_20, in that order.",
+    referenceSql: "WITH m AS (SELECT p.id, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS marg FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT 'top_10' AS band, ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg DESC LIMIT 10)) * 100.0 / (SELECT SUM(marg) FROM m), 1) AS pct_of_margin UNION ALL SELECT 'top_20', ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg DESC LIMIT 20)) * 100.0 / (SELECT SUM(marg) FROM m), 1) UNION ALL SELECT 'bottom_20', ROUND((SELECT SUM(marg) FROM (SELECT marg FROM m ORDER BY marg ASC LIMIT 20)) * 100.0 / (SELECT SUM(marg) FROM m), 1)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'tc-111': {
+    title: 'Ten lines, half the money',
+    hint: "Work out what delisting the bottom twenty would actually save, and what it would cost.",
+    brief: "Ten of sixty-one products carry 55.3% of margin. The bottom twenty carry 8.6%. Read that before anybody proposes a cut.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'concentrated', correct: true, label: 'The range is heavily concentrated — a third of the lines carry nearly three quarters of the margin', why: 'Twenty of sixty-one products at 72.5%. That is the shape of nearly every retail range and it is the reason delisting feels easy.' },
+        { key: 'notfree', correct: true, label: 'Delisting the bottom twenty does not save 8.6% of margin — it loses it', why: 'The saving is in space, buying time and working capital, none of which is in this data. The margin is a straightforward loss and it is the only number here you can actually quantify.' },
+        { key: 'substitution', correct: true, label: 'Some of that lost margin would move to remaining products, and nothing here says how much', why: 'A customer who came for a delisted tea may buy another tea or may leave. Substitution is the whole economics of a delist and this data cannot see it.' },
+        { key: 'cut', correct: false, label: 'The bottom twenty should be delisted — 8.6% of margin is not worth the complexity', why: 'You have not costed the complexity. Trading a quantified ₹18 lakh against an unquantified saving is exactly the decision that needs both numbers.' },
+        { key: 'top', correct: false, label: 'Buying effort should concentrate on the top ten', why: 'They are already working. Where the money sits tells you what to protect, not where attention is most productive.' },
+        { key: 'tail', correct: false, label: 'A long tail of low-margin lines is a sign of poor range management', why: 'It is the normal shape of a range. Whether it is too long is a question about space and attention, neither of which this data holds.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-112': {
+    title: 'The tail, costed',
+    hint: "Rank by margin ascending, take the bottom twenty, and total what they actually contribute.",
+    brief: "Put names against the proposal. Write ONE SQL SELECT listing the twenty lowest-margin products that sold: name, category, units on positive lines, margin on the cost that applied, and that product's share of total margin to two places. Weakest first.",
+    referenceSql: "WITH m AS (SELECT p.id, p.name, p.category, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS marg FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT name, category, units, ROUND(marg) AS margin, ROUND(marg * 100.0 / (SELECT SUM(marg) FROM m), 2) AS pct_of_margin FROM m ORDER BY marg ASC LIMIT 20",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-113': {
+    title: 'The concentration chart',
+    hint: "Categories, one measure, sorted. The same chart you would draw for any contribution question.",
+    brief: "Build the visual for the range review: margin contribution by subcategory, so buying can see which parts of the range carry the money. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT p.category || ' · ' || p.subcategory AS subcategory, SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) AS margin FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.category, p.subcategory ORDER BY margin DESC",
+      prompt: 'Margin contribution by subcategory, for the range review.',
+      answer: { type: 'bar', x: 'subcategory', y: 'margin', sort: 'desc', baselineZero: true },
+      why: 'Named categories compared on one quantity, sorted so the contribution order is what the reader takes away. Margin in rupees rather than rate, because a delist decision is about what a slot earns — and a zero baseline because the smallest subcategories would otherwise look like they contribute nothing at all.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tc-114': {
+    title: 'Ravi proposes a rule',
+    hint: "Apply his rule to the table you already have and see which lines it would remove.",
+    brief: "Ravi has a delist rule. Work out what it would actually do.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Ravi Menon', subject: '#retail-analytics',
+        body: "Proposing a simple delist rule for the range review: any product contributing under 1.5% of category margin goes.\n\nObjective, repeatable, no arguing about individual lines. Good?",
+      },
+      prompt: 'Tick every problem with the rule as written.',
+      options: [
+        { key: 'invisible', correct: true, label: 'It cannot see the seven products that never sold', why: 'They have no category margin to be a percentage of, so a rule expressed as a share of category never reaches them. The worst lines in the range are immune to it.' },
+        { key: 'relative', correct: true, label: 'A percentage of category means small categories lose lines that large ones would keep', why: '1.5% of Bakery is a fraction of 1.5% of Equipment. The same rupee contribution survives in one category and is cut in another.' },
+        { key: 'ratchet', correct: true, label: 'Applied repeatedly it never stops — every cut creates a new bottom', why: 'Once the tail is removed the remaining lines re-share 100%, and a fresh set falls under 1.5%. A rule with no floor delists the whole range eventually.' },
+        { key: 'role', correct: true, label: 'It takes no account of what a line is for', why: 'An opening price point or a line that brings people in can carry very little margin of its own and still be the reason a basket exists.' },
+        { key: 'objective', correct: false, label: 'It is not objective, because the threshold was chosen arbitrarily', why: 'Every threshold is chosen. Arbitrariness is not the problem — the problems are what it cannot see and what it does when you run it twice.' },
+        { key: 'margin', correct: false, label: 'It should use revenue rather than margin', why: 'Margin is the better measure of what a slot earns. Changing it to revenue fixes nothing and loses the one thing the rule gets right.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'tc-115': {
+    title: 'Give Ravi a better rule',
+    hint: "Keep what works about his — objective and repeatable — and fix the four things it does wrong.",
+    brief: "Reply in the channel. He asked for thoughts on a rule, in public, and the instinct is right. Under 130 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: delist rule', maxWords: 130,
+      prompt: 'What the rule misses, and a version that survives being run twice.',
+      rubric: [
+        { key: 'never', label: 'That it cannot reach the never-sold lines', markers: ['never sold|seven|7|zero|no margin|invisible|cannot see|immune'], why: 'The most concrete failure and the easiest to demonstrate.' },
+        { key: 'absolute', label: 'An absolute floor rather than a share of category', markers: ['absolute|rupee|floor|fixed|lakh|per slot|not percent|share'], why: 'The fix for both the small-category problem and the ratchet.' },
+        { key: 'ratchet', label: 'That a share-based rule never terminates', markers: ['again|repeat|twice|ratchet|re.?share|next year|keeps|eventually|never stop'], why: 'The failure nobody notices until the second review.' },
+        { key: 'role', label: 'That some lines earn their slot in other ways', markers: ['role|entry|opening|price point|traffic|basket|footfall|why it is there'], why: 'A rule with no exception process becomes a rule people work around.' },
+        { key: 'support', label: 'Support for the idea of having a rule', markers: ['good|agree|right|worth|like|yes|sensible|keep'], why: 'Objective and repeatable are the right instincts. Replying with only objections is how people stop proposing things in the open.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'tc-120': {
+    title: 'Stock cover, as requested',
+    hint: "Average units on hand over average monthly sales. Compute it before deciding whether it means anything.",
+    brief: "Buying have asked for months of stock cover per product, to support the delist. Write ONE SQL SELECT over products that sold, returning: name, category, average monthly units sold to one place, average units on hand to one place, and months of cover to two places. Highest cover first.",
+    referenceSql: "WITH u AS (SELECT p.id, p.name, p.category, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) / 12.0 AS monthly_units FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id), k AS (SELECT product_id, AVG(units_on_hand) AS stock FROM stock_counts GROUP BY product_id) SELECT u.name, u.category, ROUND(u.monthly_units, 1) AS monthly_units, ROUND(k.stock, 1) AS avg_stock, ROUND(k.stock / u.monthly_units, 2) AS months_cover FROM u JOIN k ON k.product_id = u.id ORDER BY months_cover DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.85, priority: 'high', dueInDays: 3, day: 3, difficulty: 'hard',
+  },
+
+  'tc-121': {
+    title: 'Every product holds about twenty units',
+    hint: "Look at the spread of avg_stock across sixty-one products, then at the spread of monthly sales. They do not match.",
+    brief: "Your cover figures run from 0.43 to 1.09 months and cluster around 0.7. Decide whether that is a finding or a warning.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'flat', correct: true, label: 'Average stock is 14.8 to 24.0 units for every product, while sales run 234 to 482 a year', why: 'A product selling twice as fast holds the same stock as one selling half as fast. That is not how replenishment works anywhere.' },
+        { key: 'implausible', correct: true, label: 'A cover figure that is nearly uniform across the whole range cannot be describing stock policy', why: 'The output is suspiciously tidy, which is the signal. Real cover varies enormously between a fast coffee and a slow grinder.' },
+        { key: 'refuse', correct: true, label: 'The right answer to buying is that this table cannot support the question', why: 'You can compute the number. Publishing it would give a delist decision a spurious input, and it would be your input.' },
+        { key: 'quarterly', correct: true, label: 'Four snapshots a year cannot capture a stock position that turns over monthly', why: 'Even if the counts were demand-linked, a quarterly point-in-time reading says almost nothing about a line selling twenty units a month.' },
+        { key: 'lowcover', correct: false, label: 'The range is running at under a month of cover and is at risk of stockouts', why: 'It is the conclusion the number invites and it rests entirely on a measure you have just shown is not measuring anything.' },
+        { key: 'fix', correct: false, label: 'Weight the stock counts by store to correct the distortion', why: 'There is nothing to correct. The counts do not vary with demand, and no weighting recovers information that was never recorded.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-122': {
+    title: 'Prove it properly',
+    hint: "Band the products by how fast they sell and show average stock in each band. If stock responded to demand the bands would differ.",
+    brief: "Do not assert it — demonstrate it. Write ONE SQL SELECT banding products that sold into low (under 300 units), mid (300 to 399) and high (400 or more), returning per band: the number of products, average annual units, and average units on hand to one place.",
+    referenceSql: "WITH u AS (SELECT p.id, SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END) AS units FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id), k AS (SELECT product_id, AVG(units_on_hand) AS stock FROM stock_counts GROUP BY product_id) SELECT CASE WHEN u.units < 300 THEN 'low' WHEN u.units < 400 THEN 'mid' ELSE 'high' END AS band, COUNT(*) AS products, ROUND(AVG(u.units)) AS avg_units, ROUND(AVG(k.stock), 1) AS avg_stock FROM u JOIN k ON k.product_id = u.id GROUP BY band ORDER BY avg_units",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-123': {
+    title: 'Tell buying the measure does not work',
+    hint: "They asked for a number. You are declining to give it and you need them to understand why, not to think you could not do it.",
+    brief: "Write to Sneha. She asked for stock cover to support the delist and you are not going to supply it. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Stock cover — the counts will not support it', maxWords: 160,
+      prompt: 'What you found, the evidence, why you will not publish the figure, and what would fix it.',
+      rubric: [
+        { key: 'flat', label: 'That stock does not vary with sales rate', markers: ['same|flat|uniform|20|twenty|regardless|no relation|independent|does not vary'], why: 'The observation, stated so she can check it herself.' },
+        { key: 'evidence', label: 'The banded evidence', markers: ['band|low|high|fast|slow|19|20|234|482|twice'], why: 'Fast-selling and slow-selling lines hold the same stock. That comparison is the proof.' },
+        { key: 'refuse', label: 'That you will not publish a cover figure', markers: ['not|won.t|will not|cannot|decline|hold|rather not|no cover'], why: 'Be explicit. A caveated number gets used without its caveat.' },
+        { key: 'notability', label: 'That this is about the data, not about difficulty', markers: ['can compute|easy|not hard|the data|counts|quarterly|four|snapshot|record'], why: 'Otherwise she hears "the analyst could not do it" and asks someone else who will.' },
+        { key: 'fix', label: 'What would make it answerable', markers: ['daily|weekly|movement|receipt|delivery|more frequent|per store|system|epos'], why: 'Turns a refusal into a request, and it is a request somebody can actually action.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-124': {
+    title: 'The measures that survive',
+    hint: "Three of these you have computed this week and can defend. Three you cannot.",
+    brief: "Buying still need a delist basis. Decide what you can actually give them.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every measure this data supports.',
+      options: [
+        { key: 'margin', correct: true, label: 'Margin contribution per product, on the cost that applied', why: 'Directly computed, defensible, and the closest thing to what a slot earns.' },
+        { key: 'breadth', correct: true, label: 'How many stores carry each line', why: 'A line in two stores and a line in twelve are different propositions, and the sales table says which is which.' },
+        { key: 'never', correct: true, label: 'Whether a line has ever sold at all', why: 'The cleanest signal in the dataset and the one the standard query cannot see.' },
+        { key: 'cover', correct: false, label: 'Months of stock cover', why: 'You have just spent a day establishing that it is not measuring anything.' },
+        { key: 'velocity', correct: false, label: 'Rate of sale per store per week', why: 'Computable and misleading here — a line carried only by flagships will look fast because of where it is stocked, not because of what it is.' },
+        { key: 'substitution', correct: false, label: 'What customers would buy instead if a line went', why: 'The single most important number for a delist decision and it is nowhere in these four tables.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'tc-125': {
+    title: 'The delist candidates, defensible version',
+    hint: "One pass over sales, one over products, and a rule you can state in a sentence.",
+    brief: "Build the candidate list on measures that survive. In the notebook, return every product that either never sold, or contributed under ₹120,000 of margin on the cost that applied. Assign a list of dicts with keys name, category, units, margin and stores — margin rounded to whole rupees — sorted ascending by margin then by name, to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const acc = new Map();
+      for (const p of tables.products) acc.set(p.id, { name: p.name, category: p.category, units: 0, margin: 0, stores: new Set() });
+      const products = new Map(tables.products.map((p) => [p.id, p]));
+      for (const s of tables.sales) {
+        const p = products.get(s.product_id);
+        const cost = p.cost_changed_on != null && s.sold_at < p.cost_changed_on ? p.previous_unit_cost : p.unit_cost;
+        const row = acc.get(p.id);
+        if (s.quantity > 0) row.units += s.quantity;
+        row.margin += s.quantity * (s.unit_price - cost);
+        row.stores.add(s.store_id);
+      }
+      return [...acc.values()]
+        .map((r) => ({ name: r.name, category: r.category, units: r.units, margin: Math.round(r.margin), stores: r.stores.size }))
+        .filter((r) => r.stores === 0 || r.margin < 120000)
+        .sort((a, b) => a.margin - b.margin || (a.name < b.name ? -1 : 1));
+    },
+  },
+
+  'tc-130': {
+    title: 'Range breadth by store',
+    hint: "Count distinct products sold per store. Format explains almost all of it.",
+    brief: "Buying will ask whether the range fits the estate. Write ONE SQL SELECT returning, per store: format, the number of distinct products it has sold, and that as a percentage of the full range to one place. Widest range first.",
+    referenceSql: "SELECT st.name, st.format, COUNT(DISTINCT s.product_id) AS products_sold, ROUND(COUNT(DISTINCT s.product_id) * 100.0 / (SELECT COUNT(*) FROM products), 1) AS pct_of_range FROM stores st JOIN sales s ON s.store_id = st.id GROUP BY st.id ORDER BY products_sold DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tc-131': {
+    title: 'How many stores carry each line',
+    hint: "Count distinct stores per product and then count how many products sit at each level.",
+    brief: "Write ONE SQL SELECT returning, for each number of stores carrying a line, how many products are at that level. Fewest stores first, and include the products carried by none.",
+    referenceSql: "SELECT stores_carried, COUNT(*) AS products FROM (SELECT p.id, COUNT(DISTINCT s.store_id) AS stores_carried FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id) GROUP BY stores_carried ORDER BY stores_carried",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.55, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'tc-132': {
+    title: 'The express stores carry a third of the range',
+    hint: "Compare the flagship number with the express numbers and ask what that does to a national delist.",
+    brief: "Flagships sell 61 of 68 lines. The express stores sell between 22 and 32. Work out what that means for a single delist list.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'notnational', correct: true, label: 'A single national delist list applies a decision to stores that never carried the line', why: 'Removing something from Sector 29 that Sector 29 never stocked achieves nothing and makes the list look bigger than it is.' },
+        { key: 'weak', correct: true, label: 'A line carried by few stores looks weak on total margin whether or not it sells well', why: 'Distribution and performance are different things, and total margin confuses them. Two of the candidates are in seven stores.' },
+        { key: 'perstore', correct: true, label: 'Margin per store carrying the line is the fairer comparison', why: 'It separates "nobody wants this" from "almost nobody stocks this", which are opposite problems with opposite answers.' },
+        { key: 'format', correct: true, label: 'The delist question is really a range-by-format question', why: 'An express store with a third of the range has already made most of these decisions. The real question is what the full range should be and what each format takes from it.' },
+        { key: 'expand', correct: false, label: 'The express stores should carry more of the range', why: 'They have a third of the space. Nothing in this data says what would fit, and adding lines to a small store is how you get the tail problem you are trying to fix.' },
+        { key: 'drop', correct: false, label: 'Lines carried by fewer than nine stores should be delisted on that basis alone', why: 'That is the mistake this whole task is about. Low distribution may mean nobody ranged it, which is a buying decision rather than a customer verdict.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-133': {
+    title: 'Margin per store carrying the line',
+    hint: "Divide the line's margin by the number of stores that actually sell it, not by thirteen.",
+    brief: "Correct for distribution. Write ONE SQL SELECT over products that sold, returning: name, category, the number of stores carrying it, total margin on the cost that applied, and margin per carrying store rounded to the nearest rupee. Weakest per store first.",
+    referenceSql: "SELECT p.name, p.category, COUNT(DISTINCT s.store_id) AS stores, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END))) AS margin, ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) / COUNT(DISTINCT s.store_id)) AS margin_per_store FROM products p JOIN sales s ON s.product_id = p.id GROUP BY p.id ORDER BY margin_per_store ASC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Sneha accepts the list and then wants it split by
+    // format, because an express store and a flagship do not take the same decision.
+    rework: true,
+  },
+
+  'tc-134': {
+    title: 'The list changes',
+    hint: "Compare the bottom of the total-margin list with the bottom of the per-store list. Some lines move a long way.",
+    brief: "Correcting for distribution changes which lines look weakest. Say what that means for the recommendation.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'moves', correct: true, label: 'Lines carried by few stores move up the list once distribution is accounted for', why: 'They were near the bottom on total margin because of where they are stocked. On a per-store basis they are unremarkable.' },
+        { key: 'stay', correct: true, label: 'Lines that are weak in twelve stores stay weak on either measure', why: 'The most useful result of the correction: it tells you which candidates are robust to how you measure them.' },
+        { key: 'both', correct: true, label: 'The recommendation should name which measure each candidate fails on', why: 'A line that fails on both is a different case from one that fails on total margin alone, and buying will want to know which they are looking at.' },
+        { key: 'either', correct: false, label: 'Per-store margin should replace total margin as the delist measure', why: 'Total margin is what the business loses. Per-store margin is what the shelf earns. A delist needs both, and substituting one for the other just moves the blind spot.' },
+        { key: 'noone', correct: false, label: 'Since the list changes, neither measure can be trusted', why: 'Both are correct measures of different things. Disagreement between two right answers is information, not a reason to abandon both.' },
+        { key: 'expand2', correct: false, label: 'Low-distribution lines that perform well per store should be rolled out wider', why: 'It is the interesting hypothesis and this data cannot test it — you do not know whether they sell well because they are good or because flagship customers buy differently.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-135': {
+    title: 'Sneha wants a number for the saving',
+    hint: "Work out which part of the saving you can compute and which part you cannot.",
+    brief: "Sneha wants a rupee figure for what the delist saves, to put in the range review paper. Half of that question is computable and half is not. Answer her. Under 150 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'What the delist is worth', maxWords: 150,
+      prompt: 'The half you can compute, the half you cannot, and how the figure should be framed in the paper.',
+      rubric: [
+        { key: 'loses', label: 'The margin the delist costs, with a figure', markers: ['lose|cost|at risk|6\\.8|14 lakh|1,?4|margin of|forego'], why: 'The only directly measured number in the decision, and it points the opposite way to the one she asked for.' },
+        { key: 'saving', label: 'What the saving is made of, and that it is not in this data', markers: ['space|buying|working capital|shelf|slot|not in|outside|cannot|do not have'], why: 'Naming the three components tells her who can price them, which beats a refusal.' },
+        { key: 'substitution', label: 'Substitution as the unknown that decides it', markers: ['substitut|instead|switch|buy another|move to|half|net'], why: 'If customers buy something else the loss shrinks. Till data cannot see it.' },
+        { key: 'frame', label: 'That it should be framed as a cost to justify, not a saving to bank', markers: ['cost|justif|frame|not a saving|against|trade|rather than'], why: 'A paper that opens with an uncomputed saving is how a range gets cut on a number that was never true.' },
+        { key: 'noestimate', label: 'That you will not supply an industry estimate', markers: ['not estimate|won.t|will not|no benchmark|industry|made up|invent|our data'], why: 'She will quote the number, not the source.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'tc-140': {
+    title: 'What the candidates are worth',
+    hint: "Same rule as the notebook, summed. This is the number that goes in the paper.",
+    brief: "Cost the recommendation. Write ONE SQL SELECT returning one row for every product that either never sold or contributed under ₹120,000 of margin: how many there are, their combined units, revenue and margin, and their share of total margin to one place. Label them candidates, units, revenue, margin and pct_of_margin.",
+    referenceSql: "WITH m AS (SELECT p.id, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, COALESCE(SUM(s.quantity * s.unit_price), 0) AS revenue, COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0) AS marg, COUNT(DISTINCT s.store_id) AS stores FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id) SELECT COUNT(*) AS candidates, SUM(units) AS units, ROUND(SUM(revenue)) AS revenue, ROUND(SUM(marg)) AS margin, ROUND(SUM(marg) * 100.0 / (SELECT SUM(marg) FROM m), 1) AS pct_of_margin FROM m WHERE stores = 0 OR marg < 120000",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-141': {
+    title: 'The candidates, with both measures',
+    hint: "Each candidate needs to say which test it failed, so buying can argue with the right one.",
+    brief: "Assemble the paper's appendix. Write ONE SQL SELECT over the delist candidates returning: name, category, stores carrying it, units, total margin, and margin per carrying store — zero where nothing sold. Weakest total margin first.",
+    referenceSql: "SELECT p.name, p.category, COUNT(DISTINCT s.store_id) AS stores, COALESCE(SUM(CASE WHEN s.quantity > 0 THEN s.quantity ELSE 0 END), 0) AS units, ROUND(COALESCE(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)), 0)) AS margin, CASE WHEN COUNT(DISTINCT s.store_id) = 0 THEN 0 ELSE ROUND(SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) / COUNT(DISTINCT s.store_id)) END AS margin_per_store FROM products p LEFT JOIN sales s ON s.product_id = p.id GROUP BY p.id HAVING COUNT(DISTINCT s.store_id) = 0 OR SUM(s.quantity * (s.unit_price - CASE WHEN p.cost_changed_on IS NOT NULL AND s.sold_at < p.cost_changed_on THEN p.previous_unit_cost ELSE p.unit_cost END)) < 120000 ORDER BY margin ASC, p.name",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-142': {
+    title: 'What the paper says',
+    hint: "Two things you established, two things you refused, and one thing you do not know.",
+    brief: "Decide what goes in the range review paper.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'never', correct: true, label: 'The seven never-ranged lines, and the process question behind them', why: 'The cleanest finding of the week and the one with a fix that outlives the review.' },
+        { key: 'cost', correct: true, label: 'The margin the candidate list would cost, stated as a cost', why: 'It is the only quantified figure in the decision and it points the opposite way to the framing the paper was requested in.' },
+        { key: 'nocover', correct: true, label: 'That stock cover was requested, computed and rejected, with the reason', why: 'Somebody else will compute it. The paper should already say why it was not used, or the omission looks like an oversight.' },
+        { key: 'twomeasures', correct: true, label: 'Which test each candidate fails — total margin, distribution, or both', why: 'A line weak in twelve stores and a line barely stocked are different cases, and buying will argue them differently.' },
+        { key: 'saving', correct: false, label: 'An estimated saving from the delist', why: 'Space, buying time and working capital are real and none of them is in these four tables. An estimate here would be the most-quoted number in the paper.' },
+        { key: 'rule', correct: false, label: 'A standing rule to delist anything under 1.5% of category margin', why: 'You argued against exactly this on Tuesday, and it still cannot see the seven lines that never sold.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-143': {
+    title: 'Sign off the range paper',
+    hint: "Read what the sentences claim on top of your numbers. Three of the four go further than the analysis does.",
+    brief: "Sneha has drafted the paper using your work. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Sneha Joshi', subject: 'Range paper — sign off?',
+        body: "\"Analytics have identified a tail of underperforming lines representing under 9% of margin. Delisting them releases shelf space and working capital at minimal commercial risk. Stock cover analysis confirms the range is over-extended. We recommend removing all candidates at the spring reset.\"\n\nGood to go?",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'cover', correct: true, label: '"Stock cover analysis confirms" — you told her that analysis does not work', why: 'It is the sentence you spent Wednesday and a whole email preventing, and it has come back in as supporting evidence.' },
+        { key: 'risk', correct: true, label: '"Minimal commercial risk" is an assessment nobody has made', why: 'Substitution is unmeasured. The risk could be near zero or it could be most of the margin, and the paper asserts the first.' },
+        { key: 'releases', correct: true, label: '"Releases shelf space and working capital" states a saving that was never quantified', why: 'Both are real and both are outside this data. Stating them as achieved outcomes is how a cost becomes a saving on paper.' },
+        { key: 'all', correct: true, label: '"Removing all candidates" ignores that they fail different tests', why: 'Seven never sold at all. Others are weak only on total margin because they are barely stocked. Treating them as one list removes the distinction you built.' },
+        { key: 'nine', correct: false, label: 'The "under 9% of margin" figure is wrong', why: 'It is your figure and it is right. As usual the arithmetic survives and the sentences do not.' },
+        { key: 'spring', correct: false, label: 'The spring reset is the wrong time to do it', why: 'Nothing in this data speaks to timing, and objecting to it would be exactly the kind of unevidenced claim the rest of this list is about.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-144': {
+    title: 'Rewrite the paper\'s summary',
+    hint: "Same candidates, none of the four claims, and the cost stated as a cost.",
+    brief: "Send Sneha replacement wording for the summary paragraph. Under 140 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Sneha Joshi', subject: 'Range paper — suggested summary', maxWords: 140,
+      prompt: 'The candidates split by the test they fail, the margin at risk stated as a cost, and the saving named as unquantified.',
+      rubric: [
+        { key: 'split', label: 'Candidates split by which test they fail', markers: ['never|seven|7|distribution|stores|total margin|two group|separately|different'], why: 'The distinction the paper flattened and the one buying will argue on.' },
+        { key: 'cost', label: 'The margin stated as a cost, not a saving', markers: ['cost|lose|loses|at risk|forego|give up|margin of'], why: 'The framing reversal is the whole point of the rewrite.' },
+        { key: 'unquantified', label: 'That space and working capital are real but unquantified here', markers: ['space|working capital|not quantif|cannot|outside|do not have|no data|elsewhere'], why: 'Names the missing half without pretending it does not exist.' },
+        { key: 'nocover', label: 'No stock cover claim', markers: ['cover|stock|not used|excluded|counts|cannot support|removed'], why: 'Either drop the sentence or say why it is not there. Silence lets somebody re-add it.' },
+        { key: 'substitution', label: 'Substitution named as the open question', markers: ['substitut|instead|switch|buy another|move to|unknown|risk'], why: 'The single largest determinant of whether the delist is a good idea.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'tc-145': {
+    title: 'What you would put in place',
+    hint: "Two failures this week were data that does not exist. One was a query pattern. All three have a fix.",
+    brief: "Asha wants your view as the lead. What changes so the next range review is not another week of this? Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Range review — what I would change', maxWords: 200,
+      prompt: 'The changes that would make the next review answerable, and what each unlocks.',
+      rubric: [
+        { key: 'leftjoin', label: 'That range reporting must start from products, not sales', markers: ['left join|from products|not sales|never sold|zero|every product|start'], why: 'One query pattern, and it is the reason seven lines were invisible for as long as anybody has been reviewing the range.' },
+        { key: 'stock', label: 'Stock movement rather than quarterly snapshots', markers: ['stock|movement|daily|weekly|receipt|deliver|snapshot|quarterly|more frequent'], why: 'Without it, cover and stockouts stay unanswerable every single review.' },
+        { key: 'space', label: 'Space or slot data, so a delist has two sides', markers: ['space|slot|planogram|shelf|facing|capacity|cost of'], why: 'The saving half of the trade is currently unmeasurable, which is why delist papers keep asserting it.' },
+        { key: 'listing', label: 'A check that listed lines are actually ranged', markers: ['listed|ranged|planogram|process|sign.?off|gap|report|flag|monitor'], why: 'The seven lines were a process failure, and the fix costs one scheduled query.' },
+        { key: 'own', label: 'Written as decisions, not suggestions', markers: ['I would|we will|I will|propose|put in place|add|introduce|ask for'], why: 'A lead asked what changes is being asked to decide, not to list options.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Lead 4 · Year-End Board Pack (retail_sales) --------------------------------
+  // The last Team Lead project, and the one where the learner owns the number rather
+  // than checking somebody else's. Monday three people submit three different revenue
+  // figures. Tuesday they have to reconcile exactly. Wednesday the learner's own earlier
+  // correction turns out to have been right for a comparison and wrong for a total.
+  // Thursday an estimate for next year that has to survive being asked what it assumes.
+  // Friday the pack, and the standard that stops this recurring.
+
+  'td-101': {
+    title: 'Three people, three revenue figures',
+    hint: "None of them is wrong. Work out what each one is counting before you touch a query.",
+    brief: "Three submissions for the year-end pack, three different numbers. Establish what each is measuring.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Year-end pack — three numbers, one board',
+        body: "Three submissions in and no two agree on revenue for the year.\n\nRavi: ₹5.00 crore.\nDiya: ₹4.85 crore.\nSneha: ₹4.45 crore.\n\nBoard is Thursday week. I need one number, and I need to be able to explain the other two.",
+      },
+      prompt: 'Tick everything that is likely true.',
+      options: [
+        { key: 'defs', correct: true, label: 'All three are probably correct computations of different things', why: 'Gross or net of returns, whole estate or like-for-like, with or without the duplicated month. Three choices, eight possible answers, and nobody wrote down which they took.' },
+        { key: 'spread', correct: true, label: 'The spread is about ₹55 lakh, which is larger than most decisions in the pack', why: 'Eleven percent of the business. A pack that cannot say which figure it means cannot support anything built on it.' },
+        { key: 'bridge', correct: true, label: 'The fix is a bridge between them, not a choice among them', why: 'A board that hears "we picked Diya\'s" learns nothing. A board that sees gross, less returns, less a duplicated month, less non-comparable stores, understands the business.' },
+        { key: 'wrong', correct: false, label: 'At least two of the three must contain an error', why: 'That is the assumption to avoid. Three right answers to three unstated questions is far more common than two mistakes.' },
+        { key: 'highest', correct: false, label: 'The highest figure is the one to use, since it is the most complete', why: 'Gross revenue is the most complete and the least honest — it counts money that was refunded.' },
+        { key: 'average', correct: false, label: 'Take the middle figure as a reasonable compromise', why: 'It would be a number that answers no question at all, and nobody could reproduce it.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'td-102': {
+    title: 'Every figure they could have meant',
+    hint: "Four definitions, four rows. You have computed all of them in previous weeks.",
+    brief: "Lay out the candidates. Write ONE SQL SELECT returning one row per basis, with columns basis and revenue, in this order: gross, net, net_dedup (net with the duplicated rows removed), and net_dedup_lfl (also restricted to stores trading the whole window).",
+    referenceSql: "SELECT 'gross' AS basis, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS revenue FROM sales UNION ALL SELECT 'net', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'net_dedup', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'net_dedup_lfl', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'td-103': {
+    title: 'Match each submission',
+    hint: "Round your four figures to the nearest lakh and compare them with what the three people sent.",
+    brief: "Work out who computed what. Say which basis each of the three submissions corresponds to.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'ravi', correct: true, label: 'Ravi\'s ₹5.00 crore is gross revenue, before returns', why: '₹5,00,34,052. He has counted what went through the till and not what came back.' },
+        { key: 'diya', correct: true, label: 'Diya\'s ₹4.85 crore is net of returns, whole estate, duplicates included', why: '₹4,84,62,913. The straightforward reading of the table, and the one Finance would take.' },
+        { key: 'sneha', correct: true, label: 'Sneha\'s ₹4.45 crore is net, de-duplicated and like-for-like', why: '₹4,44,98,388. She has applied every correction, which makes it the right measure of trading and the wrong measure of what the business earned.' },
+        { key: 'nobody', correct: false, label: 'Nobody computed net with duplicates removed but all stores included', why: 'Correct — and it is the figure the board actually needs, which is why none of the three is usable as submitted.' },
+        { key: 'sneha2', correct: false, label: 'Sneha\'s figure is the most correct and should be the headline', why: 'It excludes two new stores and a closed one. The board approved that capital and the pack cannot silently drop it from the total.' },
+        { key: 'ravi2', correct: false, label: 'Ravi has made an error', why: 'Gross revenue is a real figure that Finance uses. He did not label it, which is a different failure from computing it wrongly.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-104': {
+    title: 'The figure nobody submitted',
+    hint: "Net, duplicates removed, every store included. That is what the business earned.",
+    brief: "Compute the headline. Write ONE SQL SELECT returning one row: net revenue with the duplicated rows removed and every store included, the gross figure, the value of returns, and — for contrast — the same corrected figure restricted to stores trading the whole window. Label them headline, gross, returns and like_for_like.",
+    referenceSql: "SELECT (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') AS headline, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS gross, (SELECT -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS returns, (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') AS like_for_like",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-105': {
+    title: 'Tell the three of them at once',
+    hint: "Nobody is wrong. Say so first, then say what the pack will use and why.",
+    brief: "Write to all three. They will each see the others' figures in the pack and each assume theirs was rejected. Under 170 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Ravi Menon, Diya Chandra and Sneha Joshi', subject: 'Year-end revenue — all three are right', maxWords: 170,
+      prompt: 'That each figure is a correct answer to a different question, which the pack will use, and the rule going forward.',
+      rubric: [
+        { key: 'allright', label: 'That none of them made an error', markers: ['all|each|three|right|correct|no error|different question|not wrong'], why: 'Say it first. Three people whose work has just been replaced need to know they were not wrong before they hear what was chosen.' },
+        { key: 'which', label: 'What each one computed', markers: ['gross|net|return|like.for.like|lfl|duplicat|estate|all store'], why: 'Naming each basis is what turns a disagreement into a definitions problem.' },
+        { key: 'headline', label: 'The figure the pack will carry, and why', markers: ['4\\.81|48,?1|net|dedup|all store|board|headline|earned'], why: 'What the business earned, on every store, with the known fault removed.' },
+        { key: 'others', label: 'That the other two still appear, as the bridge', markers: ['bridge|also|alongside|reconcil|show|both|appendix|beside'], why: 'Nothing is discarded. The three figures become the explanation rather than the argument.' },
+        { key: 'rule', label: 'A rule so this does not recur', markers: ['label|define|state|basis|going forward|standard|always|glossary'], why: 'Three people made the same omission, which means it is a process gap rather than three oversights.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'td-106': {
+    title: 'What a definitions note has to fix',
+    hint: "Each ambiguity cost you a submission this week. Which ones would recur next year?",
+    brief: "You are going to write a standing definitions note. Decide what has to be in it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every term that has to be defined before the next pack.',
+      options: [
+        { key: 'revenue', correct: true, label: 'Revenue — gross or net of returns', why: 'A ₹15.7 lakh difference and three people who each assumed the other meaning was obvious.' },
+        { key: 'lfl', correct: true, label: 'Like-for-like — which stores, and on what date test', why: 'Two openings and a closure in one year. Without a rule, everybody draws the boundary differently and the totals stop tying.' },
+        { key: 'txn', correct: true, label: 'Transaction — whether a refund counts as one', why: 'It changes the count by 492 and the average value by nearly ₹500, and it has already gone into one draft.' },
+        { key: 'correction', correct: true, label: 'How a known data fault is handled and disclosed', why: 'The duplicated month has now been treated three different ways by three people, and none of them said so on the page.' },
+        { key: 'margin', correct: true, label: 'Margin — on the cost that applied, or on current cost', why: 'A four percent difference overall and nearly seven in Equipment, which is where the range decisions are made.' },
+        { key: 'target', correct: false, label: 'The revenue target for next year', why: 'Not a definition. Setting it is the board\'s job and putting it in a glossary would be a quiet way of proposing one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'normal', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'td-110': {
+    title: 'The bridge, step by step',
+    hint: "Each row is a step from the figure above it. The steps have to add up exactly or it is not a bridge.",
+    brief: "Build the reconciliation. Write ONE SQL SELECT returning one row per step with columns step and value, in this order: gross, less_returns (negative), net, less_duplicates (negative), headline, less_new_stores (negative), less_closed_store (negative), like_for_like.",
+    referenceSql: "WITH d AS (SELECT SUM(quantity * unit_price) / 2 AS dup FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03'), n AS (SELECT SUM(s.quantity * s.unit_price) AS newv FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on > '2025-07-01'), c AS (SELECT SUM(s.quantity * s.unit_price) AS closedv FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.closed_on IS NOT NULL) SELECT 'gross' AS step, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS value UNION ALL SELECT 'less_returns', (SELECT SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) UNION ALL SELECT 'net', (SELECT SUM(quantity * unit_price) FROM sales) UNION ALL SELECT 'less_duplicates', -(SELECT dup FROM d) UNION ALL SELECT 'headline', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) UNION ALL SELECT 'less_new_stores', -(SELECT newv FROM n) UNION ALL SELECT 'less_closed_store', -(SELECT closedv FROM c) UNION ALL SELECT 'like_for_like', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) - (SELECT newv FROM n) - (SELECT closedv FROM c)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 1.1, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'td-111': {
+    title: 'Check it ties',
+    hint: "Add the steps up yourself. A bridge that does not reconcile to the rupee is worse than no bridge.",
+    brief: "Your bridge runs gross ₹5,00,34,052 to like-for-like ₹4,44,98,388. Decide what has to be true of it before it goes in a pack.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is required.',
+      options: [
+        { key: 'exact', correct: true, label: 'Every step has to reconcile to the rupee, not approximately', why: 'A bridge whose steps nearly add up invites somebody to find the gap in the room, and then nothing else on the page is believed.' },
+        { key: 'named', correct: true, label: 'Each step has to say what it removes and why', why: '"Less duplicates ₹3,46,357" means nothing without "a feed fault duplicated one store-month". The number and its reason travel together or not at all.' },
+        { key: 'both', correct: true, label: 'Both ends are real figures the board may be quoted', why: 'Gross is what Finance sees in the till system; like-for-like is what the trading discussion uses. The bridge exists so that hearing either does not cause a panic.' },
+        { key: 'reproduce', correct: true, label: 'Somebody else has to be able to reproduce every step from the source', why: 'That is the whole function of disclosure. An undisclosed correction is indistinguishable from an error the next time anybody checks.' },
+        { key: 'simplify', correct: false, label: 'The bridge should be simplified to two or three steps for a board audience', why: 'The steps ARE the explanation. Collapsing them is how the ₹55 lakh becomes unexplainable again.' },
+        { key: 'lflonly', correct: false, label: 'Only the like-for-like end matters, since it is the cleanest', why: 'It excludes ₹36 lakh of trade from stores the board funded. Cleanest is not the same as complete.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-112': {
+    title: 'The bridge chart',
+    hint: "Ranked comparison across named steps, and the axis has to start at zero or the steps lie about their size.",
+    brief: "Build the visual: the revenue bases side by side, so a reader sees the spread before they read the steps. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'retail_sales',
+    chart: {
+      sourceSql: "SELECT 'gross' AS basis, SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) AS revenue FROM sales UNION ALL SELECT 'net', SUM(quantity * unit_price) FROM sales UNION ALL SELECT 'net de-duplicated', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'like-for-like', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+      prompt: 'The four revenue bases, for the board pack.',
+      answer: { type: 'bar', x: 'basis', y: 'revenue', sort: 'desc', baselineZero: true },
+      why: 'Four named bases compared on one measure is a bar chart, sorted so the descent from gross to like-for-like is the shape the reader takes away. The zero baseline is doing real work here — the four figures span only eleven percent, and a truncated axis would turn a definitional difference into what looks like a collapse.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'td-113': {
+    title: 'Which figure answers which question',
+    hint: "Five questions a board actually asks. Each wants a different one of your four.",
+    brief: "The pack will be read by people asking different things. Match the figure to the question.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every statement that pairs the right figure with the right question.',
+      options: [
+        { key: 'earned', correct: true, label: '"What did the business earn?" — net, de-duplicated, all stores', why: 'Every store the company owned, money actually kept, known fault removed. The headline.' },
+        { key: 'trading', correct: true, label: '"Are the shops trading better?" — like-for-like', why: 'The only figure where the two periods contain the same estate, which is what the question is about.' },
+        { key: 'till', correct: true, label: '"What went through the tills?" — gross', why: 'A real operational figure, used for staffing and for reconciling against the till system.' },
+        { key: 'invest', correct: true, label: '"Did the new stores work?" — neither total, but the new stores reported on their own', why: 'They are excluded from like-for-like for a methodological reason, not a performance one, and hiding them in a total answers nothing.' },
+        { key: 'oneno', correct: false, label: '"What is the one true revenue number?" — the headline', why: 'There is no one true number, and a pack that pretends otherwise is the reason three people submitted three figures.' },
+        { key: 'growth', correct: false, label: '"Did we grow?" — the headline against last year\'s headline', why: 'Last year had a different estate. Growth is a like-for-like question or it is a question about the size of the company, and those are not the same.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-114': {
+    title: 'The estate, reported on its own',
+    hint: "The three stores excluded from like-for-like each need a line, with the reason they are excluded.",
+    brief: "Write ONE SQL SELECT over stores that opened inside the window or have closed, returning: name, opened_on, closed_on, days open within the window, net revenue, and revenue per day open rounded to the nearest rupee. Best per day first.",
+    referenceSql: "SELECT st.name, st.opened_on, st.closed_on, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS net_revenue, ROUND(SUM(s.quantity * s.unit_price) * 1.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS revenue_per_day_open FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY revenue_per_day_open DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-115': {
+    title: 'Write the definitions note',
+    hint: "Five terms, one line each, and a rule about disclosure. Short enough that people read it.",
+    brief: "Produce the standing definitions note that goes at the front of every pack from now on. Under 200 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Reporting definitions — standing note', maxWords: 200,
+      prompt: 'The terms, defined tightly enough that two people cannot reasonably differ.',
+      rubric: [
+        { key: 'revenue', label: 'Revenue defined as gross or net', markers: ['gross|net|return|refund|deduct'], why: 'The one that cost ₹15.7 lakh of confusion this week.' },
+        { key: 'lfl', label: 'Like-for-like with an explicit date test', markers: ['like.for.like|lfl|open before|trading throughout|both period|closed|1 july|whole window'], why: 'A rule anybody can apply without judgement, or people will apply judgement.' },
+        { key: 'txn', label: 'Transaction defined against refunds', markers: ['transaction|refund|return|sale line|positive|count'], why: 'Changes the count by 492 and the average by nearly ₹500.' },
+        { key: 'margin', label: 'Margin on a stated cost basis', markers: ['cost|time of sale|applied|current|basis|margin'], why: 'Four percent overall, seven in Equipment, and it decides range decisions.' },
+        { key: 'disclose', label: 'A rule that corrections are disclosed on the page', markers: ['disclos|state|show|note|exclusion|correction|on the page|reproduce'], why: 'The rule that makes every other definition checkable rather than a matter of trust.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'td-120': {
+    title: 'Your own correction, three months on',
+    hint: "Look at what you did to the duplicated month last time, and ask whether it was the right operation for a TOTAL.",
+    brief: "The trading review excluded store 3's whole March from the comparison. Compare that with removing only the duplicated rows.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'toomuch', correct: true, label: 'Excluding the whole month removes ₹3,46,357 of real trade as well as the duplicate', why: 'Every line is duplicated, so half of what is there is genuine. Dropping the month throws away the half that actually happened.' },
+        { key: 'right', correct: true, label: 'For the half-on-half COMPARISON, excluding the month was defensible', why: 'You could not tell which of each pair was real, so neither half of the period could be trusted for that store. Dropping it kept the comparison clean.' },
+        { key: 'wrong', correct: true, label: 'For a TOTAL it is wrong, because the money was earned', why: 'The board is being told what the business made. Understating it by ₹3.46 lakh to avoid a data fault is a different error, not a safer one.' },
+        { key: 'dedupe', correct: true, label: 'Keeping one row of each duplicated pair is the right operation here', why: 'Both rows are identical, so either is the real one. Keeping one recovers the trade and removes the fault.' },
+        { key: 'same', correct: false, label: 'The two approaches give the same answer to within rounding', why: '₹3.46 lakh apart. Small against ₹4.8 crore and larger than several line items in the pack.' },
+        { key: 'badlast', correct: false, label: 'The trading review should be reissued with the corrected figure', why: 'It was a comparison and the treatment was right for a comparison. Reissuing a correct document would confuse the one thing that is currently settled.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-121': {
+    title: 'What each treatment costs',
+    hint: "Three figures for the same year, differing only in how one month is handled.",
+    brief: "Quantify the choice. Write ONE SQL SELECT returning one row per treatment with columns treatment and revenue, in this order: as_loaded (no correction), dedup (one row of each duplicated pair kept) and exclude_month (the whole store-month dropped).",
+    referenceSql: "SELECT 'as_loaded' AS treatment, SUM(quantity * unit_price) AS revenue FROM sales UNION ALL SELECT 'dedup', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) / 2 FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') UNION ALL SELECT 'exclude_month', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT SUM(quantity * unit_price) FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03')",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.75, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-122': {
+    title: 'Ashok Nagar, corrected properly',
+    hint: "Halve March for that store and compare it against its own other months.",
+    brief: "Check the correction lands somewhere plausible. Write ONE SQL SELECT for store 3 only, returning per month: net revenue as loaded, and net revenue with March halved. Oldest first.",
+    referenceSql: "SELECT substr(sold_at, 1, 7) AS month, SUM(quantity * unit_price) AS as_loaded, CASE WHEN substr(sold_at, 1, 7) = '2026-03' THEN SUM(quantity * unit_price) / 2 ELSE SUM(quantity * unit_price) END AS corrected FROM sales WHERE store_id = 3 GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'td-123': {
+    title: 'When to drop and when to de-duplicate',
+    hint: "The question being asked decides it, not the fault.",
+    brief: "Write the rule the team will apply next time a period is found to be corrupt. Under 160 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Handling a corrupted period — the rule', maxWords: 160,
+      prompt: 'When to repair the data and when to exclude the period, and why the answer depends on the question.',
+      rubric: [
+        { key: 'repair', label: 'That a repairable fault should be repaired, for totals', markers: ['repair|dedup|half|keep one|recover|correct|total|earned'], why: 'A total has to include money that was actually made, and an identical pair is repairable with certainty.' },
+        { key: 'exclude', label: 'That a period you cannot repair is excluded from comparisons', markers: ['exclude|drop|comparison|trend|cannot tell|unrepairable|uncertain|like.for.like'], why: 'The case where the trading review was right, and it needs to stay right.' },
+        { key: 'question', label: 'That the question decides which applies', markers: ['depend|question|total|comparison|purpose|what is being asked|use'], why: 'The load-bearing idea. Same fault, two correct treatments.' },
+        { key: 'disclose', label: 'That either way it is disclosed', markers: ['disclos|state|note|page|say|reproduc|record'], why: 'Otherwise two packs carry two figures and neither explains the other.' },
+        { key: 'concrete', label: 'The March figures as the worked example', markers: ['3,?46|346|march|ashok|store 3|lakh|half'], why: 'A rule with a worked example gets applied. A rule without one gets interpreted.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'td-124': {
+    title: 'Everything the pack quotes, from one place',
+    hint: "One pass over sales. Build every figure the pack needs so they cannot drift apart.",
+    brief: "Produce the pack's numbers in a single computation, so no two of them can disagree. In the notebook, compute: gross, returns (positive), net, duplicates (positive), headline (net less duplicates), new_stores, closed_store, and like_for_like (headline less the other two). Round every figure to whole rupees. Assign a dict with those eight keys to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.0, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      let gross = 0, returns = 0, net = 0, dupMonth = 0, newStores = 0, closedStore = 0;
+      for (const s of tables.sales) {
+        const value = s.quantity * s.unit_price;
+        net += value;
+        if (s.quantity > 0) gross += value; else returns -= value;
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') dupMonth += value;
+        const store = stores.get(s.store_id);
+        if (store.opened_on > '2025-07-01') newStores += value;
+        if (store.closed_on != null) closedStore += value;
+      }
+      const duplicates = dupMonth / 2;
+      const headline = net - duplicates;
+      return {
+        gross: Math.round(gross),
+        returns: Math.round(returns),
+        net: Math.round(net),
+        duplicates: Math.round(duplicates),
+        headline: Math.round(headline),
+        new_stores: Math.round(newStores),
+        closed_store: Math.round(closedStore),
+        like_for_like: Math.round(headline - newStores - closedStore),
+      };
+    },
+  },
+
+  'td-125': {
+    title: 'One computation, many figures',
+    hint: "Think about what happens when eight numbers in a pack come from eight separate queries.",
+    brief: "You have just built every figure the pack quotes in one pass. Say why that matters.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'tie', correct: true, label: 'Figures from one computation cannot disagree with each other', why: 'Eight separate queries means eight chances for a filter to differ, and the pack stops reconciling without anybody changing a number.' },
+        { key: 'change', correct: true, label: 'A change to a definition propagates everywhere at once', why: 'When the duplicate treatment changed, one line moved and all eight figures stayed consistent. Eight queries would have needed eight edits and somebody would have missed one.' },
+        { key: 'audit', correct: true, label: 'It makes the pack auditable — one place to read the rules', why: 'Somebody checking your work reads one function rather than hunting for filters across a folder of SQL.' },
+        { key: 'this', correct: true, label: 'It is exactly how the three submissions diverged in the first place', why: 'Three people, three queries, three unstated filters. The structural fix is one computation, not three more careful people.' },
+        { key: 'faster', correct: false, label: 'It is faster to run', why: 'True and irrelevant. These figures are computed once a year and correctness is the entire point.' },
+        { key: 'always', correct: false, label: 'All analysis should be done this way', why: 'Exploratory work is meant to be throwaway. This applies to the numbers that get published and quoted, which is a much smaller set.' },
+      ],
+      skills: { businessLogic: 100, communication: 90 },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'td-130': {
+    title: 'The estimate somebody has already made',
+    hint: "Check what his 5% growth is being applied to, and what it assumes about the estate.",
+    brief: "Vikram has put a number for next year in the draft. Work out what is wrong with it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Next year — putting 5.1 crore in the draft',
+        body: "Taking this year at ₹4.85 crore and adding 5% growth gives ₹5.09 crore. Round to ₹5.1 crore.\n\nFeels about right and the board will want to see growth. Shout if you disagree.",
+      },
+      prompt: 'Tick every problem with it.',
+      options: [
+        { key: 'base', correct: true, label: 'The base includes the duplicated month, so it starts ₹3.46 lakh too high', why: 'He has used the uncorrected figure, which you established on Monday is not the one the pack will carry.' },
+        { key: 'closed', correct: true, label: 'It assumes Park Street keeps trading, and Park Street closed in January', why: '₹11.64 lakh of this year\'s revenue cannot recur. The estate next year is not the estate this year.' },
+        { key: 'newstores', correct: true, label: 'It ignores that two new stores only traded part of the year', why: 'Sector 29 for 268 days and Salt Lake for 149. A full year of each adds far more than the 5% he is applying.' },
+        { key: 'trend', correct: true, label: '5% growth contradicts the trend in the data — like-for-like fell in the second half', why: 'The only trend evidence available points down. Applying growth because the board wants to see growth is the reasoning to name out loud.' },
+        { key: 'promo', correct: true, label: 'It assumes the promotion repeats, without saying so', why: 'November added about ₹15.2 lakh of revenue. Whether it runs again is a decision nobody has taken, and the estimate silently takes it.' },
+        { key: 'round', correct: false, label: 'Rounding to ₹5.1 crore is too imprecise for a board', why: 'Rounding is the least of it, and an estimate quoted to the rupee would imply precision that no forecast has.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-131': {
+    title: 'What the estate alone does to next year',
+    hint: "Annualise each part-year store at its own daily rate, and remove the store that closed.",
+    brief: "Build the estate adjustment. Write ONE SQL SELECT returning one row per store that opened inside the window or closed during it, with: name, days open, actual revenue, and revenue annualised to 365 days at the same daily rate, rounded to the nearest rupee.",
+    referenceSql: "SELECT st.name, CAST(julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1 AS INTEGER) AS days_open, SUM(s.quantity * s.unit_price) AS actual, ROUND(SUM(s.quantity * s.unit_price) * 365.0 / (julianday(MIN(COALESCE(st.closed_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(st.opened_on, '2025-07-01')) + 1)) AS annualised FROM stores st JOIN sales s ON s.store_id = st.id WHERE st.opened_on > '2025-07-01' OR st.closed_on IS NOT NULL GROUP BY st.id ORDER BY annualised DESC",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-132': {
+    title: 'The estimate, with its assumptions on the page',
+    hint: "Start from the headline, adjust the estate, then decide the promotion separately. Each step is an assumption.",
+    brief: "Build the estimate properly. In the notebook, start from the headline figure and produce two scenarios: with the promotion repeated and without it. Adjust for the estate — remove the closed store entirely, and uplift each part-year store to a full year at its own daily rate. Assume flat like-for-like trading. Assign a dict with keys base, estate_adjustment, promotion_value, with_promotion and without_promotion — all rounded to whole rupees — to `result`.",
+    tool: 'python', datasetKey: 'retail_sales',
+    estHours: 1.2, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const stores = new Map(tables.stores.map((s) => [s.id, s]));
+      const day = (d) => Date.parse(d + 'T00:00:00Z') / 86400000;
+      let net = 0, dupMonth = 0, closed = 0;
+      const partYear = new Map();
+      const byMonth = new Map();
+      for (const s of tables.sales) {
+        const value = s.quantity * s.unit_price;
+        net += value;
+        if (s.store_id === 3 && s.sold_at.slice(0, 7) === '2026-03') dupMonth += value;
+        const store = stores.get(s.store_id);
+        if (store.closed_on != null) closed += value;
+        if (store.opened_on > '2025-07-01') partYear.set(store.id, (partYear.get(store.id) || 0) + value);
+        byMonth.set(s.sold_at.slice(0, 7), (byMonth.get(s.sold_at.slice(0, 7)) || 0) + value);
+      }
+      const base = net - dupMonth / 2;
+      let uplift = 0;
+      for (const [id, revenue] of partYear) {
+        const store = stores.get(id);
+        const days = day('2026-06-30') - day(store.opened_on) + 1;
+        uplift += revenue * 365 / days - revenue;
+      }
+      const estate = uplift - closed;
+      const nov = byMonth.get('2025-11');
+      const others = [...byMonth.entries()].filter(([m]) => m !== '2025-11').map(([, v]) => v);
+      const promotion = nov - others.reduce((s, v) => s + v, 0) / others.length;
+      return {
+        base: Math.round(base),
+        estate_adjustment: Math.round(estate),
+        promotion_value: Math.round(promotion),
+        with_promotion: Math.round(base + estate),
+        without_promotion: Math.round(base + estate - promotion),
+      };
+    },
+  },
+
+  'td-133': {
+    title: 'What the estimate assumes',
+    hint: "Every step you took is an assumption. Name the ones a board should be told about.",
+    brief: "Your estimate is not a prediction. Decide what has to be said alongside it.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick every assumption that has to be stated on the page.',
+      options: [
+        { key: 'flat', correct: true, label: 'That like-for-like trading is assumed flat, which the data does not support', why: 'The second half fell. Assuming flat is already optimistic, and a board told "no growth assumed" will hear conservatism where there is none.' },
+        { key: 'newstores', correct: true, label: 'That the new stores are assumed to continue at their current daily rate', why: 'A store open five months may still be in its opening peak or still building. Annualising assumes neither, and that assumption is invisible in the number.' },
+        { key: 'promo', correct: true, label: 'Which scenario assumes the promotion repeats, and that repeating it is a decision nobody has taken', why: 'A ₹15.2 lakh swing that depends entirely on a choice outside this analysis.' },
+        { key: 'nomarket', correct: true, label: 'That nothing is assumed about the market, because nothing can be', why: 'No competitor, footfall or macro data exists. Saying so stops the estimate being read as a forecast.' },
+        { key: 'range', correct: true, label: 'That it should be presented as a range, not a point', why: 'Two scenarios ₹15.2 lakh apart on a decision not yet taken. A single number hides the decision inside it.' },
+        { key: 'confidence', correct: false, label: 'A confidence interval around the estimate', why: 'There is no sampling process here to have an interval about. The uncertainty is in the assumptions, not in the arithmetic, and dressing it as statistics would misrepresent it.' },
+      ],
+      skills: { statistics: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-134': {
+    title: 'Answer Vikram',
+    hint: "He offered you a shout. Replace his number rather than just objecting to it.",
+    brief: "Write back. His figure is too high for four separate reasons and you have an alternative with its assumptions attached. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Next year — what I would put in instead', maxWords: 180,
+      prompt: 'What is wrong with the 5% approach, your figures, and the assumptions they rest on.',
+      rubric: [
+        { key: 'base', label: 'That the base was the uncorrected figure', markers: ['base|4\\.85|duplicat|3,?46|corrected|headline|start'], why: 'The simplest correction and the one that makes the rest credible.' },
+        { key: 'estate', label: 'The estate adjustment, with direction', markers: ['closed|park street|new store|annualis|full year|sector|salt lake|estate'], why: 'It pushes the number up for one reason and down for another, and both have to be visible.' },
+        { key: 'two', label: 'Two scenarios rather than one number', markers: ['two|range|scenario|with|without|promotion|depend'], why: 'The promotion decision is worth ₹15.2 lakh and belongs to somebody else.' },
+        { key: 'flat', label: 'That flat like-for-like is already an optimistic assumption', markers: ['flat|no growth|second half|fell|declin|optimist|not conservative|17'], why: 'The sentence that stops the board reading the estimate as cautious.' },
+        { key: 'notgrowth', label: 'That growth cannot be assumed because the board wants it', markers: ['want|expect|because|evidence|support|data|assume|cannot'], why: 'He said "the board will want to see growth" out loud, which is the part to answer directly rather than politely ignore.' },
+      ],
+      skills: { communication: 100, statistics: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'td-135': {
+    title: 'Monthly revenue for the trend page',
+    hint: "Twelve months, with March for store 3 halved so the series does not have a spike in it.",
+    brief: "The pack needs both series, for the same reason the headline needs both bases. Write ONE SQL SELECT returning, per month: net revenue as loaded, net revenue with store 3's March halved across the whole estate, and the same corrected figure restricted to stores trading the whole window. Label them as_loaded, corrected and corrected_lfl. Oldest month first.",
+    referenceSql: "SELECT substr(s.sold_at, 1, 7) AS month, SUM(s.quantity * s.unit_price) AS as_loaded, SUM(CASE WHEN s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03' THEN s.quantity * s.unit_price / 2.0 ELSE s.quantity * s.unit_price END) AS corrected, SUM(CASE WHEN st.opened_on <= '2025-07-01' AND st.closed_on IS NULL THEN (CASE WHEN s.store_id = 3 AND substr(s.sold_at, 1, 7) = '2026-03' THEN s.quantity * s.unit_price / 2.0 ELSE s.quantity * s.unit_price END) ELSE 0 END) AS corrected_lfl FROM sales s JOIN stores st ON st.id = s.store_id GROUP BY month ORDER BY month",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 0.65, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: Asha accepts the series and then asks for it as a
+    // rolling three-month average, because the promotion spike dominates the chart.
+    rework: true,
+  },
+
+  'td-140': {
+    title: 'The pack, assembled',
+    hint: "Everything the board sees, from the one computation, with the basis on every line.",
+    brief: "Produce the pack's summary table. Write ONE SQL SELECT returning one row per line item with columns line and value, in this order: gross, returns, net, duplicate_correction, headline, new_stores, closed_store, like_for_like — returns and the corrections as positive numbers.",
+    referenceSql: "WITH d AS (SELECT SUM(quantity * unit_price) / 2 AS dup FROM sales WHERE store_id = 3 AND substr(sold_at, 1, 7) = '2026-03') SELECT 'gross' AS line, (SELECT SUM(CASE WHEN quantity > 0 THEN quantity * unit_price ELSE 0 END) FROM sales) AS value UNION ALL SELECT 'returns', (SELECT -SUM(CASE WHEN quantity < 0 THEN quantity * unit_price ELSE 0 END) FROM sales) UNION ALL SELECT 'net', (SELECT SUM(quantity * unit_price) FROM sales) UNION ALL SELECT 'duplicate_correction', (SELECT dup FROM d) UNION ALL SELECT 'headline', (SELECT SUM(quantity * unit_price) FROM sales) - (SELECT dup FROM d) UNION ALL SELECT 'new_stores', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on > '2025-07-01') UNION ALL SELECT 'closed_store', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.closed_on IS NOT NULL) UNION ALL SELECT 'like_for_like', (SELECT SUM(s.quantity * s.unit_price) FROM sales s JOIN stores st ON st.id = s.store_id WHERE st.opened_on <= '2025-07-01' AND st.closed_on IS NULL) - (SELECT dup FROM d)",
+    datasetKey: 'retail_sales', tool: 'sql', estHours: 1.0, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-141': {
+    title: 'Sign off the board summary',
+    hint: "The numbers are yours and they are right. Read what the sentences claim on top of them.",
+    brief: "Asha has drafted the summary page from your pack. Tick every problem.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Board summary — sign off?',
+        body: "\"Revenue for the year was ₹4.81 crore. Like-for-like trading declined, offset by two successful new store openings. A data quality issue was identified and corrected. We expect ₹4.90 crore next year on a conservative basis.\"\n\nThis is your pack. Anything?",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'conservative', correct: true, label: '"Conservative" describes an estimate that assumes flat trading after a falling half', why: 'Flat is optimistic against the only trend evidence there is. Calling it conservative tells the board the risk is on the upside when it is not.' },
+        { key: 'offset', correct: true, label: '"Offset by" implies the new stores compensated for the decline — they are different populations', why: 'The like-for-like decline and the new store revenue are not commensurable. One is a trading trend, the other is added capacity.' },
+        { key: 'successful', correct: true, label: '"Successful" openings is a judgement nobody has made', why: 'They trade in line with their format on a per-day basis. Whether that repays the capital is a question this analysis never asked.' },
+        { key: 'vague', correct: true, label: '"A data quality issue was identified and corrected" does not say what or how much', why: 'Third time this has come up across three packs. Without ₹3.46 lakh and a named month, nobody can reproduce the headline.' },
+        { key: 'promo', correct: true, label: 'The estimate quotes one scenario without saying which promotion assumption it takes', why: 'A ₹15.2 lakh swing on a decision nobody has taken, hidden inside a single number.' },
+        { key: 'figure', correct: false, label: 'The ₹4.81 crore headline is wrong', why: 'It is your figure and it is right. As in every pack this quarter, the arithmetic survives and the sentences do not.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-142': {
+    title: 'Rewrite the summary',
+    hint: "Same five facts, none of the five claims, and the estimate as a range.",
+    brief: "Send Asha a replacement summary paragraph. It has to be read aloud at a board and survive being quoted back. Under 140 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'Board summary — suggested wording', maxWords: 140,
+      prompt: 'The headline with its basis, the trading picture, the new stores stated fairly, the correction named, and the estimate as a range with its assumption.',
+      rubric: [
+        { key: 'basis', label: 'The headline with its basis stated', markers: ['net|return|all store|every store|4\\.81|basis|de.?duplicat'], why: 'One clause, and it is what stops the figure being compared against a differently-defined one next year.' },
+        { key: 'lfl', label: 'The trading decline, scoped to like-for-like', markers: ['like.for.like|lfl|same store|ten store|decline|fell'], why: 'The trading story, kept separate from the capacity story.' },
+        { key: 'newstores', label: 'New stores stated without a verdict', markers: ['in line|for their format|per day|separately|added|open|not yet|too early'], why: '"Successful" is a judgement about capital returns that this work never touched.' },
+        { key: 'correction', label: 'The correction named, with the amount', markers: ['3,?46|346|march|ashok|store|duplicat|lakh'], why: 'So the headline reconciles with the warehouse for anybody who checks.' },
+        { key: 'range', label: 'The estimate as a range, with the flat-trading assumption named', markers: ['range|two|scenario|promotion|flat|assum|depend|between'], why: 'The estimate is a pair of scenarios on a decision the board itself has to take.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-143': {
+    title: 'The question you will be asked in the room',
+    hint: "Four packs this quarter each turned on a definition. Work out what a board member is entitled to conclude from that.",
+    brief: "A board member asks why the revenue figure has changed since the last pack. Decide how to answer.",
+    tool: 'choice', datasetKey: 'retail_sales',
+    choice: {
+      prompt: 'Tick everything that belongs in the answer.',
+      options: [
+        { key: 'basis', correct: true, label: 'That the figure did not change — the basis did, and both are on the page', why: 'The bridge exists exactly so that this question has a one-sentence answer with a table behind it.' },
+        { key: 'own', correct: true, label: 'That the earlier packs were not wrong, they answered different questions', why: 'Throwing previous work under the bus to look rigorous costs the team more than the admission gains.' },
+        { key: 'fix', correct: true, label: 'That a definitions note now sits at the front of every pack', why: 'Turns an awkward question into evidence that it is being managed.' },
+        { key: 'fault', correct: true, label: 'That one genuine fault was found, quantified and disclosed', why: '₹3.46 lakh, named month, named store. Volunteering it is what makes the rest of the answer credible.' },
+        { key: 'blame', correct: false, label: 'That previous packs used an incorrect methodology', why: 'They used an unstated one. Calling it incorrect is both inaccurate and a way of blaming colleagues in front of a board.' },
+        { key: 'simplify', correct: false, label: 'That the difference is technical and not material to the decision', why: '₹55 lakh across the four bases. Describing it as technical would be the last thing you said before somebody worked out it was eleven percent.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-144': {
+    title: 'The reporting standard',
+    hint: "Four projects, four different failures, and every one of them has a control that would have caught it.",
+    brief: "Write the standard that governs retail reporting from now on. It has to be short enough that people follow it. Under 220 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Retail Analytics team', subject: 'Reporting standard — effective now', maxWords: 220,
+      prompt: 'The controls, each tied to something that actually went wrong.',
+      rubric: [
+        { key: 'definitions', label: 'Definitions at the front of every pack', markers: ['definition|glossary|basis|front|state|label|term'], why: 'Three people, three revenue figures, one week. The cheapest control available.' },
+        { key: 'onecomp', label: 'Published figures come from one computation', markers: ['one|single|same|source|computation|derive|together|tie'], why: 'Eight figures from eight queries is how a pack stops reconciling with itself.' },
+        { key: 'dupcheck', label: 'A scheduled duplicate check on the feeds', markers: ['duplicate|check|monthly|automat|schedul|feed|load|monitor'], why: 'One query, run monthly, would have caught a fault that survived three months of reporting.' },
+        { key: 'disclose', label: 'Every correction disclosed on the page it affects', markers: ['disclos|on the page|state|note|reproduc|exclusion|correction'], why: 'Three packs have now said "a data quality issue was corrected" and none has said what.' },
+        { key: 'claims', label: 'Sign-off covers the sentences, not just the numbers', markers: ['sentence|claim|wording|sign.?off|read|driven by|language|assert'], why: 'Every pack this quarter was arithmetically right and rhetorically wrong somewhere.' },
+        { key: 'own', label: 'Written as rules in force, not proposals', markers: ['will|must|from now|effective|every|each|no figure|standard'], why: 'A lead writing a standard is issuing it. Hedged into suggestions, none of it happens.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'td-145': {
+    title: 'What you would want to be measured on',
+    hint: "You have run four reviews. Think about which of your outputs actually changed a decision.",
+    brief: "Asha asks what the analytics team should be judged on next year. Answer as the lead. Under 180 words.",
+    tool: 'writeup', datasetKey: 'retail_sales',
+    writeup: {
+      to: 'Asha Rao', subject: 'What the team should be measured on', maxWords: 180,
+      prompt: 'A measure of the team\'s value that cannot be gamed by producing more output.',
+      rubric: [
+        { key: 'notvolume', label: 'That volume of analysis is the wrong measure', markers: ['volume|number of|output|report|dashboard|count|more|not how many'], why: 'The obvious measure, and the one that rewards producing packs nobody reads.' },
+        { key: 'decisions', label: 'Something about decisions changed or prevented', markers: ['decision|changed|prevent|stopped|avoided|acted|influence|outcome'], why: 'Four reviews this quarter each stopped something wrong reaching a board. That is the product.' },
+        { key: 'trust', label: 'Something about figures being reproducible and trusted', markers: ['reconcil|reproduc|trust|tie|challenge|dispute|question|stand up'], why: 'A number nobody can reproduce has no value however correct it is.' },
+        { key: 'honest', label: 'Acknowledgement that the good measures are hard to count', markers: ['hard|difficult|cannot count|proxy|imperfect|qualitative|judge'], why: 'Proposing a measure while pretending it is easy to collect is how bad metrics get adopted.' },
+        { key: 'own', label: 'A clear answer rather than a survey of options', markers: ['I would|I think|propose|my view|should be|recommend'], why: 'She asked what you think. Three options with trade-offs is a way of not answering.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+
+  // ---- Manager 1 · Demand & Capacity Review (analytics_ops) -----------------------
+  // First project at Manager, and the subject changes: the thing being analysed is the
+  // team. Monday the intake. Tuesday who looks busy, which turns out to rank people by
+  // how well they fill in a timesheet. Wednesday the wobble — the timesheets account for
+  // an eighth of the paid time, so every rate built on them is out by a factor of eight.
+  // Thursday capacity from presence rather than headcount, and the hours spent on work
+  // nobody wanted. Friday what the exec is told, and what gets instrumented.
+
+  'ma-101': {
+    title: 'What the exec is asking for',
+    hint: "He has asked a resourcing question in the form of a productivity question. Notice which one you are being handed.",
+    brief: "Read the request before you touch the data. Decide what is actually being asked and what would be needed to answer it.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Analytics headcount — before budget round',
+        body: "Budget round is in three weeks and analytics is one of the larger cost lines.\n\nI want to understand what we get for it. How much does an analysis cost us, who in the team is most productive, and do we need all fourteen people?\n\nYou have the timesheets. Should be straightforward.",
+      },
+      prompt: 'Tick everything that is true about the request as framed.',
+      options: [
+        { key: 'three', correct: true, label: 'It is three different questions, and only one of them is about cost', why: 'Cost per analysis, individual productivity, and establishment size. They need different data and only the first is close to answerable.' },
+        { key: 'individual', correct: true, label: '"Who is most productive" is the question to push back on hardest', why: 'Any answer becomes a performance conversation with a named person. It needs to be right, and the data almost certainly cannot make it right.' },
+        { key: 'timesheets', correct: true, label: 'Whether the timesheets can carry any of it is the first thing to establish', why: 'He has assumed they are a record of how time was spent. That assumption is testable before anything is built on it.' },
+        { key: 'need', correct: true, label: '"Do we need all fourteen" cannot be answered from utilisation alone', why: 'It depends on what would not get done, and the backlog and cancelled work speak to that far better than a headcount figure does.' },
+        { key: 'straightforward', correct: false, label: 'It is straightforward — the timesheets hold hours per person and per request', why: 'They hold logged hours, which is a different thing from hours worked, and the gap between those two is the whole of this week.' },
+        { key: 'refuse', correct: false, label: 'Decline the individual productivity question outright', why: 'He is entitled to ask what his money buys. Refusing the question is not the same as refusing to answer it with a measure that cannot bear the weight.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ma-102': {
+    title: 'What came in and what happened to it',
+    hint: "Status is the first cut. Note how much sits in states that are neither done nor being worked on.",
+    brief: "Establish the intake. Write ONE SQL SELECT returning, per request status: the number of requests and that as a percentage of all requests to one place. Most common first.",
+    referenceSql: "SELECT status, COUNT(*) AS requests, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct FROM requests GROUP BY status ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'ma-103': {
+    title: 'Who asks, and for how much',
+    hint: "Count requests and sum hours in the same query. The two orderings will not match.",
+    brief: "Write ONE SQL SELECT returning, per requesting function: the number of requests, total logged hours to one place, and hours per request to one place. Most requests first.",
+    referenceSql: "SELECT r.requested_by, COUNT(DISTINCT r.id) AS requests, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) / COUNT(DISTINCT r.id), 1) AS hours_per_request FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.requested_by ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'ma-104': {
+    title: 'Finance asks most and takes least',
+    hint: "Compare the two orderings. One function is at opposite ends of them.",
+    brief: "Finance submitted 136 requests and consumed 574 logged hours. Product submitted 34 and consumed 945. Read what that means.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything your table supports.',
+      options: [
+        { key: 'shape', correct: true, label: 'The two functions ask in completely different shapes', why: 'Finance at 4.2 hours a request, Product at 27.8. One is a stream of small things and the other is a handful of substantial pieces.' },
+        { key: 'ranking', correct: true, label: 'Ranking requesters by count and by hours gives nearly opposite answers', why: 'Finance is first by count and fourth by hours. Any prioritisation built on one measure will be argued with using the other.' },
+        { key: 'both', correct: true, label: 'A demand picture needs both numbers side by side', why: 'Count tells you where the interruptions come from; hours tell you where the capacity goes. They are different management problems.' },
+        { key: 'neither', correct: false, label: 'Finance is over-using the team and should be rationed', why: 'A hundred and thirty-six small requests may be exactly the right relationship with Finance. Volume is not the same as burden, which is what the hours column is for.' },
+        { key: 'product', correct: false, label: 'Product is the most valuable requester, since it consumes the most', why: 'Consumption is not value. Nothing in this data says what any of the work was worth.' },
+        { key: 'small', correct: false, label: 'The small Finance requests should be automated away', why: 'Plausible, and it is a recommendation rather than a finding. You do not yet know whether they repeat or are each different.' },
+      ],
+      skills: { businessLogic: 100, statistics: 90 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ma-105': {
+    title: 'The backlog',
+    hint: "Queued work has never been picked up. Measure how long it has been waiting, not how much there is.",
+    brief: "Write ONE SQL SELECT over requests that are still queued, returning: requested_by, the number queued, and the average days since they were requested as at 30 June 2026, to one place. Longest waiting first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS queued, ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) AS avg_days_waiting FROM requests WHERE status = 'queued' GROUP BY requested_by ORDER BY avg_days_waiting DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'ma-106': {
+    title: 'Reply to Vikram on day one',
+    hint: "Three questions, and you can already say which ones are answerable and what the third one needs.",
+    brief: "Write back before you build anything. Separate his three questions, say which you will answer and how, and flag the one that needs care. Under 170 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Analytics cost — three questions, not one', maxWords: 170,
+      prompt: 'The three questions separated, what you will produce, and the one you are going to handle differently.',
+      rubric: [
+        { key: 'three', label: 'That it is three questions', markers: ['three|separate|different|cost|productiv|headcount|establish|not one'], why: 'Answering a compound question as though it were one is how the wrong thing gets measured.' },
+        { key: 'individual', label: 'That individual productivity needs handling carefully', markers: ['individual|person|name|performance|careful|not|measure|per analyst|attribut'], why: 'Flag it on day one. Raising it after you have the numbers looks like you are protecting the team from a result.' },
+        { key: 'timesheet', label: 'That you will check what the timesheets actually cover first', markers: ['timesheet|logged|coverage|check|whether|hold up|self.report|record'], why: 'The load-bearing assumption in his request, and it is testable in a day.' },
+        { key: 'will', label: 'What you will produce and by when', markers: ['will|demand|capacity|backlog|by|friday|next week|produce|send'], why: 'Pushing back without a deliverable reads as avoidance.' },
+        { key: 'legit', label: 'That the underlying question is fair', markers: ['fair|reasonable|right to|entitled|good question|should|understand'], why: 'He is asking what a large cost line buys. That is his job, and the reply should not read as defensive.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'ma-110': {
+    title: 'Hours per analyst',
+    hint: "Exclude the manager — she does not deliver requests and a zero would drag every average down.",
+    brief: "The obvious cut. Write ONE SQL SELECT over analysts below manager level, returning: name, level, total logged hours to one place, and the number of distinct requests they logged against. Most hours first.",
+    referenceSql: "SELECT a.name, a.level, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, COUNT(DISTINCT t.request_id) AS requests FROM analysts a LEFT JOIN time_logs t ON t.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.55, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'ma-111': {
+    title: 'The table you should not send',
+    hint: "Ask what a person at the bottom of this list would have to do to move up it.",
+    brief: "You now have a ranked list of people by hours logged. Decide what it is measuring.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of this table.',
+      options: [
+        { key: 'logging', correct: true, label: 'A person can move up it by logging more diligently, without doing more work', why: 'That is the definition of a measure that cannot support a performance conversation. It rewards the behaviour it records rather than the behaviour it is meant to proxy.' },
+        { key: 'assignment', correct: true, label: 'It also reflects how much work each person was assigned', why: 'Which is a management decision, not an individual one. Two of the three things this table varies on are outside the person\'s control.' },
+        { key: 'presence', correct: true, label: 'Two people were not here for the whole year and appear near the bottom', why: 'A March joiner and a January leaver. Ranking them against a full year on absolute hours is arithmetic, not performance.' },
+        { key: 'named', correct: true, label: 'Sent as it stands, it would become a performance conversation about named people', why: 'Which is the reason to be certain before it leaves your desk. A wrong retail number costs money; a wrong version of this costs somebody their standing.' },
+        { key: 'useful', correct: false, label: 'It is a reasonable first approximation of individual output', why: 'It is an approximation of logging discipline, assignment volume and time present, in that order. Output is not in the top three.' },
+        { key: 'normalise', correct: false, label: 'Dividing by days present would make it a fair comparison', why: 'It would fix the presence problem and leave the other two untouched, which is worse — a normalised number looks careful.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-112': {
+    title: 'How many days anybody logs at all',
+    hint: "Count distinct days with any entry, against the working days that person was here.",
+    brief: "Test the assumption underneath everything. Write ONE SQL SELECT over analysts below manager level, returning: name, working days present in the window (calendar days times five sevenths, rounded), distinct days with any log, and days logged as a percentage of working days to one place. Best coverage first.",
+    referenceSql: "SELECT a.name, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) AS working_days, COUNT(DISTINCT t.logged_on) AS days_logged, ROUND(COUNT(DISTINCT t.logged_on) * 100.0 / (CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7), 1) AS pct FROM analysts a LEFT JOIN time_logs t ON t.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.95, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-113': {
+    title: 'Nobody logs more than half their days',
+    hint: "Look at the best coverage in the team, not the worst.",
+    brief: "Coverage runs from 19.2% to 49.1%. Work out what that does to every figure derived from the timesheets.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'best', correct: true, label: 'Even the most diligent person accounts for under half their working days', why: '49.1% is the ceiling. This is not a few people being lax — it is a system nobody uses fully, which is a different problem with a different fix.' },
+        { key: 'spread', correct: true, label: 'The spread between best and worst is about two and a half times', why: 'Which is larger than any plausible difference in actual output, so the variation in the hours table is mostly variation in admin.' },
+        { key: 'relative', correct: true, label: 'It invalidates comparisons between people more than it invalidates totals', why: 'A total that is uniformly short can be scaled. A comparison between a 49% logger and a 19% logger cannot be rescued at all.' },
+        { key: 'cost', correct: true, label: 'Any cost-per-hour or cost-per-request built on logged hours will be badly overstated', why: 'The denominator is missing most of the time that was actually spent, so every rupee of cost is divided across a fraction of the hours.' },
+        { key: 'lazy', correct: false, label: 'The people at the bottom should be asked to log more carefully', why: 'It is the first instinct and it treats a system problem as thirteen individual ones. Nobody is above half.' },
+        { key: 'useless', correct: false, label: 'The timesheets are useless and should be discarded', why: 'They are a reasonable sample of WHAT people work on even if they are a poor record of HOW MUCH. Proportions survive better than totals.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-114': {
+    title: 'Tell the team before you tell the exec',
+    hint: "Thirteen people are about to have their timesheets discussed in a budget round. They should hear it from you first.",
+    brief: "Write to the team. You are about to use their logged hours in an exec conversation and the coverage is 12.8%. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'Timesheets, and what I am and am not going to do with them', maxWords: 160,
+      prompt: 'What you found, what you will not use it for, and what you are asking of them.',
+      rubric: [
+        { key: 'finding', label: 'The coverage figure', markers: ['12|13|eighth|coverage|half|49|most|nobody'], why: 'State it plainly. They will assume it is worse than it is otherwise.' },
+        { key: 'notperf', label: 'That it will not be used to compare individuals', why: 'The single thing every one of them will be worried about, and it has to be the clearest sentence in the note.', markers: ['not|won.t|will not|individual|compare|performance|rank|between people|nobody'] },
+        { key: 'system', label: 'That this is a system problem, not thirteen personal ones', markers: ['system|nobody|everyone|all of us|not you|design|tool|process|my'], why: 'If the note reads as a telling-off, coverage goes up for a month and the data gets worse, not better.' },
+        { key: 'use', label: 'What you WILL use it for', markers: ['proportion|where|shape|mix|what we work on|demand|categor|relative'], why: 'Proportions survive poor coverage far better than totals. Saying so keeps the data worth collecting.' },
+        { key: 'ask', label: 'A specific and proportionate ask', markers: ['ask|please|would|two week|trial|for now|going forward|change'], why: '"Log everything from now on" is not proportionate and will not happen. Something small and time-boxed might.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-115': {
+    title: 'What survives poor coverage',
+    hint: "Sort these by whether they need the level of the hours or only their relative shape.",
+    brief: "Coverage is 12.8%. Decide which of the questions you were asked can still be answered.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick every question the timesheets can still support.',
+      options: [
+        { key: 'mix', correct: true, label: 'Roughly what proportion of effort goes to each requesting function', why: 'A proportion survives an incomplete sample far better than a total, provided the incompleteness is not correlated with the requester — which is worth stating as an assumption.' },
+        { key: 'shape', correct: true, label: 'Which categories of work are large and which are small', why: 'Same argument. The shape of the distribution is much more robust than its scale.' },
+        { key: 'cancelled', correct: true, label: 'That a material amount of effort goes on work that is later cancelled', why: 'A finding about the existence and rough size of something, which does not need the hours to be complete to be alarming.' },
+        { key: 'cost', correct: false, label: 'The cost of an average analysis', why: 'Needs the hours to be right in level, not just in shape. Computed naively it comes out around eight times too high.' },
+        { key: 'person', correct: false, label: 'Which analyst delivers most per day', why: 'The comparison the coverage differences destroy most completely.' },
+        { key: 'capacity', correct: false, label: 'How much spare capacity the team has', why: 'Spare capacity is total hours available minus hours used, and the timesheets cannot see most of the second term.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'ma-120': {
+    title: 'The number the budget round wants',
+    hint: "Compute it the way it would be computed if nobody had checked the coverage.",
+    brief: "Produce the naive answer first, so you can show what it is. Write ONE SQL SELECT returning three rows, one per measure, with columns measure and value: total logged hours to one place, the team's annual cost from day rates and days present, and cost per logged hour rounded to the nearest rupee. Label the rows logged_hours, annual_cost and cost_per_logged_hour, in that order.",
+    referenceSql: "WITH cost AS (SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) AS annual_cost FROM analysts a), logged AS (SELECT SUM(hours) AS h FROM time_logs) SELECT 'logged_hours' AS measure, ROUND(h, 1) AS value FROM logged UNION ALL SELECT 'annual_cost', ROUND(annual_cost) FROM cost UNION ALL SELECT 'cost_per_logged_hour', ROUND(annual_cost / h) FROM cost, logged",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-121': {
+    title: 'Capacity in hours, properly',
+    hint: "Days present, not headcount. Working days, not calendar days. And the manager is not delivery capacity.",
+    brief: "Compute the denominator that should have been used. Write ONE SQL SELECT over analysts below manager level returning one row: total calendar days present in the window, those as working days rounded, capacity hours at eight a day rounded, logged hours to one place, and logged hours as a percentage of capacity to one place.",
+    referenceSql: "SELECT SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) AS calendar_days, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7) AS working_days, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7 * 8) AS capacity_hours, (SELECT ROUND(SUM(hours), 1) FROM time_logs) AS logged_hours, ROUND((SELECT SUM(hours) FROM time_logs) * 100.0 / (SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) * 5.0 / 7 * 8), 1) AS coverage_pct FROM analysts a WHERE a.level <> 'manager'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-122': {
+    title: 'Eight times wrong',
+    hint: "Compare the cost per logged hour with the cost per capacity hour. The ratio is the finding.",
+    brief: "The naive figure is ₹9,664 an hour. Against capacity hours it is about ₹1,241. Say what that means for the budget conversation.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'ratio', correct: true, label: 'The naive rate is roughly eight times the rate against capacity, because the denominator is 12.8% complete', why: 'The two numbers are the same cost divided by two very different hour counts. Neither is wrong arithmetically and only one describes anything real.' },
+        { key: 'neither', correct: true, label: 'Neither figure is a defensible cost per hour of useful work', why: 'The naive one divides by a fraction of the time; the capacity one assumes every paid hour is chargeable, which no team achieves. The truth is between them and this data cannot locate it.' },
+        { key: 'danger', correct: true, label: 'The naive figure is the more dangerous of the two because it flatters nobody', why: '₹9,664 an hour sounds like a rate that needs explaining, and the explanation would be about the people rather than about the timesheet.' },
+        { key: 'range', correct: true, label: 'The honest output is a range with the assumption named, not a point', why: 'Bounded above by the naive figure and below by the capacity figure, with a sentence saying why the truth is inside it.' },
+        { key: 'scale', correct: false, label: 'Scale the logged hours up by the coverage rate to get the true figure', why: 'That assumes unlogged time is spent in the same proportions as logged time, which is exactly the thing you have no evidence for.' },
+        { key: 'capacity', correct: false, label: 'Use the capacity figure — it is the conservative one', why: 'It is the flattering one, and it assumes a hundred percent utilisation. Conservative would be the other end.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-123': {
+    title: 'Where the effort goes, in proportions',
+    hint: "Proportions survive an incomplete sample. Use them rather than the hours themselves.",
+    brief: "Salvage what the timesheets can carry. Write ONE SQL SELECT returning, per work category: logged hours to one place and that as a percentage of all logged hours to one place. Biggest share first.",
+    referenceSql: "SELECT r.category, ROUND(SUM(t.hours), 1) AS hours, ROUND(SUM(t.hours) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_effort FROM time_logs t JOIN requests r ON r.id = t.request_id GROUP BY r.category ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'ma-124': {
+    title: 'Effort against outcome',
+    hint: "One pass over the logs, grouped by what happened to the request they belong to.",
+    brief: "Find out how much of the year went on work that produced nothing. In the notebook, compute for each request status: the number of requests, total logged hours, and hours as a percentage of all logged hours. Round hours to one decimal place and percentages to one. Assign a list of dicts with keys status, requests, hours and pct_of_hours, sorted by hours descending, to `result`.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    estHours: 0.9, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+    referenceCompute: (tables) => {
+      const byRequest = new Map();
+      for (const t of tables.time_logs) byRequest.set(t.request_id, (byRequest.get(t.request_id) || 0) + t.hours);
+      const acc = new Map();
+      for (const r of tables.requests) {
+        if (!acc.has(r.status)) acc.set(r.status, { status: r.status, requests: 0, hours: 0 });
+        const row = acc.get(r.status);
+        row.requests += 1;
+        row.hours += byRequest.get(r.id) || 0;
+      }
+      const total = [...acc.values()].reduce((s, r) => s + r.hours, 0);
+      const r1 = (n) => Math.round(n * 10) / 10;
+      return [...acc.values()]
+        .map((r) => ({ status: r.status, requests: r.requests, hours: r1(r.hours), pct_of_hours: r1((r.hours / total) * 100) }))
+        .sort((a, b) => b.hours - a.hours);
+    },
+  },
+
+  'ma-125': {
+    title: 'Four hundred and eighty-five hours on cancelled work',
+    hint: "Work out what that is as a share of effort, and what it would be worth fixing.",
+    brief: "Forty-six requests were cancelled after work had started on them. Decide what that is.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'share', correct: true, label: 'It is about 15% of all logged effort, and that is a floor rather than an estimate', why: 'Logged hours are 12.8% of time, so the true hours on cancelled work are larger. The proportion is the reliable part, the level is not.' },
+        { key: 'intake', correct: true, label: 'It points at the intake process rather than at the analysts', why: 'Work that gets started and then withdrawn was accepted before it was needed. That is a decision made before any analysis began.' },
+        { key: 'actionable', correct: true, label: 'Unlike most of this week, it is directly actionable', why: 'A clarifying question at intake costs minutes. Nothing else you have found this week has that ratio.' },
+        { key: 'notwaste', correct: true, label: 'Not all of it is waste — some cancellations are the right outcome', why: 'A request cancelled because the analysis showed it was the wrong question is a success. The data cannot tell those apart, and saying so keeps the finding honest.' },
+        { key: 'blame', correct: false, label: 'The functions that cancel most should be charged for it', why: 'Cross-charging inside a company converts a process problem into an argument, and it would discourage exactly the early cancellations that are healthy.' },
+        { key: 'refuse', correct: false, label: 'Requests should not be started until they are confirmed twice', why: 'A process that slows everything to reduce a 15% loss. The fix should be proportionate to the problem.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'ma-130': {
+    title: 'Capacity by level',
+    hint: "Days present by level, so the shape of the team is visible rather than just its size.",
+    brief: "Write ONE SQL SELECT over analysts below manager level returning, per level: headcount, total calendar days present in the window, that as person-years to two places, and annual cost from day rates. Most costly level first.",
+    referenceSql: "SELECT a.level, COUNT(*) AS headcount, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) AS days_present, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0, 2) AS person_years, ROUND(SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7)) AS annual_cost FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level ORDER BY annual_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-131': {
+    title: 'Headcount is not capacity',
+    hint: "One person left in January and one joined in March. Everybody else reads 100%, and that is what makes the two that do not worth seeing.",
+    brief: "Vikram asked whether we need all fourteen people. Establish what the thirteen below manager level actually bought. Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, calendar days present inside the window, that as person-years to two places, and days present as a percentage of the full year to one place. Shortest first, then by name.",
+    referenceSql: "SELECT a.name, a.level, CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) AS days_present, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) / 365.0, 2) AS person_years, ROUND(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 100.0 / 365.0, 1) AS pct_of_year FROM analysts a WHERE a.level <> 'manager' ORDER BY pct_of_year ASC, a.name",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-132': {
+    title: 'The demand chart',
+    hint: "Named categories, one measure, sorted. The same chart you would draw for any contribution question.",
+    brief: "Build the visual for the budget conversation: share of logged effort by requesting function, so the exec sees where the team's time goes. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT r.requested_by AS requester, SUM(t.hours) * 100.0 / (SELECT SUM(hours) FROM time_logs) AS pct_of_effort FROM time_logs t JOIN requests r ON r.id = t.request_id GROUP BY r.requested_by ORDER BY pct_of_effort DESC",
+      prompt: 'Share of logged effort by requesting function.',
+      answer: { type: 'bar', x: 'requester', y: 'pct_of_effort', sort: 'desc', baselineZero: true },
+      why: 'Six named functions compared on one measure is a bar chart, sorted so the order of demand is what the reader takes away. A share rather than raw hours, because the hours are 12.8% complete and the proportion is the part that survives — and a zero baseline, because the smallest requester would otherwise appear to consume nothing.',
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'ma-133': {
+    title: 'Answering "do we need fourteen"',
+    hint: "Utilisation cannot answer it. Work out what can.",
+    brief: "Decide how to answer the establishment question honestly.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the answer.',
+      options: [
+        { key: 'notutil', correct: true, label: 'That utilisation cannot answer it, because the timesheets cover an eighth of the time', why: 'The most important sentence, and it has to come before any number or the number will be used instead.' },
+        { key: 'backlog', correct: true, label: 'The queued backlog and how long it has been waiting', why: 'Work nobody has picked up is the closest thing in this data to evidence about whether there are enough people.' },
+        { key: 'cancelled', correct: true, label: 'That 15% of effort goes on work later cancelled, which is capacity available without hiring', why: 'It reframes the question from "more people" to "less waste", which is the answer an exec in a budget round can actually use.' },
+        { key: 'demand', correct: true, label: 'The shape of demand — who asks, in what volume, at what size', why: 'Establishment questions are really questions about what the team is for, and the demand mix is the best available evidence on that.' },
+        { key: 'number', correct: false, label: 'A recommended headcount number', why: 'You have no basis for one. Producing it because the question was asked in that shape is how an unevidenced figure gets into a budget.' },
+        { key: 'busy', correct: false, label: 'That the team is busy, evidenced by hours logged', why: 'The one claim this data most clearly cannot support, and the one most tempting to make.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-134': {
+    title: 'Delivered work per person-year',
+    hint: "Delivered requests over person-years present, by level. Not a productivity measure, and worth computing anyway — it is the coarsest thing here that the coverage problem cannot break.",
+    brief: "Write ONE SQL SELECT returning, per level below manager: delivered requests owned by analysts at that level, person-years present at that level to two places, and delivered requests per person-year to one place. Highest rate first. Label them level, delivered, person_years and per_person_year.",
+    referenceSql: "WITH present AS (SELECT a.level, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 AS person_years FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level), done AS (SELECT a.level, COUNT(*) AS delivered FROM requests r JOIN analysts a ON a.id = r.analyst_id WHERE r.status = 'delivered' AND a.level <> 'manager' GROUP BY a.level) SELECT p.level, COALESCE(d.delivered, 0) AS delivered, ROUND(p.person_years, 2) AS person_years, ROUND(COALESCE(d.delivered, 0) / p.person_years, 1) AS per_person_year FROM present p LEFT JOIN done d ON d.level = p.level ORDER BY per_person_year DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'normal', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the split by level is accepted and then comes back
+    // asked for per person, which is the one cut this whole day exists to refuse.
+    rework: true,
+  },
+
+  'ma-135': {
+    title: 'Vikram wants the per-person table anyway',
+    hint: "He is not asking for something unreasonable. Work out what you can give him that is not the thing he asked for.",
+    brief: "Answer him.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'chat', from: 'Vikram Nair', subject: 'Direct message',
+        body: "I understand the coverage problem. But I still need to know whether everyone in that team is pulling their weight, and you are the only person who can tell me.\n\nGive me the per-person hours with a health warning on it. I will read it sensibly.",
+      },
+      prompt: 'Tick everything that belongs in your response.',
+      options: [
+        { key: 'no', correct: true, label: 'Decline the per-person hours table specifically', why: 'A health warning does not travel with a table into a budget conversation, and the table ranks admin discipline.' },
+        { key: 'own', correct: true, label: 'Say that judging the team is your job and you are accountable for it', why: 'He is asking because he has no other route. Offering your own assessment is a better answer than a number, and it is the one a manager is actually for.' },
+        { key: 'offer', correct: true, label: 'Offer something you can defend — delivered work per person-year, by level', why: 'You already have it from this morning. Coarser, robust to the coverage problem, and it answers the shape of his question without ranking individuals on a broken measure.' },
+        { key: 'why', correct: true, label: 'Explain that it would rank the two best administrators at the top', why: 'One concrete sentence beats any amount of methodological caution. It is checkable and it ends the argument.' },
+        { key: 'give', correct: false, label: 'Give it to him with the warning, since he has asked twice and will read it sensibly', why: 'He may well read it sensibly. The document outlives the conversation and the next reader will not have been in it.' },
+        { key: 'escalate', correct: false, label: 'Escalate to his manager rather than refuse directly', why: 'It is a disagreement you can have with him, and going around him over it would cost more than the table ever could.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'ma-140': {
+    title: 'The demand picture, in one table',
+    hint: "Everything the budget conversation needs about demand, from one query, so no two figures can drift.",
+    brief: "Assemble it. Write ONE SQL SELECT returning, per requesting function: requests, delivered, cancelled, still queued, logged hours to one place, and share of logged effort to one place. Biggest share of effort first.",
+    referenceSql: "SELECT r.requested_by, COUNT(DISTINCT r.id) AS requests, COUNT(DISTINCT CASE WHEN r.status = 'delivered' THEN r.id END) AS delivered, COUNT(DISTINCT CASE WHEN r.status = 'cancelled' THEN r.id END) AS cancelled, COUNT(DISTINCT CASE WHEN r.status = 'queued' THEN r.id END) AS queued, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_effort FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.requested_by ORDER BY pct_of_effort DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-141': {
+    title: 'What goes to the budget round',
+    hint: "Two things you established, two you refused, and one thing that is genuinely actionable.",
+    brief: "Decide what the exec hears.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'coverage', correct: true, label: 'That timesheets cover 12.8% of paid time, so no rate can be built on them', why: 'It has to be first. Every number he was expecting depends on it, and hearing it later sounds like an excuse for the numbers.' },
+        { key: 'demand', correct: true, label: 'The demand shape — who asks, how often, and how large', why: 'Robust to the coverage problem and directly relevant to what the team is for.' },
+        { key: 'cancelled', correct: true, label: 'That about 15% of effort goes on work later cancelled, with a proposed fix at intake', why: 'The only genuinely actionable finding of the week, and it answers the capacity question without hiring anybody.' },
+        { key: 'backlog', correct: true, label: 'The queued backlog, as the available evidence on whether the team is large enough', why: 'Not proof, and the closest thing to it that exists. Presenting it as evidence rather than as an answer is the honest framing.' },
+        { key: 'rate', correct: false, label: 'A cost per analysis, with a caveat about the coverage', why: 'The caveat does not travel. It will be quoted as ₹9,664 an hour in a room you are not in.' },
+        { key: 'people', correct: false, label: 'A per-person productivity ranking, for his eyes only', why: '"For his eyes only" is not a property a table has once it is in an email.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-142': {
+    title: 'The budget note',
+    hint: "He asked three questions. Answer all three, including the one where the answer is no.",
+    brief: "Write the note that goes into the budget round. It will be read by people who were not in any of this week's conversations. Under 230 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Analytics — demand, capacity and what the timesheets can carry', maxWords: 230,
+      prompt: 'What the timesheets can and cannot support, the demand picture, the cancelled-work finding, and an honest answer on establishment.',
+      rubric: [
+        { key: 'coverage', label: 'The coverage finding, up front', markers: ['12|13|eighth|coverage|logged|cannot|rate|8 times|eight times'], why: 'Everything else in the note depends on it, so it cannot be a caveat at the end.' },
+        { key: 'demand', label: 'The demand shape, with the two extremes named', markers: ['finance|product|136|34|4\\.2|27\\.8|small|large|shape'], why: 'One function asks constantly in small pieces and another rarely in large ones. That is the useful sentence about what the team does.' },
+        { key: 'cancelled', label: 'The cancelled-effort finding and what to do about it', markers: ['cancel|15|485|46|intake|confirm|withdraw|before'], why: 'The one place this week where a small process change recovers real capacity.' },
+        { key: 'establishment', label: 'An honest answer on whether fourteen is right', markers: ['cannot|backlog|queue|evidence|not able|would need|utilisation|capacity'], why: 'Say what the data can and cannot establish, and give him the backlog as the best available evidence.' },
+        { key: 'norate', label: 'That you are not supplying a cost per analysis, and why', markers: ['not|won.t|will not|no rate|cost per|9,?664|misleading|decline'], why: 'He asked for it directly. Leaving it out without saying so reads as an oversight and he will ask again.' },
+        { key: 'fix', label: 'What you are changing so next year is answerable', markers: ['next|change|instrument|going forward|will|improve|record|fix'], why: 'A manager reporting a measurement failure without owning the fix has described their own gap.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-143': {
+    title: 'Sign off the budget slide',
+    hint: "Four sentences, and three of them claim something the week established was unavailable.",
+    brief: "Finance have drafted the analytics slide for the budget pack. Tick every problem.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Analytics slide for the budget pack',
+        body: "\"Analytics delivered 263 pieces of work at an average cost of ₹9,664 per hour. Utilisation across the team is low at 13%, suggesting spare capacity. Headcount of 14 is above requirement. Recommend holding establishment flat and reviewing individual performance.\"",
+      },
+      prompt: 'What has to change?',
+      options: [
+        { key: 'rate', correct: true, label: 'The ₹9,664 rate is the naive figure and will be read as a real cost', why: 'It divides the full cost by an eighth of the hours. Quoted in a budget pack it makes the team look eight times more expensive than it is.' },
+        { key: 'util', correct: true, label: '"Utilisation is low at 13%" restates a measurement failure as a finding about the team', why: 'The single most damaging sentence available. 13% is what the timesheet records, not what people did, and it is about to become evidence of idleness.' },
+        { key: 'spare', correct: true, label: '"Suggesting spare capacity" and "headcount above requirement" follow from that error', why: 'Two conclusions stacked on a number that measures admin. They would survive into a headcount decision long after anybody remembered where they came from.' },
+        { key: 'perf', correct: true, label: '"Reviewing individual performance" is the one recommendation you explicitly refused to support', why: 'It has arrived in the pack anyway, which is exactly what happened to the stock-cover claim in the range review. Refusals have to be written into the document.' },
+        { key: 'count', correct: false, label: 'The 263 delivered figure is wrong', why: 'It is right. As in every pack this year, the arithmetic survives and the sentences do not.' },
+        { key: 'flat', correct: false, label: 'Holding establishment flat is the wrong recommendation', why: 'It may well be the right call. The problem is the reasoning underneath it, not the conclusion.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-144': {
+    title: 'Rewrite the slide',
+    hint: "Same numbers where they are sound, none of the four claims, and the cancelled-work finding in place of the utilisation one.",
+    brief: "Send Diya replacement wording. It has to survive a budget round with you not in the room. Under 130 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Analytics slide — suggested wording', maxWords: 130,
+      prompt: 'Delivered work, the demand shape, the cancelled-effort finding, and a plain statement that no cost rate is available.',
+      rubric: [
+        { key: 'norate', label: 'That no defensible cost per hour exists', markers: ['no|not|cannot|unavailable|rate|cost per|timesheet|coverage'], why: 'Say it as a fact about the instrumentation, not as a hedge about the number.' },
+        { key: 'notutil', label: 'No utilisation claim', markers: ['13|utilis|not a measure|coverage|record|logged|admin|spare'], why: 'Either remove it or state what 13% actually measures. Leaving it uncorrected is how it becomes evidence.' },
+        { key: 'delivered', label: 'What was delivered, and to whom', markers: ['263|deliver|finance|product|request|function'], why: 'The solid ground: counts of work and who asked for it survive the coverage problem entirely.' },
+        { key: 'cancelled', label: 'The cancelled-effort finding as the capacity story', markers: ['cancel|15|485|intake|withdraw|recover|without hiring'], why: 'It replaces a false capacity claim with a true one, which is why the slide does not end up shorter.' },
+        { key: 'noperf', label: 'No individual performance recommendation', markers: ['individual|performance|remove|not|my|manager|accountab'], why: 'Refused twice this week and still in the draft. It has to come out in writing.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'ma-145': {
+    title: 'What you would instrument',
+    hint: "Every question you could not answer this week was a measurement that does not exist. Pick the ones worth building.",
+    brief: "You are the manager and the measurement gap is yours. Say what changes before the next budget round, and what each thing would let you answer. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'What I am changing about how we measure ourselves', maxWords: 220,
+      prompt: 'The instrumentation changes, each tied to a question you could not answer this week.',
+      rubric: [
+        { key: 'time', label: 'Something about time recording that is proportionate', markers: ['time|log|record|day|week|allocat|sample|simpler|percentage|rather than'], why: 'Demanding complete timesheets will not work — nobody exceeds half today. A coarser instrument that people actually use beats a precise one they do not.' },
+        { key: 'intake', label: 'A change at intake, to catch work that would be cancelled', markers: ['intake|confirm|clarify|before|accept|triage|question|sponsor'], why: 'The one finding with a fix cheaper than the problem.' },
+        { key: 'outcome', label: 'Something about whether delivered work was used', markers: ['used|outcome|value|follow.?up|after|impact|decision|was it'], why: 'The question nobody in the company can currently answer, and the one that would change what the team prioritises.' },
+        { key: 'capacity', label: 'Capacity measured from presence, as a standing figure', markers: ['presence|days|person.year|capacity|not headcount|joiner|leaver'], why: 'Headcount overstated capacity by about a person-year this year and will again.' },
+        { key: 'own', label: 'Written as decisions, not proposals', markers: ['I will|I am|we will|from|changing|introduce|put in place|next'], why: 'A manager describing a measurement gap without owning the fix has described their own failure twice.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 2 · Tooling & Licence Renewal (analytics_ops) ----------------------
+  // Second project at Manager. The team is still the subject but the cost line is the
+  // tooling rather than the people, which makes it the easier conversation and the more
+  // dangerous analysis: nobody defends a seat, so a bad cut here goes through unopposed.
+  // Monday the estate and cost per seat. Tuesday seats, assignments and use turn out to
+  // be three numbers. Wednesday the wobble — the per-seat ranking pointed at the best-used
+  // tool in the estate, and the obvious cut removes a capability. Thursday the recovery
+  // in three buckets, and the gap between recoverable and recommendable. Friday the
+  // renewal, a vendor who would rather you did not, and the process that stops the drift.
+
+  'mb-101': {
+    title: 'The renewal that starts the clock',
+    hint: "Read what is being decided and when. One of the three dates in here is the one that matters.",
+    brief: "Finance has sent a renewal notice. Work out what is actually being asked of you before you open the data.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra', subject: 'Analytics tooling — renewals coming up',
+        body: "The Clearview BI platform auto-renews on 15 August at ₹21.6 lakh and I need your seat count by Friday or it renews as it stands.\n\nWhile you are in there: the whole analytics tooling line is ₹61.14 lakh and the budget round will ask about it. Anything you can hand back before the round would be useful.\n\nI have pulled cost per seat for each tool if that helps — Northlake looks like the expensive one.",
+      },
+      prompt: 'Tick everything that is true about what you have just been asked.',
+      options: [
+        { key: 'deadline', correct: true, label: 'The decision is the BI seat count, and it is due Friday whether or not you are ready', why: 'An auto-renewal is a decision that gets made by default. Friday is not a reporting deadline, it is the last day the default can be changed.' },
+        { key: 'wider', correct: true, label: 'The wider question is which tools are worth what they cost, and that has no deadline at all', why: 'Two questions on two clocks. Answering only the urgent one leaves ₹61.14 lakh unexamined until the round asks.' },
+        { key: 'perseat', correct: true, label: 'Her cost-per-seat ranking is a claim about the contracts, not about use', why: 'It divides price by seats bought. Nobody has yet asked how many of those seats have a person behind them, which is where the answer is.' },
+        { key: 'cheap', correct: false, label: 'Tooling is 16.5% of the analytics cost line, so it is the smaller problem and can wait', why: 'It is the smaller line and the one where money can be handed back this month without anybody losing their job. Small and actionable beats large and immovable.' },
+        { key: 'vendor', correct: false, label: 'Northlake is the tool to renegotiate, since cost per seat is highest there', why: 'That is the conclusion her ranking invites and it will not survive Tuesday. Take the ranking as a starting point rather than a finding.' },
+        { key: 'defer', correct: false, label: 'Ask her to delay the BI renewal until the full review is done', why: 'An auto-renewal date is a contract term, not a preference. Asking for it to move is how the whole year gets renewed at thirty seats.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mb-102': {
+    title: 'What we actually buy',
+    hint: "Six contracts. Order them by how soon each one can still be changed.",
+    brief: "Start with the estate. Write ONE SQL SELECT over licences returning: tool, vendor, seats, annual cost, renewal date, and the number of days from 30 June 2026 to that renewal. Soonest renewal first.",
+    referenceSql: "SELECT tool, vendor, seats, annual_cost, renews_on, CAST(julianday(renews_on) - julianday('2026-06-30') AS INTEGER) AS days_to_renewal FROM licences ORDER BY renews_on",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'mb-103': {
+    title: "Diya's ranking, reproduced",
+    hint: "Reproduce it exactly as she would have. You are not agreeing with it, you are establishing what it says.",
+    brief: "Before you argue with a figure, be able to produce it. Write ONE SQL SELECT over licences returning tool, seats, annual cost and annual cost per seat rounded to the nearest rupee, most expensive per seat first.",
+    referenceSql: "SELECT tool, seats, annual_cost, ROUND(annual_cost * 1.0 / seats) AS cost_per_seat FROM licences ORDER BY cost_per_seat DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'easy',
+  },
+
+  'mb-104': {
+    title: 'What cost per seat can and cannot say',
+    hint: "Everything in that ranking comes from the contract. Ask what is missing.",
+    brief: "You have Warehouse compute at ₹1,03,571 a seat and Scheduling at ₹33,000. Decide what that comparison is worth.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of a cost-per-seat ranking.',
+      options: [
+        { key: 'contract', correct: true, label: 'Both numbers in it come from the contract, so it says nothing about use', why: 'Price and seats are what the vendor sold us. Whether anybody opens the tool is a different table entirely.' },
+        { key: 'buying', correct: true, label: 'A tool bought with generous headroom looks cheap per seat precisely because the extra seats are empty', why: 'Buying thirty seats for a team of fourteen halves the cost per seat and doubles the waste. The measure rewards the mistake.' },
+        { key: 'capability', correct: true, label: 'It treats six tools doing six different jobs as though they were interchangeable', why: 'A warehouse and a scheduler are not substitutes. A per-unit comparison across them is arithmetic without a question behind it.' },
+        { key: 'start', correct: true, label: 'It is still a reasonable place to start, because it puts every contract on one page', why: 'Establishing what is bought is a real step. The error is stopping there and calling the top of the list the problem.' },
+        { key: 'expensive', correct: false, label: 'It correctly identifies the tool where the company is getting least for its money', why: 'It identifies the tool with the highest sticker price per seat. Those are different claims and Tuesday will separate them.' },
+        { key: 'negotiate', correct: false, label: 'It is the right basis for deciding which vendor to renegotiate with', why: 'Renegotiating on price per seat with a vendor whose seats are all in use is a conversation you will lose, and should.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mb-105': {
+    title: 'Seats bought against seats given out',
+    hint: "A seat with nobody assigned to it has never been used by anyone and never will be.",
+    brief: "The first real question. Write ONE SQL SELECT returning, per tool: seats contracted, seats with somebody assigned to them, seats with nobody assigned, and what those unassigned seats cost a year. Most wasted first.",
+    referenceSql: "SELECT l.tool, l.seats, COUNT(la.id) AS assigned, l.seats - COUNT(la.id) AS unassigned_seats, ROUND((l.seats - COUNT(la.id)) * l.annual_cost * 1.0 / l.seats) AS unassigned_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id GROUP BY l.id ORDER BY unassigned_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mb-106': {
+    title: 'Hold the renewal',
+    hint: "She needs to know the Friday date is now a real decision rather than a formality. Do not send her a finding you cannot yet defend.",
+    brief: "Write to Diya on day one. Sixteen of the thirty BI seats have never been assigned to anybody, which is ₹11.52 lakh, and you have not yet looked at whether the other fourteen are used. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'BI renewal — do not let it auto-renew at thirty', maxWords: 150,
+      prompt: 'What you have found so far, and what you will have by Friday.',
+      rubric: [
+        { key: 'finding', label: 'The sixteen unassigned BI seats and what they cost', markers: ['16|sixteen|unassigned|never|no one|nobody|11\\.5|1,?152|lakh'], why: 'One concrete number on day one is what keeps a renewal open. Method can wait.' },
+        { key: 'partial', label: 'That this is seats assigned, not seats used, and use is still to come', markers: ['assign|not used|use|yet|still|Tuesday|further|open|whether'], why: 'The gap between assigned and used is the rest of the week. Implying you already know it is how a number gets quoted early.' },
+        { key: 'date', label: 'A commitment to a seat count before Friday', markers: ['friday|by then|before|will have|number|count|thursday|end of the week'], why: 'She asked for a date-bound answer. Anything that does not name the date reads as a request for more time.' },
+        { key: 'noblame', label: 'No suggestion that anybody bought badly', markers: ['headroom|growth|planned|at the time|reasonable|understand|not|no blame|sensible'], why: 'Thirty seats for fourteen people was somebody\'s judgement about growth. Leading with that being wrong makes the next renewal harder, not easier.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mb-110': {
+    title: 'Three numbers that are not the same number',
+    hint: "Contracted, assigned, and assigned to somebody who is still here and has opened it recently. Count all three.",
+    brief: "Write ONE SQL SELECT returning, per tool: seats contracted, assignments made, assignments held by people who still work here, and assignments held by current staff used since 1 April 2026. Most expensive tool first.",
+    referenceSql: "SELECT l.tool, l.seats, COUNT(la.id) AS assigned, SUM(CASE WHEN a.left_on IS NULL THEN 1 ELSE 0 END) AS held_by_current, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_last_quarter FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY l.annual_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-111': {
+    title: 'Where the three numbers separate',
+    hint: "Look for the tool where assigned and active are furthest apart, and the tool where contracted and assigned are.",
+    brief: "You have three counts per tool and they disagree in two different ways. Work out what each disagreement means.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows from the three counts.',
+      options: [
+        { key: 'bi', correct: true, label: 'BI has sixteen seats no one has ever held — a buying decision, recoverable at renewal with nobody affected', why: 'Nothing has to change for anybody. The seats are handed back and thirteen people carry on exactly as they were.' },
+        { key: 'stat', correct: true, label: 'The Statistical suite has ten assignments and five recent users — a use problem, and cutting it takes something away from somebody', why: 'Every one of those ten seats belongs to a person who might open it next week. That is a different decision from handing back air.' },
+        { key: 'kinds', correct: true, label: 'The two gaps need different remedies and should not be added into one waste figure without saying so', why: 'One is recoverable with no consequence and one has a consequence. A single total hides exactly the part a reader needs.' },
+        { key: 'leaver', correct: true, label: 'Assigned and held-by-current differ, which means at least one seat belongs to somebody who has left', why: 'Four of them, and nobody noticed for five months. Reclaiming a leaver\'s seats is a process that does not exist here.' },
+        { key: 'same', correct: false, label: 'Unassigned seats and unused assignments are both waste and should be reported as one number', why: 'It gives the larger headline and it is the reason cuts get made in the wrong place. A reader who cannot see the split cannot judge the risk.' },
+        { key: 'stat2', correct: false, label: 'The Statistical suite has the clearest case for a cut, since half its seats are idle', why: 'It is the most visible gap and the most consequential cut. Wednesday is about why the visible one is the wrong one to start with.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-112': {
+    title: 'The rate that means something',
+    hint: "Same numerator, a denominator with people in it. Put both rates side by side so the reordering is visible.",
+    brief: "Write ONE SQL SELECT returning, per tool: annual cost, cost per seat, active users (current staff who used it since 1 April 2026), and cost per active user. Most expensive per active user first, both rates rounded to the rupee.",
+    referenceSql: "SELECT l.tool, l.annual_cost, ROUND(l.annual_cost * 1.0 / l.seats) AS cost_per_seat, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, ROUND(l.annual_cost * 1.0 / NULLIF(SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END), 0)) AS cost_per_active_user FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY cost_per_active_user DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-113': {
+    title: 'The ranking turns over',
+    hint: "Compare where each tool sits in the two orderings. One of them moves a long way.",
+    brief: "Cost per seat put Warehouse compute at the top. Cost per active user puts it third. Decide what that tells you.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows from the two rankings disagreeing.',
+      options: [
+        { key: 'warehouse', correct: true, label: 'Warehouse compute is the best-used tool in the estate — fourteen seats, thirteen active users', why: 'It topped the per-seat table because it is genuinely expensive per seat, and it is expensive per seat because almost nobody is wasting one.' },
+        { key: 'bi', correct: true, label: 'BI looks second cheapest per seat and second most expensive per active user', why: 'The clearest illustration of the whole point. Buying sixteen spare seats made the per-seat figure look good and cost ₹11.52 lakh.' },
+        { key: 'denominator', correct: true, label: 'The per-seat figure improves whenever we buy seats we do not need', why: 'A measure that rewards over-buying will, given a year, produce over-buying. That is not a comment about anybody; it is what measures do.' },
+        { key: 'monday', correct: true, label: "Diya's Monday conclusion about Northlake points at the one contract you should not touch", why: 'And she will have said it to somebody by now. Correcting it is Wednesday morning\'s job, before it reaches the round.' },
+        { key: 'both', correct: false, label: 'Both rankings are valid and the honest answer is to publish them side by side without choosing', why: 'They are not equally useful. Publishing both without saying which answers the renewal question is a way of not answering it.' },
+        { key: 'stat', correct: false, label: 'The Statistical suite tops the per-active-user table, so it is the clearest cut', why: 'It tops it because five people have not opened it since February. Whether that is waste or a capability in reserve is not something the rate can tell you.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-114': {
+    title: 'How far each tool moves',
+    hint: "Rank on both measures, then subtract. The movement is the finding, not either ranking on its own.",
+    brief: "Quantify the reordering. Using the six tools, rank them 1 to 6 by cost per seat and again by cost per active user, and report each tool's two ranks and the change. Return a list of dicts with keys tool, rank_per_seat, rank_per_active and rank_change, ordered by the size of the change, largest first.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "import json\nrows = query(\"SELECT l.tool, l.annual_cost, l.annual_cost * 1.0 / l.seats AS per_seat, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id\")\nfor r in rows:\n    r['per_active'] = r['annual_cost'] / r['active']\nby_seat = sorted(rows, key=lambda r: -r['per_seat'])\nby_active = sorted(rows, key=lambda r: -r['per_active'])\nseat_rank = {r['tool']: i + 1 for i, r in enumerate(by_seat)}\nactive_rank = {r['tool']: i + 1 for i, r in enumerate(by_active)}\nout = [{'tool': t, 'rank_per_seat': seat_rank[t], 'rank_per_active': active_rank[t], 'rank_change': seat_rank[t] - active_rank[t]} for t in seat_rank]\nout.sort(key=lambda r: -abs(r['rank_change']))\nresult = out",
+    estHours: 0.8, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mb-115': {
+    title: 'Tell the team their seats are being counted',
+    hint: "Thirteen people are about to have their tool use looked at. Same rule as the timesheets: they hear it from you first.",
+    brief: "Write to the team. You are reviewing licence use ahead of renewals and some seats will be handed back. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'Tool seats — what I am looking at and why', maxWords: 150,
+      prompt: 'What you are doing, what it is not, and what to do if a seat they need is at risk.',
+      rubric: [
+        { key: 'what', label: 'What you are actually reviewing — seats and contracts, ahead of renewals', markers: ['seat|licence|license|renew|contract|tool|august|review'], why: 'Naming the thing plainly stops it being guessed at. People assume the worst about any exercise with the word review in it.' },
+        { key: 'notperf', label: 'That this is not about individual performance', markers: ['not|performance|assess|judg|about you|individual|nobody|no one'], why: 'Tool telemetry is the second dataset this month that could be read as watching people. Say it is not before somebody asks.' },
+        { key: 'ask', label: 'An invitation to say if a seat they need looks unused', markers: ['tell me|let me know|speak|shout|if you|need it|use it|flag|come to me'], why: 'The data cannot distinguish a tool nobody needs from one used twice a year for something important. The people can.' },
+        { key: 'nothing', label: 'Reassurance that nothing has been taken away yet', markers: ['nothing|yet|not taken|before|first|no change|will not|until'], why: 'Otherwise the first reaction is to log in to everything on Monday, which destroys exactly the data you are reading.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mb-120': {
+    title: 'The seats nobody handed back',
+    hint: "Somebody left in January. Find out what they still have.",
+    brief: "Write ONE SQL SELECT returning every licence assignment held by somebody who has left: their name, leaving date, the tool, the date they last used it, and what that seat costs a year. Most expensive seat first.",
+    referenceSql: "SELECT a.name, a.left_on, l.tool, la.last_used_on, ROUND(l.annual_cost * 1.0 / l.seats) AS per_seat_cost FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NOT NULL ORDER BY per_seat_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'mb-121': {
+    title: 'Monday pointed at the wrong vendor',
+    hint: "Diya has already told somebody that Northlake is the expensive one. Work out what that costs if it is not corrected today.",
+    brief: "Cost per active user puts Warehouse compute third, not first, and it is the most fully used tool we have. Decide what to do about Monday.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how you handle this.',
+      options: [
+        { key: 'correct', correct: true, label: 'Correct it with Diya today, before the renewal conversation with Northlake happens', why: 'Northlake renews on 30 September. A renegotiation opened on the wrong premise is worse than none — it tells the vendor we have not done the work.' },
+        { key: 'own', correct: true, label: 'Own it as a shared starting point rather than as her error', why: 'Cost per seat was a reasonable first cut and you reproduced it yourself on Monday. Framing it as her mistake buys nothing and costs a working relationship.' },
+        { key: 'concrete', correct: true, label: 'Give her the one sentence that replaces it: fourteen seats, thirteen active users, the best-used tool we have', why: 'A correction without a replacement leaves a hole, and the old number fills holes. Hand her the sentence she can repeat.' },
+        { key: 'where', correct: true, label: 'Point at where the money actually is — sixteen unassigned BI seats at ₹11.52 lakh', why: 'It makes the correction useful rather than merely deflating. She came to you for somewhere to cut and there is somewhere to cut.' },
+        { key: 'quiet', correct: false, label: 'Leave it, since the BI renewal is the urgent one and Northlake is three months away', why: 'Three months is how long a wrong figure has to become the thing everybody knows. Corrections get cheaper the earlier they are made, never later.' },
+        { key: 'blame', correct: false, label: 'Explain that cost per seat was never a sound basis for the comparison', why: 'True, unhelpful, and it invites her to defend it. What she needs is the replacement figure, not a lesson on the old one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-122': {
+    title: 'Seats held by people who are still here and not using them',
+    hint: "Current staff only. The leaver is a different bucket with a different remedy.",
+    brief: "Write ONE SQL SELECT returning every assignment held by somebody still employed who has not used it since 1 April 2026: tool, name, level, last used date, days since use as at 30 June 2026, and the annual cost of that seat. Longest idle first.",
+    referenceSql: "SELECT l.tool, a.name, a.level, la.last_used_on, CAST(julianday('2026-06-30') - julianday(la.last_used_on) AS INTEGER) AS days_since_use, ROUND(l.annual_cost * 1.0 / l.seats) AS per_seat_cost FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NULL AND la.last_used_on < '2026-04-01' ORDER BY days_since_use DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-123': {
+    title: 'The obvious cut',
+    hint: "Every one of those five rows is a named person and one tool. Ask what the tool does before you ask how often it is opened.",
+    brief: "Five idle seats, all on the Statistical suite, worth ₹4.6 lakh a year. Decide whether that is the cut to recommend.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that should shape the decision.',
+      options: [
+        { key: 'capability', correct: true, label: 'It is the only tool in the estate that does what it does, so a cut is a capability decision rather than a cost one', why: 'Handing back an unused BI seat changes nothing. Handing back a statistical seat means the next request needing it gets refused or done badly.' },
+        { key: 'frequency', correct: true, label: 'Low frequency is not low value — some analysis is done twice a year and matters both times', why: 'The usage data records opens. It has no opinion at all about what was produced, and the two are not the same shape.' },
+        { key: 'ask', correct: true, label: 'The five people should be asked before a seat is removed, and they are the only source for the answer', why: 'Five conversations against ₹4.6 lakh is a good trade. The data genuinely cannot distinguish disuse from infrequent necessity.' },
+        { key: 'stagger', correct: true, label: 'It renews on 5 October, so there is time to ask — unlike BI', why: 'Ninety-seven days. The reason to decide BI this week and this one next month is the calendar, not the size.' },
+        { key: 'cut', correct: false, label: 'Cut all five: five months without opening a tool is evidence enough', why: 'It is the largest single-tool saving on the page and the one most likely to come back as a refused request in November.' },
+        { key: 'keep', correct: false, label: 'Leave it entirely — usage data is too weak to support any change here', why: 'Too weak to decide alone is not the same as useless. It tells you exactly which five conversations to have.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-124': {
+    title: 'Three buckets, three remedies',
+    hint: "Never assigned, held by a leaver, held by somebody here who is not using it. Count seats and rupees for each.",
+    brief: "Split the recoverable seats by the kind of thing they are. Write ONE SQL SELECT returning three rows with columns bucket, seats and annual_cost: seats never assigned to anybody; seats held by somebody who has left; seats held by current staff unused since 1 April 2026.",
+    referenceSql: "SELECT 'seats never assigned' AS bucket, SUM(l.seats - x.assigned) AS seats, ROUND(SUM((l.seats - x.assigned) * l.annual_cost * 1.0 / l.seats)) AS annual_cost FROM licences l JOIN (SELECT licence_id, COUNT(*) AS assigned FROM licence_assignments GROUP BY licence_id) x ON x.licence_id = l.id UNION ALL SELECT 'seats held by a leaver', COUNT(*), ROUND(SUM(l.annual_cost * 1.0 / l.seats)) FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NOT NULL UNION ALL SELECT 'held by current staff, unused since 1 April', COUNT(*), ROUND(SUM(l.annual_cost * 1.0 / l.seats)) FROM licence_assignments la JOIN analysts a ON a.id = la.analyst_id JOIN licences l ON l.id = la.licence_id WHERE a.left_on IS NULL AND la.last_used_on < '2026-04-01'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-125': {
+    title: 'Correct Monday, in writing',
+    hint: "Short. The replacement sentence matters more than the explanation of what was wrong.",
+    brief: "Write to Diya. Her cost-per-seat ranking pointed at Northlake, which turns out to be the best-used tool we have. Under 140 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Northlake is the wrong target — here is the right one', maxWords: 140,
+      prompt: 'The correction, the replacement, and where the money actually is.',
+      rubric: [
+        { key: 'correct', label: 'That Northlake is fully used — fourteen seats, thirteen active users', markers: ['14|fourteen|13|thirteen|active|fully|used|all|best'], why: 'The specific counts are what make the correction stick. "It is fine actually" will not survive a second reading of her own table.' },
+        { key: 'why', label: 'Why cost per seat misled — it rewards buying seats nobody uses', markers: ['per seat|denominator|seats bought|headroom|spare|reward|empty|unassigned|contract'], why: 'Without the mechanism she has no way to avoid repeating it on the next cost line she looks at.' },
+        { key: 'where', label: 'Where the money is instead — the unassigned BI seats', markers: ['BI|Clearview|16|sixteen|11\\.5|1,?152|unassigned|never'], why: 'A correction that only removes a target leaves her worse off than before she asked.' },
+        { key: 'shared', label: 'Framed as a shared first cut rather than her error', markers: ['we|I also|first cut|start|reasonable|same|my own|monday|both'], why: 'You produced the same ranking on Monday. Writing it as her mistake is both unkind and inaccurate.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mb-130': {
+    title: 'Every tool, one table',
+    hint: "Recoverable means seats beyond what current active users need. One query, so no two figures in the pack can disagree.",
+    brief: "Assemble the review. Write ONE SQL SELECT returning, per tool: seats, annual cost, renewal date, assignments, active users (current staff, used since 1 April 2026), seats above that active count, and what those seats cost a year. Most recoverable first.",
+    referenceSql: "SELECT l.tool, l.seats, l.annual_cost, l.renews_on, COUNT(la.id) AS assigned, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS recoverable_seats, ROUND((l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END)) * l.annual_cost * 1.0 / l.seats) AS recoverable_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY recoverable_cost DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-131': {
+    title: 'The recovery chart',
+    hint: "Six named tools, one measure, sorted. The reader should see where the money is in one glance.",
+    brief: "Build the visual for the budget note: recoverable annual cost by tool. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT l.tool AS tool, (l.seats - SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END)) * l.annual_cost * 1.0 / l.seats AS recoverable_cost FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY recoverable_cost DESC",
+      prompt: 'Recoverable annual cost by tool.',
+      answer: { type: 'bar', x: 'tool', y: 'recoverable_cost', sort: 'desc', baselineZero: true },
+      why: 'Six named tools compared on one measure is a bar chart, sorted so the reader sees that BI is most of the answer before reading a single label. A zero baseline because the tools with nothing recoverable must read as nothing rather than as a short bar.',
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mb-132': {
+    title: 'Recoverable is not the same as recommendable',
+    hint: "Some of that ₹20.43 lakh needs a conversation first, and some of it needs headroom kept back.",
+    brief: "The table says ₹20.43 lakh is recoverable. Decide what you are actually willing to put in front of Finance.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that should reduce the headline before it is published.',
+      options: [
+        { key: 'headroom', correct: true, label: 'Some spare seats have to be kept — a joiner in March needed one and there was no delay because the seats were there', why: 'Cutting to exactly the active count buys a procurement conversation every time somebody joins. Two seats of headroom per tool is cheaper than that.' },
+        { key: 'stat', correct: true, label: 'The Statistical suite seats need five conversations before they can be counted as savings', why: 'Recoverable on the table, undecided in reality. Putting it in the headline commits you to a cut you have not yet agreed with the people affected.' },
+        { key: 'timing', correct: true, label: 'Only the tools renewing this financial year can deliver a saving this financial year', why: 'Scheduling renews in January 2027. Reporting its ₹99,000 as an in-year saving is a timing error that Finance will find.' },
+        { key: 'split', correct: true, label: 'The honest headline is smaller than ₹20.43 lakh and should be shown against it, not instead of it', why: 'Show the theoretical maximum and what you are recommending. The gap between them IS the analysis, and hiding it invites somebody else to find the bigger number.' },
+        { key: 'max', correct: false, label: 'Publish ₹20.43 lakh, since it is what the data supports and the caveats are in the appendix', why: 'The headline will be quoted and the appendix will not. A number you cannot deliver becomes a shortfall you have to explain in six months.' },
+        { key: 'nothing', correct: false, label: 'Publish nothing until every conversation has happened, since a partial figure will be misused', why: 'BI renews in forty-six days. Waiting for certainty means the ₹11.52 lakh renews itself, which is the one outcome with no upside at all.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-133': {
+    title: 'Reclaiming the leaver seats',
+    hint: "Four seats, five months, nobody noticed. The note is about the process rather than the person.",
+    brief: "Write to IT operations. Somebody who left on 30 January still holds four licence seats worth ₹2.76 lakh a year. Under 140 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'IT Operations', subject: 'Licence seats not reclaimed on leaving', maxWords: 140,
+      prompt: 'The specific case, the general gap, and what you want to happen.',
+      rubric: [
+        { key: 'facts', label: 'The specific facts — four seats, left 30 January, ₹2.76 lakh a year', markers: ['4|four|seat|january|2\\.7|2\\.8|276|lakh|five months'], why: 'A process complaint with no instance behind it gets filed. One with a date and a number gets actioned.' },
+        { key: 'process', label: 'That the gap is a missing offboarding step, not a mistake by any individual', markers: ['process|step|offboard|leaver|automatic|nobody|checklist|not|blame|system'], why: 'Nobody chose not to reclaim them. Naming it as a process gap is both true and the only framing that gets a process built.' },
+        { key: 'ask', label: 'A specific ask — reclaim these four, and add the step', markers: ['reclaim|remove|revoke|add|step|checklist|going forward|future|both'], why: 'Two asks, one immediate and one structural. Sending only the first guarantees the next leaver repeats it.' },
+        { key: 'scope', label: 'Acknowledgement that this is only what you can see in analytics tooling', markers: ['analytics|our|only|other team|elsewhere|wider|may|likely|suspect'], why: 'One leaver, four seats, one function. If the step is missing everywhere the number is much larger, and that is their finding to make, not yours to assert.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mb-134': {
+    title: 'What to renew each contract at',
+    hint: "Active users plus two seats of headroom, and never more seats than we already hold.",
+    brief: "Produce the recommendation. Write ONE SQL SELECT returning, per tool: renewal date, seats now, active users, proposed seats (active users plus two, capped at the seats we already have), the cost at the proposed seat count, and the saving. Biggest saving first.",
+    referenceSql: "SELECT l.tool, l.renews_on, l.seats AS seats_now, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) AS active_users, MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2) AS seats_proposed, ROUND(l.annual_cost * 1.0 / l.seats * MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2)) AS cost_proposed, l.annual_cost - ROUND(l.annual_cost * 1.0 / l.seats * MIN(l.seats, SUM(CASE WHEN a.left_on IS NULL AND la.last_used_on >= '2026-04-01' THEN 1 ELSE 0 END) + 2)) AS saving FROM licences l LEFT JOIN licence_assignments la ON la.licence_id = l.id LEFT JOIN analysts a ON a.id = la.analyst_id GROUP BY l.id ORDER BY saving DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the recommendation is accepted and then asked for
+    // with a different headroom rule, which is the same query and a different number in
+    // front of Finance. Worth feeling how cheap that change is once it is one query.
+    rework: true,
+  },
+
+  'mb-135': {
+    title: 'Going into the renewal conversation',
+    hint: "You are about to halve an order with a vendor whose account manager has your number.",
+    brief: "Decide how to approach Clearview about renewing at fifteen seats rather than thirty.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in your approach.',
+      options: [
+        { key: 'evidence', correct: true, label: 'Go in with the assignment counts, because they are checkable and not a matter of opinion', why: 'Thirteen active users out of thirty seats is not an argument, it is an observation. Vendors argue with opinions and concede to counts.' },
+        { key: 'renew', correct: true, label: 'Be clear that we are renewing, not leaving — the disagreement is about volume', why: 'A renewal at half the seats is still a sale. Letting it sound like a churn risk invites a retention offer instead of a price.' },
+        { key: 'unitprice', correct: true, label: 'Expect the per-seat price to rise when the volume falls, and work out the total before agreeing', why: 'Fifteen seats at a higher unit price can cost more than thirty at the old one. The number that matters is the invoice.' },
+        { key: 'timing', correct: true, label: 'Open it now rather than in the last week before 15 August', why: 'A negotiation with no time left in it is a request. Forty-six days is enough to walk away from a first offer.' },
+        { key: 'threat', correct: false, label: 'Open by saying we are evaluating alternatives, to improve the position', why: 'We are not, and a bluff that is called costs the whole relationship for the next four renewals. The counts are a strong enough position.' },
+        { key: 'quiet', correct: false, label: 'Renew at thirty this year and reduce next year once the usage data is longer', why: 'That is ₹11.52 lakh for another year of data confirming something already visible. The seats have never been assigned to anybody.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mb-140': {
+    title: 'The renewal recommendation',
+    hint: "Two numbers: what the table says is recoverable, and what you are recommending. The gap is the honest part.",
+    brief: "Write to Diya with the answer she asked for on Monday. Fifteen BI seats, ₹13.89 lakh of recommended savings against ₹20.43 lakh theoretically recoverable. Under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Diya Chandra', subject: 'Tooling renewals — the seat counts and what they save', maxWords: 200,
+      prompt: 'The BI answer she needs by Friday, the wider recommendation, and what you are not yet claiming.',
+      rubric: [
+        { key: 'bi', label: 'The BI seat count, which is the thing with a Friday deadline', markers: ['15|fifteen|BI|Clearview|seat|renew|10\\.8|1,?080'], why: 'She asked one question with a date on it. Everything else is context, and context that buries the answer is not context.' },
+        { key: 'two', label: 'Both figures — recommended against theoretically recoverable', markers: ['13\\.8|13\\.9|1,?389|20\\.4|2,?043|recover|recommend|against|versus|of which'], why: 'One number invites the question "is that all there is". Two numbers answer it before it is asked.' },
+        { key: 'gap', label: 'Why the recommendation is lower — headroom, conversations still to have, renewal timing', markers: ['headroom|two seats|conversation|ask|statistical|timing|next year|january|spare|joiner'], why: 'The gap is a judgement you made, so it needs your reasoning attached or somebody will close it for you.' },
+        { key: 'northlake', label: 'That Northlake is fully used and should be renewed as it stands', markers: ['northlake|warehouse|fully|13|thirteen|as it stands|no change|renew'], why: 'It was the headline of her Monday email. Leaving it unmentioned means she still half-believes it.' },
+        { key: 'nopeople', label: 'No implication that any of this bears on the people question', markers: ['tooling|seat|contract|separate|not|people|headcount|different'], why: 'Two cost lines, two arguments. A tooling saving offered as evidence in a headcount discussion loses both.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.75, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-141': {
+    title: 'What Finance does with a saving',
+    hint: "A saving offered into a budget round does not stay a saving. Decide what you want it to become.",
+    brief: "You are about to hand back ₹13.89 lakh. Decide what to say about what happens to it.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true about handing back a saving in a budget round.',
+      options: [
+        { key: 'baseline', correct: true, label: 'It becomes next year\'s baseline, so the saving is made once and expected forever', why: 'Which is the correct outcome and worth going in knowing. A saving presented as a one-off will be treated as a recurring one anyway.' },
+        { key: 'credit', correct: true, label: 'Handing it back voluntarily is worth more than having it found, in every round after this one', why: 'A function that finds its own waste is asked to find more. A function whose waste is found for it is cut.' },
+        { key: 'specific', correct: true, label: 'Naming what it buys — the March joiner had a seat on day one because there was headroom — protects the headroom you kept', why: 'Unexplained spare seats look like the next saving. Explained ones look like a decision.' },
+        { key: 'notrade', correct: false, label: 'It can be traded for headcount, since both are analytics cost', why: 'They are separate lines with separate owners and the trade is not in your gift. Offering it makes the tooling saving look like a negotiating position rather than a finding.' },
+        { key: 'hold', correct: false, label: 'Hold it back until the headcount question is settled, so it is available as a concession', why: 'BI renews on 15 August. Holding it means paying it, and being seen to have held it costs the credit as well as the money.' },
+        { key: 'quiet', correct: false, label: 'Reduce the seats without flagging it, so the budget stays where it is', why: 'The invoice arrives in Finance. Being discovered to have quietly kept an underspend is expensive in a way ₹13.89 lakh is not.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-142': {
+    title: 'Tooling against the whole cost line',
+    hint: "The people cost you computed last month, and the tooling cost from the contracts. One row.",
+    brief: "Put the tooling bill in proportion for the budget note. Write ONE SQL SELECT returning one row: total annual tooling cost, total annual people cost from day rates and days present, and tooling as a percentage of the two combined to one place.",
+    referenceSql: "SELECT (SELECT SUM(annual_cost) FROM licences) AS tooling_cost, ROUND((SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) FROM analysts a)) AS people_cost, ROUND((SELECT SUM(annual_cost) FROM licences) * 100.0 / ((SELECT SUM(annual_cost) FROM licences) + (SELECT SUM(a.day_rate * CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER) * 5.0 / 7) FROM analysts a)), 1) AS tooling_pct",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-143': {
+    title: 'Clearview comes back',
+    hint: "Work out what the offer actually costs over the period it covers, not over the first year.",
+    brief: "The vendor has responded to the fifteen-seat proposal. Decide what to do with the offer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Clearview Account Team', subject: 'Re: Renewal — seat count',
+        body: "Thanks for coming to us early, that helps.\n\nWe can't do fifteen seats at the current unit rate — below twenty the price steps up to ₹84,000 a seat. What we can do is hold all thirty seats at ₹64,000 a seat on a two-year term, which brings the annual down to ₹19.2 lakh from ₹21.6 lakh.\n\nThat is a ₹2.4 lakh saving a year with no change on your side, and it protects you if the team grows.",
+      },
+      prompt: 'Tick everything that is true about this offer.',
+      options: [
+        { key: 'worse', correct: true, label: 'It is worse than fifteen seats at ₹84,000, which is ₹12.6 lakh a year', why: 'Their own step-up price on fifteen seats costs ₹6.6 lakh less a year than the discount they are offering. The offer is a discount on seats we do not want.' },
+        { key: 'lock', correct: true, label: 'A two-year term removes the decision you have just spent a week earning the right to make', why: 'The value of this review is the ability to set seat counts at each renewal. Trading that for ₹2.4 lakh gives away the mechanism to keep the money.' },
+        { key: 'anchor', correct: true, label: 'Comparing it to ₹21.6 lakh makes it look like a saving; comparing it to your proposal makes it a ₹6.6 lakh increase', why: 'The baseline is doing all the work in that email. Choosing which number the comparison is against is most of a negotiation.' },
+        { key: 'counter', correct: true, label: 'The step-up price is itself negotiable and is the thing to push on', why: 'They have told you the fifteen-seat price. A one-year term at a better unit rate is a smaller ask than they have just made of you.' },
+        { key: 'accept', correct: false, label: 'Accept it — ₹2.4 lakh with no change on our side is the lowest-risk saving available', why: 'It is the lowest-effort saving. It also costs ₹6.6 lakh a year against the alternative and locks it in for two.' },
+        { key: 'growth', correct: false, label: 'The growth protection is worth having, given the team may hire next year', why: 'Sixteen seats have gone unused for a year. Paying for growth headroom on that scale is buying insurance against an event that has already failed to happen.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-144': {
+    title: 'Answer the vendor',
+    hint: "Hold the position, name the alternative you want, and keep the relationship. You renew with them next year too.",
+    brief: "Reply to Clearview. You want fifteen seats on a one-year term at a better unit rate than ₹84,000. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Clearview Account Team', subject: 'Re: Renewal — seat count', maxWords: 150,
+      prompt: 'Decline the two-year offer, state what you want, and keep it a negotiation rather than a stand-off.',
+      rubric: [
+        { key: 'decline', label: 'A clear decline of the thirty-seat two-year offer', markers: ['not|no|decline|cannot|won\'t|rather not|unable|pass|30|thirty|two.year'], why: 'An ambiguous answer to a vendor offer is read as an opening. Say no in a sentence and spend the rest on what you do want.' },
+        { key: 'why', label: 'The reason: sixteen seats have never been assigned to anybody', markers: ['16|sixteen|never|unassigned|13|thirteen|active|use|nobody'], why: 'Checkable, unarguable, and it makes the decline a fact about us rather than a judgement about their pricing.' },
+        { key: 'want', label: 'What you are actually asking for — fifteen seats, one year, a rate below the step-up', markers: ['15|fifteen|one.year|12.month|rate|84|unit|below|better'], why: 'A decline with no counter ends the conversation. Naming the shape you want lets them come back with something.' },
+        { key: 'relationship', label: 'Kept warm — this is a renewal, not a departure', markers: ['renew|continue|value|work well|happy|relationship|next|keen|intend'], why: 'We are renewing with them either way and there is another renewal in twelve months. Winning ₹6.6 lakh rudely is not winning.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mb-145': {
+    title: 'So that this is a smaller job next year',
+    hint: "Every finding this week came from a gap between two tables that nobody was watching. Pick the checks that would have caught them.",
+    brief: "Asha asks what should be standing rather than annual. Propose what gets instrumented. Under 180 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Tooling — what should be standing rather than annual', maxWords: 180,
+      prompt: 'What to check, how often, and who acts on it.',
+      rubric: [
+        { key: 'offboard', label: 'A leaver check — seats reclaimed as part of offboarding', markers: ['leaver|offboard|left|reclaim|revoke|exit|automatic|trigger'], why: 'The cheapest of the three findings to prevent and the only one that recurs with every departure.' },
+        { key: 'unassigned', label: 'A standing view of seats contracted against seats assigned', markers: ['unassign|contract|assigned|gap|seat|monthly|quarterly|view|dashboard|report'], why: 'Sixteen empty seats existed for a year because no query compared two columns in two tables. It is a scheduled report, not a project.' },
+        { key: 'ahead', label: 'A renewal calendar with a decision point well before each date', markers: ['renew|calendar|date|60|90|days|before|ahead|advance|diary|reminder'], why: 'The whole week ran on forty-six days of notice. Ninety days of notice turns a scramble into a decision.' },
+        { key: 'owner', label: 'Somebody named as the owner of each check', markers: ['own|owner|me|I will|responsib|IT|who|assign|accountable'], why: 'A process with no name against it is a document. Naming yourself for the ones you own is part of the proposal.' },
+        { key: 'nottoomuch', label: 'Restraint — not proposing to monitor individual tool use continuously', markers: ['not|individual|monitor|surveil|person|annual|quarterly|light|enough|proportion'], why: 'A standing per-person usage report would catch things, and it would also change what the data means and how the team feels about being measured.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 3 · Intake & Prioritisation (analytics_ops) ------------------------
+  // Third at Manager, and the first where the finding is that a control everybody relies
+  // on does not work. The priority field has four values, every requester uses it, and it
+  // moves delivery by six days out of twenty-six. Worse, urgent predicts cancellation
+  // rather than speed. Monday the intake and the queue. Tuesday what priority buys.
+  // Wednesday the wobble — the published lead time measures to first delivery, which
+  // understates the work that went wrong by eighteen days, and thirty-two requests have
+  // never been picked up at all. Thursday what replaces the field. Friday the proposal,
+  // the requesters who lose their urgent flag, and the standing measure.
+
+  'mc-101': {
+    title: 'A complaint that contains a measurement',
+    hint: "He has made four claims. Two of them the data can settle this morning and two of them it cannot settle at all.",
+    brief: "Read the complaint and sort it before you touch the tables.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon', subject: 'Retail Ops — we have stopped bothering',
+        body: "I need to raise something before the quarterly review.\n\nRetail Ops has largely stopped sending work to analytics. Not because we do not need it — because nothing marked urgent comes back any faster than anything else, and three things we raised last year have simply never been looked at.\n\nMy team now marks everything urgent, because that is the only lever the form gives us. I am aware that makes it worse. I would rather have a system where I did not have to.\n\nCan you tell me whether it is us or whether it is everyone?",
+      },
+      prompt: 'Tick everything that is true about what he has sent you.',
+      options: [
+        { key: 'testable', correct: true, label: 'Whether urgent work comes back faster is directly measurable from the data you hold', why: 'Lead time by priority is one group-by. It is the claim most worth settling first because everything else he says depends on it.' },
+        { key: 'queue', correct: true, label: 'Whether things are never looked at is also measurable, and is a different question from speed', why: 'A request nobody picks up has no lead time at all. It vanishes from any average built on delivered work, which is where this kind of complaint usually hides.' },
+        { key: 'gaming', correct: true, label: 'He has told you the field is being gamed, and that he knows it and does it anyway', why: 'A rational response to a lever that is the only lever. That is a design problem rather than a behaviour problem, and it means asking people to stop will not work.' },
+        { key: 'notus', correct: true, label: '"Is it us or everyone" is the question to answer first, because the two have different remedies', why: 'If Retail Ops is treated worse than everyone else that is a fairness problem. If everyone is treated the same and the field does nothing, that is a system problem. Same complaint, opposite fixes.' },
+        { key: 'volume', correct: false, label: 'Their reduced volume is evidence that the service has got worse this year', why: 'It is evidence that they believe it has. Demand falling because people gave up looks identical in the data to demand falling because they needed less.' },
+        { key: 'sla', correct: false, label: 'The answer is to agree a service level for urgent work with Retail Ops', why: 'A commitment made before you know whether the current one is honoured. Find out what urgent currently buys before promising what it will buy.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mc-102': {
+    title: 'What came in, and what became of it',
+    hint: "Four outcomes. Give each one a share so the reader does not have to divide.",
+    brief: "Establish the shape of a year. Write ONE SQL SELECT over requests returning, per status: the number of requests and the share of all requests to one place. Largest first.",
+    referenceSql: "SELECT status, COUNT(*) AS requests, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct FROM requests GROUP BY status ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'mc-103': {
+    title: 'Is it Retail Ops, or is it everyone',
+    hint: "His question, answered directly. One row per requesting function.",
+    brief: "Answer the fairness question first. Write ONE SQL SELECT returning, per requesting function: requests raised, delivered, cancelled, still queued, and the delivered share to one place. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS requests, SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct FROM requests GROUP BY requested_by ORDER BY requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mc-104': {
+    title: 'What a 68.5% delivery rate is not',
+    hint: "Ask what happened to the other 31.5%, and whether they are all the same kind of thing.",
+    brief: "Two-thirds of requests were delivered. Decide what that figure supports.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of the delivery rate as a headline.',
+      options: [
+        { key: 'open', correct: true, label: 'It counts work still in progress as not delivered, which is only true so far', why: 'Forty-three requests are open and most of them will land. A snapshot rate mixes failure with work in flight and reads as failure.' },
+        { key: 'cancel', correct: true, label: 'Cancelled and never-picked-up are both in the remainder and are completely different failures', why: 'One is the business changing its mind, which is normal. The other is us never starting, which is not. Averaging them together hides the only one we own.' },
+        { key: 'silent', correct: true, label: 'It says nothing about requests people did not raise because they had given up', why: 'Which is exactly what Ravi is describing. Suppressed demand never enters the table and no rate computed from the table can see it.' },
+        { key: 'compare', correct: true, label: 'It is most useful compared across requesters, where the differences are what matters', why: 'A rate with nothing to compare it to is a number. The same rate across six functions is a finding.' },
+        { key: 'good', correct: false, label: 'It is a reasonable headline for the quarterly review', why: 'It is the number most likely to be quoted and least likely to be understood. Every component of the remainder needs a different response.' },
+        { key: 'target', correct: false, label: 'Raising it is a sensible objective for the team next year', why: 'It rises fastest by refusing work that might get cancelled and by never closing anything as stale. Both make the service worse and the number better.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'mc-105': {
+    title: 'The things nobody ever picked up',
+    hint: "Queued means never started. Age them against 30 June 2026 and look at the top of the list.",
+    brief: "Find what Ravi is talking about. Write ONE SQL SELECT returning every queued request: id, title, requesting function, category, priority, the date it was raised, and its age in whole days at 30 June 2026. Oldest first.",
+    referenceSql: "SELECT id, title, requested_by, category, priority, requested_on, CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER) AS age_days FROM requests WHERE status = 'queued' ORDER BY age_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.6, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mc-106': {
+    title: 'Answer Ravi today',
+    hint: "He asked a yes or no question. Give him the answer, not the analysis that produced it.",
+    brief: "Reply to Ravi. Retail Ops is not being treated differently — 67.1% delivered against 68.5% across all requesters — and thirty-two requests have never been picked up, three of them raised by his team. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Ravi Menon', subject: 'Re: Retail Ops — it is everyone, and it is real', maxWords: 160,
+      prompt: 'Answer his actual question, confirm the part of his complaint that is true, and say what happens next.',
+      rubric: [
+        { key: 'answer', label: 'The direct answer: it is not Retail Ops specifically', markers: ['not|everyone|all|same|67|68|no difference|equally|across'], why: 'He asked one question in plain terms. Anything that makes him read three paragraphs to find out is a worse answer whatever it contains.' },
+        { key: 'concede', label: 'Confirmation that the never-looked-at part is true', markers: ['32|thirty.two|queue|never|picked up|not started|right|correct|true|three of'], why: 'He is right and the data says so. Conceding it immediately is what makes the rest of the note believable.' },
+        { key: 'urgent', label: 'That you are checking whether the urgent flag does anything, and will tell him either way', markers: ['urgent|priority|flag|check|measur|look|tell you|either way|whether'], why: 'It is the claim he most wants settled and you do not yet know. Naming it as in progress beats guessing at it.' },
+        { key: 'nopromise', label: 'No commitment to a service level you have not yet tested', markers: ['not yet|before|once|when I|first|will|rather than|no promise|premature'], why: 'Promising a turnaround on urgent work before knowing what urgent currently buys is how an unmeetable SLA gets agreed in an email.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mc-110': {
+    title: 'What the urgent flag buys',
+    hint: "Measure to the final close rather than to the first delivery, and only for work that finished.",
+    brief: "Settle the main claim. Write ONE SQL SELECT over delivered requests returning, per priority: the number delivered, average days from raised to first delivery to one place, and average days from raised to final close to one place. Slowest to close first.",
+    referenceSql: "SELECT priority, COUNT(*) AS delivered, ROUND(AVG(julianday(delivered_on) - julianday(requested_on)), 1) AS days_to_first_delivery, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY priority ORDER BY days_to_final_close DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mc-111': {
+    title: 'Six days',
+    hint: "The ordering is right. Ask whether the size of the difference could be noticed by anybody.",
+    brief: "Urgent closes in 25.5 days and low in 31.3. Decide what that means for the priority field.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'order', correct: true, label: 'The ordering is correct — urgent, high, normal, low — so the field is not being ignored', why: 'Worth saying plainly, because "priority does nothing" is the easy summary and it is not quite true. It does something, and the something is too small to matter.' },
+        { key: 'size', correct: true, label: 'Six days out of twenty-six is not a difference a requester could perceive', why: 'Nobody experiences a four-week wait as meaningfully shorter than a four-and-a-half-week one. Ravi is not wrong; he is reporting the size correctly.' },
+        { key: 'promise', correct: true, label: 'A field that offers four choices implies a much larger difference than six days', why: 'The interface is making a promise the system does not keep. That gap is the whole problem, and it is a design decision rather than anybody\'s behaviour.' },
+        { key: 'rational', correct: true, label: 'Marking everything urgent is the correct individual response to a six-day spread', why: 'If the only lever moves things by a fifth and costs nothing to pull, everybody pulls it. That is not abuse, it is arithmetic.' },
+        { key: 'ignored', correct: false, label: 'The team is ignoring the priority field and should be asked to respect it', why: 'The ordering shows they are not ignoring it. Asking thirteen people to try harder at something they are already doing is how a system problem becomes a morale problem.' },
+        { key: 'fine', correct: false, label: 'A six-day advantage is a real effect and the field is working as intended', why: 'Statistically present, operationally invisible. A control nobody can feel is a control that will be gamed until it means nothing.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-112': {
+    title: 'What urgent actually predicts',
+    hint: "Stop asking how fast and start asking what happened to it at all.",
+    brief: "Look at outcomes rather than speed. Write ONE SQL SELECT over all requests returning, per priority: requests raised, and the share delivered, cancelled and still queued, each to one place. Most cancelled first.",
+    referenceSql: "SELECT priority, COUNT(*) AS requests, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct, ROUND(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS cancelled_pct, ROUND(SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS queued_pct FROM requests GROUP BY priority ORDER BY cancelled_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-113': {
+    title: 'Urgent is the worst outcome in the table',
+    hint: "53.4% of urgent work is delivered and 21.9% is cancelled. High priority cancels at 5.9%.",
+    brief: "The flag that was supposed to mean 'do this first' turns out to mean something else entirely. Work out what.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick every reading that is consistent with the numbers.',
+      options: [
+        { key: 'panic', correct: true, label: 'Urgent marks work raised in a hurry, and work raised in a hurry is likelier to stop being needed', why: 'Twenty-two per cent of it is cancelled against six per cent of high-priority work. The flag is recording the requester\'s state of mind at 4pm on a Thursday.' },
+        { key: 'predict', correct: true, label: 'The flag predicts cancellation better than it predicts speed', why: 'And that is genuinely useful information, just not the information the field was built to carry. A signal pointing the wrong way is still a signal.' },
+        { key: 'cost', correct: true, label: 'Doing urgent work first therefore front-loads the work most likely to be thrown away', why: '186 hours went on urgent work that was later cancelled. Honouring the flag harder would increase that, not reduce it.' },
+        { key: 'high', correct: true, label: 'High priority is the healthiest bucket in the table and nobody would guess that from the label', why: '69.1% delivered, 5.9% cancelled. It is what urgent is supposed to be, and it is one step down the same dropdown.' },
+        { key: 'punish', correct: false, label: 'Requesters who over-use the urgent flag should be deprioritised until they stop', why: 'It punishes a rational response to a broken control, and it lands on the individuals rather than on the form that offered them the lever.' },
+        { key: 'causal', correct: false, label: 'Marking a request urgent causes it to be cancelled more often', why: 'Nothing here separates the flag from the circumstances that produced it. The association is real, the direction of cause is not established, and it does not need to be for the decision.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-114': {
+    title: 'How much of the wait priority explains',
+    hint: "Compare the spread between priority groups with the spread inside them. If the second is much larger, the field is not the thing driving the wait.",
+    brief: "Quantify how much of the variation in lead time the priority field accounts for. Using delivered requests, compute days from raised to final close for each, then return a dict with keys overall_mean, between_group_spread (the range of the four group means), within_group_sd (the standard deviation of lead time within groups, pooled) and share_explained (the ratio of the variance between group means to the total variance, as a percentage to one place).",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "import statistics\nrows = query(\"SELECT priority, julianday(closed_on) - julianday(requested_on) AS lead FROM requests WHERE status = 'delivered'\")\nleads = [r['lead'] for r in rows]\noverall = statistics.mean(leads)\ngroups = {}\nfor r in rows:\n    groups.setdefault(r['priority'], []).append(r['lead'])\nmeans = {k: statistics.mean(v) for k, v in groups.items()}\nbetween = sum(len(v) * (means[k] - overall) ** 2 for k, v in groups.items())\nwithin = sum((x - means[k]) ** 2 for k, v in groups.items() for x in v)\npooled_sd = (within / (len(leads) - len(groups))) ** 0.5\nresult = {\n    'overall_mean': round(overall, 1),\n    'between_group_spread': round(max(means.values()) - min(means.values()), 1),\n    'within_group_sd': round(pooled_sd, 1),\n    'share_explained': round(between / (between + within) * 100, 1),\n}",
+    estHours: 0.9, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'mc-115': {
+    title: 'Tell the team what you have found',
+    hint: "The finding is about the form, not about them. Say so before anybody assumes otherwise.",
+    brief: "Write to the team. The priority field moves delivery by six days and urgent work is cancelled four times as often as high-priority work. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'What I have found about the priority field', maxWords: 150,
+      prompt: 'The finding, what it is not, and what you want from them.',
+      rubric: [
+        { key: 'finding', label: 'The two numbers — six days of difference, and urgent cancelling at 21.9%', markers: ['6|six|day|25|31|urgent|22|21\\.9|cancel|four times'], why: 'Both are short and surprising. A note that summarises without the figures invites people to supply their own.' },
+        { key: 'notblame', label: 'That the ordering is right, so nobody is ignoring the field', markers: ['not|nobody|ordering|order|correct|right|doing|respect|follow|you are'], why: 'The first thing thirteen people will assume is that they are being told they ignore priorities. They are not, and the data agrees.' },
+        { key: 'design', label: 'That the problem is the form offering a lever it cannot deliver', markers: ['form|field|design|lever|promise|interface|system|dropdown|four|choice'], why: 'Naming it as design rather than behaviour is the difference between a team that helps you fix it and a team that gets defensive.' },
+        { key: 'ask', label: 'A specific ask — how they actually decide what to work on next', markers: ['how do you|tell me|what do you|decide|pick|next|actually|really|ask'], why: 'They are already using some other rule to order work. That rule is the best available candidate for what should replace the field.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'mc-120': {
+    title: 'The number already on the dashboard',
+    hint: "Split delivered work by whether it ever came back, and measure each to both dates.",
+    brief: "The team reports lead time to first delivery. Test what that hides. Write ONE SQL SELECT over delivered requests returning, for work that was reopened and work that was not: the count, average days to first delivery, and average days to final close, each to one place.",
+    referenceSql: "SELECT CASE WHEN reopened > 0 THEN 'reopened' ELSE 'clean' END AS kind, COUNT(*) AS requests, ROUND(AVG(julianday(delivered_on) - julianday(requested_on)), 1) AS days_to_first_delivery, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY kind",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-121': {
+    title: 'Reopened work looks faster',
+    hint: "25.3 days to first delivery against 26.5 for work that never came back. Then 43.3 to actually finish.",
+    brief: "The reported measure says the work that went wrong was delivered quicker than the work that did not. Work out what is happening and what it costs.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'early', correct: true, label: 'Work sent back early tends to have been sent out early, so first-delivery time flatters exactly the failures', why: 'A first delivery that is wrong is still a first delivery. The measure rewards sending something, not sending something right.' },
+        { key: 'gap', correct: true, label: 'The real cost of a reopen is 18 days, and none of it appears in the reported figure', why: '43.3 against 25.3. The published number is not slightly optimistic about these thirty-two requests, it is wrong by more than half.' },
+        { key: 'incentive', correct: true, label: 'Reporting to first delivery gives the team a reason to deliver before it is ready', why: 'Nobody would do that deliberately. Over a year, a measure that treats a wrong answer on day 25 as better than a right one on day 28 will produce more day-25 answers.' },
+        { key: 'change', correct: true, label: 'The measure should be days to final close, and the change makes the team look worse', why: 'Overall lead time goes up when you start counting the rework. Proposing a measure that worsens your own numbers is the only way anybody believes the new one.' },
+        { key: 'small', correct: false, label: 'Thirty-two reopened requests out of 263 is small enough that the overall average is safe', why: 'It is twelve per cent of delivered work carrying an eighteen-day error. And the average is not what a requester experiences — the ones who were reopened experienced 43 days.' },
+        { key: 'quality', correct: false, label: 'The reopen rate is a quality measure for individual analysts and should be tracked per person', why: 'It is mostly a property of the category — data-fixes come back at 1.6% and reports at 18.8% — and per-person tracking would rank people by what they were assigned.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-122': {
+    title: 'Which work comes back',
+    hint: "Group by what kind of thing was asked for. One category barely ever returns.",
+    brief: "Find where the rework is. Write ONE SQL SELECT over delivered requests returning, per category: the number delivered, the number that were reopened at least once, the reopen rate to one place, and average days to final close to one place. Highest reopen rate first.",
+    referenceSql: "SELECT category, COUNT(*) AS delivered, SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) AS reopened, ROUND(SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS reopen_pct, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS days_to_final_close FROM requests WHERE status = 'delivered' GROUP BY category ORDER BY reopen_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'high', dueInDays: 4, day: 3, difficulty: 'medium',
+  },
+
+  'mc-123': {
+    title: 'Data fixes come back once in sixty-two',
+    hint: "Ask what is different about a data fix, as a request, before anybody arrives.",
+    brief: "Reports reopen at 18.8% and data fixes at 1.6%. Decide what that difference is telling you.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that plausibly explains the gap.',
+      options: [
+        { key: 'spec', correct: true, label: 'A data fix arrives fully specified — the number is wrong, make it right — and a report does not', why: 'The whole difference is how much of the question was settled before work started. That is a property of the request, not of the analyst.' },
+        { key: 'done', correct: true, label: 'A data fix has an unambiguous finished state and a report has an opinion about one', why: 'You can check whether the figure reconciles. You cannot check whether a report is what somebody pictured.' },
+        { key: 'intake', correct: true, label: 'It points at intake rather than delivery — the fix is a better conversation at the start', why: 'The most useful finding of the week. Eighteen per cent rework on reports is not a skill problem, it is twenty minutes that nobody spent in week one.' },
+        { key: 'discover', correct: true, label: 'Some reopens on analysis work are the process working — the first answer raised a better question', why: 'Not all rework is waste, and a proposal that treats every reopen as a defect will stop people exploring. Worth distinguishing before setting a target.' },
+        { key: 'skill', correct: false, label: 'Reports are being written by less experienced people', why: 'Assignment is not in this table in a way that supports that, and reaching for a people explanation before an intake one is exactly the reflex this level is supposed to have lost.' },
+        { key: 'target', correct: false, label: 'The team should be given a reopen rate target by category', why: 'A reopen target is met by arguing with the requester about whether it counts as a reopen. Fix the intake and the rate moves on its own.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-124': {
+    title: 'The queue is ordered by nothing',
+    hint: "Age the queue by priority. If the field worked, urgent would be the youngest group in it.",
+    brief: "Write ONE SQL SELECT over queued requests returning, per priority: the number waiting, average age in days at 30 June 2026 to one place, and the age of the oldest in whole days. Oldest average first.",
+    referenceSql: "SELECT priority, COUNT(*) AS waiting, ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) AS avg_age_days, MAX(CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER)) AS oldest_days FROM requests WHERE status = 'queued' GROUP BY priority ORDER BY avg_age_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-125': {
+    title: 'Withdraw the lead time figure',
+    hint: "It is on a dashboard people read. Say what it will become and that the new number is worse.",
+    brief: "Write to Asha. The reported lead time measures to first delivery, which understates reopened work by eighteen days, and the corrected figure makes the team look slower. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Our lead time figure measures the wrong date', maxWords: 160,
+      prompt: 'What is wrong, what it becomes, and why you are proposing a change that makes your own numbers worse.',
+      rubric: [
+        { key: 'what', label: 'The specific fault — measured to first delivery rather than to final close', markers: ['first deliver|delivered_on|closed_on|final|close|date|reopen|back'], why: 'Naming the column is what makes it fixable by somebody other than you.' },
+        { key: 'size', label: 'The size of the error where it bites — eighteen days on reopened work', markers: ['18|eighteen|43|25\\.3|26\\.5|twelve|12%|32|thirty.two'], why: 'Twelve per cent of delivered work carrying an eighteen-day error. Both halves of that sentence matter.' },
+        { key: 'worse', label: 'That the corrected figure is worse for us — 26.4 days becomes 28.6 — and you are proposing it anyway', markers: ['worse|higher|slower|up|unflatter|against|own|even so|still'], why: 'Volunteering a number that makes you look slower is the only thing that makes anyone believe the replacement.' },
+        { key: 'incentive', label: 'Why it matters beyond accuracy — the old measure rewards delivering early and wrong', markers: ['incentive|reward|encourag|early|before ready|wrong|rush|behaviour|drive'], why: 'An inaccurate measure is a reporting problem. One that changes what people do is an operational one, and only the second gets fixed quickly.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'mc-130': {
+    title: 'Who is carrying what',
+    hint: "Below manager level. Open work per person, and how old the oldest of it is.",
+    brief: "Before proposing anything, know the load. Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, requests currently in progress, requests delivered, and the age in whole days of their oldest open request at 30 June 2026. Most open work first.",
+    referenceSql: "SELECT a.name, a.level, SUM(CASE WHEN r.status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress, SUM(CASE WHEN r.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, MAX(CASE WHEN r.status = 'in_progress' THEN CAST(julianday('2026-06-30') - julianday(r.started_on) AS INTEGER) END) AS oldest_open_days FROM analysts a LEFT JOIN requests r ON r.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY in_progress DESC, delivered DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-131': {
+    title: 'The queue chart',
+    hint: "Four named groups, one measure, and the sort is the finding.",
+    brief: "Build the visual that shows the priority field is not ordering the queue: average age of queued work by priority. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "SELECT priority, AVG(julianday('2026-06-30') - julianday(requested_on)) AS avg_age_days FROM requests WHERE status = 'queued' GROUP BY priority ORDER BY avg_age_days DESC",
+      prompt: 'Average age of queued work by priority.',
+      answer: { type: 'bar', x: 'priority', y: 'avg_age_days', sort: 'desc', baselineZero: true },
+      why: 'Four named categories on one measure is a bar chart. Sorted by age rather than by priority order, because the whole point is that the two orderings do not match — sorting by priority would hide the finding inside an axis the reader expects.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'mc-132': {
+    title: 'What replaces the field',
+    hint: "Whatever replaces it has to be something the requester cannot simply always choose.",
+    brief: "The priority dropdown has to go or change. Decide what goes in its place.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the replacement.',
+      options: [
+        { key: 'date', correct: true, label: 'A needed-by date with a reason, rather than a priority word', why: 'A date can be checked against reality and a reason can be discussed. Neither is a lever you can simply always pull to its maximum.' },
+        { key: 'cost', correct: true, label: 'Something that makes urgency cost the requester something — naming what it displaces', why: 'The current field is free to use, which is the entire reason it means nothing. Any replacement that is also free will mean nothing within a year.' },
+        { key: 'wip', correct: true, label: 'A limit on how much is in progress at once, since forty-three open items and a 191-day queue is a flow problem', why: 'Nothing in the priority field addresses the actual cause of the wait, which is that far more is started than finished.' },
+        { key: 'intake', correct: true, label: 'A short specification step for reports and dashboards, where rework is concentrated', why: 'The 18.8% reopen rate on reports is the cheapest thing on the page to fix and it does not need anybody\'s permission.' },
+        { key: 'strict', correct: false, label: 'Keep the field and enforce it strictly, so that urgent work is genuinely done first', why: 'Urgent work is cancelled at 21.9%. Doing it first means doing the most-likely-to-be-abandoned work first, on purpose.' },
+        { key: 'quota', correct: false, label: 'Give each requesting function a quota of urgent flags per quarter', why: 'It makes the flag scarce without making it mean anything, and the first casualty is the genuinely urgent thing raised in a quarter where the quota is spent.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-133': {
+    title: 'The queue, triaged',
+    hint: "Older than six months, never started. Group them so the mail you have to send is one mail per function.",
+    brief: "Produce the close-out list. Write ONE SQL SELECT over queued requests older than 180 days at 30 June 2026, returning per requesting function: how many, the age of the oldest in whole days, and how many of them are marked urgent. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS stale_requests, MAX(CAST(julianday('2026-06-30') - julianday(requested_on) AS INTEGER)) AS oldest_days, SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END) AS marked_urgent FROM requests WHERE status = 'queued' AND julianday('2026-06-30') - julianday(requested_on) > 180 GROUP BY requested_by ORDER BY stale_requests DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-134': {
+    title: 'Where the effort actually went',
+    hint: "Hours against requests, grouped by the flag. Compare each group's share of effort with its share of requests.",
+    brief: "Write ONE SQL SELECT returning, per priority: requests raised, share of all requests to one place, logged hours to one place, and share of all logged hours to one place. Most hours first.",
+    referenceSql: "SELECT r.priority, COUNT(DISTINCT r.id) AS requests, ROUND(COUNT(DISTINCT r.id) * 100.0 / (SELECT COUNT(*) FROM requests), 1) AS pct_of_requests, ROUND(COALESCE(SUM(t.hours), 0), 1) AS hours, ROUND(COALESCE(SUM(t.hours), 0) * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS pct_of_hours FROM requests r LEFT JOIN time_logs t ON t.request_id = r.id GROUP BY r.priority ORDER BY hours DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the split is accepted and then wanted against
+    // delivered work only, which removes the cancelled urgent hours and makes the flag
+    // look considerably better than it is.
+    rework: true,
+  },
+
+  'mc-135': {
+    title: 'Closing a request that is 361 days old',
+    hint: "Somebody asked for this and has been waiting. Closing it is right and it is still bad news.",
+    brief: "You are about to close sixteen queued requests that have been waiting more than six months. Decide how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how this is done.',
+      options: [
+        { key: 'named', correct: true, label: 'One message per requesting function, listing their own items rather than a bulk announcement', why: 'A broadcast about queue hygiene gets ignored. A list of three things somebody personally asked for gets read.' },
+        { key: 'reraise', correct: true, label: 'An explicit invitation to re-raise anything still needed, with a commitment that it will be picked up', why: 'Without it, closing the queue is indistinguishable from refusing the work, which is what Ravi already believes is happening.' },
+        { key: 'own', correct: true, label: 'Say plainly that nobody ever started them and that is on us', why: 'They can see the dates. Any framing that implies these lapsed naturally will read as evasive and confirm the thing you are trying to fix.' },
+        { key: 'notquiet', correct: true, label: 'Not closed silently, even though silently is much less uncomfortable', why: 'Sixteen items disappearing from a queue with no message is how a function learns that raising things with analytics is pointless.' },
+        { key: 'keep', correct: false, label: 'Leave them open, since closing them removes the evidence of the backlog', why: 'The evidence is in the analysis and in this week\'s numbers. A queue that is a year stale is not a record, it is a false promise to six functions.' },
+        { key: 'blame', correct: false, label: 'Explain that they were not started because the priority field made ordering impossible', why: 'It is partly true and it reads as an excuse offered to the people who were let down. The system explanation belongs in the proposal, not in the apology.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'mc-140': {
+    title: 'The intake proposal',
+    hint: "Four findings, one proposal, and a number it is expected to move. Asha has to be able to take this to the other functions.",
+    brief: "Write the proposal to Asha. Replace the priority field with a needed-by date and a reason, add a specification step for reports and dashboards, cap work in progress, and close the stale queue. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Intake — what I want to change and what it should move', maxWords: 220,
+      prompt: 'The case, the changes, and what you expect each to do.',
+      rubric: [
+        { key: 'evidence', label: 'The evidence in one line — six days of difference, 21.9% cancellation on urgent, a 191-day queue', markers: ['6|six|day|21\\.9|22|cancel|191|queue|32|thirty.two|stale'], why: 'A proposal that opens with what should change rather than what is wrong gets read as a preference.' },
+        { key: 'replace', label: 'The replacement for the field — a needed-by date with a reason', markers: ['date|needed.by|by when|reason|why|deadline|replace|instead'], why: 'The specific mechanism, not "better prioritisation". Anything unspecific will be implemented as a renamed dropdown.' },
+        { key: 'intake', label: 'The specification step, aimed at reports and dashboards where rework is concentrated', markers: ['spec|scope|brief|upfront|start|report|dashboard|18|rework|reopen'], why: 'The cheapest change on the page and the one that needs nobody\'s approval. Worth naming separately so it is not lost inside the bigger ask.' },
+        { key: 'queue', label: 'Closing the stale queue, with the re-raise commitment', markers: ['close|stale|queue|180|re.raise|raise again|back|invite|tell'], why: 'The part that touches other functions and the part most likely to be softened into nothing if it is not explicit.' },
+        { key: 'measure', label: 'What each change should move, and that lead time will get worse before it gets better', markers: ['measure|expect|move|worse|up|rise|final close|before|track|watch'], why: 'Switching to close date raises the reported lead time. Saying so in the proposal stops it being read in three months as the changes having failed.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-141': {
+    title: 'The functions lose their urgent flag',
+    hint: "Six functions, one of whom asked for this and five of whom did not.",
+    brief: "Decide what the requesting functions are told and when.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how the change is introduced.',
+      options: [
+        { key: 'why', correct: true, label: 'The measured reason — the flag moved delivery by six days, which is why it is going', why: 'Removing a control without evidence reads as analytics deciding it knows better. The six days is checkable and ends the argument.' },
+        { key: 'gain', correct: true, label: 'What they get instead — a date they can hold you to, rather than a word that does nothing', why: 'A change that only removes something will be resisted by everyone. This one genuinely offers more than it takes, and that has to be the headline.' },
+        { key: 'ravi', correct: true, label: 'Credit to Ravi for raising it, since he did and it is why this happened', why: 'It costs nothing, it is true, and it is the difference between a function that complains once and one that keeps telling you things.' },
+        { key: 'trial', correct: true, label: 'A date to review it, so the change is reversible rather than imposed', why: 'A reviewable change gets tried. A permanent one gets negotiated before it starts.' },
+        { key: 'blame', correct: false, label: 'That some functions were marking everything urgent, which is why the field stopped working', why: 'True, and naming it makes five functions defensive about a rational response to a bad form. The form is the explanation to give.' },
+        { key: 'soft', correct: false, label: 'Keep the urgent flag as well, so nobody feels anything has been taken away', why: 'Two mechanisms means the old one continues to be used and the new one is optional. This is the compromise that guarantees nothing changes.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-142': {
+    title: 'The before figures, stated once',
+    hint: "Four measures, one row each, so the review in six months compares like with like.",
+    brief: "Fix the baseline before anything changes. Write ONE SQL SELECT returning four rows with columns measure and value: average days to final close for delivered work, the reopen rate across delivered work as a percentage, the number of queued requests, and the average age in days of the queue at 30 June 2026. All to one decimal place, in that order.",
+    referenceSql: "SELECT 'days_to_final_close' AS measure, ROUND(AVG(julianday(closed_on) - julianday(requested_on)), 1) AS value FROM requests WHERE status = 'delivered' UNION ALL SELECT 'reopen_rate_pct', ROUND(SUM(CASE WHEN reopened > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) FROM requests WHERE status = 'delivered' UNION ALL SELECT 'queued_requests', ROUND(COUNT(*), 1) FROM requests WHERE status = 'queued' UNION ALL SELECT 'queue_avg_age_days', ROUND(AVG(julianday('2026-06-30') - julianday(requested_on)), 1) FROM requests WHERE status = 'queued'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-143': {
+    title: 'Exec would like to keep their flag',
+    hint: "Work out what he is actually asking for, and whether there is a version of it you can give him.",
+    brief: "The proposal has reached the exec team. Decide how to answer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Re: Intake changes',
+        body: "No objection to any of this for the general population.\n\nBut exec requests do need to jump the queue sometimes — board papers, regulator questions, that sort of thing. Can we keep an escalation route that does not depend on filling in a form about why?\n\nHappy for it to be logged. Just not happy for a board deadline to sit behind a dashboard request.",
+      },
+      prompt: 'Tick everything that belongs in your answer.',
+      options: [
+        { key: 'yes', correct: true, label: 'Yes to an escalation route — some work genuinely does have an external deadline', why: 'A board date and a regulator date are real constraints that exist whatever your intake process says. A system with no escape hatch gets bypassed entirely.' },
+        { key: 'named', correct: true, label: 'With a named person who can invoke it, rather than a function that can', why: 'Exec has twenty-four requests a year. If any of them can be escalated by anybody in the function, the route becomes the new urgent flag within two quarters.' },
+        { key: 'visible', correct: true, label: 'And with what it displaced recorded, so the cost is visible to the person invoking it', why: 'Escalation is always at somebody else\'s expense. Naming whose makes it self-limiting without any rule being needed.' },
+        { key: 'data', correct: true, label: "Note that Exec's own delivery rate is the lowest of the six functions at 54.2%, which this would help", why: 'It turns his request from a demand for special treatment into a fix for a problem he is already having, and it is true.' },
+        { key: 'no', correct: false, label: 'No — an exception for the most senior requester is how the old system failed', why: 'It failed because the lever was free and available to everyone. A named, logged, costed route is a different mechanism, and refusing outright gets you overruled rather than persuaded.' },
+        { key: 'noform', correct: false, label: 'Agree, and drop the requirement to say why, since a board deadline is self-evidently urgent', why: 'The reason is what makes the route reviewable in six months. It is one line, and it is the only thing standing between an escalation route and an escalation habit.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'mc-144': {
+    title: 'Close the loop with Ravi',
+    hint: "He raised it, he was right, and he is about to lose the urgent flag he told you he was abusing.",
+    brief: "Write to Ravi. Tell him what you found, what is changing, and what happens to his team's three queued requests. Under 170 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Ravi Menon', subject: 'What the numbers said, and what is changing', maxWords: 170,
+      prompt: 'The finding, the change, his own items, and the thing he should keep doing.',
+      rubric: [
+        { key: 'right', label: 'That he was right — the flag buys six days and the queue is real', markers: ['right|correct|six|6|day|25|31|queue|32|never|true'], why: 'He took a risk raising it. Confirming he was right is the whole reason the next person raises the next thing.' },
+        { key: 'change', label: 'What replaces it — a needed-by date with a reason', markers: ['date|needed.by|reason|why|instead|replace|deadline'], why: 'He specifically said he would rather not have to game a field. Tell him what he gets instead of the one he is losing.' },
+        { key: 'his', label: 'What happens to his team\'s three queued requests specifically', markers: ['three|3|your|yours|clos|re.raise|raise again|pick up|still need'], why: 'A general answer to a specific complaint is how a complaint gets raised again in a quarter.' },
+        { key: 'keep', label: 'An ask to keep telling you things like this', markers: ['tell me|again|keep|raise|come to me|useful|next time|glad'], why: 'The single most valuable output of this week is that a requester complained instead of quietly giving up. Say so.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'medium',
+  },
+
+  'mc-145': {
+    title: 'What you would watch from now on',
+    hint: "Pick measures that get worse when the service gets worse, and that cannot be improved by refusing work.",
+    brief: "Asha asks what the standing intake measures should be. Propose them, with what each one would catch. Under 190 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Intake — what I would watch monthly', maxWords: 190,
+      prompt: 'Three or four measures, what each catches, and what you would deliberately not measure.',
+      rubric: [
+        { key: 'close', label: 'Lead time to final close, not first delivery', markers: ['final|close|closed_on|not first|rework|reopen|whole'], why: 'The specific correction from Wednesday, made permanent. Without it every other measure is optimistic about exactly the failures.' },
+        { key: 'queue', label: 'The age of the oldest thing nobody has started', markers: ['oldest|queue|age|unstarted|not started|never|waiting|days'], why: 'The one measure that cannot be improved by working faster and can only be improved by picking something up or closing it honestly.' },
+        { key: 'rework', label: 'Reopen rate, by category rather than by person', markers: ['reopen|rework|categor|report|dashboard|not person|not individual|by type'], why: 'By category it points at intake. By person it points at whoever was assigned the reports, which is a management decision rather than their work.' },
+        { key: 'notgame', label: 'Awareness that a measure which can be improved by refusing work will be', markers: ['game|refuse|reject|decline|improve|worse|perverse|incentive|manipul|cannot'], why: 'Delivery rate rises fastest by taking less work. Any proposal that does not name that risk will produce it.' },
+        { key: 'not', label: 'Something deliberately not measured, and why', markers: ['not|would not|avoid|resist|individual|per person|utilisation|volume|count of'], why: 'A list of everything worth knowing is not a proposal. Naming what you are choosing to leave out is what makes it one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 4 · The Headcount Case (analytics_ops) -----------------------------
+  // The last project of the Data Analyst track. Everything above it has been about
+  // finding that a number was wrong. This one is about what to do when the numbers are
+  // right and they say something nobody in the room wants to hear: demand fell by a
+  // fifth, the backlog grew anyway, and the answer to "shall we ask for two more people"
+  // is no. Asking in a budget round is free; refusing costs you something, and being the
+  // only person in the room who can tell the difference is the whole job.
+
+  'md-101': {
+    title: 'Asha has already decided the answer',
+    hint: "She is not wrong about the pressure. She has skipped the part where somebody checks.",
+    brief: "Read what you have been asked to do and work out what is actually being assumed.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Budget round — establishment',
+        body: "Submissions open Monday week. I want analytics to go in for two additional analysts.\n\nMy reasoning: the team has been under pressure all year, we lost somebody in January and took three months to replace them, there is a visible backlog, and every other function is asking. A function that does not ask is assumed not to need.\n\nYou have the data. Put the case together — I need something that will survive Vikram reading it.",
+      },
+      prompt: 'Tick everything that is true about the request as it stands.',
+      options: [
+        { key: 'conclusion', correct: true, label: 'The conclusion has been set before the analysis, and you are being asked to support it', why: 'Which happens constantly and is not dishonest. The job is to notice it, because an analysis commissioned to support a number rarely disagrees with it.' },
+        { key: 'testable', correct: true, label: 'Three of her four reasons are directly testable against the data you hold', why: 'Pressure, the replacement gap and the backlog are all measurable. Only "every other function is asking" is not, and it is the one doing most of the work.' },
+        { key: 'political', correct: true, label: '"A function that does not ask is assumed not to need" is a claim about the room, not about the team', why: 'It may well be true. It is also the reason unevidenced headcount requests get made everywhere, every year, and it is worth naming as what it is.' },
+        { key: 'survive', correct: true, label: 'Wanting something that survives Vikram reading it is an argument for checking rather than for building the case', why: 'He will ask whether demand is growing. If it is not, a case built on pressure falls over in the room and takes your credibility with it.' },
+        { key: 'refuse', correct: false, label: 'The right first move is to tell her the request is the wrong shape', why: 'Before you know whether the answer is two, one or none. Push back on a conclusion once you can say what the evidence is, not before.' },
+        { key: 'obvious', correct: false, label: 'A visible backlog plus a five-month replacement gap is sufficient evidence on its own', why: 'A backlog says work is not getting done. It says nothing about whether more people would get it done, which is the whole question.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'md-102': {
+    title: 'Is demand growing',
+    hint: "The first question any reader will ask, and it takes one group-by.",
+    brief: "Establish the demand trend before anything else. Write ONE SQL SELECT over requests returning, per month of the request date: requests raised, and how many of them were later cancelled. Earliest month first.",
+    referenceSql: "SELECT substr(requested_on, 1, 7) AS month, COUNT(*) AS raised, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS later_cancelled FROM requests GROUP BY month ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'md-103': {
+    title: 'The two halves',
+    hint: "Six months against six months, per requesting function. One of them moves the other way.",
+    brief: "Write ONE SQL SELECT returning, per requesting function: requests raised in July–December 2025, requests raised in January–June 2026, the change as a percentage to one place, and the share of all their requests delivered to one place. Biggest increase first.",
+    referenceSql: "SELECT requested_by, SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END) AS first_half, SUM(CASE WHEN requested_on >= '2026-01-01' THEN 1 ELSE 0 END) AS second_half, ROUND((SUM(CASE WHEN requested_on >= '2026-01-01' THEN 1 ELSE 0 END) - SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END)) * 100.0 / SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END), 1) AS change_pct, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct FROM requests GROUP BY requested_by ORDER BY change_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-104': {
+    title: 'Demand fell by a fifth',
+    hint: "Ravi told you in the last review that his team had stopped bothering. Hold that next to this.",
+    brief: "Total demand went from 213 requests to 171. Decide what that does and does not establish.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'nogrowth', correct: true, label: 'It removes the simplest case for hiring, which is that there is more work arriving than there used to be', why: 'Every headcount case has to answer "what changed". A fifth less demand is not an answer that supports two more people.' },
+        { key: 'suppressed', correct: true, label: 'Falling demand is consistent with people giving up, which is the opposite of not needing the team', why: 'You have direct testimony that this is happening. The same number supports two contradictory stories and the data cannot separate them.' },
+        { key: 'exec', correct: true, label: 'One function grew — Exec, by two thirds — and is the worst served at 54.2% delivered', why: 'The growth is in the demand with the shortest tolerance and the fewest alternatives. A total that falls can hide a segment that matters.' },
+        { key: 'careful', correct: true, label: 'It has to be presented with the suppression caveat, or it becomes an argument for cutting the team', why: 'Handed over as "demand is down 20%" it will be used in a direction you did not intend and cannot then retrieve.' },
+        { key: 'proof', correct: false, label: 'It proves the team has spare capacity relative to last year', why: 'It says nothing about capacity. The backlog grew over the same period, which is the fact that makes the naive reading impossible.' },
+        { key: 'ignore', correct: false, label: 'Since suppression cannot be measured, the demand trend should be left out of the case', why: 'It is the first thing anybody reading a headcount case will check. Omitting it means it gets found by somebody else, in the room.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-105': {
+    title: 'What is still open, month by month',
+    hint: "Open at the end of a month means raised by then and not yet closed. Leave cancelled work out — it is not waiting for anybody.",
+    brief: "Track the backlog. Write ONE SQL SELECT returning, for each month in the window: the month, and the number of non-cancelled requests raised on or before that month and not closed by the end of it. Earliest first.",
+    referenceSql: "WITH m AS (SELECT DISTINCT substr(requested_on, 1, 7) AS mo FROM requests) SELECT mo AS month, (SELECT COUNT(*) FROM requests r WHERE r.status <> 'cancelled' AND substr(r.requested_on, 1, 7) <= m.mo AND (r.closed_on IS NULL OR substr(r.closed_on, 1, 7) > m.mo)) AS open_backlog FROM m ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-106': {
+    title: 'Tell Asha what you have found before you build anything',
+    hint: "She asked for a case. Tell her today that the first number does not support it, so she is not surprised on Friday.",
+    brief: "Write to Asha. Demand fell 19.7% between the two halves of the year and the backlog grew from 35 to 89 over the same period. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Headcount case — the first number goes the wrong way', maxWords: 160,
+      prompt: 'What you have found, what it does not yet mean, and what you are doing next.',
+      rubric: [
+        { key: 'both', label: 'Both figures — demand down 19.7%, backlog up from 35 to 89', markers: ['19\\.7|20%|fell|down|213|171|backlog|35|89|grew|up'], why: 'Either alone tells the wrong story. Together they are the whole finding and they are what makes the rest of the week necessary.' },
+        { key: 'notyet', label: 'That this does not yet mean no, and you are not concluding on day one', markers: ['not yet|too early|does not mean|still|before|conclude|working|rest of|week|open'], why: 'She asked for a case on Monday and is hearing doubt. Saying plainly that you have not decided stops it being read as a refusal.' },
+        { key: 'flag', label: 'Early warning that the case may not be for two people', markers: ['may not|might not|two|different|shape|prepare|not support|warn|expect'], why: 'A week of silence followed by a no on Friday is a much harder conversation than a heads-up on Monday.' },
+        { key: 'next', label: 'What you will actually test — whether more people would clear a backlog like this one', markers: ['test|check|whether|would|clear|flow|throughput|cancel|next|look at'], why: 'It reframes the week from "building a case" to "answering a question", which is the only framing under which the answer can be no.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'md-110': {
+    title: 'Work in, work out',
+    hint: "Raised in a month against closed in a month. The difference each month is what the backlog did.",
+    brief: "Write ONE SQL SELECT returning, per month: requests raised that month, requests closed that month, and the net change. Earliest first.",
+    referenceSql: "WITH months AS (SELECT DISTINCT substr(requested_on, 1, 7) AS m FROM requests), raised AS (SELECT substr(requested_on, 1, 7) AS m, COUNT(*) AS n FROM requests GROUP BY 1), closed AS (SELECT substr(closed_on, 1, 7) AS m, COUNT(*) AS n FROM requests WHERE closed_on IS NOT NULL GROUP BY 1) SELECT months.m AS month, COALESCE(raised.n, 0) AS raised, COALESCE(closed.n, 0) AS closed, COALESCE(raised.n, 0) - COALESCE(closed.n, 0) AS net FROM months LEFT JOIN raised ON raised.m = months.m LEFT JOIN closed ON closed.m = months.m ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-111': {
+    title: 'Falling demand, growing backlog',
+    hint: "Both facts are certain. Only one explanation fits both.",
+    brief: "Fewer requests are arriving and more of them are outstanding. Work out what that combination rules out.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything the combination supports or rules out.',
+      options: [
+        { key: 'notdemand', correct: true, label: 'It rules out demand growth as the cause of the backlog', why: 'The backlog grew in eight months out of twelve while intake fell by a fifth. Whatever is causing it, more work arriving is not.' },
+        { key: 'throughput', correct: true, label: 'Throughput is below intake even at the reduced intake, so the constraint is on the way out rather than the way in', why: 'Twenty-two requests closed per person-year against roughly thirty arriving. That gap is the backlog, and it is a finishing problem.' },
+        { key: 'hire', correct: true, label: 'More people would raise throughput and would also raise the number of things started at once', why: 'Which is the part of a hiring case nobody writes down. Forty-three items are already open across thirteen people; two more people is two more streams of started-and-stalled work unless something else changes.' },
+        { key: 'june', correct: true, label: 'June closed 37 against 26 raised, so the backlog can be reduced at current headcount', why: 'One month is not a trend and it is an existence proof. The team cleared eleven net items with nobody new, which no version of "we do not have enough people" survives intact.' },
+        { key: 'lazy', correct: false, label: 'It shows the team is not working hard enough to clear what it has', why: 'Nothing here measures effort, and the answer to a flow problem is never to ask thirteen people to try harder. That is the reading to head off before somebody else reaches it.' },
+        { key: 'nothing', correct: false, label: 'Since demand is falling, the backlog will clear on its own', why: 'It has not in twelve months of falling demand. A backlog that grows while intake falls is not waiting for intake to fall further.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-112': {
+    title: 'What one more person would buy',
+    hint: "Throughput per person-year, and the day rate of the level you would actually hire at.",
+    brief: "Price the ask. Write ONE SQL SELECT over analysts below manager level returning, per level: headcount, person-years present to two places, requests closed by people at that level, requests closed per person-year to one place, and the annual cost of one more person at that level's average day rate over 261 working days. Cheapest per person first.",
+    referenceSql: "WITH present AS (SELECT a.level, COUNT(*) AS headcount, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 AS person_years, AVG(a.day_rate) AS avg_rate FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level), done AS (SELECT a.level, COUNT(*) AS closed FROM requests r JOIN analysts a ON a.id = r.analyst_id WHERE r.closed_on IS NOT NULL GROUP BY a.level) SELECT p.level, p.headcount, ROUND(p.person_years, 2) AS person_years, COALESCE(d.closed, 0) AS closed, ROUND(COALESCE(d.closed, 0) / p.person_years, 1) AS closed_per_person_year, ROUND(p.avg_rate * 261) AS cost_of_one_more FROM present p LEFT JOIN done d ON d.level = p.level ORDER BY cost_of_one_more",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-113': {
+    title: 'A junior costs ₹15.76 lakh and closes twenty a year',
+    hint: "Compare that against the two things you already know are recoverable and cost nothing.",
+    brief: "You now know what a hire costs and roughly what it delivers. Decide how that compares with what you already found.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the comparison.',
+      options: [
+        { key: 'cancel', correct: true, label: 'Cancelled work is 15.2% of effort — about 1.8 person-years — which is more than a hire and costs nothing to recover', why: 'The proportion survives the coverage problem even though the hours do not. Fifteen per cent of 11.92 person-years is the honest form of that number.' },
+        { key: 'tooling', correct: true, label: 'The ₹13.89 lakh of tooling already handed back is most of a junior analyst, and it was handed back rather than kept', why: 'Worth naming, because the round will remember the function that gave money back. It is also the strongest possible framing for asking later.' },
+        { key: 'notlinear', correct: true, label: 'Twenty closed per person-year is an average over people already embedded, not what a new joiner does in year one', why: 'A March joiner has closed six. Costing a hire at the team average and crediting it with the team average output is the commonest error in a headcount case.' },
+        { key: 'flow', correct: true, label: 'If the constraint is finishing rather than starting, a new person raises started work before they raise finished work', why: 'Which is why the sequence matters: fix the flow, then see what is left, then ask. In the other order the hire gets blamed.' },
+        { key: 'cheap', correct: false, label: 'At ₹15.76 lakh against a ₹3.09 crore cost line, a junior is small enough not to need a case', why: 'It is five per cent of the line, it is permanent, and the argument that a cost is too small to examine is the argument that produced the thirty BI seats.' },
+        { key: 'senior', correct: false, label: 'A senior at ₹24.62 lakh is better value, since seniors close more per person-year', why: 'Seniors close 21 per person-year and leads 29, which mostly reflects what each level is given rather than how fast they work. Costing a hire on that ratio would be reading assignment as productivity.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-114': {
+    title: 'How long to clear the backlog',
+    hint: "Project the backlog forward under three scenarios and find where each one lands after twelve months.",
+    brief: "Model it. Take intake at the second-half rate per month and closures at the second-half rate per month, starting from the current non-cancelled backlog. Project twelve months under three scenarios: no change; one more junior adding a twelfth of 20 closures a month; and halving the share of effort that goes to work later cancelled, which raises closures by 7.6%. Return a list of dicts with keys scenario, monthly_intake, monthly_closures and backlog_after_12m, each number to one place.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "intake_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE requested_on >= '2026-01-01'\")\nclosed_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE closed_on >= '2026-01-01'\")\nbacklog_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE status IN ('queued', 'in_progress')\")\nintake = intake_rows[0]['n'] / 6.0\nbase_close = closed_rows[0]['n'] / 6.0\nbacklog = backlog_rows[0]['n']\nscenarios = [\n    ('no change', base_close),\n    ('one more junior', base_close + 20 / 12.0),\n    ('halve cancelled work', base_close * 1.076),\n]\nout = []\nfor name, close in scenarios:\n    end = backlog + 12 * (intake - close)\n    out.append({\n        'scenario': name,\n        'monthly_intake': round(intake, 1),\n        'monthly_closures': round(close, 1),\n        'backlog_after_12m': round(end, 1),\n    })\nresult = out",
+    estHours: 1.0, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-115': {
+    title: 'Ask the team the question the data cannot answer',
+    hint: "Thirteen people know why work stalls. None of it is in any table you have.",
+    brief: "Write to the team. You are deciding whether to ask for two more people and you want to know what actually stops work finishing. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'What actually stops things finishing?', maxWords: 150,
+      prompt: 'What you are deciding, the specific question, and why you are asking them rather than the data.',
+      rubric: [
+        { key: 'honest', label: 'That a headcount ask is genuinely open and you have not decided', markers: ['deciding|open|not decided|whether|considering|may|might|thinking'], why: 'If they think the answer is fixed they will tell you what supports it. The value of the question depends on the decision being real.' },
+        { key: 'specific', label: 'A specific question — what stalls, not "any thoughts"', markers: ['what|stops|stall|stuck|waiting|blocked|slow|finish|hold up|specific'], why: '"Any thoughts on capacity" produces "we are busy". "What stopped your oldest open item last week" produces something you can act on.' },
+        { key: 'why', label: 'Why them — the reason work stalls is not in any table', markers: ['data|table|not in|cannot|only you|you know|invisible|see|record|nowhere'], why: 'It explains why you are asking and it is true, which makes it far likelier to be answered properly.' },
+        { key: 'safe', label: 'Made safe to answer honestly, including "I have too much open"', markers: ['honest|safe|not|blame|judg|criticis|fine|no problem|freely|candid|between us'], why: 'The most useful answer is the one that sounds like an admission. Nobody gives it unless you say first that it is not one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'md-120': {
+    title: 'The capacity that already exists',
+    hint: "The proportion of effort is the part that survives poor coverage. Apply it to person-years, not to hours.",
+    brief: "Size the recoverable capacity properly. Write ONE SQL SELECT returning one row: person-years present below manager level to two places, the share of logged effort spent on work later cancelled to one place, and that share of those person-years to two places. Label them person_years, cancelled_effort_pct and person_years_on_cancelled.",
+    referenceSql: "SELECT ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0, 2) AS person_years, ROUND((SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS cancelled_effort_pct, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 * (SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') / (SELECT SUM(hours) FROM time_logs), 2) AS person_years_on_cancelled FROM analysts a WHERE a.level <> 'manager'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-121': {
+    title: 'The case you were about to make',
+    hint: "1.81 person-years already inside the team against 1.0 you would be buying. Work out what that does to the submission.",
+    brief: "The answer has turned over. Decide what the honest submission now says.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'no', correct: true, label: 'The evidence does not support asking for two people this round', why: 'Demand down a fifth, a backlog that is a flow problem, and more capacity inside the team than the ask would add. Every one of those has to be answered before an ask is honest.' },
+        { key: 'inside', correct: true, label: '1.81 person-years is going on work later cancelled, which is more than the ask and already paid for', why: 'And it is the proportion rather than the hours, so it survives the coverage problem that broke every other figure built on timesheets.' },
+        { key: 'notzero', correct: true, label: 'Saying no is not the same as saying the team is comfortable — the backlog and the queue are real', why: 'A submission that reads as "we are fine" is both untrue and the one that gets the establishment cut next year. The distinction has to be explicit.' },
+        { key: 'conditions', correct: true, label: 'What should go in is what would change the answer, with the date you will come back', why: 'It converts a refusal into a deferral with a test attached, which is the only form of no that survives a budget round without being read as weakness.' },
+        { key: 'compromise', correct: false, label: 'Ask for one rather than two, as a defensible middle position', why: 'Splitting the difference on a number the evidence does not support is how an unevidenced figure enters a budget. One is not half as wrong as two, it is the same kind of wrong.' },
+        { key: 'ask', correct: false, label: 'Ask anyway — it costs nothing, and a rejected ask is better than an unasked one', why: 'It costs the thing that makes the next ask work. A function that asks every year regardless of evidence gets read the same way every year, and the year it genuinely needs people is the year nobody can tell.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-122': {
+    title: 'Where the started work is stuck',
+    hint: "Open items by owner, below manager level, with the age of the oldest. The shape of a flow problem is a long tail of old open items.",
+    brief: "Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, requests currently in progress, the age in whole days of their oldest open one at 30 June 2026, and requests closed. Most open first.",
+    referenceSql: "SELECT a.name, a.level, SUM(CASE WHEN r.status = 'in_progress' THEN 1 ELSE 0 END) AS open_now, MAX(CASE WHEN r.status = 'in_progress' THEN CAST(julianday('2026-06-30') - julianday(r.started_on) AS INTEGER) END) AS oldest_open_days, SUM(CASE WHEN r.closed_on IS NOT NULL THEN 1 ELSE 0 END) AS closed FROM analysts a LEFT JOIN requests r ON r.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY open_now DESC, oldest_open_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-123': {
+    title: 'Telling your manager her answer was wrong',
+    hint: "She asked for a case and has probably already said in a meeting that analytics is asking for two.",
+    brief: "You are going to tell Asha that the submission should not ask for headcount. Decide how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how you do it.',
+      options: [
+        { key: 'early', correct: true, label: 'Today, in person, before the submission is drafted rather than in the draft', why: 'She may have already committed to it verbally. Finding out from a document is how a manager gets embarrassed, and you only get to do that once.' },
+        { key: 'her', correct: true, label: 'Confirm the parts of her reasoning that held up — the replacement gap and the backlog are both real', why: 'She was right about three of her four reasons. Leading with what survived is the difference between a correction and a contradiction.' },
+        { key: 'alt', correct: true, label: 'Bring the alternative submission, not just the refusal', why: 'She needs something to put in the round. A no with nothing attached puts her in the room with nothing, which is worse than the wrong ask.' },
+        { key: 'risk', correct: true, label: 'Be explicit that not asking has a risk, and that you are taking it deliberately', why: 'Her point about functions that do not ask being assumed not to need is a real cost. Pretending it is not makes the recommendation look naive.' },
+        { key: 'defer', correct: false, label: 'Write it up and let the document make the argument, so it is on the record', why: 'The record matters less than her not being surprised. Anything that reaches her as a document first will be read as having gone around her.' },
+        { key: 'soften', correct: false, label: 'Present it as an open question so she can reach the conclusion herself', why: 'It is not an open question — you have done the work and you have an answer. Manufacturing a discovery wastes her time and hides where the recommendation came from.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-124': {
+    title: 'What would change the answer',
+    hint: "Each one has to be a number you can compute today, so that in six months the test is unambiguous.",
+    brief: "Write the conditions into the submission as measurable tests. Write ONE SQL SELECT returning four rows with columns condition and current_value: monthly intake in the second half, monthly closures in the second half, the non-cancelled backlog at 30 June 2026, and the share of logged effort on work later cancelled. All to one decimal place, in that order.",
+    referenceSql: "SELECT 'monthly_intake_h2' AS condition, ROUND(COUNT(*) / 6.0, 1) AS current_value FROM requests WHERE requested_on >= '2026-01-01' UNION ALL SELECT 'monthly_closures_h2', ROUND(COUNT(*) / 6.0, 1) FROM requests WHERE closed_on >= '2026-01-01' UNION ALL SELECT 'open_backlog', ROUND(COUNT(*), 1) FROM requests WHERE status IN ('queued', 'in_progress') UNION ALL SELECT 'cancelled_effort_pct', ROUND((SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') * 100.0 / (SELECT SUM(hours) FROM time_logs), 1)",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-125': {
+    title: 'The conversation with Asha, written down',
+    hint: "You have had the conversation. This is the note that follows it, so that what was agreed is what gets submitted.",
+    brief: "Write to Asha after the conversation. The submission will not ask for headcount this round; it will commit to the four conditions and a January review. Under 190 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Establishment submission — what we agreed', maxWords: 190,
+      prompt: 'What was decided, the evidence behind it, and what happens in January.',
+      rubric: [
+        { key: 'decision', label: 'The decision stated plainly in the first two lines', markers: ['not|no|will not|hold|flat|without|no ask|establishment|this round'], why: 'A note recording a decision that takes three paragraphs to state it will be read as hedging on the decision.' },
+        { key: 'evidence', label: 'The three findings — demand down 19.7%, a flow problem, 1.81 person-years on cancelled work', markers: ['19\\.7|20%|demand|flow|finish|throughput|1\\.8|cancel|15\\.2'], why: 'Three numbers, one line. It is what she repeats when somebody asks her why analytics did not ask.' },
+        { key: 'notfine', label: 'That this is not a claim the team is comfortable', markers: ['not|backlog|queue|32|pressure|real|hard|comfortable|fine|does not mean'], why: 'A submission read as "analytics is fine" is the one whose establishment gets cut next year. The distinction has to be in writing.' },
+        { key: 'january', label: 'The January review and what would trigger an ask', markers: ['january|review|six month|trigger|if|condition|intake|backlog|then|come back'], why: 'It is what makes this a deferral rather than a refusal, and it is the part that gets dropped in the retelling unless it is written down.' },
+        { key: 'risk', label: 'Acknowledgement of the risk she named — a function that does not ask', markers: ['risk|assume|not ask|read|room|aware|cost|deliberate|accept'], why: 'She raised it on Monday. A note that ignores it implies you did not take her point, whatever the analysis says.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-130': {
+    title: 'The backlog chart',
+    hint: "Twelve points in time, one measure. The reader should see the line rise while demand falls.",
+    brief: "Build the chart for the submission: the non-cancelled backlog at each month end. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "WITH m AS (SELECT DISTINCT substr(requested_on, 1, 7) AS mo FROM requests) SELECT mo AS month, (SELECT COUNT(*) FROM requests r WHERE r.status <> 'cancelled' AND substr(r.requested_on, 1, 7) <= m.mo AND (r.closed_on IS NULL OR substr(r.closed_on, 1, 7) > m.mo)) AS open_backlog FROM m ORDER BY month",
+      prompt: 'Non-cancelled backlog at each month end.',
+      answer: { type: 'line', x: 'month', y: 'open_backlog', sort: 'asc', baselineZero: true },
+      why: 'Twelve consecutive months is a time series, so a line, sorted by month rather than by value — re-sorting a time axis destroys the only thing it carries. A zero baseline because the claim is about the size of the backlog, not only about its direction, and a truncated axis would make a rise from 35 to 89 look like a collapse.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'md-131': {
+    title: 'What goes into the submission',
+    hint: "It has to survive being read by somebody who wanted a different answer.",
+    brief: "Decide the contents of the establishment submission.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'norequest', correct: true, label: 'No establishment increase this round, stated as the headline rather than as a conclusion at the end', why: 'A budget submission is skimmed. A recommendation that appears in the last paragraph will be missed by half the room and misread by the rest.' },
+        { key: 'why', correct: true, label: 'The three findings that produced it, in one line each', why: 'Demand down a fifth, a backlog that is a flow problem, 1.81 person-years already inside the team. Each is checkable, which is what makes the recommendation hold up.' },
+        { key: 'conditions', correct: true, label: 'The four conditions, with their current values, and a January review date', why: 'Numbers written down in June are a test. The same conditions described in words are a conversation you will have again in January from scratch.' },
+        { key: 'tooling', correct: true, label: 'The ₹13.89 lakh of tooling handed back, as evidence of what this function does with its own cost line', why: 'It is the only thing in the submission that is already banked, and it is what makes "no ask" read as discipline rather than as low ambition.' },
+        { key: 'worse', correct: false, label: 'A warning that service will deteriorate without the two analysts', why: 'You have just concluded that more people would not fix the backlog. Attaching a threat to a recommendation that contradicts it is how a submission gets picked apart.' },
+        { key: 'quiet', correct: false, label: 'Leave the backlog out, since it invites the question of why more people are not needed', why: 'It is the strongest evidence in the pack and it is the thing Vikram will find in ten minutes. The version you omit is the version that gets used against you.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-132': {
+    title: 'The submission',
+    hint: "Written for somebody comparing six cost lines who will give it ninety seconds.",
+    brief: "Write the establishment submission. No increase this round, four measured conditions, a January review, and the tooling already handed back. Under 230 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Budget round — establishment submission', subject: 'Analytics — establishment for FY27', maxWords: 230,
+      prompt: 'The recommendation, the evidence, the conditions, and what has already been returned.',
+      rubric: [
+        { key: 'headline', label: 'The recommendation first — no increase this round', markers: ['no increase|flat|hold|not seeking|no additional|thirteen|13|unchanged|no ask'], why: 'It is the only sentence guaranteed to be read. Everything else in the document exists to support it.' },
+        { key: 'three', label: 'The evidence — demand down 19.7%, a flow rather than capacity problem, 1.81 person-years on cancelled work', markers: ['19\\.7|20%|demand|flow|throughput|finish|1\\.8|cancel|15\\.2|backlog'], why: 'Three checkable numbers. A submission that argues without them reads as a preference and will be treated as one.' },
+        { key: 'conditions', label: 'The conditions with current values and the January date', markers: ['january|review|condition|if|intake|28\\.5|backlog|75|15\\.2|trigger|return'], why: 'It is what turns this from a refusal into a commitment, and the values have to be in it or the test is arguable in six months.' },
+        { key: 'returned', label: 'The ₹13.89 lakh of tooling already handed back', markers: ['13\\.8|13\\.9|1,?389|tooling|licence|license|returned|handed|saving'], why: 'The only banked number in the document, and the reason "no ask" reads as a function that manages its own costs.' },
+        { key: 'notfine', label: 'That this is not a claim the service is where it should be', markers: ['not|backlog|queue|32|below|should|pressure|comfortable|work to do|behind'], why: 'Without it, the submission is read as analytics declaring itself finished, and that is the reading that costs establishment next year.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.85, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-133': {
+    title: 'The exec reads it',
+    hint: "He has found the one thing in the pack that points the other way, and he is right that it does.",
+    brief: "Vikram has come back on the submission. Decide how to answer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Re: Analytics — establishment for FY27',
+        body: "This is the most honest submission in the round and I will say so.\n\nOne thing though. Your own numbers say exec requests grew by two thirds and that we are your worst-served function at 54%. That is my work, not getting done, growing.\n\nSo either the answer is not quite no, or you are telling me exec demand is the thing that gets squeezed. Which is it?",
+      },
+      prompt: 'Tick everything that belongs in your answer.',
+      options: [
+        { key: 'concede', correct: true, label: 'He is right that the exec segment moved the other way, and it is in your submission because you put it there', why: 'Volunteering the counter-evidence is what earned the credibility he opened with. Defending it now would spend that in one message.' },
+        { key: 'small', correct: true, label: 'Fifteen requests in six months is real and is not a headcount-sized problem — it is a routing problem', why: 'Two and a half requests a month cannot justify a permanent post. It can absolutely justify a named route and a service commitment, which is the answer that fits the size.' },
+        { key: 'route', correct: true, label: 'Offer the escalation route agreed last month as the mechanism, with a delivery commitment attached', why: 'It already exists, it costs nothing, and it turns the objection into a thing you have done rather than a thing you have declined.' },
+        { key: 'measure', correct: true, label: 'Add exec delivery rate to the January conditions, so the claim is testable rather than reassuring', why: 'He has raised a specific risk. Putting it in the test set is the difference between an answer and a promise.' },
+        { key: 'give', correct: false, label: 'Change the submission to ask for one analyst, since exec demand is growing', why: 'Fifteen requests in six months. Converting a senior stakeholder\'s objection into a permanent post is exactly how establishment grows without evidence, and he is not asking you to.' },
+        { key: 'squeeze', correct: false, label: 'Tell him plainly that yes, exec work is what gets squeezed at current capacity', why: 'It is neither true nor necessary. Exec is worst served because twenty-four requests a year never build a working relationship with anybody, which is fixable without a hire.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-134': {
+    title: 'Answer Vikram',
+    hint: "Concede the point, size it honestly, and offer the mechanism that already exists.",
+    brief: "Reply to Vikram. Exec demand grew from 9 to 15 requests and is the worst served at 54.2%, which is a routing problem rather than a headcount one. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Re: Analytics — establishment for FY27', maxWords: 160,
+      prompt: 'Concede what is true, size it, and say what you will do about it.',
+      rubric: [
+        { key: 'concede', label: 'That he is right about the exec segment', markers: ['right|correct|yes|agree|you are|fair|true|good point'], why: 'He found the counter-evidence in a document you wrote. Anything other than agreement reads as defending a position rather than answering a question.' },
+        { key: 'size', label: 'The size — fifteen requests in six months, two and a half a month', markers: ['15|fifteen|six month|2\\.5|two and a half|month|small|scale|size'], why: 'The scale is the whole argument. A number that small cannot carry a permanent post and can carry a named route.' },
+        { key: 'offer', label: 'The escalation route and a delivery commitment', markers: ['escalat|route|named|commit|first|priorit|guarantee|direct|me|myself'], why: 'An objection answered with a mechanism is settled. An objection answered with an explanation comes back.' },
+        { key: 'test', label: 'Exec delivery rate added to the January review', markers: ['january|review|measure|track|condition|54|report back|test|watch'], why: 'It makes the commitment checkable, and he is the person who will check it.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the reply is accepted and then wanted with the
+    // commitment made specific — a date rather than a promise — which is a harder note to
+    // write and the one that actually binds.
+    rework: true,
+  },
+
+  'md-135': {
+    title: 'What the team is told',
+    hint: "Thirteen people have spent the week hearing that a headcount case was being built.",
+    brief: "The submission asks for nobody. Decide what the team hears and how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in what you tell them.',
+      options: [
+        { key: 'direct', correct: true, label: 'That there is no headcount ask, from you, before they hear it anywhere else', why: 'They will hear it. The version they hear from you is the only one that comes with the reasoning attached.' },
+        { key: 'reason', correct: true, label: 'The actual reason — more people would not have cleared this backlog', why: 'Without it the only available explanation is that you did not fight for them, and that is what will be believed.' },
+        { key: 'what', correct: true, label: 'What is changing instead — the intake changes, the WIP cap, and closing the stale queue', why: 'A no with nothing attached lands as a loss. The same no with three changes attached lands as a plan they are part of.' },
+        { key: 'thanks', correct: true, label: 'What their answers to Tuesday\'s question changed about the conclusion', why: 'You asked thirteen people a real question. Showing that it altered the outcome is what makes the next question worth answering.' },
+        { key: 'blame', correct: false, label: 'That the data showed the team starts more than it finishes', why: 'True, and said to the people rather than about the system it reads as an accusation. The flow problem is a management finding, not a personal one.' },
+        { key: 'hope', correct: false, label: 'That you will ask again in January and expect to get it', why: 'You do not know that, and a commitment you cannot keep is worse than the no. January is a review, not a promise.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-140': {
+    title: 'Write to the team',
+    hint: "Short, direct, and the reasoning before the decision is repeated back to them.",
+    brief: "Write to the team. No headcount ask this round, the reason, what is changing instead, and what their answers changed. Under 180 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'No headcount ask this round — and what we are doing instead', maxWords: 180,
+      prompt: 'The decision, the reason, the changes, and the credit.',
+      rubric: [
+        { key: 'decision', label: 'The decision up front', markers: ['no|not asking|no ask|without|flat|thirteen|13|this round|decided'], why: 'Burying it is worse than saying it. They will find the sentence first whatever order you write it in.' },
+        { key: 'reason', label: 'That more people would not have cleared this backlog, with the reason', markers: ['flow|finish|start|throughput|would not|not fix|clear|open|43|forty.three|more people'], why: 'The alternative explanation available to them is that you did not fight for them. Only the mechanism displaces it.' },
+        { key: 'changes', label: 'What is changing instead', markers: ['intake|cap|WIP|limit|queue|clos|spec|instead|change|doing'], why: 'The decision is a no; the note should not be. Three concrete changes make it a plan.' },
+        { key: 'credit', label: 'That what they said on Tuesday changed the conclusion', markers: ['you|your|told me|said|answer|tuesday|asked|changed|thank|helpful'], why: 'It was a real question and it did change things. Saying so is what makes the next one worth answering honestly.' },
+        { key: 'nofalse', label: 'No promise about January that you cannot keep', markers: ['review|january|not a promise|cannot|if|depends|conditions|no guarantee|see'], why: 'A hinted guarantee is remembered as a guarantee, and it is the sentence that gets quoted back in six months.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-141': {
+    title: 'The year in one table',
+    hint: "Everything the January review will need, from one query, so no two figures can drift apart between now and then.",
+    brief: "Assemble the baseline. Write ONE SQL SELECT returning, per requesting function: requests raised, delivered, cancelled, still queued, the delivered share to one place, and the average days from raised to final close for their delivered work to one place. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS raised, SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct, ROUND(AVG(CASE WHEN status = 'delivered' THEN julianday(closed_on) - julianday(requested_on) END), 1) AS avg_days_to_close FROM requests GROUP BY requested_by ORDER BY raised DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-142': {
+    title: 'Saying no in a room where everyone says yes',
+    hint: "Five other functions asked. Work out what it costs to be the one that did not, and what it buys.",
+    brief: "The round is over. Decide what you actually learned about the decision you made.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of not asking.',
+      options: [
+        { key: 'credibility', correct: true, label: 'It is only worth anything if the function would have asked when the evidence supported it', why: 'A no with no plausible yes behind it is read as timidity. The January conditions exist partly to demonstrate that there is a threshold and you know where it is.' },
+        { key: 'once', correct: true, label: 'The credit it buys is spendable roughly once, and should be spent on something that matters', why: 'Being the honest function is a position, not a personality. It is worth something the first time you use it and less the fourth.' },
+        { key: 'risk', correct: true, label: 'Asha\'s warning is a genuine risk and taking it is a judgement, not a virtue', why: 'Functions that do not ask do get assumed not to need. Saying no here is a bet that a demonstrated threshold is worth more, and it could be wrong.' },
+        { key: 'baseline', correct: true, label: 'Next year\'s comparison is now against thirteen people, which makes an increase harder to argue later', why: 'Establishment is sticky in both directions. That cost is real and belongs in the decision rather than in the surprise next June.' },
+        { key: 'always', correct: false, label: 'Honesty is the right answer in a budget round regardless of what it costs the team', why: 'The team carries the consequence of an under-resourced year. This was the right call because the evidence said so, not because refusing is inherently virtuous.' },
+        { key: 'safe', correct: false, label: 'It is the low-risk option, since nobody is ever criticised for spending less', why: 'It is the option that leaves you accountable for a backlog with no additional resource, which is the opposite of low-risk.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-143': {
+    title: 'The January test, written now',
+    hint: "Each condition needs a number, a direction, and what you will do if it is met.",
+    brief: "Write the January review terms. Four conditions with their June values and what each would trigger. Under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'January review — the terms, agreed now', maxWords: 200,
+      prompt: 'The conditions, the current values, and what each one triggers.',
+      rubric: [
+        { key: 'values', label: 'Current values recorded — intake, closures, backlog, cancelled share', markers: ['28\\.5|intake|closures|backlog|75|15\\.2|cancel|per month|current|june'], why: 'A condition without today\'s value is not a test, it is a topic. The numbers have to be in this note or January is another argument.' },
+        { key: 'direction', label: 'Which direction each has to move for the answer to change', markers: ['rise|fall|above|below|increase|reduce|higher|lower|if|exceed|remain'], why: 'Otherwise every outcome will look to somebody like the condition being met.' },
+        { key: 'trigger', label: 'What an ask would actually be if the conditions are met', markers: ['one|two|junior|senior|ask|request|post|analyst|then|would'], why: 'Naming the ask in advance is what stops January becoming a negotiation about whether there is an ask at all.' },
+        { key: 'both', label: 'That the conditions can also confirm no ask is needed', markers: ['also|equally|either|confirm|no|might|may not|both|if not|stays'], why: 'A test with only one outcome written down is a plan to ask. Saying it can go either way is what makes it a test.' },
+        { key: 'owner', label: 'Who runs it and when', markers: ['I will|me|my|january|date|run|prepare|bring|own|report'], why: 'A review with no owner and no date is the thing everybody agrees to and nobody holds in June.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-144': {
+    title: 'The year, from four reviews',
+    hint: "Four reviews, four measures, and the same failure in each. Say what the pattern is rather than listing them.",
+    brief: "Asha asks what you would tell somebody taking this job tomorrow. Answer in under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'What I would tell whoever does this next', maxWords: 200,
+      prompt: 'The pattern across the four reviews, and what it implies about the job.',
+      rubric: [
+        { key: 'pattern', label: 'The common shape — measures built from what was easy to count, drifting out of meaning while still being used', markers: ['easy|count|available|convenient|drift|stopped meaning|still used|denominator|built|reason'], why: 'Four separate findings are anecdotes. The shape they share is the thing that transfers to the next person.' },
+        { key: 'denominator', label: 'The practical rule that came out of it — go to the denominator first', markers: ['denominator|below the line|divide|per|rate|first|check|what is it divided'], why: 'Timesheet coverage, cost per seat, first delivery. One habit would have caught all three inside a day.' },
+        { key: 'nobody', label: 'That nobody was at fault in any of the four', markers: ['nobody|no one|not|fault|blame|sensible|reasonable|at the time|good reason|built for'], why: 'Each measure was built for a reason and worked when it was built. A successor who goes looking for culprits will find none and will be resented for looking.' },
+        { key: 'job', label: 'What that makes the job — asking whether a number should exist, which nobody below you can do', markers: ['job|manager|only|nobody else|asked for|should exist|question|authority|position|mine'], why: 'An analyst checks the number they were asked for. Deciding which numbers are allowed to exist is the part of this role that is not a promotion in title only.' },
+        { key: 'cost', label: 'Something about what it cost — the refusals, the corrections, the no in a budget round', markers: ['refus|no|decline|correct|uncomfortable|cost|hard|unpopular|awkward|carry'], why: 'A handover that is only about technique understates the job by half. The hard parts this year were all conversations.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-145': {
+    title: 'The end of the track',
+    hint: "Sixteen weeks, four levels, twenty projects. Pick the things that actually changed how you work.",
+    brief: "The last task of the Data Analyst track. Write what you would now do differently on the first day of a review, and what you would want to learn next. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'End of the track', maxWords: 220,
+      prompt: 'What changed in how you work, and what you would want next.',
+      rubric: [
+        { key: 'first', label: 'Something specific about what you now do on day one of a review', markers: ['first|day one|before|start|read|ask|question|denominator|scope|population|check|what is being decided'], why: 'The most transferable thing in the whole track is the order of operations on the first morning. Naming yours is a test of whether it is actually a habit.' },
+        { key: 'population', label: 'Something about populations and denominators', markers: ['population|denominator|who is in|leaver|exclude|include|filter|current|per|divide'], why: 'Leavers in hr_core, a churned client in saas_ops, staff accounts in product_events, a closed store in retail_sales, the manager in analytics_ops. The same question, five datasets.' },
+        { key: 'people', label: 'Something about what changes when the analysis is about people', markers: ['people|person|named|individual|team|colleague|consequence|refus|withhold|harm|conversation'], why: 'The step from Lead to Manager was entirely this, and it is the part that does not appear in any technical syllabus.' },
+        { key: 'honest', label: 'An honest weakness rather than a list of strengths', markers: ['weak|not|struggle|slow|still|harder|less confident|work on|improve|difficult|worst'], why: 'A reflection with no weakness in it is a performance. The useful version names the thing you would still get wrong under pressure.' },
+        { key: 'next', label: 'What you would want to learn next, with a reason', markers: ['next|would like|want|learn|interested|because|towards|beyond|further'], why: 'The track ends; the work does not. What you reach for next says more about whether it landed than any summary of what you covered.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
 };

@@ -851,6 +851,220 @@ function generateRetailSales(seed) {
 }
 
 // ---------------------------------------------------------------------------
+// Dataset: analytics_ops
+//
+// The analytics function's own operation: who works here, what the business asks for,
+// where the hours go, and what the tooling costs. Built for the Manager track, where the
+// subject of the analysis stops being a market or a product and becomes the team itself.
+//
+// That changes what a wrong answer costs. A misread retail figure produces a bad range
+// decision. A misread capacity figure produces a performance conversation with a person,
+// and the quirks here are chosen accordingly — most of them are ways of accidentally
+// measuring somebody's admin habits and calling it their output.
+//
+// Deliberate quirks, authored on purpose because finding them IS the analysis:
+//
+//   1. Time logging is self-reported and wildly uneven. Some analysts log nearly every
+//      working day and some log about half. Hours per person therefore ranks people by
+//      how diligently they fill in a timesheet, and the two most "productive" people on
+//      that measure are the two best at admin.
+//
+//   2. One analyst left in January and another joined in March. Capacity computed from
+//      headcount counts both for the whole year; capacity computed from days present
+//      does not. The gap is about a fifth of a person-year.
+//
+//   3. Cancelled work still has hours against it. Requests that were withdrawn or
+//      abandoned carry real logged time, so any "hours per delivered request" that
+//      filters to delivered work quietly hides the effort that produced nothing.
+//
+//   4. Two functions ask in completely different shapes. Finance submits many small
+//      requests; Product submits few large ones. Rank the requesters by count and Finance
+//      dominates; rank by hours and Product does. Neither is the answer on its own.
+//
+//   5. Delivery is recorded when the analyst closes the ticket, and some tickets are
+//      reopened afterwards. Lead time measured to the first delivery understates the
+//      true elapsed time for exactly the requests that went wrong.
+//
+//   6. Tool licences are bought in seats and used by people. One tool has far more seats
+//      than it has assignments, and another has assignments that have not been touched
+//      in months. Seats, assignments and active users are three different numbers and
+//      the renewal decision needs all three.
+// ---------------------------------------------------------------------------
+
+const OPS_FROM = '2025-07-01';
+const OPS_TO = '2026-06-30';
+
+const OPS_ANALYSTS = [
+  { id: 1, name: 'Asha Rao', level: 'manager', started_on: '2021-03-01', left_on: null, day_rate: 16000, logging: 0.92 },
+  { id: 2, name: 'Devika Raghavan', level: 'lead', started_on: '2022-06-13', left_on: null, day_rate: 12500, logging: 0.88 },
+  { id: 3, name: 'Suresh Balan', level: 'lead', started_on: '2023-01-09', left_on: null, day_rate: 12000, logging: 0.54 },
+  { id: 4, name: 'Aditi Sharma', level: 'senior', started_on: '2023-05-02', left_on: null, day_rate: 9500, logging: 0.95 },
+  { id: 5, name: 'Nikhil Varma', level: 'senior', started_on: '2022-11-21', left_on: null, day_rate: 9800, logging: 0.61 },
+  { id: 6, name: 'Karthik Iyer', level: 'senior', started_on: '2024-02-19', left_on: null, day_rate: 9200, logging: 0.83 },
+  { id: 7, name: 'Tanvi Deshmukh', level: 'senior', started_on: '2023-09-04', left_on: null, day_rate: 9400, logging: 0.49 },
+  { id: 8, name: 'Imran Qureshi', level: 'senior', started_on: '2024-07-15', left_on: null, day_rate: 9100, logging: 0.90 },
+  { id: 9, name: 'Harini Gopal', level: 'junior', started_on: '2024-10-07', left_on: null, day_rate: 6200, logging: 0.86 },
+  { id: 10, name: 'Yash Chitale', level: 'junior', started_on: '2025-01-13', left_on: null, day_rate: 6000, logging: 0.58 },
+  { id: 11, name: 'Ananya Bose', level: 'junior', started_on: '2025-04-01', left_on: null, day_rate: 5900, logging: 0.79 },
+  // Quirk 2. One leaver and one joiner inside the window, so headcount and days present
+  // give different capacity by about a fifth of a person-year.
+  { id: 12, name: 'Farhan Sheikh', level: 'junior', started_on: '2024-08-19', left_on: '2026-01-30', day_rate: 6100, logging: 0.72 },
+  { id: 13, name: 'Lakshmi Krishnan', level: 'senior', started_on: '2026-03-02', left_on: null, day_rate: 9600, logging: 0.81 },
+  { id: 14, name: 'Nithya Menon', level: 'junior', started_on: '2025-06-16', left_on: null, day_rate: 6000, logging: 0.66 },
+];
+
+// Quirk 4. Finance asks for many small things; Product asks for few large ones. Counting
+// requests and counting hours therefore rank the requesters in almost opposite orders.
+const OPS_REQUESTERS = [
+  { name: 'Finance', weight: 34, size_lo: 2, size_hi: 9 },
+  { name: 'Retail Ops', weight: 24, size_lo: 3, size_hi: 16 },
+  { name: 'Product', weight: 11, size_lo: 22, size_hi: 70 },
+  { name: 'Marketing', weight: 15, size_lo: 4, size_hi: 20 },
+  { name: 'People', weight: 9, size_lo: 3, size_hi: 12 },
+  { name: 'Exec', weight: 7, size_lo: 10, size_hi: 38 },
+];
+
+const OPS_CATEGORIES = ['report', 'analysis', 'dashboard', 'data-fix', 'adhoc'];
+const OPS_PRIORITIES = ['urgent', 'high', 'normal', 'normal', 'low'];
+const OPS_TITLES = [
+  'Monthly trading summary', 'Cohort retention view', 'Supplier spend breakdown',
+  'Headcount reconciliation', 'Store ranking refresh', 'Margin by subcategory',
+  'Campaign attribution', 'Stock position extract', 'Churn drivers', 'Basket composition',
+  'Returns analysis', 'Payroll variance', 'Range performance', 'Promotion readout',
+  'Forecast accuracy', 'Data quality report', 'Customer segmentation', 'Price elasticity',
+];
+
+const OPS_TOOLS = [
+  { id: 1, tool: 'Warehouse compute', vendor: 'Northlake', seats: 14, annual_cost: 1450000, renews_on: '2026-09-30' },
+  { id: 2, tool: 'BI platform', vendor: 'Clearview', seats: 30, annual_cost: 2160000, renews_on: '2026-08-15' },
+  { id: 3, tool: 'Notebook hosting', vendor: 'Pinegrove', seats: 12, annual_cost: 540000, renews_on: '2026-11-01' },
+  { id: 4, tool: 'Data catalogue', vendor: 'Orrery', seats: 14, annual_cost: 780000, renews_on: '2026-07-20' },
+  { id: 5, tool: 'Scheduling', vendor: 'Tidewater', seats: 8, annual_cost: 264000, renews_on: '2027-01-12' },
+  { id: 6, tool: 'Statistical suite', vendor: 'Kestrel', seats: 10, annual_cost: 920000, renews_on: '2026-10-05' },
+];
+
+function opsDay(date) { return Date.parse(date + 'T00:00:00Z') / 86400000; }
+function opsDate(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+function opsIsWeekend(date) { const d = new Date(date + 'T00:00:00Z').getUTCDay(); return d === 0 || d === 6; }
+
+function generateAnalyticsOps(seed) {
+  const rng = makeRng(seed);
+  const from = opsDay(OPS_FROM);
+  const to = opsDay(OPS_TO);
+
+  // Who is available on a given day, so capacity is a fact about presence rather than
+  // about headcount.
+  const present = (a, date) => a.started_on <= date && (a.left_on == null || date <= a.left_on);
+
+  // --- Requests -------------------------------------------------------------
+  const requests = [];
+  let rid = 1;
+  const total = 384;
+  for (let i = 0; i < total; i++) {
+    const requester = peWeighted(rng, OPS_REQUESTERS);
+    const requestedOn = opsDate(intBetween(rng, from, to));
+    const candidates = OPS_ANALYSTS.filter((a) => present(a, requestedOn) && a.level !== 'manager');
+    const owner = candidates.length ? pick(rng, candidates) : OPS_ANALYSTS[1];
+
+    // Most work gets done. Some is still open, and some is cancelled — quirk 3, because
+    // cancelled work still consumed hours.
+    const roll = rng();
+    const status = roll < 0.70 ? 'delivered' : roll < 0.82 ? 'in_progress' : roll < 0.90 ? 'queued' : 'cancelled';
+
+    const startLag = status === 'queued' ? null : intBetween(rng, 0, 24);
+    const startedOn = startLag == null ? null : opsDate(Math.min(opsDay(requestedOn) + startLag, to));
+    const workDays = intBetween(rng, 2, 30);
+    const deliveredOn = status === 'delivered'
+      ? opsDate(Math.min(opsDay(startedOn) + workDays, to))
+      : null;
+    // Quirk 5. Some delivered work comes back. The reopen is recorded but the original
+    // delivery date is not moved, so lead time to first delivery understates the truth.
+    const reopened = status === 'delivered' && rng() < 0.13 ? intBetween(rng, 1, 2) : 0;
+    const closedOn = reopened && deliveredOn
+      ? opsDate(Math.min(opsDay(deliveredOn) + intBetween(rng, 5, 40), to))
+      : deliveredOn;
+
+    requests.push({
+      id: rid++,
+      title: `${pick(rng, OPS_TITLES)} — ${requester.name}`,
+      requested_by: requester.name,
+      category: pick(rng, OPS_CATEGORIES),
+      priority: pick(rng, OPS_PRIORITIES),
+      requested_on: requestedOn,
+      started_on: startedOn,
+      delivered_on: deliveredOn,
+      closed_on: closedOn,
+      reopened,
+      status,
+      analyst_id: status === 'queued' ? null : owner.id,
+      _size: intBetween(rng, requester.size_lo, requester.size_hi),
+    });
+  }
+
+  // --- Time logs ------------------------------------------------------------
+  // Hours are logged against a request on working days between start and close. Quirk 1:
+  // each analyst logs only a fraction of the days they actually worked, and the fraction
+  // is a property of the person, not of the work.
+  const time_logs = [];
+  let tid = 1;
+  const byId = new Map(OPS_ANALYSTS.map((a) => [a.id, a]));
+  for (const r of requests) {
+    if (r.analyst_id == null || r.started_on == null) continue;
+    const analyst = byId.get(r.analyst_id);
+    const end = r.closed_on || opsDate(Math.min(opsDay(r.started_on) + intBetween(rng, 3, 25), to));
+    let remaining = r._size;
+    for (let d = opsDay(r.started_on); d <= opsDay(end) && remaining > 0; d += 1) {
+      const date = opsDate(d);
+      if (opsIsWeekend(date)) continue;
+      if (rng() > analyst.logging) { remaining -= Math.min(remaining, 1.5); continue; }
+      const hours = Math.min(remaining, Math.round((0.5 + rng() * 5) * 2) / 2);
+      if (hours <= 0) break;
+      // A request can still be open after the person working it has left, and the walk
+      // above does not know that. Nobody fills in a timesheet after their last day, so the
+      // entry lands on the leaving date instead — which is what actually happens: people
+      // close out their outstanding time on the way out of the door. Clamping rather than
+      // dropping keeps the hours where they were spent, so every total holds.
+      const on = analyst.left_on && date > analyst.left_on ? analyst.left_on : date;
+      time_logs.push({ id: tid++, analyst_id: analyst.id, request_id: r.id, logged_on: on, hours });
+      remaining -= hours;
+    }
+  }
+
+  // --- Licence assignments ---------------------------------------------------
+  // Quirk 6. Seats are bought, assignments are made, and use is a third thing. The BI
+  // platform has thirty seats for a team of fourteen; the statistical suite is assigned
+  // to people who have not opened it in months; and the January leaver's four seats were
+  // never handed back, which is the commonest and least visible way a tooling bill grows.
+  const licence_assignments = [];
+  let lid = 1;
+  for (const tool of OPS_TOOLS) {
+    for (const a of OPS_ANALYSTS) {
+      const wants = tool.id === 2 ? 0.95
+        : tool.id === 6 ? 0.70
+        : tool.id === 5 ? 0.45
+        : 0.85;
+      if (rng() > wants) continue;
+      // Days since last use. The statistical suite is where the stale ones are.
+      const staleness = tool.id === 6 ? intBetween(rng, 5, 300) : intBetween(rng, 0, 45);
+      licence_assignments.push({
+        id: lid++,
+        licence_id: tool.id,
+        analyst_id: a.id,
+        assigned_on: a.started_on > OPS_FROM ? a.started_on : OPS_FROM,
+        // Nobody opens a tool after their last day. The seat stays assigned, because
+        // reclaiming it is a job somebody has to remember to do and nobody did.
+        last_used_on: a.left_on && opsDate(to - staleness) > a.left_on
+          ? a.left_on
+          : opsDate(to - staleness),
+      });
+    }
+  }
+
+  for (const r of requests) delete r._size;
+  return { analysts: OPS_ANALYSTS, requests, time_logs, licences: OPS_TOOLS, licence_assignments };
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 //
 // `seed` is fixed per dataset, NOT per learner. Two learners on the same task see the
@@ -1129,6 +1343,106 @@ const DATASETS = {
       CREATE INDEX idx_sales_product ON sales (product_id);
     `,
     generate: generateRetailSales,
+  },
+
+  analytics_ops: {
+    key: 'analytics_ops',
+    label: 'Analytics Operations',
+    description: 'The analytics function itself: people, incoming requests, logged hours and tool licences.',
+    seed: 20260905,
+    tables: [
+      {
+        name: 'analysts',
+        note: 'The team. left_on is NULL for people still here; started_on can fall inside the reporting window.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'name', type: 'TEXT' },
+          { name: 'level', type: 'TEXT', note: 'junior, senior, lead or manager' },
+          { name: 'started_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'left_on', type: 'TEXT', note: 'NULL if still here' },
+          { name: 'day_rate', type: 'INTEGER', note: 'Fully loaded cost per working day, INR' },
+        ],
+      },
+      {
+        name: 'requests',
+        note: 'Work asked of the team. delivered_on is when the analyst closed it; closed_on accounts for reopens.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'title', type: 'TEXT' },
+          { name: 'requested_by', type: 'TEXT', note: 'The function that asked' },
+          { name: 'category', type: 'TEXT', note: 'report, analysis, dashboard, data-fix or adhoc' },
+          { name: 'priority', type: 'TEXT', note: 'urgent, high, normal or low' },
+          { name: 'requested_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'started_on', type: 'TEXT', note: 'NULL if never picked up' },
+          { name: 'delivered_on', type: 'TEXT', note: 'First delivery. NULL if not delivered' },
+          { name: 'closed_on', type: 'TEXT', note: 'Final close, after any reopen' },
+          { name: 'reopened', type: 'INTEGER', note: 'How many times it came back' },
+          { name: 'status', type: 'TEXT', note: 'delivered, in_progress, queued or cancelled' },
+          { name: 'analyst_id', type: 'INTEGER', note: 'NULL while unassigned' },
+        ],
+      },
+      {
+        name: 'time_logs',
+        note: 'Self-reported hours. Coverage varies a great deal between people.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'analyst_id', type: 'INTEGER', note: 'References analysts.id' },
+          { name: 'request_id', type: 'INTEGER', note: 'References requests.id' },
+          { name: 'logged_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'hours', type: 'REAL' },
+        ],
+      },
+      {
+        name: 'licences',
+        note: 'Tooling contracts. seats is what is paid for, not what is used.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'tool', type: 'TEXT' },
+          { name: 'vendor', type: 'TEXT' },
+          { name: 'seats', type: 'INTEGER', note: 'Seats contracted' },
+          { name: 'annual_cost', type: 'INTEGER', note: 'INR per year' },
+          { name: 'renews_on', type: 'TEXT', note: 'ISO date' },
+        ],
+      },
+      {
+        name: 'licence_assignments',
+        note: 'Who has been given a seat, and when they last used it.',
+        columns: [
+          { name: 'id', type: 'INTEGER', note: 'Primary key' },
+          { name: 'licence_id', type: 'INTEGER', note: 'References licences.id' },
+          { name: 'analyst_id', type: 'INTEGER', note: 'References analysts.id' },
+          { name: 'assigned_on', type: 'TEXT', note: 'ISO date' },
+          { name: 'last_used_on', type: 'TEXT', note: 'ISO date' },
+        ],
+      },
+    ],
+    schema: `
+      CREATE TABLE analysts (
+        id INTEGER PRIMARY KEY, name TEXT NOT NULL, level TEXT NOT NULL,
+        started_on TEXT NOT NULL, left_on TEXT, day_rate INTEGER NOT NULL
+      );
+      CREATE TABLE requests (
+        id INTEGER PRIMARY KEY, title TEXT NOT NULL, requested_by TEXT NOT NULL,
+        category TEXT NOT NULL, priority TEXT NOT NULL, requested_on TEXT NOT NULL,
+        started_on TEXT, delivered_on TEXT, closed_on TEXT, reopened INTEGER NOT NULL,
+        status TEXT NOT NULL, analyst_id INTEGER
+      );
+      CREATE TABLE time_logs (
+        id INTEGER PRIMARY KEY, analyst_id INTEGER NOT NULL, request_id INTEGER NOT NULL,
+        logged_on TEXT NOT NULL, hours REAL NOT NULL
+      );
+      CREATE TABLE licences (
+        id INTEGER PRIMARY KEY, tool TEXT NOT NULL, vendor TEXT NOT NULL,
+        seats INTEGER NOT NULL, annual_cost INTEGER NOT NULL, renews_on TEXT NOT NULL
+      );
+      CREATE TABLE licence_assignments (
+        id INTEGER PRIMARY KEY, licence_id INTEGER NOT NULL, analyst_id INTEGER NOT NULL,
+        assigned_on TEXT NOT NULL, last_used_on TEXT NOT NULL
+      );
+      CREATE INDEX idx_logs_analyst ON time_logs (analyst_id, logged_on);
+      CREATE INDEX idx_logs_request ON time_logs (request_id);
+    `,
+    generate: generateAnalyticsOps,
   },
 };
 
