@@ -619,6 +619,42 @@ const PROJECT_CATALOG = {
       ],
       unlockAfter: 2,
     },
+    {
+      key: 'headcount-case',
+      title: 'The Headcount Case',
+      description: 'Your manager wants a case for two more analysts. Demand fell by a fifth this year and the backlog grew anyway.',
+      kind: 'review',
+      stakeholder: 'line_manager',
+      difficulty: 'Hard',
+      level: 'manager',
+      datasetKey: 'analytics_ops',
+      taskKeys: [
+        // Day 1 — a conclusion arrives before the analysis. Demand turns out to be falling.
+        'md-101', 'md-102', 'md-103', 'md-104', 'md-105', 'md-106',
+        // Day 2 — falling demand and a growing backlog together, which rules out the
+        // simplest case for hiring and points at flow instead.
+        'md-110', 'md-111', 'md-112', 'md-113', 'md-114', 'md-115',
+        // Day 3 — the wobble, and the hardest one in the track: there is more capacity
+        // inside the team than the ask would add, so the honest submission asks for
+        // nobody, and the person who has to be told that is your own manager.
+        'md-120', 'md-121', 'md-122', 'md-123', 'md-124', 'md-125',
+        // Day 4 — the submission, and an exec who has found the one number in it that
+        // points the other way.
+        'md-130', 'md-131', 'md-132', 'md-133', 'md-134', 'md-135',
+        // Day 5 — the team, the January test written down while the values are known,
+        // and the end of the track.
+        'md-140', 'md-141', 'md-142', 'md-143', 'md-144', 'md-145',
+      ],
+      skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
+      impactValue: 3152880,
+      contributors: [
+        { name: 'Asha Rao', role: 'Line Manager', does: 'Wants the case for two analysts', day: 1, throughDay: 5, needsYou: true },
+        { name: null, role: 'Data Analytics Manager', does: 'Owns the establishment submission', day: 1, throughDay: 5 },
+        { name: 'Vikram Nair', role: 'Business Stakeholder', does: 'Reads the submission and finds the counter-evidence', day: 4, needsYou: true },
+        { name: 'Diya Chandra', role: 'Finance Analyst', does: 'Takes the submission into the round', day: 5 },
+      ],
+      unlockAfter: 3,
+    },
   ],
 };
 
@@ -8427,6 +8463,498 @@ const TASKS = {
       skills: { communication: 100, businessLogic: 100 },
     },
     estHours: 0.7, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager 4 · The Headcount Case (analytics_ops) -----------------------------
+  // The last project of the Data Analyst track. Everything above it has been about
+  // finding that a number was wrong. This one is about what to do when the numbers are
+  // right and they say something nobody in the room wants to hear: demand fell by a
+  // fifth, the backlog grew anyway, and the answer to "shall we ask for two more people"
+  // is no. Asking in a budget round is free; refusing costs you something, and being the
+  // only person in the room who can tell the difference is the whole job.
+
+  'md-101': {
+    title: 'Asha has already decided the answer',
+    hint: "She is not wrong about the pressure. She has skipped the part where somebody checks.",
+    brief: "Read what you have been asked to do and work out what is actually being assumed.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Asha Rao', subject: 'Budget round — establishment',
+        body: "Submissions open Monday week. I want analytics to go in for two additional analysts.\n\nMy reasoning: the team has been under pressure all year, we lost somebody in January and took three months to replace them, there is a visible backlog, and every other function is asking. A function that does not ask is assumed not to need.\n\nYou have the data. Put the case together — I need something that will survive Vikram reading it.",
+      },
+      prompt: 'Tick everything that is true about the request as it stands.',
+      options: [
+        { key: 'conclusion', correct: true, label: 'The conclusion has been set before the analysis, and you are being asked to support it', why: 'Which happens constantly and is not dishonest. The job is to notice it, because an analysis commissioned to support a number rarely disagrees with it.' },
+        { key: 'testable', correct: true, label: 'Three of her four reasons are directly testable against the data you hold', why: 'Pressure, the replacement gap and the backlog are all measurable. Only "every other function is asking" is not, and it is the one doing most of the work.' },
+        { key: 'political', correct: true, label: '"A function that does not ask is assumed not to need" is a claim about the room, not about the team', why: 'It may well be true. It is also the reason unevidenced headcount requests get made everywhere, every year, and it is worth naming as what it is.' },
+        { key: 'survive', correct: true, label: 'Wanting something that survives Vikram reading it is an argument for checking rather than for building the case', why: 'He will ask whether demand is growing. If it is not, a case built on pressure falls over in the room and takes your credibility with it.' },
+        { key: 'refuse', correct: false, label: 'The right first move is to tell her the request is the wrong shape', why: 'Before you know whether the answer is two, one or none. Push back on a conclusion once you can say what the evidence is, not before.' },
+        { key: 'obvious', correct: false, label: 'A visible backlog plus a five-month replacement gap is sufficient evidence on its own', why: 'A backlog says work is not getting done. It says nothing about whether more people would get it done, which is the whole question.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'md-102': {
+    title: 'Is demand growing',
+    hint: "The first question any reader will ask, and it takes one group-by.",
+    brief: "Establish the demand trend before anything else. Write ONE SQL SELECT over requests returning, per month of the request date: requests raised, and how many of them were later cancelled. Earliest month first.",
+    referenceSql: "SELECT substr(requested_on, 1, 7) AS month, COUNT(*) AS raised, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS later_cancelled FROM requests GROUP BY month ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.5, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'easy',
+  },
+
+  'md-103': {
+    title: 'The two halves',
+    hint: "Six months against six months, per requesting function. One of them moves the other way.",
+    brief: "Write ONE SQL SELECT returning, per requesting function: requests raised in July–December 2025, requests raised in January–June 2026, the change as a percentage to one place, and the share of all their requests delivered to one place. Biggest increase first.",
+    referenceSql: "SELECT requested_by, SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END) AS first_half, SUM(CASE WHEN requested_on >= '2026-01-01' THEN 1 ELSE 0 END) AS second_half, ROUND((SUM(CASE WHEN requested_on >= '2026-01-01' THEN 1 ELSE 0 END) - SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END)) * 100.0 / SUM(CASE WHEN requested_on < '2026-01-01' THEN 1 ELSE 0 END), 1) AS change_pct, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct FROM requests GROUP BY requested_by ORDER BY change_pct DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.8, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-104': {
+    title: 'Demand fell by a fifth',
+    hint: "Ravi told you in the last review that his team had stopped bothering. Hold that next to this.",
+    brief: "Total demand went from 213 requests to 171. Decide what that does and does not establish.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true.',
+      options: [
+        { key: 'nogrowth', correct: true, label: 'It removes the simplest case for hiring, which is that there is more work arriving than there used to be', why: 'Every headcount case has to answer "what changed". A fifth less demand is not an answer that supports two more people.' },
+        { key: 'suppressed', correct: true, label: 'Falling demand is consistent with people giving up, which is the opposite of not needing the team', why: 'You have direct testimony that this is happening. The same number supports two contradictory stories and the data cannot separate them.' },
+        { key: 'exec', correct: true, label: 'One function grew — Exec, by two thirds — and is the worst served at 54.2% delivered', why: 'The growth is in the demand with the shortest tolerance and the fewest alternatives. A total that falls can hide a segment that matters.' },
+        { key: 'careful', correct: true, label: 'It has to be presented with the suppression caveat, or it becomes an argument for cutting the team', why: 'Handed over as "demand is down 20%" it will be used in a direction you did not intend and cannot then retrieve.' },
+        { key: 'proof', correct: false, label: 'It proves the team has spare capacity relative to last year', why: 'It says nothing about capacity. The backlog grew over the same period, which is the fact that makes the naive reading impossible.' },
+        { key: 'ignore', correct: false, label: 'Since suppression cannot be measured, the demand trend should be left out of the case', why: 'It is the first thing anybody reading a headcount case will check. Omitting it means it gets found by somebody else, in the room.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-105': {
+    title: 'What is still open, month by month',
+    hint: "Open at the end of a month means raised by then and not yet closed. Leave cancelled work out — it is not waiting for anybody.",
+    brief: "Track the backlog. Write ONE SQL SELECT returning, for each month in the window: the month, and the number of non-cancelled requests raised on or before that month and not closed by the end of it. Earliest first.",
+    referenceSql: "WITH m AS (SELECT DISTINCT substr(requested_on, 1, 7) AS mo FROM requests) SELECT mo AS month, (SELECT COUNT(*) FROM requests r WHERE r.status <> 'cancelled' AND substr(r.requested_on, 1, 7) <= m.mo AND (r.closed_on IS NULL OR substr(r.closed_on, 1, 7) > m.mo)) AS open_backlog FROM m ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'md-106': {
+    title: 'Tell Asha what you have found before you build anything',
+    hint: "She asked for a case. Tell her today that the first number does not support it, so she is not surprised on Friday.",
+    brief: "Write to Asha. Demand fell 19.7% between the two halves of the year and the backlog grew from 35 to 89 over the same period. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Headcount case — the first number goes the wrong way', maxWords: 160,
+      prompt: 'What you have found, what it does not yet mean, and what you are doing next.',
+      rubric: [
+        { key: 'both', label: 'Both figures — demand down 19.7%, backlog up from 35 to 89', markers: ['19\\.7|20%|fell|down|213|171|backlog|35|89|grew|up'], why: 'Either alone tells the wrong story. Together they are the whole finding and they are what makes the rest of the week necessary.' },
+        { key: 'notyet', label: 'That this does not yet mean no, and you are not concluding on day one', markers: ['not yet|too early|does not mean|still|before|conclude|working|rest of|week|open'], why: 'She asked for a case on Monday and is hearing doubt. Saying plainly that you have not decided stops it being read as a refusal.' },
+        { key: 'flag', label: 'Early warning that the case may not be for two people', markers: ['may not|might not|two|different|shape|prepare|not support|warn|expect'], why: 'A week of silence followed by a no on Friday is a much harder conversation than a heads-up on Monday.' },
+        { key: 'next', label: 'What you will actually test — whether more people would clear a backlog like this one', markers: ['test|check|whether|would|clear|flow|throughput|cancel|next|look at'], why: 'It reframes the week from "building a case" to "answering a question", which is the only framing under which the answer can be no.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'md-110': {
+    title: 'Work in, work out',
+    hint: "Raised in a month against closed in a month. The difference each month is what the backlog did.",
+    brief: "Write ONE SQL SELECT returning, per month: requests raised that month, requests closed that month, and the net change. Earliest first.",
+    referenceSql: "WITH months AS (SELECT DISTINCT substr(requested_on, 1, 7) AS m FROM requests), raised AS (SELECT substr(requested_on, 1, 7) AS m, COUNT(*) AS n FROM requests GROUP BY 1), closed AS (SELECT substr(closed_on, 1, 7) AS m, COUNT(*) AS n FROM requests WHERE closed_on IS NOT NULL GROUP BY 1) SELECT months.m AS month, COALESCE(raised.n, 0) AS raised, COALESCE(closed.n, 0) AS closed, COALESCE(raised.n, 0) - COALESCE(closed.n, 0) AS net FROM months LEFT JOIN raised ON raised.m = months.m LEFT JOIN closed ON closed.m = months.m ORDER BY month",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-111': {
+    title: 'Falling demand, growing backlog',
+    hint: "Both facts are certain. Only one explanation fits both.",
+    brief: "Fewer requests are arriving and more of them are outstanding. Work out what that combination rules out.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything the combination supports or rules out.',
+      options: [
+        { key: 'notdemand', correct: true, label: 'It rules out demand growth as the cause of the backlog', why: 'The backlog grew in eight months out of twelve while intake fell by a fifth. Whatever is causing it, more work arriving is not.' },
+        { key: 'throughput', correct: true, label: 'Throughput is below intake even at the reduced intake, so the constraint is on the way out rather than the way in', why: 'Twenty-two requests closed per person-year against roughly thirty arriving. That gap is the backlog, and it is a finishing problem.' },
+        { key: 'hire', correct: true, label: 'More people would raise throughput and would also raise the number of things started at once', why: 'Which is the part of a hiring case nobody writes down. Forty-three items are already open across thirteen people; two more people is two more streams of started-and-stalled work unless something else changes.' },
+        { key: 'june', correct: true, label: 'June closed 37 against 26 raised, so the backlog can be reduced at current headcount', why: 'One month is not a trend and it is an existence proof. The team cleared eleven net items with nobody new, which no version of "we do not have enough people" survives intact.' },
+        { key: 'lazy', correct: false, label: 'It shows the team is not working hard enough to clear what it has', why: 'Nothing here measures effort, and the answer to a flow problem is never to ask thirteen people to try harder. That is the reading to head off before somebody else reaches it.' },
+        { key: 'nothing', correct: false, label: 'Since demand is falling, the backlog will clear on its own', why: 'It has not in twelve months of falling demand. A backlog that grows while intake falls is not waiting for intake to fall further.' },
+      ],
+      skills: { statistics: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-112': {
+    title: 'What one more person would buy',
+    hint: "Throughput per person-year, and the day rate of the level you would actually hire at.",
+    brief: "Price the ask. Write ONE SQL SELECT over analysts below manager level returning, per level: headcount, person-years present to two places, requests closed by people at that level, requests closed per person-year to one place, and the annual cost of one more person at that level's average day rate over 261 working days. Cheapest per person first.",
+    referenceSql: "WITH present AS (SELECT a.level, COUNT(*) AS headcount, SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 AS person_years, AVG(a.day_rate) AS avg_rate FROM analysts a WHERE a.level <> 'manager' GROUP BY a.level), done AS (SELECT a.level, COUNT(*) AS closed FROM requests r JOIN analysts a ON a.id = r.analyst_id WHERE r.closed_on IS NOT NULL GROUP BY a.level) SELECT p.level, p.headcount, ROUND(p.person_years, 2) AS person_years, COALESCE(d.closed, 0) AS closed, ROUND(COALESCE(d.closed, 0) / p.person_years, 1) AS closed_per_person_year, ROUND(p.avg_rate * 261) AS cost_of_one_more FROM present p LEFT JOIN done d ON d.level = p.level ORDER BY cost_of_one_more",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.2, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-113': {
+    title: 'A junior costs ₹15.76 lakh and closes twenty a year',
+    hint: "Compare that against the two things you already know are recoverable and cost nothing.",
+    brief: "You now know what a hire costs and roughly what it delivers. Decide how that compares with what you already found.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in the comparison.',
+      options: [
+        { key: 'cancel', correct: true, label: 'Cancelled work is 15.2% of effort — about 1.8 person-years — which is more than a hire and costs nothing to recover', why: 'The proportion survives the coverage problem even though the hours do not. Fifteen per cent of 11.92 person-years is the honest form of that number.' },
+        { key: 'tooling', correct: true, label: 'The ₹13.89 lakh of tooling already handed back is most of a junior analyst, and it was handed back rather than kept', why: 'Worth naming, because the round will remember the function that gave money back. It is also the strongest possible framing for asking later.' },
+        { key: 'notlinear', correct: true, label: 'Twenty closed per person-year is an average over people already embedded, not what a new joiner does in year one', why: 'A March joiner has closed six. Costing a hire at the team average and crediting it with the team average output is the commonest error in a headcount case.' },
+        { key: 'flow', correct: true, label: 'If the constraint is finishing rather than starting, a new person raises started work before they raise finished work', why: 'Which is why the sequence matters: fix the flow, then see what is left, then ask. In the other order the hire gets blamed.' },
+        { key: 'cheap', correct: false, label: 'At ₹15.76 lakh against a ₹3.09 crore cost line, a junior is small enough not to need a case', why: 'It is five per cent of the line, it is permanent, and the argument that a cost is too small to examine is the argument that produced the thirty BI seats.' },
+        { key: 'senior', correct: false, label: 'A senior at ₹24.62 lakh is better value, since seniors close more per person-year', why: 'Seniors close 21 per person-year and leads 29, which mostly reflects what each level is given rather than how fast they work. Costing a hire on that ratio would be reading assignment as productivity.' },
+      ],
+      skills: { businessLogic: 100, statistics: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-114': {
+    title: 'How long to clear the backlog',
+    hint: "Project the backlog forward under three scenarios and find where each one lands after twelve months.",
+    brief: "Model it. Take intake at the second-half rate per month and closures at the second-half rate per month, starting from the current non-cancelled backlog. Project twelve months under three scenarios: no change; one more junior adding a twelfth of 20 closures a month; and halving the share of effort that goes to work later cancelled, which raises closures by 7.6%. Return a list of dicts with keys scenario, monthly_intake, monthly_closures and backlog_after_12m, each number to one place.",
+    tool: 'python', datasetKey: 'analytics_ops',
+    referenceCompute: "intake_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE requested_on >= '2026-01-01'\")\nclosed_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE closed_on >= '2026-01-01'\")\nbacklog_rows = query(\"SELECT COUNT(*) AS n FROM requests WHERE status IN ('queued', 'in_progress')\")\nintake = intake_rows[0]['n'] / 6.0\nbase_close = closed_rows[0]['n'] / 6.0\nbacklog = backlog_rows[0]['n']\nscenarios = [\n    ('no change', base_close),\n    ('one more junior', base_close + 20 / 12.0),\n    ('halve cancelled work', base_close * 1.076),\n]\nout = []\nfor name, close in scenarios:\n    end = backlog + 12 * (intake - close)\n    out.append({\n        'scenario': name,\n        'monthly_intake': round(intake, 1),\n        'monthly_closures': round(close, 1),\n        'backlog_after_12m': round(end, 1),\n    })\nresult = out",
+    estHours: 1.0, priority: 'high', dueInDays: 3, day: 2, difficulty: 'hard',
+  },
+
+  'md-115': {
+    title: 'Ask the team the question the data cannot answer',
+    hint: "Thirteen people know why work stalls. None of it is in any table you have.",
+    brief: "Write to the team. You are deciding whether to ask for two more people and you want to know what actually stops work finishing. Under 150 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'What actually stops things finishing?', maxWords: 150,
+      prompt: 'What you are deciding, the specific question, and why you are asking them rather than the data.',
+      rubric: [
+        { key: 'honest', label: 'That a headcount ask is genuinely open and you have not decided', markers: ['deciding|open|not decided|whether|considering|may|might|thinking'], why: 'If they think the answer is fixed they will tell you what supports it. The value of the question depends on the decision being real.' },
+        { key: 'specific', label: 'A specific question — what stalls, not "any thoughts"', markers: ['what|stops|stall|stuck|waiting|blocked|slow|finish|hold up|specific'], why: '"Any thoughts on capacity" produces "we are busy". "What stopped your oldest open item last week" produces something you can act on.' },
+        { key: 'why', label: 'Why them — the reason work stalls is not in any table', markers: ['data|table|not in|cannot|only you|you know|invisible|see|record|nowhere'], why: 'It explains why you are asking and it is true, which makes it far likelier to be answered properly.' },
+        { key: 'safe', label: 'Made safe to answer honestly, including "I have too much open"', markers: ['honest|safe|not|blame|judg|criticis|fine|no problem|freely|candid|between us'], why: 'The most useful answer is the one that sounds like an admission. Nobody gives it unless you say first that it is not one.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 3, day: 2, difficulty: 'medium',
+  },
+
+  'md-120': {
+    title: 'The capacity that already exists',
+    hint: "The proportion of effort is the part that survives poor coverage. Apply it to person-years, not to hours.",
+    brief: "Size the recoverable capacity properly. Write ONE SQL SELECT returning one row: person-years present below manager level to two places, the share of logged effort spent on work later cancelled to one place, and that share of those person-years to two places. Label them person_years, cancelled_effort_pct and person_years_on_cancelled.",
+    referenceSql: "SELECT ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0, 2) AS person_years, ROUND((SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') * 100.0 / (SELECT SUM(hours) FROM time_logs), 1) AS cancelled_effort_pct, ROUND(SUM(CAST(julianday(MIN(COALESCE(a.left_on, '2026-06-30'), '2026-06-30')) - julianday(MAX(a.started_on, '2025-07-01')) + 1 AS INTEGER)) / 365.0 * (SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') / (SELECT SUM(hours) FROM time_logs), 2) AS person_years_on_cancelled FROM analysts a WHERE a.level <> 'manager'",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.1, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-121': {
+    title: 'The case you were about to make',
+    hint: "1.81 person-years already inside the team against 1.0 you would be buying. Work out what that does to the submission.",
+    brief: "The answer has turned over. Decide what the honest submission now says.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that follows.',
+      options: [
+        { key: 'no', correct: true, label: 'The evidence does not support asking for two people this round', why: 'Demand down a fifth, a backlog that is a flow problem, and more capacity inside the team than the ask would add. Every one of those has to be answered before an ask is honest.' },
+        { key: 'inside', correct: true, label: '1.81 person-years is going on work later cancelled, which is more than the ask and already paid for', why: 'And it is the proportion rather than the hours, so it survives the coverage problem that broke every other figure built on timesheets.' },
+        { key: 'notzero', correct: true, label: 'Saying no is not the same as saying the team is comfortable — the backlog and the queue are real', why: 'A submission that reads as "we are fine" is both untrue and the one that gets the establishment cut next year. The distinction has to be explicit.' },
+        { key: 'conditions', correct: true, label: 'What should go in is what would change the answer, with the date you will come back', why: 'It converts a refusal into a deferral with a test attached, which is the only form of no that survives a budget round without being read as weakness.' },
+        { key: 'compromise', correct: false, label: 'Ask for one rather than two, as a defensible middle position', why: 'Splitting the difference on a number the evidence does not support is how an unevidenced figure enters a budget. One is not half as wrong as two, it is the same kind of wrong.' },
+        { key: 'ask', correct: false, label: 'Ask anyway — it costs nothing, and a rejected ask is better than an unasked one', why: 'It costs the thing that makes the next ask work. A function that asks every year regardless of evidence gets read the same way every year, and the year it genuinely needs people is the year nobody can tell.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-122': {
+    title: 'Where the started work is stuck',
+    hint: "Open items by owner, below manager level, with the age of the oldest. The shape of a flow problem is a long tail of old open items.",
+    brief: "Write ONE SQL SELECT over analysts below manager level returning, per person: name, level, requests currently in progress, the age in whole days of their oldest open one at 30 June 2026, and requests closed. Most open first.",
+    referenceSql: "SELECT a.name, a.level, SUM(CASE WHEN r.status = 'in_progress' THEN 1 ELSE 0 END) AS open_now, MAX(CASE WHEN r.status = 'in_progress' THEN CAST(julianday('2026-06-30') - julianday(r.started_on) AS INTEGER) END) AS oldest_open_days, SUM(CASE WHEN r.closed_on IS NOT NULL THEN 1 ELSE 0 END) AS closed FROM analysts a LEFT JOIN requests r ON r.analyst_id = a.id WHERE a.level <> 'manager' GROUP BY a.id ORDER BY open_now DESC, oldest_open_days DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'high', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-123': {
+    title: 'Telling your manager her answer was wrong',
+    hint: "She asked for a case and has probably already said in a meeting that analytics is asking for two.",
+    brief: "You are going to tell Asha that the submission should not ask for headcount. Decide how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in how you do it.',
+      options: [
+        { key: 'early', correct: true, label: 'Today, in person, before the submission is drafted rather than in the draft', why: 'She may have already committed to it verbally. Finding out from a document is how a manager gets embarrassed, and you only get to do that once.' },
+        { key: 'her', correct: true, label: 'Confirm the parts of her reasoning that held up — the replacement gap and the backlog are both real', why: 'She was right about three of her four reasons. Leading with what survived is the difference between a correction and a contradiction.' },
+        { key: 'alt', correct: true, label: 'Bring the alternative submission, not just the refusal', why: 'She needs something to put in the round. A no with nothing attached puts her in the room with nothing, which is worse than the wrong ask.' },
+        { key: 'risk', correct: true, label: 'Be explicit that not asking has a risk, and that you are taking it deliberately', why: 'Her point about functions that do not ask being assumed not to need is a real cost. Pretending it is not makes the recommendation look naive.' },
+        { key: 'defer', correct: false, label: 'Write it up and let the document make the argument, so it is on the record', why: 'The record matters less than her not being surprised. Anything that reaches her as a document first will be read as having gone around her.' },
+        { key: 'soften', correct: false, label: 'Present it as an open question so she can reach the conclusion herself', why: 'It is not an open question — you have done the work and you have an answer. Manufacturing a discovery wastes her time and hides where the recommendation came from.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-124': {
+    title: 'What would change the answer',
+    hint: "Each one has to be a number you can compute today, so that in six months the test is unambiguous.",
+    brief: "Write the conditions into the submission as measurable tests. Write ONE SQL SELECT returning four rows with columns condition and current_value: monthly intake in the second half, monthly closures in the second half, the non-cancelled backlog at 30 June 2026, and the share of logged effort on work later cancelled. All to one decimal place, in that order.",
+    referenceSql: "SELECT 'monthly_intake_h2' AS condition, ROUND(COUNT(*) / 6.0, 1) AS current_value FROM requests WHERE requested_on >= '2026-01-01' UNION ALL SELECT 'monthly_closures_h2', ROUND(COUNT(*) / 6.0, 1) FROM requests WHERE closed_on >= '2026-01-01' UNION ALL SELECT 'open_backlog', ROUND(COUNT(*), 1) FROM requests WHERE status IN ('queued', 'in_progress') UNION ALL SELECT 'cancelled_effort_pct', ROUND((SELECT SUM(t.hours) FROM time_logs t JOIN requests r ON r.id = t.request_id WHERE r.status = 'cancelled') * 100.0 / (SELECT SUM(hours) FROM time_logs), 1)",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 0.9, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-125': {
+    title: 'The conversation with Asha, written down',
+    hint: "You have had the conversation. This is the note that follows it, so that what was agreed is what gets submitted.",
+    brief: "Write to Asha after the conversation. The submission will not ask for headcount this round; it will commit to the four conditions and a January review. Under 190 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'Establishment submission — what we agreed', maxWords: 190,
+      prompt: 'What was decided, the evidence behind it, and what happens in January.',
+      rubric: [
+        { key: 'decision', label: 'The decision stated plainly in the first two lines', markers: ['not|no|will not|hold|flat|without|no ask|establishment|this round'], why: 'A note recording a decision that takes three paragraphs to state it will be read as hedging on the decision.' },
+        { key: 'evidence', label: 'The three findings — demand down 19.7%, a flow problem, 1.81 person-years on cancelled work', markers: ['19\\.7|20%|demand|flow|finish|throughput|1\\.8|cancel|15\\.2'], why: 'Three numbers, one line. It is what she repeats when somebody asks her why analytics did not ask.' },
+        { key: 'notfine', label: 'That this is not a claim the team is comfortable', markers: ['not|backlog|queue|32|pressure|real|hard|comfortable|fine|does not mean'], why: 'A submission read as "analytics is fine" is the one whose establishment gets cut next year. The distinction has to be in writing.' },
+        { key: 'january', label: 'The January review and what would trigger an ask', markers: ['january|review|six month|trigger|if|condition|intake|backlog|then|come back'], why: 'It is what makes this a deferral rather than a refusal, and it is the part that gets dropped in the retelling unless it is written down.' },
+        { key: 'risk', label: 'Acknowledgement of the risk she named — a function that does not ask', markers: ['risk|assume|not ask|read|room|aware|cost|deliberate|accept'], why: 'She raised it on Monday. A note that ignores it implies you did not take her point, whatever the analysis says.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'urgent', dueInDays: 4, day: 3, difficulty: 'hard',
+  },
+
+  'md-130': {
+    title: 'The backlog chart',
+    hint: "Twelve points in time, one measure. The reader should see the line rise while demand falls.",
+    brief: "Build the chart for the submission: the non-cancelled backlog at each month end. Pick the chart type, the fields and the sort.",
+    tool: 'chart', datasetKey: 'analytics_ops',
+    chart: {
+      sourceSql: "WITH m AS (SELECT DISTINCT substr(requested_on, 1, 7) AS mo FROM requests) SELECT mo AS month, (SELECT COUNT(*) FROM requests r WHERE r.status <> 'cancelled' AND substr(r.requested_on, 1, 7) <= m.mo AND (r.closed_on IS NULL OR substr(r.closed_on, 1, 7) > m.mo)) AS open_backlog FROM m ORDER BY month",
+      prompt: 'Non-cancelled backlog at each month end.',
+      answer: { type: 'line', x: 'month', y: 'open_backlog', sort: 'asc', baselineZero: true },
+      why: 'Twelve consecutive months is a time series, so a line, sorted by month rather than by value — re-sorting a time axis destroys the only thing it carries. A zero baseline because the claim is about the size of the backlog, not only about its direction, and a truncated axis would make a rise from 35 to 89 look like a collapse.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 5, day: 4, difficulty: 'medium',
+  },
+
+  'md-131': {
+    title: 'What goes into the submission',
+    hint: "It has to survive being read by somebody who wanted a different answer.",
+    brief: "Decide the contents of the establishment submission.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in it.',
+      options: [
+        { key: 'norequest', correct: true, label: 'No establishment increase this round, stated as the headline rather than as a conclusion at the end', why: 'A budget submission is skimmed. A recommendation that appears in the last paragraph will be missed by half the room and misread by the rest.' },
+        { key: 'why', correct: true, label: 'The three findings that produced it, in one line each', why: 'Demand down a fifth, a backlog that is a flow problem, 1.81 person-years already inside the team. Each is checkable, which is what makes the recommendation hold up.' },
+        { key: 'conditions', correct: true, label: 'The four conditions, with their current values, and a January review date', why: 'Numbers written down in June are a test. The same conditions described in words are a conversation you will have again in January from scratch.' },
+        { key: 'tooling', correct: true, label: 'The ₹13.89 lakh of tooling handed back, as evidence of what this function does with its own cost line', why: 'It is the only thing in the submission that is already banked, and it is what makes "no ask" read as discipline rather than as low ambition.' },
+        { key: 'worse', correct: false, label: 'A warning that service will deteriorate without the two analysts', why: 'You have just concluded that more people would not fix the backlog. Attaching a threat to a recommendation that contradicts it is how a submission gets picked apart.' },
+        { key: 'quiet', correct: false, label: 'Leave the backlog out, since it invites the question of why more people are not needed', why: 'It is the strongest evidence in the pack and it is the thing Vikram will find in ten minutes. The version you omit is the version that gets used against you.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.55, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-132': {
+    title: 'The submission',
+    hint: "Written for somebody comparing six cost lines who will give it ninety seconds.",
+    brief: "Write the establishment submission. No increase this round, four measured conditions, a January review, and the tooling already handed back. Under 230 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Budget round — establishment submission', subject: 'Analytics — establishment for FY27', maxWords: 230,
+      prompt: 'The recommendation, the evidence, the conditions, and what has already been returned.',
+      rubric: [
+        { key: 'headline', label: 'The recommendation first — no increase this round', markers: ['no increase|flat|hold|not seeking|no additional|thirteen|13|unchanged|no ask'], why: 'It is the only sentence guaranteed to be read. Everything else in the document exists to support it.' },
+        { key: 'three', label: 'The evidence — demand down 19.7%, a flow rather than capacity problem, 1.81 person-years on cancelled work', markers: ['19\\.7|20%|demand|flow|throughput|finish|1\\.8|cancel|15\\.2|backlog'], why: 'Three checkable numbers. A submission that argues without them reads as a preference and will be treated as one.' },
+        { key: 'conditions', label: 'The conditions with current values and the January date', markers: ['january|review|condition|if|intake|28\\.5|backlog|75|15\\.2|trigger|return'], why: 'It is what turns this from a refusal into a commitment, and the values have to be in it or the test is arguable in six months.' },
+        { key: 'returned', label: 'The ₹13.89 lakh of tooling already handed back', markers: ['13\\.8|13\\.9|1,?389|tooling|licence|license|returned|handed|saving'], why: 'The only banked number in the document, and the reason "no ask" reads as a function that manages its own costs.' },
+        { key: 'notfine', label: 'That this is not a claim the service is where it should be', markers: ['not|backlog|queue|32|below|should|pressure|comfortable|work to do|behind'], why: 'Without it, the submission is read as analytics declaring itself finished, and that is the reading that costs establishment next year.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.85, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-133': {
+    title: 'The exec reads it',
+    hint: "He has found the one thing in the pack that points the other way, and he is right that it does.",
+    brief: "Vikram has come back on the submission. Decide how to answer.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair', subject: 'Re: Analytics — establishment for FY27',
+        body: "This is the most honest submission in the round and I will say so.\n\nOne thing though. Your own numbers say exec requests grew by two thirds and that we are your worst-served function at 54%. That is my work, not getting done, growing.\n\nSo either the answer is not quite no, or you are telling me exec demand is the thing that gets squeezed. Which is it?",
+      },
+      prompt: 'Tick everything that belongs in your answer.',
+      options: [
+        { key: 'concede', correct: true, label: 'He is right that the exec segment moved the other way, and it is in your submission because you put it there', why: 'Volunteering the counter-evidence is what earned the credibility he opened with. Defending it now would spend that in one message.' },
+        { key: 'small', correct: true, label: 'Fifteen requests in six months is real and is not a headcount-sized problem — it is a routing problem', why: 'Two and a half requests a month cannot justify a permanent post. It can absolutely justify a named route and a service commitment, which is the answer that fits the size.' },
+        { key: 'route', correct: true, label: 'Offer the escalation route agreed last month as the mechanism, with a delivery commitment attached', why: 'It already exists, it costs nothing, and it turns the objection into a thing you have done rather than a thing you have declined.' },
+        { key: 'measure', correct: true, label: 'Add exec delivery rate to the January conditions, so the claim is testable rather than reassuring', why: 'He has raised a specific risk. Putting it in the test set is the difference between an answer and a promise.' },
+        { key: 'give', correct: false, label: 'Change the submission to ask for one analyst, since exec demand is growing', why: 'Fifteen requests in six months. Converting a senior stakeholder\'s objection into a permanent post is exactly how establishment grows without evidence, and he is not asking you to.' },
+        { key: 'squeeze', correct: false, label: 'Tell him plainly that yes, exec work is what gets squeezed at current capacity', why: 'It is neither true nor necessary. Exec is worst served because twenty-four requests a year never build a working relationship with anybody, which is fixable without a hire.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-134': {
+    title: 'Answer Vikram',
+    hint: "Concede the point, size it honestly, and offer the mechanism that already exists.",
+    brief: "Reply to Vikram. Exec demand grew from 9 to 15 requests and is the worst served at 54.2%, which is a routing problem rather than a headcount one. Under 160 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Vikram Nair', subject: 'Re: Analytics — establishment for FY27', maxWords: 160,
+      prompt: 'Concede what is true, size it, and say what you will do about it.',
+      rubric: [
+        { key: 'concede', label: 'That he is right about the exec segment', markers: ['right|correct|yes|agree|you are|fair|true|good point'], why: 'He found the counter-evidence in a document you wrote. Anything other than agreement reads as defending a position rather than answering a question.' },
+        { key: 'size', label: 'The size — fifteen requests in six months, two and a half a month', markers: ['15|fifteen|six month|2\\.5|two and a half|month|small|scale|size'], why: 'The scale is the whole argument. A number that small cannot carry a permanent post and can carry a named route.' },
+        { key: 'offer', label: 'The escalation route and a delivery commitment', markers: ['escalat|route|named|commit|first|priorit|guarantee|direct|me|myself'], why: 'An objection answered with a mechanism is settled. An objection answered with an explanation comes back.' },
+        { key: 'test', label: 'Exec delivery rate added to the January review', markers: ['january|review|measure|track|condition|54|report back|test|watch'], why: 'It makes the commitment checkable, and he is the person who will check it.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.6, priority: 'urgent', dueInDays: 5, day: 4, difficulty: 'hard',
+    // Deliberately flagged for rework: the reply is accepted and then wanted with the
+    // commitment made specific — a date rather than a promise — which is a harder note to
+    // write and the one that actually binds.
+    rework: true,
+  },
+
+  'md-135': {
+    title: 'What the team is told',
+    hint: "Thirteen people have spent the week hearing that a headcount case was being built.",
+    brief: "The submission asks for nobody. Decide what the team hears and how.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that belongs in what you tell them.',
+      options: [
+        { key: 'direct', correct: true, label: 'That there is no headcount ask, from you, before they hear it anywhere else', why: 'They will hear it. The version they hear from you is the only one that comes with the reasoning attached.' },
+        { key: 'reason', correct: true, label: 'The actual reason — more people would not have cleared this backlog', why: 'Without it the only available explanation is that you did not fight for them, and that is what will be believed.' },
+        { key: 'what', correct: true, label: 'What is changing instead — the intake changes, the WIP cap, and closing the stale queue', why: 'A no with nothing attached lands as a loss. The same no with three changes attached lands as a plan they are part of.' },
+        { key: 'thanks', correct: true, label: 'What their answers to Tuesday\'s question changed about the conclusion', why: 'You asked thirteen people a real question. Showing that it altered the outcome is what makes the next question worth answering.' },
+        { key: 'blame', correct: false, label: 'That the data showed the team starts more than it finishes', why: 'True, and said to the people rather than about the system it reads as an accusation. The flow problem is a management finding, not a personal one.' },
+        { key: 'hope', correct: false, label: 'That you will ask again in January and expect to get it', why: 'You do not know that, and a commitment you cannot keep is worse than the no. January is a review, not a promise.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.5, priority: 'high', dueInDays: 5, day: 4, difficulty: 'hard',
+  },
+
+  'md-140': {
+    title: 'Write to the team',
+    hint: "Short, direct, and the reasoning before the decision is repeated back to them.",
+    brief: "Write to the team. No headcount ask this round, the reason, what is changing instead, and what their answers changed. Under 180 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Analytics team', subject: 'No headcount ask this round — and what we are doing instead', maxWords: 180,
+      prompt: 'The decision, the reason, the changes, and the credit.',
+      rubric: [
+        { key: 'decision', label: 'The decision up front', markers: ['no|not asking|no ask|without|flat|thirteen|13|this round|decided'], why: 'Burying it is worse than saying it. They will find the sentence first whatever order you write it in.' },
+        { key: 'reason', label: 'That more people would not have cleared this backlog, with the reason', markers: ['flow|finish|start|throughput|would not|not fix|clear|open|43|forty.three|more people'], why: 'The alternative explanation available to them is that you did not fight for them. Only the mechanism displaces it.' },
+        { key: 'changes', label: 'What is changing instead', markers: ['intake|cap|WIP|limit|queue|clos|spec|instead|change|doing'], why: 'The decision is a no; the note should not be. Three concrete changes make it a plan.' },
+        { key: 'credit', label: 'That what they said on Tuesday changed the conclusion', markers: ['you|your|told me|said|answer|tuesday|asked|changed|thank|helpful'], why: 'It was a real question and it did change things. Saying so is what makes the next one worth answering honestly.' },
+        { key: 'nofalse', label: 'No promise about January that you cannot keep', markers: ['review|january|not a promise|cannot|if|depends|conditions|no guarantee|see'], why: 'A hinted guarantee is remembered as a guarantee, and it is the sentence that gets quoted back in six months.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.7, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-141': {
+    title: 'The year in one table',
+    hint: "Everything the January review will need, from one query, so no two figures can drift apart between now and then.",
+    brief: "Assemble the baseline. Write ONE SQL SELECT returning, per requesting function: requests raised, delivered, cancelled, still queued, the delivered share to one place, and the average days from raised to final close for their delivered work to one place. Most requests first.",
+    referenceSql: "SELECT requested_by, COUNT(*) AS raised, SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued, ROUND(SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS delivered_pct, ROUND(AVG(CASE WHEN status = 'delivered' THEN julianday(closed_on) - julianday(requested_on) END), 1) AS avg_days_to_close FROM requests GROUP BY requested_by ORDER BY raised DESC",
+    datasetKey: 'analytics_ops', tool: 'sql', estHours: 1.0, priority: 'urgent', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-142': {
+    title: 'Saying no in a room where everyone says yes',
+    hint: "Five other functions asked. Work out what it costs to be the one that did not, and what it buys.",
+    brief: "The round is over. Decide what you actually learned about the decision you made.",
+    tool: 'choice', datasetKey: 'analytics_ops',
+    choice: {
+      prompt: 'Tick everything that is true of not asking.',
+      options: [
+        { key: 'credibility', correct: true, label: 'It is only worth anything if the function would have asked when the evidence supported it', why: 'A no with no plausible yes behind it is read as timidity. The January conditions exist partly to demonstrate that there is a threshold and you know where it is.' },
+        { key: 'once', correct: true, label: 'The credit it buys is spendable roughly once, and should be spent on something that matters', why: 'Being the honest function is a position, not a personality. It is worth something the first time you use it and less the fourth.' },
+        { key: 'risk', correct: true, label: 'Asha\'s warning is a genuine risk and taking it is a judgement, not a virtue', why: 'Functions that do not ask do get assumed not to need. Saying no here is a bet that a demonstrated threshold is worth more, and it could be wrong.' },
+        { key: 'baseline', correct: true, label: 'Next year\'s comparison is now against thirteen people, which makes an increase harder to argue later', why: 'Establishment is sticky in both directions. That cost is real and belongs in the decision rather than in the surprise next June.' },
+        { key: 'always', correct: false, label: 'Honesty is the right answer in a budget round regardless of what it costs the team', why: 'The team carries the consequence of an under-resourced year. This was the right call because the evidence said so, not because refusing is inherently virtuous.' },
+        { key: 'safe', correct: false, label: 'It is the low-risk option, since nobody is ever criticised for spending less', why: 'It is the option that leaves you accountable for a backlog with no additional resource, which is the opposite of low-risk.' },
+      ],
+      skills: { businessLogic: 100, communication: 100 },
+    },
+    estHours: 0.55, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-143': {
+    title: 'The January test, written now',
+    hint: "Each condition needs a number, a direction, and what you will do if it is met.",
+    brief: "Write the January review terms. Four conditions with their June values and what each would trigger. Under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'January review — the terms, agreed now', maxWords: 200,
+      prompt: 'The conditions, the current values, and what each one triggers.',
+      rubric: [
+        { key: 'values', label: 'Current values recorded — intake, closures, backlog, cancelled share', markers: ['28\\.5|intake|closures|backlog|75|15\\.2|cancel|per month|current|june'], why: 'A condition without today\'s value is not a test, it is a topic. The numbers have to be in this note or January is another argument.' },
+        { key: 'direction', label: 'Which direction each has to move for the answer to change', markers: ['rise|fall|above|below|increase|reduce|higher|lower|if|exceed|remain'], why: 'Otherwise every outcome will look to somebody like the condition being met.' },
+        { key: 'trigger', label: 'What an ask would actually be if the conditions are met', markers: ['one|two|junior|senior|ask|request|post|analyst|then|would'], why: 'Naming the ask in advance is what stops January becoming a negotiation about whether there is an ask at all.' },
+        { key: 'both', label: 'That the conditions can also confirm no ask is needed', markers: ['also|equally|either|confirm|no|might|may not|both|if not|stays'], why: 'A test with only one outcome written down is a plan to ask. Saying it can go either way is what makes it a test.' },
+        { key: 'owner', label: 'Who runs it and when', markers: ['I will|me|my|january|date|run|prepare|bring|own|report'], why: 'A review with no owner and no date is the thing everybody agrees to and nobody holds in June.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.75, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-144': {
+    title: 'The year, from four reviews',
+    hint: "Four reviews, four measures, and the same failure in each. Say what the pattern is rather than listing them.",
+    brief: "Asha asks what you would tell somebody taking this job tomorrow. Answer in under 200 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'What I would tell whoever does this next', maxWords: 200,
+      prompt: 'The pattern across the four reviews, and what it implies about the job.',
+      rubric: [
+        { key: 'pattern', label: 'The common shape — measures built from what was easy to count, drifting out of meaning while still being used', markers: ['easy|count|available|convenient|drift|stopped meaning|still used|denominator|built|reason'], why: 'Four separate findings are anecdotes. The shape they share is the thing that transfers to the next person.' },
+        { key: 'denominator', label: 'The practical rule that came out of it — go to the denominator first', markers: ['denominator|below the line|divide|per|rate|first|check|what is it divided'], why: 'Timesheet coverage, cost per seat, first delivery. One habit would have caught all three inside a day.' },
+        { key: 'nobody', label: 'That nobody was at fault in any of the four', markers: ['nobody|no one|not|fault|blame|sensible|reasonable|at the time|good reason|built for'], why: 'Each measure was built for a reason and worked when it was built. A successor who goes looking for culprits will find none and will be resented for looking.' },
+        { key: 'job', label: 'What that makes the job — asking whether a number should exist, which nobody below you can do', markers: ['job|manager|only|nobody else|asked for|should exist|question|authority|position|mine'], why: 'An analyst checks the number they were asked for. Deciding which numbers are allowed to exist is the part of this role that is not a promotion in title only.' },
+        { key: 'cost', label: 'Something about what it cost — the refusals, the corrections, the no in a budget round', markers: ['refus|no|decline|correct|uncomfortable|cost|hard|unpopular|awkward|carry'], why: 'A handover that is only about technique understates the job by half. The hard parts this year were all conversations.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.8, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
+  },
+
+  'md-145': {
+    title: 'The end of the track',
+    hint: "Sixteen weeks, four levels, twenty projects. Pick the things that actually changed how you work.",
+    brief: "The last task of the Data Analyst track. Write what you would now do differently on the first day of a review, and what you would want to learn next. Under 220 words.",
+    tool: 'writeup', datasetKey: 'analytics_ops',
+    writeup: {
+      to: 'Asha Rao', subject: 'End of the track', maxWords: 220,
+      prompt: 'What changed in how you work, and what you would want next.',
+      rubric: [
+        { key: 'first', label: 'Something specific about what you now do on day one of a review', markers: ['first|day one|before|start|read|ask|question|denominator|scope|population|check|what is being decided'], why: 'The most transferable thing in the whole track is the order of operations on the first morning. Naming yours is a test of whether it is actually a habit.' },
+        { key: 'population', label: 'Something about populations and denominators', markers: ['population|denominator|who is in|leaver|exclude|include|filter|current|per|divide'], why: 'Leavers in hr_core, a churned client in saas_ops, staff accounts in product_events, a closed store in retail_sales, the manager in analytics_ops. The same question, five datasets.' },
+        { key: 'people', label: 'Something about what changes when the analysis is about people', markers: ['people|person|named|individual|team|colleague|consequence|refus|withhold|harm|conversation'], why: 'The step from Lead to Manager was entirely this, and it is the part that does not appear in any technical syllabus.' },
+        { key: 'honest', label: 'An honest weakness rather than a list of strengths', markers: ['weak|not|struggle|slow|still|harder|less confident|work on|improve|difficult|worst'], why: 'A reflection with no weakness in it is a performance. The useful version names the thing you would still get wrong under pressure.' },
+        { key: 'next', label: 'What you would want to learn next, with a reason', markers: ['next|would like|want|learn|interested|because|towards|beyond|further'], why: 'The track ends; the work does not. What you reach for next says more about whether it landed than any summary of what you covered.' },
+      ],
+      skills: { communication: 100, businessLogic: 100 },
+    },
+    estHours: 0.9, priority: 'high', dueInDays: 5, day: 5, difficulty: 'hard',
   },
 
 };

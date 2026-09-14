@@ -3263,6 +3263,247 @@ One thing to sit with over the weekend: you have now told three different people
       },
     },
   ],
+  'headcount-case': [
+    {
+      key: 'mda-01', day: 1, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 13,
+      subject: 'How establishment actually gets decided',
+      title: 'Diya: what a budget round does with a headcount ask',
+      body: `Your first establishment submission, so here is what happens to it after you press send.
+
+Six functions submit. Every one of them asks for something, because asking is free and the person who does not ask is compared against the people who did. The round has less money than the sum of the asks, always, by design.
+
+So the decision is not whether your case is good. It is how your case ranks against five others, all of which are also good, and the ranking is done by people who cannot check any of them in the time available.
+
+Two things follow, and they are not what people expect.
+
+A case that is checkable beats a case that is strong. If a reader can verify one of your numbers in two minutes, they extend credit to the rest. If they cannot verify any of them, the whole thing is a claim.
+
+And a function that has ever said no gets read differently from one that has never said no. Not fairly, not consistently, but it is real, and it is worth more than one year's headcount.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What most helps a headcount submission in a competitive round?',
+        options: [
+          { key: 'check', correct: true, label: 'Numbers a reader can verify in two minutes' },
+          { key: 'size', correct: false, label: 'A modest ask, since large ones are cut first' },
+          { key: 'urgency', correct: false, label: 'A clear statement of what will fail without it' },
+          { key: 'detail', correct: false, label: 'Thorough working, so the analysis can be inspected' },
+        ],
+        why: 'Nobody has time to inspect thorough working. One checkable figure buys credit for everything else in the document, which is the only mechanism available in the time the reader has.',
+      },
+    },
+    {
+      key: 'mda-02', day: 1, type: 'learning', via: 'email', from: 'line_manager', minutes: 12,
+      subject: 'I have told you the answer',
+      title: 'Asha: what to do when your manager pre-decides',
+      body: `I sent you a conclusion this morning and asked you to build the case for it. That is a normal thing for a manager to do and it is worth us both being honest about what it does.
+
+It means the analysis is now being marked against a target. Everything that supports two analysts will feel like a finding, and everything that does not will feel like a problem to be worked around. That happens without anybody deciding to be dishonest — it is just what having an answer in advance does to a week of work.
+
+What I want from you is the version where that has not happened. If the number is two, tell me two. If it is none, tell me none, and tell me on Wednesday rather than on Friday.
+
+The thing I would find hard to forgive is a case for two that falls over when Vikram reads it, because then I have spent my own credibility on your analysis and neither of us gets it back.
+
+You are allowed to disagree with me. I would rather find out here than in the round.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What does a pre-decided conclusion do to an analysis?',
+        markers: ['support|confirm|bias|mark|target|toward|findings|problem|work around|without|honest|unconscious'],
+        why: 'Evidence that supports it registers as a finding and evidence that does not registers as an obstacle, without anybody choosing to be dishonest.',
+      },
+    },
+    {
+      key: 'mda-03', day: 2, type: 'learning', via: 'email', from: 'data_engineer', minutes: 13,
+      subject: 'Little\'s law, without the maths',
+      title: 'Rahul: why adding people to a queue often does not shorten it',
+      body: `You have falling demand and a growing backlog, so here is the thing that explains it.
+
+The length of a queue is set by two numbers: how fast work arrives, and how fast it leaves. Not how many people there are. Headcount affects the second number, but only if the people are the constraint on it — and very often they are not.
+
+What is usually the constraint is how much is open at once. Thirteen people with forty-three things in progress are each switching between three or four, which means each item spends most of its life waiting for its owner to come back to it rather than being worked on. Add two people and you get fifteen people with fifty-five things in progress, and the average item waits about as long as it did before.
+
+That is why a backlog can grow while demand falls. Nothing about arrival rate explains it. Everything about work-in-progress does.
+
+The test is simple and you can do it today: is the oldest open item old because it is hard, or old because nobody has touched it in two months? If it is the second, the constraint is not people.`,
+      check: {
+        kind: 'choice',
+        prompt: 'A backlog grows while demand falls. What does that most strongly indicate?',
+        options: [
+          { key: 'wip', correct: true, label: 'Too much is open at once, so items spend most of their life waiting rather than being worked on' },
+          { key: 'people', correct: false, label: 'The team is below the headcount the workload requires' },
+          { key: 'hard', correct: false, label: 'The work arriving is harder than the work that used to arrive' },
+          { key: 'data', correct: false, label: 'Requests are being left open after the work is finished' },
+        ],
+        why: 'Arrival rate is falling, so nothing about arrivals explains it. Adding people to a system already switching between three or four items each mostly adds more items in progress.',
+      },
+    },
+    {
+      key: 'mda-04', day: 2, type: 'learning', via: 'chat', from: 'people_partner', minutes: 10,
+      subject: 'What a post actually costs',
+      title: 'Neha: the number on the requisition is not the number',
+      body: `If you do put in for a post, cost it properly, because the day rate is about two thirds of it.
+
+A junior analyst at ₹6,000 a day over 261 working days is ₹15.76 lakh, and that is the figure the day rate gives you. On top of it: recruitment, which for an analyst runs eight to twelve weeks of somebody's time plus agency fees if we use one; the three months before they are productive, during which they also consume about a day a week of a senior person; and the fact that a post, once created, is very hard to remove.
+
+That last one matters most and gets mentioned least. Establishment is sticky. A post granted in a good year stays through the bad ones, which is exactly why rounds are cautious about granting them and why a well-evidenced ask is worth more than a large one.
+
+None of that means do not ask. It means that a post is a multi-year commitment being made in a one-year conversation, and the case has to be the kind that is still true in eighteen months.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why does the stickiness of establishment matter to how a case is written?',
+        options: [
+          { key: 'multi', correct: true, label: 'A post is a multi-year commitment made in a one-year conversation, so the case has to still be true in eighteen months' },
+          { key: 'cost', correct: false, label: 'The true cost is higher than the day rate suggests' },
+          { key: 'slow', correct: false, label: 'Recruitment takes long enough that the need may pass before the person arrives' },
+          { key: 'ramp', correct: false, label: 'A new joiner consumes senior time for the first three months' },
+        ],
+        why: 'The other three are real costs and they are one-off. Stickiness is the one that changes what the case has to argue, because a temporary spike cannot justify a permanent post.',
+      },
+    },
+    {
+      key: 'mda-05', day: 3, type: 'learning', via: 'email', from: 'line_manager', minutes: 14,
+      subject: 'Telling me I am wrong',
+      title: 'Asha: how to do this so it works',
+      body: `You are about to tell me the submission should ask for nobody. I asked for a case for two on Monday and I have said it out loud in at least one meeting since.
+
+So here is how to do it in a way that lands, from the person receiving it.
+
+In person and today. Not in the draft, not on Friday. If the first I see of it is a document, I will read it as having been decided without me, and I will spend the conversation on that rather than on whether you are right.
+
+Bring what survived. Three of my four reasons hold up — the replacement gap was real, the backlog is real, the pressure is real. Start there. It is true and it tells me you have actually read what I sent rather than looked for the flaw in it.
+
+Bring the alternative. I have to put something in the round. "No" leaves me with nothing; "no, and here is the submission" leaves me with a position.
+
+And say out loud that not asking has a cost. I raised it on Monday and if you have quietly decided it does not matter, I will assume you have not thought about my job.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Why in person and today rather than in Friday\'s draft?',
+        options: [
+          { key: 'surprise', correct: true, label: 'A document is read as a decision taken without her, and the conversation goes to that instead of the evidence' },
+          { key: 'time', correct: false, label: 'She needs time to prepare the other functions for the change' },
+          { key: 'record', correct: false, label: 'A verbal conversation leaves less of a record if it goes badly' },
+          { key: 'soften', correct: false, label: 'Difficult news lands better in person than in writing' },
+        ],
+        why: 'She has committed to two in a meeting. The cost of finding out from a document is not the discomfort, it is that the argument stops being about whether the analysis is right.',
+      },
+    },
+    {
+      key: 'mda-06', day: 3, type: 'learning', via: 'email', from: 'stakeholder', minutes: 12,
+      subject: 'The shape of a good no',
+      title: 'Vikram: deferral beats refusal',
+      body: `You may end up not asking for headcount. If so, one piece of advice about the form of it, because there are two kinds of no and only one of them survives a budget round.
+
+A refusal says we do not need it. It is read as a claim about the present, it invites somebody to test it by cutting you, and if you come back in twelve months asking for two the obvious question is what changed, to which "we were wrong" is the only honest answer and a bad one.
+
+A deferral says: not on this evidence, here are the four numbers that would change it, here is what they are today, and I will bring this back in January. It is read as a threshold rather than a verdict. It also does something quietly useful — it tells the room that this function has a bar and knows where it is, which is more than most submissions manage.
+
+The difference is entirely in whether the conditions are written down with today's values against them. Without the numbers it is a refusal with an optimistic sentence at the end, and everybody has seen enough of those to discount it.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What turns a refusal into a deferral?',
+        markers: ['condition|number|value|today|written|measur|threshold|test|date|specific|january|record'],
+        why: 'Conditions written down with their current values and a date. Without the numbers it is a refusal with a hopeful sentence attached, and readers discount those.',
+      },
+    },
+    {
+      key: 'mda-07', day: 4, type: 'learning', via: 'email', from: 'finance_analyst', minutes: 11,
+      subject: 'Writing for ninety seconds',
+      title: 'Diya: what survives a budget pack',
+      body: `Your submission goes into a pack with five others. Here is the reading behaviour it has to survive.
+
+The first pass is the recommendation line and nothing else. If it is not in the first two lines, half the room does not know what you asked for.
+
+The second pass, for the two or three submissions that got attention, is a hunt for the weakest number. Not the strongest — nobody checks the strongest. Somebody looks for the figure that seems too convenient and tests that one.
+
+Which gives you the most counter-intuitive rule in this whole exercise: put your weakest number in yourself, with its weakness named. A caveat you volunteered is a sign of rigour. The identical caveat found by a reader is a sign you were hiding it, and it contaminates everything else on the page.
+
+In your case the vulnerable figure is demand being down twenty per cent, because it could be people giving up rather than people needing less. Write that sentence yourself. It costs you nothing — you are not asking for headcount anyway — and it is the single thing most likely to make the rest of the document believed.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What should you do with the weakest figure in a submission?',
+        options: [
+          { key: 'own', correct: true, label: 'Put it in yourself with its weakness named' },
+          { key: 'omit', correct: false, label: 'Leave it out, since it is not load-bearing for the recommendation' },
+          { key: 'appendix', correct: false, label: 'Move it to an appendix where it can be examined if anybody wants to' },
+          { key: 'strengthen', correct: false, label: 'Find additional evidence for it before submitting' },
+        ],
+        why: 'The second pass is a hunt for the weakest number. Volunteered, it reads as rigour; found by the reader, it contaminates everything else on the page.',
+      },
+    },
+    {
+      key: 'mda-08', day: 4, type: 'learning', via: 'chat', from: 'line_manager', minutes: 9,
+      subject: 'Before you send the team note',
+      title: 'Asha: what thirteen people will hear',
+      body: `You are about to tell the team there is no headcount ask. Think about what they will actually hear, which is not what you will write.
+
+They know you spent the week on it. They know the answer was going to be two. Whatever your note says, the first interpretation available to them is that you tried and lost, and the second is that you did not try.
+
+Neither is true and neither can be dislodged by saying it is not true. The only thing that displaces them is the mechanism — that more people would not have cleared this particular backlog, because the constraint is finishing rather than starting.
+
+So lead with the mechanism, not with the decision and not with reassurance. "Two more people would have given us fifty-five things open instead of forty-three" is a sentence somebody can check against their own week, and it is the only kind that survives the version of the story they will hear in the kitchen.
+
+And be careful with January. Anything that sounds like a promise will be remembered as one.`,
+      check: {
+        kind: 'choice',
+        prompt: 'What displaces "she tried and lost" as the team\'s explanation?',
+        options: [
+          { key: 'mech', correct: true, label: 'The mechanism — that more people would not have cleared this backlog, stated so they can check it against their own week' },
+          { key: 'deny', correct: false, label: 'Saying directly that this was your recommendation rather than a defeat' },
+          { key: 'jan', correct: false, label: 'The commitment to review it again in January' },
+          { key: 'data', correct: false, label: 'Sharing the full analysis so they can see the evidence' },
+        ],
+        why: 'A denial cannot displace an interpretation and the full analysis will not be read. A single checkable sentence about why more people would not have helped is the only thing that competes.',
+      },
+    },
+    {
+      key: 'mda-09', day: 5, type: 'learning', via: 'email', from: 'people_partner', minutes: 12,
+      subject: 'Writing a test you will be held to',
+      title: 'Neha: conditions that survive six months',
+      body: `You are writing conditions for a January review. Most of these documents are useless by the time they are needed, and the failure modes are predictable.
+
+Vague direction. "If demand increases materially" — everybody has a different idea of material, and the argument in January is about that word rather than about the number.
+
+No baseline. "If the backlog grows" — grows from what? Somebody will produce a figure computed a slightly different way and it will take an afternoon to work out whether it is comparable.
+
+One-sided. Four conditions that all point towards asking, none that point towards confirming the answer was right. Written that way, the review is a plan to ask with a delay attached, and it will be read as one.
+
+No owner. A review nobody is named for happens in whichever month somebody remembers.
+
+Fix all four and it takes one extra paragraph: the number today, the direction, the threshold, what it triggers, who brings it, and when. Six things. Anything less and you will be having this entire conversation again from the beginning.`,
+      check: {
+        kind: 'choice',
+        prompt: 'Four conditions all point towards asking for headcount. What is wrong with that?',
+        options: [
+          { key: 'onesided', correct: true, label: 'It is a plan to ask with a delay attached, and will be read that way' },
+          { key: 'many', correct: false, label: 'Four conditions is too many to track meaningfully' },
+          { key: 'vague', correct: false, label: 'Conditions about future states cannot be made precise enough' },
+          { key: 'weak', correct: false, label: 'It makes the current recommendation look provisional' },
+        ],
+        why: 'A test with only one possible outcome written down is not a test. At least one condition has to be able to confirm that no ask is needed, or the review is a formality.',
+      },
+    },
+    {
+      key: 'mda-10', day: 5, type: 'reflection', via: 'chat', from: 'line_manager', minutes: 8,
+      subject: 'End of the track',
+      title: 'Asha: sixteen weeks',
+      body: `Last one. Not a debrief — a thing worth noticing.
+
+You arrived able to write a query. The first project was a department average and the thing you got wrong was leaving the leavers in. That was sixteen weeks ago.
+
+What changed since is not technique. The SQL in this week's submission is easier than the SQL in your third week. What changed is what you do before writing any of it: who is in the population, what the denominator is, what the number will be used to argue, and whether it should exist at all.
+
+And this week you told your own manager that the thing she asked for was the wrong thing, brought her an alternative, and put a number you could not defend out of a budget round. I would not have predicted that in week one and I do not say it lightly.
+
+You are at the top of this track now. There is nothing above Manager on the analyst ladder, which means the next thing you learn will not come from a project brief.
+
+Have a think about what you want it to be.`,
+      check: {
+        kind: 'answer',
+        prompt: 'What changed most between week one and now?',
+        markers: ['before|first|population|denominator|used|argue|should exist|question|not technique|judgement|what|refus|decide|order'],
+        why: 'Not the technique — the SQL got easier, not harder. What changed is the set of questions asked before any of it is written, and the willingness to act on the answers.',
+      },
+    },
+  ],
 };
 
 // ---- Situations ---------------------------------------------------------------------
@@ -4926,6 +5167,113 @@ Cleaner than asking people to remember. Want me to build it?`,
 Nothing needed unless you want to change the description, which currently reads "Data & Analytics".`,
       expect: ['archive it'],
       note: 'Automatic, and the description is already right.',
+    },
+  ],
+  'headcount-case': [
+    {
+      key: 'mds-01', day: 1, type: 'pressure', via: 'chat', from: 'engineering_manager',
+      subject: 'What are you putting in for?',
+      body: `Comparing notes before submissions. Engineering is going in for four.
+
+What is analytics asking for? Useful to know so we are not both fighting over the same pot.`,
+      needsReply: true,
+      expect: ['say you do not know yet'],
+      markers: ['don\'t know|do not know|not yet|working|deciding|depends|evidence|no number|tell you|once|open'],
+      ifIgnored: 'He tells the round that analytics is going in for two, having heard it from Asha, and the number is in circulation before you have tested it.',
+      note: 'A number given now becomes the number, whatever Wednesday says. "I do not know yet" is a complete and accurate answer on Monday.',
+    },
+    {
+      key: 'mds-02', day: 1, type: 'noise', via: 'email', from: 'broadcast',
+      subject: 'Budget submission templates',
+      body: `FY27 submission templates are now available on the finance portal.
+
+Cost centre owners have been notified directly. Templates must be submitted through the portal rather than by email.`,
+      expect: ['archive it'],
+      note: 'Templates you will get through Diya anyway, and the instruction is about the mechanism rather than the content.',
+    },
+    {
+      key: 'mds-03', day: 2, type: 'judgement', via: 'chat', from: 'data_engineer',
+      subject: 'You asked what stops things finishing',
+      body: `Honest answer: I have six things open and three of them are waiting on somebody else. I pick them up, find the blocker is still there, and put them down again.
+
+Not sure that is a headcount problem. Might be the opposite.`,
+      needsReply: true,
+      expect: ['thank him', 'and say it changes the analysis'],
+      markers: ['thank|useful|exactly|helps|blocker|waiting|wip|open|flow|change|analysis|not headcount|right'],
+      ifIgnored: 'The most useful thing anybody says all week gets no acknowledgement, and the next time you ask the team a question you get "we are busy".',
+      note: 'The qualitative evidence for the whole conclusion, volunteered by somebody who thought it might be unwelcome. Say so.',
+    },
+    {
+      key: 'mds-04', day: 2, type: 'noise', via: 'email', from: 'it_ops',
+      subject: 'Laptop refresh cycle',
+      body: `Devices older than four years will be refreshed over the next quarter. Affected users will be contacted directly with a booking link.
+
+No action required from managers.`,
+      expect: ['archive it'],
+      note: 'Users contacted directly, no manager action. Nothing to do.',
+    },
+    {
+      key: 'mds-05', day: 3, type: 'pressure', via: 'email', from: 'line_manager',
+      subject: 'Where are we on the case?',
+      body: `I mentioned to Vikram yesterday that analytics is coming in for two.
+
+Do you have enough to draft? I would like to see something by tomorrow morning.`,
+      needsReply: true,
+      expect: ['ask for a conversation today', 'and say the answer has changed'],
+      markers: ['today|now|talk|call|15 min|before|changed|different|not two|conversation|speak|come to you'],
+      ifIgnored: 'The draft arrives on Thursday saying no, after she has repeated the figure to the exec team, and the conversation is about why she was not told.',
+      note: 'She has now said it out loud to Vikram. The window for telling her without embarrassment is today, and it closes.',
+    },
+    {
+      key: 'mds-06', day: 3, type: 'noise', via: 'chat', from: 'comms',
+      subject: 'Function headcount on the intranet',
+      body: `The org chart feed now updates function headcounts automatically, so the analytics page will show thirteen rather than fourteen from next week.
+
+Nothing needed — flagging in case anyone asks.`,
+      expect: ['archive it'],
+      note: 'A correction to a page nobody reads, and it is already right.',
+    },
+    {
+      key: 'mds-07', day: 4, type: 'judgement', via: 'chat', from: 'finance_analyst',
+      subject: 'Are you sure about this?',
+      body: `I have read the submission. It is the only one in the round not asking for anything.
+
+You do know that means analytics is the easiest line to cut if the round comes up short? I am not arguing with the analysis. I am asking whether you have thought about that.`,
+      needsReply: true,
+      expect: ['yes, it is deliberate', 'and say what protects against it'],
+      markers: ['yes|deliberate|thought|aware|risk|condition|january|threshold|backlog|not fine|protect|explicit|bar'],
+      ifIgnored: 'She reads the silence as you not having considered it, and softens the submission herself when she presents it.',
+      note: 'A real risk raised by somebody trying to help. The protection is in the document — conditions with values, and an explicit statement that this is not a claim the service is where it should be.',
+    },
+    {
+      key: 'mds-08', day: 4, type: 'noise', via: 'email', from: 'security',
+      subject: 'Access review — quarterly attestation',
+      body: `The quarterly access attestation for analytics systems has been completed on your behalf using the licence assignment data you supplied last month.
+
+No further action required.`,
+      expect: ['archive it'],
+      note: 'Done on your behalf, using work you already did. Nothing to answer.',
+    },
+    {
+      key: 'mds-09', day: 5, type: 'judgement', via: 'email', from: 'people_partner',
+      subject: 'One of your team has asked about progression',
+      body: `Following your note about no headcount ask, somebody has asked me whether that also means no promotions this year.
+
+They have not asked you directly. I think they were not sure how it would land.`,
+      needsReply: true,
+      expect: ['answer it to the whole team, not just that person'],
+      markers: ['all|everyone|team|whole|note|separate|different|budget|promotion|not the same|address|directly|clarify'],
+      ifIgnored: 'The assumption that a flat establishment means a frozen ladder spreads unchallenged, and two people start looking.',
+      note: 'Establishment and progression are different budgets and the team has no reason to know that. One person asked; thirteen are wondering.',
+    },
+    {
+      key: 'mds-10', day: 5, type: 'noise', via: 'chat', from: 'facilities',
+      subject: 'Desk allocation for next year',
+      body: `Confirming the analytics floor allocation is unchanged for FY27 at sixteen desks.
+
+No action needed.`,
+      expect: ['archive it'],
+      note: 'Unchanged, and no action needed. Nothing to do.',
     },
   ],
 };
@@ -6677,6 +7025,122 @@ const QUIZZES = {
           { key: 'd', label: 'The exact queries, so the figures can be reproduced' },
         ],
         why: 'The queries matter too, but the prediction is the one that decides the six-month conversation: switching to final close makes the team look slower, and unrecorded that rise becomes the argument for reverting everything.',
+      },
+    ],
+  },
+  'headcount-case': {
+    key: 'mdq-headcount', title: 'The Headcount Case — end of project',
+    intro: 'Ten questions on the week, and the last of the track. Not a pass or fail — it tells both of us what stuck.',
+    questions: [
+      {
+        id: 'q1', topic: 'business-sense',
+        q: 'Your manager asks you to build the case for two more analysts. What has that already done to the week?',
+        options: [
+          { key: 'c', label: 'Evidence that supports two now registers as a finding and evidence that does not registers as an obstacle', correct: true },
+          { key: 'a', label: 'Nothing, provided the analysis is done the same way it would otherwise have been' },
+          { key: 'b', label: 'It has removed the need to establish whether demand is growing' },
+          { key: 'd', label: 'It has made the submission her responsibility rather than yours' },
+        ],
+        why: 'Nobody decides to be dishonest. Having an answer in advance is simply what it does to a week of work, which is why it is worth naming on day one.',
+      },
+      {
+        id: 'q2', topic: 'statistics',
+        q: 'Demand fell from 213 requests to 171 between the two halves of the year. What does that establish?',
+        options: [
+          { key: 'b', label: 'That the simplest case for hiring does not hold — and nothing about whether people gave up instead', correct: true },
+          { key: 'a', label: 'That the team has spare capacity relative to last year' },
+          { key: 'c', label: 'That requesters are finding the service harder to use' },
+          { key: 'd', label: 'Nothing, since suppressed demand cannot be measured' },
+        ],
+        why: 'The same number supports two contradictory stories and the data cannot separate them. Leaving it out is not an option either — it is the first thing any reader will check.',
+      },
+      {
+        id: 'q3', topic: 'business-sense',
+        q: 'Demand is falling and the backlog is growing. What does that combination rule out?',
+        options: [
+          { key: 'd', label: 'Demand growth as the cause — whatever is driving the backlog, it is not more work arriving', correct: true },
+          { key: 'a', label: 'That the team is short of people' },
+          { key: 'b', label: 'That the work arriving has got harder' },
+          { key: 'c', label: 'That requests are being left open after the work is done' },
+        ],
+        why: 'Throughput is below intake even at the reduced intake. Twenty-two closed per person-year against roughly thirty-two arriving — the gap is the backlog, and it is a finishing problem.',
+      },
+      {
+        id: 'q4', topic: 'statistics',
+        q: 'Why does adding two analysts often fail to shorten a queue like this one?',
+        options: [
+          { key: 'a', label: 'Forty-three items are already open across thirteen people; two more people mostly means more items open at once', correct: true },
+          { key: 'b', label: 'New joiners take three months to become productive' },
+          { key: 'c', label: 'The backlog is mostly requests that were never going to be needed' },
+          { key: 'd', label: 'Queue length is determined by arrival rate, which hiring does not change' },
+        ],
+        why: 'Each item already spends most of its life waiting for its owner to come back to it. Fifteen people with fifty-five things open gives about the same wait as thirteen with forty-three.',
+      },
+      {
+        id: 'q5', topic: 'sql',
+        q: '15.2% of logged effort went on work later cancelled. What is the honest way to express that as capacity?',
+        options: [
+          { key: 'c', label: '15.2% of the 11.92 person-years present — about 1.81 — because the proportion survives the coverage problem and the hours do not', correct: true },
+          { key: 'a', label: '485 hours, converted to person-years at 261 days of eight hours' },
+          { key: 'b', label: '485 hours divided by the 12.8% coverage rate, to gross it back up' },
+          { key: 'd', label: 'It cannot be expressed as capacity, since the timesheets cover an eighth of the time' },
+        ],
+        why: 'The face-value hours give 0.23 person-years and understate it eightfold. Grossing up by the coverage rate is arithmetic on a number you do not trust. Applying the share to person-years uses only the part that survives.',
+      },
+      {
+        id: 'q6', topic: 'business-sense',
+        q: 'A junior analyst costs ₹15.76 lakh a year. What is the strongest comparison to put beside that?',
+        options: [
+          { key: 'b', label: '1.81 person-years already going on work later cancelled, which is more and costs nothing to recover', correct: true },
+          { key: 'a', label: 'The ₹3.09 crore the team already costs, against which it is small' },
+          { key: 'c', label: 'A senior at ₹24.62 lakh, who closes more requests per person-year' },
+          { key: 'd', label: 'The thirty-two queued requests the hire would be brought in to clear' },
+        ],
+        why: 'Costing a senior on closures per person-year reads assignment as productivity. "Small against the whole line" is the argument that produced thirty BI seats. The cancelled work is the only comparison that is both larger and free.',
+      },
+      {
+        id: 'q7', topic: 'communication',
+        q: 'You are going to tell your manager the submission should ask for nobody. When and how?',
+        options: [
+          { key: 'a', label: 'Today, in person, leading with the parts of her reasoning that held up, and bringing the alternative submission', correct: true },
+          { key: 'c', label: 'In Friday\'s draft, so the argument is on the record and can be examined' },
+          { key: 'b', label: 'As an open question, so she reaches the conclusion herself' },
+          { key: 'd', label: 'After checking it with Finance, so the recommendation arrives already supported' },
+        ],
+        why: 'She has said two out loud in a meeting. If the first she sees of it is a document, the conversation is about having been gone around rather than about whether you are right.',
+      },
+      {
+        id: 'q8', topic: 'communication',
+        q: 'What turns a refusal into a deferral?',
+        options: [
+          { key: 'd', label: 'Conditions written down with today\'s values, a direction, what each triggers, and a date', correct: true },
+          { key: 'a', label: 'A statement that the position will be reviewed if circumstances change' },
+          { key: 'b', label: 'Framing the recommendation as a recommendation rather than a decision' },
+          { key: 'c', label: 'Committing to bring the question back at the next budget round' },
+        ],
+        why: 'Without the numbers it is a refusal with a hopeful sentence at the end, and readers have seen enough of those to discount them. The values have to be recorded while they are known.',
+      },
+      {
+        id: 'q9', topic: 'communication',
+        q: 'Your submission has one vulnerable figure — demand down 20%, which could be suppression rather than lower need. What do you do with it?',
+        options: [
+          { key: 'b', label: 'Put it in yourself, with the weakness named', correct: true },
+          { key: 'a', label: 'Leave it out, since it is not load-bearing for the recommendation' },
+          { key: 'c', label: 'Move it to an appendix where it can be examined on request' },
+          { key: 'd', label: 'Find more evidence before submitting either way' },
+        ],
+        why: 'The second pass over a budget pack is a hunt for the weakest number. Volunteered, it reads as rigour; found by a reader, it contaminates everything else on the page.',
+      },
+      {
+        id: 'q10', topic: 'data-ethics',
+        q: 'You are telling thirteen people there is no headcount ask. What displaces "she tried and lost"?',
+        options: [
+          { key: 'c', label: 'The mechanism — more people would have meant fifty-five things open instead of forty-three — stated so they can check it against their own week', correct: true },
+          { key: 'a', label: 'Saying directly that this was your recommendation rather than a defeat' },
+          { key: 'b', label: 'Sharing the full analysis so they can see the evidence themselves' },
+          { key: 'd', label: 'The commitment to review the question again in January' },
+        ],
+        why: 'A denial cannot displace an interpretation and the full analysis will not be read. One checkable sentence about why more people would not have helped is the only thing that competes with the version told in the kitchen.',
       },
     ],
   },

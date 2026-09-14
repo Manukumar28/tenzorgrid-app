@@ -614,6 +614,43 @@ const PROJECT_DOCS = {
     toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
     datasetKey: 'analytics_ops',
   },
+
+  'headcount-case': {
+    projectTitle: 'The Headcount Case',
+    companyName: 'Meridian Group',
+    companyBlurb: 'The analytics function at budget time. Six functions submit, every one of them asks for something, and there is less money than the sum of the asks.',
+    yourRole: 'Data Analytics Manager',
+    roleResponsibilities: [
+      'Answer the establishment question from the evidence, including when the evidence disagrees with the person who asked for the answer.',
+      'Tell your own manager, early and in person, when the thing she has asked for is the wrong thing.',
+      'Record the conditions that would change the answer, with today\u2019s values against them, while they are still known.',
+    ],
+    scenario:
+      'Your manager wants analytics to go into the budget round for two additional analysts. Her reasoning is that the team has been under pressure all year, that a January leaver took three months to replace, that there is a visible backlog, and that a function which does not ask is assumed not to need. Demand fell 19.7% between the two halves of the year, and the backlog grew from 35 to 89 over the same period.',
+    estimatedMinutes: 160,
+    difficulty: 'Hard',
+    primaryObjective: 'An establishment submission that is true, checkable, and survives being read by somebody who wanted a different answer.',
+    constraints: [
+      { label: 'Checkable beats strong', value: 'Nobody has time to inspect the working. One figure a reader can verify in two minutes buys credit for the rest.' },
+      { label: 'Own your weakest number', value: 'A caveat you volunteer reads as rigour. The same caveat found by a reader contaminates the whole document.' },
+      { label: 'No is a deferral, not a verdict', value: 'Conditions with today\u2019s values, a direction, what each triggers, and a date \u2014 or it is a refusal with a hopeful sentence at the end.' },
+    ],
+    deliverables: [
+      { text: 'Demand, throughput and the backlog, month by month, from one query each.', via: 'sql-terminal' },
+      { text: 'The backlog projected forward under no change, one more analyst, and halving cancelled work.', via: 'python-notebook' },
+      { text: 'The submission, the conversation with your manager in writing, and the note to the team.', via: 'email-client' },
+    ],
+    watchOutFor: [
+      'The conclusion arrived before the analysis. Evidence that supports two people will register as a finding and evidence that does not will register as an obstacle.',
+      'Demand fell by a fifth, which removes the simplest case for hiring and is also exactly what people quietly giving up looks like. Both readings fit the same number.',
+      'The backlog grew while demand fell, so nothing about arrivals explains it. Forty-three items are open across thirteen people and the oldest has been open 340 days.',
+      '15.2% of effort goes on work later cancelled \u2014 about 1.81 person-years, more than the ask would add and already paid for. Use the share of person-years, not the face-value hours.',
+      'Exec demand grew by two thirds and is the worst served at 54.2%. It is fifteen requests in six months: a routing problem, not a headcount one.',
+      '\u20b913.89 lakh of tooling was handed back last month. It is the only banked number available and it is what makes \u201cno ask\u201d read as discipline rather than low ambition.',
+    ],
+    toolKeys: ['sql-terminal', 'schema-browser', 'python-notebook', 'email-client', 'team-chat'],
+    datasetKey: 'analytics_ops',
+  },
 };
 
 // Assembles the full document for a project. Returns null for a project with no
