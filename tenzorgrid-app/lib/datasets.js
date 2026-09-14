@@ -71,6 +71,9 @@ const RESERVED_NAMES = new Set([
   'Ravi Menon', 'Priya Menon', 'Rohan Desai',
   // The Team Lead's reports.
   'Nadia Baig', 'Zubin Wadia',
+  // NOT the Manager's two leads. Devika Raghavan and Suresh Balan are deliberately the
+  // same people as the analytics_ops rows — the team you analyse is the team you run —
+  // so reserving their names would break the thing that makes the Manager track work.
 ]);
 
 // Drawn only when a generated name collides, and drawn in order rather than at random, so

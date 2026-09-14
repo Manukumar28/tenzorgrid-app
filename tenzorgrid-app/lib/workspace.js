@@ -135,6 +135,28 @@ const ROSTER = [
     helpsWith: ['anything you give him', 'asking early'],
     about: 'Six weeks in. Enthusiastic, still learning what "finished" means, and will take on whatever you hand him whether or not he can carry it.',
     reportsToLearnerFrom: 'lead', visibleFrom: 'lead' },
+
+  // ---- The Manager's reports: two leads, not twelve analysts ---------------------------
+  //
+  // This is the whole difference between the two rungs. A lead staffs people; a manager
+  // staffs leads, and finds out on Thursday what was actually decided on Monday. Every
+  // Manager task that hands work to a named analyst rather than to Devika or Suresh is
+  // reaching past somebody whose job you are doing for them.
+  //
+  // `alsoInDataset` is deliberate and declared. Both of them are real rows in
+  // analytics_ops with real day rates, real delivery counts and real time logs — because
+  // the Manager track's whole premise is that the team you analyse is the team you run.
+  // Asha Rao is in there for the same reason. The collision guard in lib/datasets.js and
+  // its tests treat a declared overlap as intended and an undeclared one as the bug it
+  // was when the Business Stakeholder turned up as a team lead being assessed.
+  { archetype: 'analytics_lead_a', name: 'Devika Raghavan', title: 'Analytics Team Lead', gender: 'female',
+    helpsWith: ['her team', 'what is really deliverable', 'where the queue is stuck'],
+    about: 'Four years here, the most experienced person you have. Carries the most requests and will not tell you when it is too much.',
+    reportsToLearnerFrom: 'manager', visibleFrom: 'manager', alsoInDataset: 'analytics_ops' },
+  { archetype: 'analytics_lead_b', name: 'Suresh Balan', title: 'Analytics Team Lead', gender: 'male',
+    helpsWith: ['his team', 'estimates', 'what the numbers on the dashboard mean'],
+    about: 'Three years here. Protective of his team and quick to say no, which is useful exactly as often as it is inconvenient.',
+    reportsToLearnerFrom: 'manager', visibleFrom: 'manager', alsoInDataset: 'analytics_ops' },
 ];
 
 const LEVEL_RANK = { junior: 0, senior: 1, lead: 2, manager: 3 };
@@ -163,6 +185,10 @@ const COLLEAGUES = ROSTER.filter((r) => !r.core);
 // two characters shown together end up with the same picture.
 function rosterWithAvatars(enrollmentId, level) {
   const used = new Set();
+  // Who is a direct report at this level, rather than a colleague. The Team tab says so
+  // on the card, because "team handling" is not a real responsibility until the learner
+  // can see which of these people are theirs.
+  const reports = new Set(reportsForLevel(level).map((p) => p.archetype));
   const contacts = enrollmentId
     ? Object.fromEntries(db.prepare('SELECT * FROM sim_contacts WHERE enrollment_id = ?').all(enrollmentId)
         .map((c) => [c.archetype, c]))
@@ -172,6 +198,7 @@ function rosterWithAvatars(enrollmentId, level) {
     return {
       ...p,
       avatarUrl: pickAvatar(p.archetype, p.gender, used),
+      reportsToYou: reports.has(p.archetype),
       friend: Boolean(c && c.friends_at),
       // How many more messages before this person counts as someone you know. Shown so
       // the learner can see that talking to people is going somewhere.
@@ -594,18 +621,18 @@ const PROJECT_CATALOG = {
       datasetKey: 'analytics_ops',
       taskKeys: [
         // Day 1 — the intake. A resourcing question arrives dressed as a productivity one.
-        'ma-101', 'ma-102', 'ma-103', 'ma-104', 'ma-105', 'ma-106',
+        'mg-101', 'ma-102', 'ma-103', 'mg-102', 'ma-105', 'mg-103',
         // Day 2 — who looks busy, which turns out to rank people by timesheet discipline.
-        'ma-110', 'ma-111', 'ma-112', 'ma-113', 'ma-114', 'ma-115',
+        'ma-110', 'mg-104', 'ma-112', 'mg-105', 'ma-114', 'mg-106',
         // Day 3 — the wobble. Coverage is 12.8%, so every rate built on logged hours is
         // out by a factor of eight, including the one already sent.
-        'ma-120', 'ma-121', 'ma-122', 'ma-123', 'ma-124', 'ma-125',
+        'ma-120', 'ma-121', 'mg-107', 'mg-108', 'ma-124', 'mg-109',
         // Day 4 — capacity from presence rather than headcount, and the cost of work
         // nobody ended up wanting.
-        'ma-130', 'ma-131', 'ma-132', 'ma-133', 'ma-134', 'ma-135',
+        'ma-130', 'ma-131', 'mg-110', 'mg-111', 'ma-134', 'mg-112',
         // Day 5 — what the exec is told, what the budget pack may say, and what gets
         // instrumented so the next budget round is not this one again.
-        'ma-140', 'ma-141', 'ma-142', 'ma-143', 'ma-144', 'ma-145',
+        'ma-140', 'mg-113', 'ma-142', 'mg-114', 'mg-115', 'ma-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 61000,
@@ -627,20 +654,22 @@ const PROJECT_CATALOG = {
       level: 'manager',
       datasetKey: 'analytics_ops',
       taskKeys: [
-        // Day 1 — the estate, and cost per seat, which is where everybody starts.
-        'mb-101', 'mb-102', 'mb-103', 'mb-104', 'mb-105', 'mb-106',
+        // Day 1 — the estate, cost per seat, and a saving somebody has already promised
+        // Finance on your behalf.
+        'mg-201', 'mb-102', 'mb-103', 'mg-202', 'mb-105', 'mg-203',
         // Day 2 — seats, assignments and active users turn out to be three numbers, and
-        // the per-seat ranking inverts when the denominator has people in it.
-        'mb-110', 'mb-111', 'mb-112', 'mb-113', 'mb-114', 'mb-115',
+        // nobody has defined the third. Two offers arrive to act before anything is known.
+        'mb-110', 'mg-204', 'mb-112', 'mg-205', 'mb-114', 'mg-206',
         // Day 3 — the wobble. Monday's ranking pointed at the best-used tool in the
-        // estate, and the most visible cut is the one that removes a capability.
-        'mb-120', 'mb-121', 'mb-122', 'mb-123', 'mb-124', 'mb-125',
-        // Day 4 — the recovery in three buckets, and the gap between what is recoverable
-        // and what you are willing to recommend.
-        'mb-130', 'mb-131', 'mb-132', 'mb-133', 'mb-134', 'mb-135',
-        // Day 5 — the renewal, a vendor who would rather you did not, and the checks that
-        // stop next year being this week again.
-        'mb-140', 'mb-141', 'mb-142', 'mb-143', 'mb-144', 'mb-145',
+        // estate, the most visible cut removes a capability, and a peer manager is already
+        // planning around the wrong version.
+        'mb-120', 'mg-207', 'mb-122', 'mg-208', 'mb-124', 'mg-209',
+        // Day 4 — the recovery in three buckets, who owns each of them, and the gap
+        // between what is recoverable and what you are willing to recommend.
+        'mb-130', 'mg-210', 'mg-211', 'mg-212', 'mb-134', 'mb-135',
+        // Day 5 — the renewal, a vendor who would rather you did not, the checks that stop
+        // next year being this week again, and when the saving actually lands.
+        'mb-140', 'mg-213', 'mb-142', 'mg-214', 'mg-215', 'mb-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 1389000,
@@ -662,20 +691,22 @@ const PROJECT_CATALOG = {
       level: 'manager',
       datasetKey: 'analytics_ops',
       taskKeys: [
-        // Day 1 — a complaint with four claims in it, the shape of a year of demand, and
-        // the thirty-two requests nobody ever started.
-        'mc-101', 'mc-102', 'mc-103', 'mc-104', 'mc-105', 'mc-106',
-        // Day 2 — what the urgent flag buys, which is six days, and what it predicts,
-        // which turns out to be cancellation.
-        'mc-110', 'mc-111', 'mc-112', 'mc-113', 'mc-114', 'mc-115',
+        // Day 1 — a complaint with four claims in it, the fairness question, and the
+        // thirty-two requests nobody ever started, one of them owned by a leaver.
+        'mc-101', 'mg-301', 'mc-103', 'mg-302', 'mg-303', 'mc-106',
+        // Day 2 — what the urgent flag buys, which is six days, what it predicts, which is
+        // cancellation, and two people who want it removed or bent on the strength of that.
+        'mc-110', 'mg-304', 'mc-112', 'mg-305', 'mc-114', 'mg-306',
         // Day 3 — the wobble. The published lead time measures to first delivery and
-        // understates the work that went wrong by eighteen days.
-        'mc-120', 'mc-121', 'mc-122', 'mc-123', 'mc-124', 'mc-125',
-        // Day 4 — the load, what replaces the field, and the queue that has to be closed.
-        'mc-130', 'mc-131', 'mc-132', 'mc-133', 'mc-134', 'mc-135',
-        // Day 5 — the proposal, the exception the exec wants, and the baseline recorded
-        // before anything changes so the review in six months means something.
-        'mc-140', 'mc-141', 'mc-142', 'mc-143', 'mc-144', 'mc-145',
+        // understates the work that went wrong by eighteen days, and the category split
+        // lands on one lead's team.
+        'mc-120', 'mg-307', 'mc-122', 'mg-308', 'mg-309', 'mc-125',
+        // Day 4 — the load, the lead carrying seven of it, the analyst carrying none, and
+        // the queue that has to be closed without punishing the functions that waited.
+        'mc-130', 'mg-310', 'mg-311', 'mc-133', 'mc-134', 'mg-312',
+        // Day 5 — the proposal, who runs it, the exception the exec wants, the baseline
+        // recorded before anything changes, and what Retail Ops asks for in return.
+        'mc-140', 'mg-313', 'mc-142', 'mg-314', 'mc-144', 'mg-315',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 74000,
@@ -697,21 +728,25 @@ const PROJECT_CATALOG = {
       level: 'manager',
       datasetKey: 'analytics_ops',
       taskKeys: [
-        // Day 1 — a conclusion arrives before the analysis. Demand turns out to be falling.
-        'md-101', 'md-102', 'md-103', 'md-104', 'md-105', 'md-106',
+        // Day 1 — a conclusion arrives before the analysis, and two other people have
+        // already started acting on it. Demand turns out to be falling.
+        'md-101', 'mg-401', 'md-103', 'mg-402', 'mg-403', 'md-106',
         // Day 2 — falling demand and a growing backlog together, which rules out the
-        // simplest case for hiring and points at flow instead.
-        'md-110', 'md-111', 'md-112', 'md-113', 'md-114', 'md-115',
+        // simplest case for hiring and points at flow instead — and which your own manager
+        // is about to put on a slide as if the two lines agreed.
+        'md-110', 'mg-404', 'md-112', 'mg-405', 'md-114', 'mg-406',
         // Day 3 — the wobble, and the hardest one in the track: there is more capacity
         // inside the team than the ask would add, so the honest submission asks for
-        // nobody, and the person who has to be told that is your own manager.
-        'md-120', 'md-121', 'md-122', 'md-123', 'md-124', 'md-125',
-        // Day 4 — the submission, and an exec who has found the one number in it that
-        // points the other way.
-        'md-130', 'md-131', 'md-132', 'md-133', 'md-134', 'md-135',
-        // Day 5 — the team, the January test written down while the values are known,
-        // and the end of the track.
-        'md-140', 'md-141', 'md-142', 'md-143', 'md-144', 'md-145',
+        // nobody, and the person who has to be told that is your own manager. How you
+        // tell her is its own decision, and a lead wants you to pad the ask anyway.
+        'md-120', 'mg-407', 'md-122', 'mg-408', 'mg-409', 'md-125',
+        // Day 4 — the submission, an exec who has found the one number in it that points
+        // the other way, Finance trying to bank money you never had, and fourteen people
+        // who have to hear it from you first.
+        'md-130', 'mg-410', 'mg-411', 'md-132', 'md-134', 'mg-412',
+        // Day 5 — the team, a lead who has decided to leave over it, the January test
+        // written down while the values are known, and the end of the track.
+        'md-140', 'mg-413', 'md-141', 'mg-414', 'mg-415', 'md-145',
       ],
       skillFocus: ['sql', 'python', 'businessLogic', 'communication'],
       impactValue: 3152880,
@@ -6131,6 +6166,2321 @@ const TASKS = {
       },
     },
     estHours: 0.3, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  // ---- Manager: through leads, across a portfolio, about people ---------------------
+  //
+  // Three of the six every day. The rung below staffs people; this one staffs LEADS and
+  // finds out on Thursday what was decided on Monday. Every item that hands work to a
+  // named analyst rather than to Devika or Suresh is the learner doing somebody else's
+  // job, and the grader says so.
+  //
+  // What changes from Team Lead is not the shape of the act but what it costs. A misread
+  // retail figure produced a bad slide. A misread capacity figure produces a performance
+  // conversation with a named person, a seat taken off somebody, or a headcount case that
+  // should not be made.
+  'mg-101': {
+    title: 'Set the week across both teams',
+    hint: 'You have two leads and a two-week exec deadline. Anything you hand to a named analyst is a decision Devika or Suresh should have made.',
+    brief: "Vikram wants a capacity answer for the budget round. You run two teams through two leads. Set the week at the grain you actually manage at.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the workstreams.',
+      context: 'Fourteen people across two teams. Devika carries the most requests of anyone; Suresh is protective of his and quick to say no. The exec wants the capacity answer in two weeks.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4,
+          note: 'Seven people. Most loaded lead on the team and will not say when it is too much.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 5,
+          note: 'Six people. Says no early, which is useful exactly as often as it is inconvenient.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3,
+          note: 'Two days already gone to the budget round itself.' },
+      ],
+      items: [
+        { key: 'timelogs', label: 'Establish what the time logs actually cover', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the foundation of every capacity number and it needs a lead who will push back on a bad definition rather than deliver one fast.' },
+        { key: 'demand', label: 'Demand analysis — what came in and what happened to it', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Her team already handles most of the intake, so the context is already in the room.' },
+        { key: 'exec', label: 'The conversation with Vikram about what the number will and will not say', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Sending a lead to negotiate the scope of an exec request is handing them your job without the authority to do it.', suresh: 'Same. He will say no correctly and then have to defend a decision that was yours to make.' },
+          why: 'Setting expectations with an exec about a number that may not flatter is the part nobody else can do for you.' },
+        { key: 'backlog', label: 'What the backlog is made of', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'You have three days and two are committed. Taking analysis yourself is the most common way a new manager stops managing.' },
+          why: 'Either lead can carry it, and it belongs with whoever has the space rather than with you.' },
+      ],
+      whyRight: 'You worked through the leads, kept the exec conversation yourself, and did not take analysis back onto your own desk.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mg-102': {
+    title: 'Devika has said yes to everything',
+    hint: 'She has not complained. Count what she has accepted against what her team can do.',
+    brief: "Devika has come back with her team's plan for the fortnight. She has accepted every request routed to her. Read it as a capacity statement rather than as a plan.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'note', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Plan for the fortnight — we'll take all of it.\n\n  - Demand analysis (2d)\n  - Backlog composition (2d)\n  - The four Finance requests that came in yesterday\n  - Harini keeps the Retail Ops dashboard work\n\nIt's tight but we'll get there. My team always does.",
+      },
+      decision: {
+        prompt: 'What do you do with this?',
+        multi: false,
+        options: [
+          { key: 'push', correct: true, label: 'Go back to her — ask what she would drop if she had to drop something', why: 'She has accepted everything and said it is tight, which is a capacity problem reported as a commitment. Asking what she would drop makes the trade-off visible without overruling her plan.' },
+          { key: 'accept', correct: false, label: 'Accept it — she knows her team better than you do', why: 'She does, and she has also just told you it is tight and that her team always gets there. Both of those are warnings dressed as reassurance.' },
+          { key: 'cut', correct: false, label: 'Move the Finance requests to Suresh yourself', why: 'It might even be the right outcome, and reaching over her to do it teaches her that her plan is provisional and yours is real.' },
+          { key: 'harini', correct: false, label: 'Tell her to take the dashboard work off Harini, who is overloaded', why: 'Harini is the most loaded person on the team and that is worth raising — but it is Devika’s allocation, and jumping to a named analyst is the manager doing the lead’s job.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You made the trade-off visible without taking the allocation off her.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'drop', label: 'Asks what she would drop', markers: ['drop', 'give up', 'would go', 'trade', 'if you had to', 'what comes off', 'priorit'], why: 'It is the one question that converts "we will get there" into information you can act on.' },
+          { key: 'always', label: 'Names "my team always does" as the thing you are worried about', markers: ['always', 'gets there', 'tight', 'worry', 'concern', 'flag', 'that phrase', 'heard'], why: 'That sentence is how a team quietly absorbs an overload until somebody leaves. It has to be said out loud once.' },
+          { key: 'hers', label: 'Makes clear the allocation stays hers', markers: ['your call', 'your team', 'you decide', 'not telling', 'up to you', 'your plan'], why: 'The whole point of asking rather than moving work is that she keeps the decision. Say so or she will read the question as a reversal.' },
+        ],
+        whyRight: 'You asked the question that surfaces the trade-off, named the phrase that worried you, and left the plan with her.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'mg-103': {
+    title: 'Harini is carrying more hours than anyone',
+    hint: 'She is a junior outworking every senior on the team. That is a fact about your management, not about her.',
+    brief: "The time logs show Harini Gopal, four months from graduate scheme, logging more hours than any senior. Decide what this is and what you do about it.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Suresh has raised it. Decide, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Not my team, so tell me if this isn't mine to raise.\n\nHarini Gopal has logged 444 hours across 31 requests. That's more than any of my seniors\nand she's a junior on Devika's side. Either she's brilliant or somebody's using her as\ncapacity, and I don't think anyone's looked.\n\nI mention it because she's the one who'd never say anything.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'devika', correct: true, label: 'Take it to Devika as her lead, with the number, and ask what she sees', why: 'It is Devika’s team and Devika’s allocation. Going to her with the figure treats it as a management question rather than an accusation, and she may have context nobody else has.' },
+          { key: 'harini', correct: false, label: 'Talk to Harini directly', why: 'Reaching two levels down past her lead. Whatever Harini says, Devika now finds out her manager went round her about her own report.' },
+          { key: 'nothing', correct: false, label: 'Thank Suresh and leave it — it is not his team', why: 'He has told you somebody who would never complain is carrying the most work on the team. Filing that is a decision you will regret in an exit interview.' },
+          { key: 'rebalance', correct: false, label: 'Rebalance the work across both teams yourself', why: 'Acting on one number before anyone who manages her has been asked what it means.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You routed it through the person who manages her rather than round them or past it.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'yes', label: 'Tells him it was right to raise', markers: ['right to', 'glad', 'yours to raise', 'thank', 'good', 'exactly', 'keep'], why: 'He opened by asking whether it was his place. The answer to that determines whether he ever does it again.' },
+          { key: 'route', label: 'Says you will take it to Devika', markers: ['Devika', 'her lead', 'take it', 'speak to', 'raise it with', 'through'], why: 'He needs to know it is being handled and how, or he will assume it went nowhere.' },
+          { key: 'nothers', label: 'Does not promise an outcome', markers: ['may be', 'might', 'find out', 'see what', 'could be', 'context', 'ask'], why: 'There is a version of this where Harini is thriving and a version where she is being used. Committing before asking Devika is the same error you are trying to avoid.' },
+        ],
+        whyRight: 'You confirmed it was his to raise, said how it would be handled, and did not decide the answer in advance.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'mg-104': {
+    title: 'The coverage problem changes the week',
+    hint: 'If the logs only cover a fraction of paid time, every number built on them is wrong by the same factor. Staff for that, not around it.',
+    brief: "Suresh has come back: nobody on either team logs more than about half their working days. Every capacity number in the budget round would inherit that. Re-set the fortnight.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Re-allocate the fortnight.',
+      context: 'Time logs cover roughly an eighth of paid time. The exec deadline has not moved. Both leads now know.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Found the coverage problem.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'bound', label: 'Establish how far out a logged-hours capacity figure would be', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'He found it, he understands the shape of it, and sizing the error is the piece the exec conversation depends on.' },
+        { key: 'alternative', label: 'Find a capacity measure that does not depend on logging', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: { you: 'It is the most interesting problem of the fortnight, which is exactly why it is not yours to take.' },
+          why: 'Delivered work per person-year can be counted without anybody logging anything. It needs a lead with the intake context.' },
+        { key: 'warn', label: 'Tell Vikram the number will be later and different', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Renegotiating an exec deadline is not a lead’s to carry.', suresh: 'Same, and he already delivered the bad news once this week.' },
+          why: 'Bad news about a commitment you made goes from the person who made it, early.' },
+        { key: 'nolog', label: 'Work out why logging is so patchy', days: 1,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Delegable, and you have one day left.' },
+          why: 'It is a management question about the teams, and both leads have a view worth hearing before anyone proposes fixing it.' },
+      ],
+      whyRight: 'You sized the error, went looking for a measure that does not depend on the broken one, and carried the deadline conversation yourself.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'mg-105': {
+    title: 'Devika wants to fix the logging by Friday',
+    hint: 'Her fix would produce compliant logs. Ask whether it would produce true ones.',
+    brief: "Devika has proposed how to fix the coverage problem in a week. It would work, in the sense that the numbers would fill in.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "I can fix the logging gap this week. Daily reminder, and I'll check on Friday who's\nbehind and chase them.\n\nBy the end of the month coverage will be near a hundred per cent and we'll have clean\ncapacity numbers for the next round.",
+      },
+      decision: {
+        prompt: 'What do you do with this?',
+        multi: false,
+        options: [
+          { key: 'why', correct: true, label: 'Ask why people are not logging before installing a chase', why: 'Chasing produces entries, not truth. If people are not logging because the categories do not fit the work, a weekly chase gets you a full table of guesses and a team that resents it.' },
+          { key: 'yes', correct: false, label: 'Approve it — coverage has to improve either way', why: 'It does. A compliance push that nobody has diagnosed is how you get a clean dataset that is quietly wrong, which is worse than an obviously patchy one.' },
+          { key: 'no', correct: false, label: 'Decline — the numbers will not be ready for this round anyway', why: 'True and irrelevant. The logging problem outlives this budget round.' },
+          { key: 'mandate', correct: false, label: 'Make it a company-wide policy through Asha', why: 'Escalating a team habit to policy before anyone has asked why it exists. It also spends Asha’s authority on your first guess.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You asked why before installing a process, because compliance and accuracy are not the same thing.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'why', label: 'Asks why people are not logging', markers: ['why', 'reason', 'ask them', 'find out', 'what stops', 'categories', 'fits'], why: 'It is the question that decides whether her fix works or produces a table of plausible fiction.' },
+          { key: 'compliance', label: 'Separates entries from accuracy', markers: ['accurate', 'true', 'compliance', 'filling in', 'guess', 'complete but', 'not the same'], why: 'Full coverage of made-up numbers is a worse position than patchy coverage of real ones, and it is much harder to notice.' },
+          { key: 'keep', label: 'Does not simply block her', markers: ['then', 'once we', 'still', 'go ahead', 'after', 'both', 'worth doing'], why: 'She is trying to fix a real problem in a week. A flat no gets you a lead who stops proposing things.' },
+        ],
+        whyRight: 'You asked why before the chase, and kept her fixing it rather than waiting.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'mg-106': {
+    title: 'The table you should not send',
+    hint: 'It is accurate, it is what was asked for, and it names people. Two of those matter more than the third.',
+    brief: "Suresh has produced hours logged per named analyst, because it is what the capacity question implies. It would answer Vikram. Decide whether it leaves the team.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide whether this goes out, then reply.',
+      exhibit: {
+        kind: 'table', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Hours logged per analyst, full year:\n\n  Harini Gopal      444.0   (junior)\n  Imran Qureshi     381.5   (senior)\n  Devika Raghavan   331.0   (lead)\n  ...\n  Karthik Iyer      145.0   (senior)\n  Tanvi Deshmukh    130.5   (senior)\n  Lakshmi Krishnan   55.5   (senior, joined March)\n\nThis is what he asked for. Sending it as is?",
+      },
+      decision: {
+        prompt: 'Does this table go to the exec?',
+        multi: false,
+        options: [
+          { key: 'no', correct: true, label: 'No — send capacity at team level, and handle the individual picture inside the team', why: 'The logs cover an eighth of paid time, so this ranks people on a measure that does not measure them. Sent to an exec it becomes a performance table, and Lakshmi — who joined in March — is at the bottom of it.' },
+          { key: 'yes', correct: false, label: 'Send it — it is accurate and it is what he asked for', why: 'Accurate about logging, not about work. The person who reads it will not make that distinction, and Karthik and Tanvi will spend a year explaining a number that never meant what it looks like.' },
+          { key: 'caveat', correct: false, label: 'Send it with the coverage caveat attached', why: 'A caveat does not survive being pasted into a slide. The names do.' },
+          { key: 'anon', correct: false, label: 'Send it with the names removed', why: 'Better, and still a ranking on a broken measure. In a team of fourteen, anonymised rows are identifiable to anyone who knows who joined in March.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept a broken per-person measure inside the team and gave the exec the level they actually asked a question about.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'measure', label: 'Says the measure cannot carry a per-person reading', markers: ['eighth', 'coverage', 'does not measure', 'not measuring', 'logging not work', 'broken', 'half'], why: 'The reason is the measure, not privacy. If he hears "we do not share names" he will send it next time with the names off.' },
+          { key: 'lakshmi', label: 'Names a person it would misrepresent', markers: ['Lakshmi', 'March', 'joined', 'Karthik', 'Tanvi', 'bottom', 'new'], why: 'One concrete person makes the abstraction real and settles the argument in a sentence.' },
+          { key: 'level', label: 'Says what goes instead', markers: ['team level', 'team', 'aggregate', 'instead', 'by team', 'capacity at'], why: 'He asked a yes/no question with a deadline behind it. A no with no alternative leaves him stuck.' },
+        ],
+        whyRight: 'You refused it on the measure rather than on privacy, made it concrete, and said what goes instead.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'mg-107': {
+    title: 'Wednesday: the capacity number is eight times wrong',
+    hint: 'The answer you were about to give the budget round is out by a factor. Staff the week that follows from that.',
+    brief: "Delivered work per person-year gives a capacity figure roughly eight times the one the logs implied. That changes the budget submission and it changes what you tell people.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Staff the rest of the fortnight.',
+      context: 'The logged-hours figure would have understated capacity by about eight times. Vikram has been told the number is moving. Both teams know the logs are being looked at.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'capacity', label: 'Capacity by level, on the delivered-work basis', days: 3,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'The headline number for the round, and she has the intake context that makes the per-level split defensible.' },
+        { key: 'sanity', label: 'Independently check the eight-times gap is real', days: 2,
+          best: ['suresh'], acceptable: [],
+          forbidden: { devika: 'She is producing the number. A factor-of-eight correction cannot be checked by its own author.', you: 'Delegable, and you are the one who will have to defend it.' },
+          why: 'A correction that large will be challenged. It has to have been checked by somebody who did not produce it.' },
+        { key: 'team', label: 'Tell both teams what the logs are and are not being used for', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Reassuring fourteen people that their logged hours are not a performance measure is a manager’s sentence.', suresh: 'Same.' },
+          why: 'People have noticed their hours are being counted. Left unsaid, everyone assumes the worst version.' },
+        { key: 'assumptions', label: 'Write down what the new basis assumes', days: 1,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the section the budget round will attack, and it needs writing while the reasoning is fresh.' },
+      ],
+      whyRight: 'The correction got an independent check, and you told the team what their hours were being used for before anyone had to ask.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'mg-108': {
+    title: 'Four hundred and eighty-five hours on work that was cancelled',
+    hint: 'It is a real finding. Decide who it is a finding about before you decide what to do with it.',
+    brief: "The effort analysis shows a large share of the year's logged time went into requests that were later cancelled. Decide what happens to that number.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Something you should see before the submission.\n\n485 logged hours went into requests that were later cancelled. Forty-six cancellations\nacross the year.\n\nI'd leave it out of the budget note. It makes us look like we can't finish things and it's\nnot really our fault — most of those were cancelled by the requester.",
+      },
+      decision: {
+        prompt: 'Does this go in the submission?',
+        multi: false,
+        options: [
+          { key: 'in', correct: true, label: 'In — it is the strongest argument in the whole submission, pointed the other way', why: 'Work cancelled by requesters after the team has started it is capacity being destroyed upstream of you. Left out, the round reads it as inefficiency; put in, it is an argument for changing intake.' },
+          { key: 'out', correct: false, label: 'Leave it out as she suggests', why: 'It is the most actionable thing you found all fortnight, and omitting an inconvenient number from a budget submission is the beginning of a habit that ends badly.' },
+          { key: 'footnote', correct: false, label: 'Footnote it', why: 'A number that argues for changing how work reaches the team does not belong in the small print.' },
+          { key: 'blame', correct: false, label: 'Include it and name the functions that cancelled most', why: 'Turns a systems finding into an accusation, in a document those functions will read. You want intake changed, not a fight.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept the number and reframed it from an embarrassment into the argument it actually is.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 180,
+        rubric: [
+          { key: 'reframe', label: 'Reframes it as capacity lost upstream', markers: ['upstream', 'intake', 'before it reaches', 'argument', 'the other way', 'in our favour', 'case for'], why: 'She read it as a criticism of her team. The reframe is the whole content of the reply.' },
+          { key: 'omit', label: 'Addresses leaving inconvenient numbers out', markers: ['leave out', 'omit', 'left out', 'inconvenient', 'looks bad', 'habit', 'once we start'], why: 'She proposed omission for a sympathetic reason. That is exactly when the principle needs saying.' },
+          { key: 'noblame', label: 'Is clear it is not about naming functions', markers: ['not blame', 'not naming', 'not a fight', 'system', 'not about who', 'process'], why: 'Otherwise the obvious next draft names Finance, and you lose the intake change you actually want.' },
+        ],
+        whyRight: 'You kept it in, turned it into an argument, and headed off the version that starts a fight.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'mg-109': {
+    title: 'Suresh has told his team the headcount case is happening',
+    hint: 'He has done something reasonable with information he was given in confidence. Decide what that costs and how to answer it.',
+    brief: "Suresh has told his six people that you are building a case for two more analysts. Nothing has been decided and the submission is not written.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide how to handle this, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Heads up — I mentioned in my team meeting that we're putting a case together for two\nmore people. Morale's been low with the backlog and they needed something.\n\nProbably should have checked with you first. But they'd have found out anyway and I'd\nrather they heard it from me than in a corridor.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'both', correct: true, label: 'Tell him the instinct was right and the timing was not, and agree what happens now', why: 'He is right that people hear things anyway and right that it should come from their lead. He is wrong that an unwritten case is something to announce — six people now expect two hires you may not recommend.' },
+          { key: 'fine', correct: false, label: 'Tell him it is fine', why: 'It is not fine, and saying so now costs far less than saying it after the case is turned down.' },
+          { key: 'reprimand', correct: false, label: 'Tell him clearly it was a breach and not to do it again', why: 'It flattens a good instinct into a rule. He will stop telling his team anything, which is a worse team than the one you have.' },
+          { key: 'commit', correct: false, label: 'Accept it and make sure the case goes in for two, so he is not undermined', why: 'Letting a premature announcement decide a headcount submission. That is the tail wagging a budget round.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You separated the instinct, which was right, from the timing, which was not — and dealt with the expectation now in six people’s heads.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'instinct', label: 'Agrees people should hear things from their lead', markers: ['right', 'agree', 'from you', 'their lead', 'corridor', 'instinct', 'fair'], why: 'He is right about this and it is the part he should keep.' },
+          { key: 'timing', label: 'Names what is wrong with announcing an unwritten case', markers: ['not written', 'not decided', 'might not', 'expect', 'promise', 'may not happen', 'too early'], why: 'The problem is specific and it is about the expectation, not about confidentiality in the abstract.' },
+          { key: 'now', label: 'Says what happens with his team now', markers: ['tell them', 'go back', 'walk it', 'set expect', 'what you say', 'correct', 'now'], why: 'Six people are holding a belief. The reply is worthless if it does not address that.' },
+        ],
+        whyRight: 'You kept the instinct, corrected the timing, and dealt with what his team currently believes.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 3, difficulty: 'hard',
+  },
+
+  'mg-110': {
+    title: 'Thursday: headcount is not capacity',
+    hint: 'Two people at the same level deliver very differently. Decide whether that is a staffing question or a management one.',
+    brief: "Capacity by level is done and the spread inside each level is wider than the spread between them. Staff what follows.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Staff the last of the fortnight.',
+      context: 'Delivered work per person-year varies more within a level than across levels. The submission is due Monday.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 3, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 3, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 2, note: '' },
+      ],
+      items: [
+        { key: 'within', label: 'Quantify the spread within each level', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the finding that decides whether the answer is "hire" or "look at how work is allocated".' },
+        { key: 'oneonone', label: 'Talk to each lead about what the spread means on their team', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Asking one lead to interpret the other lead’s people is the fastest way to make this about them rather than about the work.', suresh: 'Same.' },
+          why: 'The spread is about named people. That conversation happens with each lead separately and it happens with you.' },
+        { key: 'submission', label: 'Draft the capacity section of the submission', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: { you: 'Two days left and one of them is the lead conversations.' },
+          why: 'She produced the capacity number, so the section that explains it should come from her.' },
+        { key: 'chart', label: 'The demand chart for the pack', days: 1,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Presentation work is the last thing a manager should be taking back onto their desk on a Thursday.' },
+          why: 'Either team can do it, and it is the lowest-stakes item on the list.' },
+      ],
+      whyRight: 'You kept the conversations about named people yourself and left the analysis and the drafting with the leads.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 4, difficulty: 'hard',
+  },
+
+  'mg-111': {
+    title: 'Vikram wants the per-person table anyway',
+    hint: 'You already refused this once internally. He is an exec and he is asking directly.',
+    brief: "Vikram has asked for the per-analyst breakdown by name. You decided on Tuesday that it should not leave the team. He does not know that and would not care.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Vikram Nair', fromTitle: 'Business Stakeholder',
+      prompt: 'Decide, then reply to him.',
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair, Business Stakeholder',
+        body: "The team-level capacity is useful, thanks.\n\nFor the budget round I do need it per person though — if we're arguing for two more heads\nthe first question will be whether the fourteen we have are all pulling their weight.\nJust send me the underlying table.",
+      },
+      decision: {
+        prompt: 'What do you send?',
+        multi: false,
+        options: [
+          { key: 'refuse', correct: true, label: 'Explain why the per-person number does not mean what he thinks, and offer what does answer his question', why: 'His question is fair: is the existing team productive. The per-person table cannot answer it because it ranks logging, not work. Delivered work per level can, and it is the number you already have.' },
+          { key: 'send', correct: false, label: 'Send it — he is an exec and it is his budget round', why: 'It becomes a performance ranking on a measure that does not measure performance, with your name on the covering email.' },
+          { key: 'flat', correct: false, label: 'Refuse on the grounds that individual data is not shared', why: 'It sounds like obstruction and it is not the real reason. He will get the table from somewhere else and trust you less.' },
+          { key: 'asha', correct: false, label: 'Ask Asha to handle it', why: 'Escalating a conversation squarely at your level. You have the argument and the alternative; you should make it.' },
+        ],
+        skills: { businessLogic: 100, communication: 100 },
+        whyRight: 'You answered the question he was actually asking rather than the request he made.',
+      },
+      reply: {
+        prompt: 'Reply to Vikram.',
+        to: 'Vikram Nair', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'question', label: 'Answers the underlying question about productivity', markers: ['pulling', 'productiv', 'your question', 'what you want to know', 'whether the team', 'underneath'], why: 'He does not want a table, he wants an answer. Giving him the answer is what makes the refusal land as helpfulness.' },
+          { key: 'measure', label: 'Explains why the per-person figure misleads', markers: ['logging', 'eighth', 'coverage', 'does not measure', 'not a measure of', 'rank', 'joined in March'], why: 'Without the mechanism it reads as protectiveness rather than accuracy.' },
+          { key: 'offer', label: 'Offers something concrete instead', markers: ['instead', 'can give', 'by level', 'delivered', 'happy to', 'what I can'], why: 'A no with a better yes attached is the only version of this that keeps the relationship.' },
+        ],
+        whyRight: 'You gave him what he needed, explained why the thing he asked for would mislead him, and did not hide behind policy.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-112': {
+    title: 'The lead conversation about Karthik',
+    hint: 'One number. Decide what it is evidence of before you decide what to do about the person.',
+    brief: "Suresh has raised one of his own seniors during the spread conversation. He is asking you what to do, which makes it your problem as much as his.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Suresh Balan, Analytics Team Lead',
+        body: "On the spread — Karthik Iyer is well below the other seniors on delivered work. 22\nrequests against Imran's 31, and fewer hours.\n\nI've had a feeling about it for a while and now there's a number. Do I put him on a\nformal plan? I'd rather do it properly than let it drift another year.",
+      },
+      decision: {
+        prompt: 'What do you tell him?',
+        multi: false,
+        options: [
+          { key: 'ask', correct: true, label: 'Not yet — find out what those requests were before treating the count as performance', why: 'Request counts are not comparable across work of different sizes. Somebody carrying three long investigations delivers fewer requests than somebody clearing quick ones, and a formal plan built on an uncomparable count is indefensible the moment it is challenged.' },
+          { key: 'plan', correct: false, label: 'Yes — a number plus his own judgement is enough to start a formal process', why: 'A formal plan is the most serious thing you can do to somebody short of dismissal, and this one would rest on a count nobody has checked for comparability.' },
+          { key: 'drop', correct: false, label: 'Tell him to leave it — the measure is unreliable', why: 'He has had a concern for a while and has now been told to ignore it. The measure being weak is a reason to look properly, not to stop.' },
+          { key: 'me', correct: false, label: 'Take the conversation with Karthik yourself', why: 'Going round the lead who manages him, on the lead’s own concern. It also removes Suresh from a conversation he has to be able to have.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You stopped a formal process built on a count nobody had checked, without dismissing the concern behind it.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'comparable', label: 'Names comparability as the problem with the count', markers: ['compar', 'size', 'same', 'long', 'complex', 'not all requests', 'kind of work', 'depends what'], why: 'It is the specific defect and it is checkable in an afternoon.' },
+          { key: 'concern', label: 'Takes his prior concern seriously', markers: ['feeling', 'for a while', 'concern', 'not saying', 'may be right', 'worth looking', 'take it'], why: 'He had a view before the number existed. Dismissing the number reads as dismissing him unless you say otherwise.' },
+          { key: 'next', label: 'Says what to do instead of the formal plan', markers: ['look at', 'what those', 'before', 'then', 'talk to him', 'informal', 'first'], why: 'He offered a concrete next step. Refusing it without replacing it leaves him doing nothing and resenting it.' },
+        ],
+        whyRight: 'You protected a named person from a process built on a weak measure and kept his lead engaged with the real question.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-113': {
+    title: 'Friday: what goes into the budget round',
+    hint: 'The submission is one document but the decisions in it belong to different people. Put each one where it can actually be defended.',
+    brief: "Last day. The submission goes in Monday. Assign who owns each part of it — meaning who answers when the round pushes back.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Assign an owner to each part of the submission.',
+      context: 'The capacity figure was corrected by a factor of eight this fortnight. The cancelled-work finding argues for changing intake. Both leads are available; the round itself is yours.',
+      team: [
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: 'In the budget round.' },
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 2, note: 'Not in the round.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 2, note: 'Not in the round.' },
+      ],
+      items: [
+        { key: 'headline', label: 'The capacity figure and the eight-times correction', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Not in the room, and a correction of that size will be challenged live.', suresh: 'Same.' },
+          why: 'A number that moved by a factor of eight needs its owner in the room when it is questioned.' },
+        { key: 'intake', label: 'The cancelled-work argument for changing intake', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'It asks other functions to change how they raise work. That is a manager-level ask.', suresh: 'Same.' },
+          why: 'It is a request to change how other functions behave, which only carries at your level.' },
+        { key: 'method', label: 'The methodology appendix', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: { you: 'Delegable, and you have a round to prepare for.' },
+          why: 'He did the independent check, so the appendix explaining the basis should be his.' },
+        { key: 'backlog', label: 'The backlog composition section', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Her team’s intake, her analysis, and it is the least contested part of the pack.' },
+      ],
+      whyRight: 'You kept the two items that will be challenged live, and delegated the two that will not.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-114': {
+    title: 'The budget slide, and the sentence that survives it',
+    hint: 'Read only the first line and decide what a board member believes afterwards.',
+    brief: "Devika has drafted the summary slide for the round. Every number on it is right. Decide whether the sentence at the top is the one you want repeated.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Summary slide:\n\n  \"Analytics delivered 263 requests this year against a capacity of fourteen people.\n   Demand exceeded delivery and the backlog grew from 35 to 89. We recommend two\n   additional analysts.\"\n\nAll four numbers check out.",
+      },
+      decision: {
+        prompt: 'Does this go in?',
+        multi: false,
+        options: [
+          { key: 'rewrite', correct: true, label: 'Rewrite it — it omits that demand FELL, which is the first thing the round will find', why: 'Requests fell from 213 in the first half to 171 in the second, and the backlog still grew. Leaving that out does not hide it; it just means somebody else raises it and every other number on the slide is doubted.' },
+          { key: 'ship', correct: false, label: 'Ship it — every figure is accurate', why: 'Accurate and incomplete in the one direction that helps the recommendation. That is the pattern a budget round exists to catch.' },
+          { key: 'nohire', correct: false, label: 'Drop the recommendation and present the numbers only', why: 'The round asked for a recommendation. Declining to make one because it is awkward is not neutrality, it is abstention.' },
+          { key: 'add', correct: false, label: 'Add the demand figure to the appendix', why: 'The appendix is where the strongest counter-argument to your own slide goes to be found by somebody else, in the room.' },
+        ],
+        skills: { businessLogic: 100, communication: 100 },
+        whyRight: 'You put the inconvenient number in the headline, where it can be explained rather than discovered.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 190,
+        rubric: [
+          { key: 'demand', label: 'Names the falling demand as the omission', markers: ['fell', 'down', '213', '171', 'demand', 'fewer', 'dropped'], why: 'It is the specific gap, and she has the number already.' },
+          { key: 'found', label: 'Explains that it will be found anyway', markers: ['they will', 'someone will', 'find it', 'ask', 'raised', 'in the room', 'first question'], why: 'The argument for including it is practical, not moral, and the practical version is the one that changes behaviour.' },
+          { key: 'stronger', label: 'Says the case survives it', markers: ['still', 'stronger', 'holds', 'backlog grew', 'even', 'case is', 'better'], why: 'Demand falling while the backlog grows is a more interesting argument than demand rising. She needs to see that including it improves the case.' },
+        ],
+        whyRight: 'You moved the awkward number into the headline and showed her it makes the argument stronger rather than weaker.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-115': {
+    title: 'What you would instrument, and who has to do it',
+    hint: 'Anything you propose here is work for the two people who have just finished a hard fortnight.',
+    brief: "The submission is in. Asha has asked what you would put in place so the next capacity question takes a day rather than a fortnight. Your answer commits your team.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Asha Rao', fromTitle: 'Line Manager',
+      prompt: 'Decide what you propose, then write to her.',
+      exhibit: {
+        kind: 'email', from: 'Asha Rao, Line Manager',
+        body: "Good submission — and thank you for putting the demand number in the headline rather than\nmaking me find it.\n\nWhat would you put in place so this takes a day next time? I'll back whatever you ask for,\nbut I want it to be the thing you'd actually maintain rather than the thing that sounds\nbest in this conversation.",
+      },
+      decision: {
+        prompt: 'What do you propose?',
+        multi: false,
+        options: [
+          { key: 'small', correct: true, label: 'One measure, maintained automatically, plus the intake change that stops the waste', why: 'Delivered work per person-year needs no logging and can be computed from requests the team already closes. Paired with the intake change it fixes the measurement and the cause. Everything else is optional.' },
+          { key: 'logging', correct: false, label: 'A proper time-logging system with enforced compliance', why: 'It is the answer the fortnight disproved. You would be buying a bigger version of the measure that was eight times wrong.' },
+          { key: 'dashboard', correct: false, label: 'A capacity dashboard covering every measure explored this fortnight', why: 'Sounds best in this conversation, which is exactly what she asked you not to do. Every measure on it is something somebody has to maintain.' },
+          { key: 'nothing', correct: false, label: 'Nothing — the work is done and the basis is written down', why: 'The basis being written down is why it took a fortnight this time rather than never. It does not make the next one take a day.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You proposed the smallest thing that would actually be maintained, and paired the measure with the cause.',
+      },
+      reply: {
+        prompt: 'Write to Asha.',
+        to: 'Asha Rao', subject: null, maxWords: 200,
+        rubric: [
+          { key: 'one', label: 'Proposes one measure, not a suite', markers: ['one', 'single', 'just', 'delivered work', 'per person-year', 'only', 'minimum'], why: 'She explicitly asked for the thing you would maintain. One measure is a commitment; a suite is a wish.' },
+          { key: 'nolog', label: 'Says why it does not depend on logging', markers: ['without logging', 'no logging', 'automatic', 'already', 'closed', 'falls out', 'requests'], why: 'It is the property that makes it survive contact with a busy team, and it is the lesson of the fortnight.' },
+          { key: 'cause', label: 'Includes the intake change', markers: ['intake', 'cancel', 'upstream', '485', 'before it reaches', 'raise', 'cause'], why: 'Measuring capacity better does not create any. The cancelled work does.' },
+          { key: 'cost', label: 'Is honest about who maintains it', markers: ['maintain', 'who', 'cost', 'Devika', 'Suresh', 'my team', 'owns', 'ongoing'], why: 'Everything proposed here lands on two people who have just had a hard fortnight. Saying so is what makes the proposal credible.' },
+        ],
+        whyRight: 'You proposed one maintainable measure, fixed the cause as well as the measurement, and said who carries it.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-201': {
+    title: 'Staff the licence review',
+    hint: 'One of these is a negotiation and the rest are analysis. They do not go to the same kind of person.',
+    brief: "Six tools, a renewal clock running, and Finance expecting a saving. Set the work across both leads.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the review.',
+      context: 'The BI platform renews in August at ₹21.6 lakh for thirty seats. Five other contracts follow it. Diya in Finance has already told her director there will be a saving.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'usage', label: 'Seats bought against seats actually used', days: 3,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'The core analysis, and it needs somebody who will insist on what "used" means before counting anything.' },
+        { key: 'vendor', label: 'The conversation with Clearview about the renewal', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'A commercial negotiation with a vendor is not a lead’s to hold.', suresh: 'Same.' },
+          why: 'It is a commercial conversation with money and a contract behind it.' },
+        { key: 'finance', label: 'Set expectations with Diya about the size of any saving', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She has already promised her director a number. Unwinding that is above a lead.', suresh: 'Same.' },
+          why: 'Somebody has committed to a saving before anyone counted. That correction goes from you, early.' },
+        { key: 'who', label: 'Map which tools each team actually depends on', days: 3,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: { you: 'Three days of mapping is not a manager’s work while two commercial conversations are waiting.' },
+          why: 'Cutting seats without knowing who depends on what is how a renewal saving becomes an outage.' },
+      ],
+      whyRight: 'Both commercial conversations stayed with you, and the analysis went to the leads.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 1, difficulty: 'medium',
+  },
+
+  'mg-202': {
+    title: 'Diya has already promised a number',
+    hint: 'She has committed to something on your behalf. Decide whether to correct it before or after you know the answer.',
+    brief: "Finance has told their director analytics will save twenty per cent on tooling. Nobody has counted anything yet.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Diya Chandra', fromTitle: 'Finance Analyst',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra, Finance Analyst',
+        body: "Quick heads-up — I've put analytics down for a 20% tooling saving in the draft budget.\nIt's the number my director wanted to see and I know you're reviewing the licences anyway.\n\nShout if that's wildly off, otherwise I'll leave it in.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'unwind', correct: true, label: 'Tell her today it has to come out until the review is done', why: 'A number in a draft budget becomes the expectation whatever the analysis finds. Correcting it now costs one awkward email; correcting it in August costs the credibility of every number your team sends Finance.' },
+          { key: 'leave', correct: false, label: 'Leave it — twenty per cent is probably achievable', why: 'Probably is not a basis for somebody else’s budget line, and "shout if it is wildly off" is her transferring the risk to you.' },
+          { key: 'later', correct: false, label: 'Wait until the review is done and then correct it if needed', why: 'By then it has been read, repeated and planned around. The cheapest moment to unwind a number is before anybody has used it.' },
+          { key: 'escalate', correct: false, label: 'Raise it with Asha as Finance over-committing on your behalf', why: 'It is a two-line email between peers. Escalating it makes an enemy of the person you most need to be straight with.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You unwound a commitment before it was built on, rather than after.',
+      },
+      reply: {
+        prompt: 'Reply to Diya.',
+        to: 'Diya Chandra', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'out', label: 'Asks for it to come out now', markers: ['take it out', 'remove', 'pull it', 'come out', 'not yet', 'hold', 'placeholder'], why: 'She offered to leave it unless told otherwise. Anything ambiguous means it stays.' },
+          { key: 'when', label: 'Says when she will have a real number', markers: ['by', 'when', 'weeks', 'review', 'August', 'give you', 'then'], why: 'She has a director expecting something. A refusal with no date is a problem you have handed back.' },
+          { key: 'why', label: 'Explains why a placeholder is expensive', markers: ['expect', 'planned', 'built on', 'harder', 'later', 'credib', 'stick'], why: 'Otherwise she will do the same thing next quarter, and she is doing it to be helpful.' },
+        ],
+        whyRight: 'You got it out before it was planned around, and gave her a date rather than a refusal.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'mg-203': {
+    title: 'The leaver still has four seats',
+    hint: 'It is a small number and it is not really about the money.',
+    brief: "Suresh has found that somebody who left in January still holds seats on four tools. Decide what this is.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'note', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Farhan Sheikh left on 30 January. He still has assigned seats on the BI platform, the\nwarehouse, the data catalogue and notebook hosting.\n\nFour seats, maybe ₹40k a year. Barely worth mentioning in the renewal, but it did make me\nwonder what else nobody turned off when he left.",
+      },
+      decision: {
+        prompt: 'What do you do with this?',
+        multi: false,
+        options: [
+          { key: 'offboard', correct: true, label: 'Treat it as an offboarding failure rather than a licence saving', why: 'Four seats is rounding in a ₹21.6 lakh renewal. Four live tool accounts belonging to somebody who left eight months ago is an access question, and his last sentence is the actual finding.' },
+          { key: 'saving', correct: false, label: 'Add the four seats to the savings list', why: 'True and trivial, and it files an access problem under cost. The renewal will absorb the number and nobody will ever look at offboarding.' },
+          { key: 'ignore', correct: false, label: 'Reclaim them quietly and move on', why: 'Fixes this instance and guarantees the next one. He asked the right question and got no answer.' },
+          { key: 'it', correct: false, label: 'Raise it with IT as their process failure', why: 'It may well be theirs, and leading with whose fault it is gets you a defensive conversation instead of a fixed process.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You followed his second sentence rather than his first, and treated four live accounts as access rather than as cost.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'reframe', label: 'Names it as access, not cost', markers: ['access', 'account', 'security', 'still active', 'logged in', 'offboard', 'not the money'], why: 'The reframe is the content. As a cost line it is ignorable; as access it is urgent.' },
+          { key: 'question', label: 'Picks up his "what else" question', markers: ['what else', 'others', 'who else', 'everyone who', 'check', 'leavers', 'good question'], why: 'He noticed the general case himself. Answering only the specific one teaches him not to bother.' },
+          { key: 'renewal', label: 'Is clear it does not belong in the renewal savings', markers: ['not in the', 'separate', 'renewal', 'saving', 'rounding', 'small'], why: 'Otherwise it goes on the list, gets counted, and disappears.' },
+        ],
+        whyRight: 'You reframed it, followed the general question, and kept it out of the savings column where it would have vanished.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 1, difficulty: 'hard',
+  },
+
+  'mg-204': {
+    title: 'Make "active" mean one thing',
+    hint: 'Three different numbers exist because nobody has written down what the word means. Fix that before anyone counts again.',
+    brief: "Seats, assignments and active users came back as three different numbers per tool. Set the week so the third one has a definition behind it.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the work.',
+      context: 'Monday’s table ranked tools by cost per contracted seat. Diya has it. Nobody has agreed what counts as an active user, and the BI platform has thirty seats against fourteen assignments.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Seven people. Holds one of the tool seats herself.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Six people. Will argue about a definition before he uses it, which is the point.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'define', label: 'Write down what counts as an active user before anyone counts again', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Three numbers exist because the word has never been defined. Somebody has to write the definition down and make it stick.' },
+        { key: 'owners', label: 'Ask each function which tools their people genuinely depend on', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: { you: 'Six conversations of legwork is a lead’s job. You have a correction to make and a contract to read.' },
+          why: 'Usage data says who logged in. It does not say who would be stuck on Monday morning without it.' },
+        { key: 'diya', label: 'Tell Diya the ranking she was sent on Monday is the wrong rate', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'It went out under your name. Sending a lead to retract it makes them carry a decision they did not make.', suresh: 'Same, and he will be the one asked why analytics sent a wrong number.' },
+          why: 'Cost per contracted seat ranks by how much you bought, not by how much you waste. Correcting your own number is not delegable.' },
+        { key: 'leavers', label: 'Reconcile every assignment against the leaver list', days: 1,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'A one-day reconciliation on your own desk is a manager doing analysis to feel useful.' },
+          why: 'Either lead can do it, and one seat on four tools is already known to belong to somebody who left in January.' },
+      ],
+      whyRight: 'The definition and the legwork went to the leads, and the retraction of your own number stayed with you.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'mg-205': {
+    title: 'Sixteen seats nobody has',
+    hint: 'Ask what actually changes on the invoice if she does it this afternoon.',
+    brief: "Devika has found sixteen BI seats that have never been assigned to anybody and wants to act on them today.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Thirty seats on the BI platform. Fourteen assigned. Sixteen have never been given to anybody.\n\nAt ₹72,000 a seat that is ₹11.5 lakh sitting there. I can clear them down this afternoon\nand we can tell Diya we have already found most of her saving.",
+      },
+      decision: {
+        prompt: 'What do you tell her?',
+        multi: false,
+        options: [
+          { key: 'renewal', correct: true, label: 'The sixteen seats are a renewal position, not an action for this week', why: 'There is nothing to clear — nobody holds them. We have already paid for thirty seats until 15 August. The sixteen become ₹11.52 lakh only when the contract is renewed at a lower seat count, which is a conversation with Clearview, not a change in an admin console.' },
+          { key: 'clear', correct: false, label: 'Let her clear them down this afternoon', why: 'She would be unassigning seats that have never been assigned. The console would look tidier and the invoice would be identical.' },
+          { key: 'midterm', correct: false, label: 'Ask Clearview to drop to fourteen seats mid-term', why: 'Term contracts do not flex downwards on request, and asking six weeks before the renewal tells them exactly where your floor is before you have set one.' },
+          { key: 'quiet', correct: false, label: 'Say nothing and let it appear in Friday’s recommendation', why: 'She has offered to do something useless and will do it. Staying quiet costs her an afternoon and teaches her nothing about how the money actually works.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You separated an admin action from a commercial one, which is the distinction the whole review turns on.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'nochange', label: 'Says clearing them changes nothing on the invoice', markers: ['invoice', 'bill', 'nothing', 'no change', 'already paid', 'same', 'contract'], why: 'Without this she does it anyway, because sixteen idle seats obviously look like waste.' },
+          { key: 'renewal', label: 'Names the renewal as the moment the saving exists', markers: ['renew', 'August', '15', 'contract', 'negotiat', 'term', 'when we'], why: 'It moves the finding from an admin queue to a commercial one, which is where it is worth ₹11.52 lakh.' },
+          { key: 'keep', label: 'Keeps the finding — it is the centre of the case', markers: ['good', 'right', 'useful', 'keep', 'core', 'centre', 'evidence', 'headline'], why: 'She found the largest single number in the review. A reply that is only a correction will stop her looking.' },
+        ],
+        whyRight: 'You stopped a pointless action without discouraging the person who found the biggest number in the review.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 2, difficulty: 'medium',
+  },
+
+  'mg-206': {
+    title: 'Rahul can script it tonight',
+    hint: 'The offer is to act on a threshold. Ask what the threshold would take out.',
+    brief: "Engineering offers to revoke every seat unused for ninety days, automatically, tonight.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Rahul Verma', fromTitle: 'Data Engineer',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Rahul Verma, Data Engineer',
+        body: "I can write this in an hour. Any seat with no usage in 90 days gets revoked, runs weekly\nfrom then on. Saves you the whole audit.\n\nWant me to kick it off tonight?",
+      },
+      decision: {
+        prompt: 'What do you say?',
+        multi: false,
+        options: [
+          { key: 'report', correct: true, label: 'Ask him for the weekly report and keep the revoking a human decision', why: 'Ninety days of silence is evidence of a question, not an answer. The Statistical suite is used at quarter ends by people who need it badly for a week and not at all for three months. The recurring report is the valuable half of his offer; the automatic revocation is the half that causes an incident.' },
+          { key: 'run', correct: false, label: 'Let him run it tonight', why: 'It would take out five Statistical suite seats, one of them a team lead’s, with no warning and no way to explain it afterwards except that a script did it.' },
+          { key: 'defend', correct: false, label: 'Have him publish the list and revoke anything the holder does not defend in a week', why: 'You have six weeks to a renewal and you have just created a week of people justifying their tools to a spreadsheet. Everybody defends everything, and you learn nothing.' },
+          { key: 'park', correct: false, label: 'Park it until after the renewal', why: 'The recurring report is the thing that stops next year being this week again, and he is offering to build it for free today.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You took the instrumentation and refused the automation, which is the right half of a generous offer.',
+      },
+      reply: {
+        prompt: 'Reply to Rahul.',
+        to: 'Rahul Verma', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'yes', label: 'Accepts the report', markers: ['yes', 'report', 'weekly', 'list', 'please', 'take', 'useful'], why: 'He has offered to build the standing instrumentation for an hour of his time. Declining the whole thing is the expensive answer.' },
+          { key: 'no', label: 'Declines the automatic revoking, with a reason', markers: ['not revoke', 'no revoke', 'without', 'manual', 'decision', 'quarter', 'seasonal', 'people'], why: 'A flat no teaches him you are cautious. A reason teaches him what the threshold misses.' },
+          { key: 'example', label: 'Gives him the concrete case the threshold breaks on', markers: ['statistical', 'stat suite', 'quarter', 'ninety', '90', 'seasonal', 'example'], why: 'Engineers argue with abstractions and concede to examples.' },
+        ],
+        whyRight: 'You kept the report, refused the revocation, and gave him the case that makes the difference obvious.',
+      },
+    },
+    estHours: 0.35, priority: 'normal', dueInDays: 2, day: 2, difficulty: 'medium',
+  },
+
+  'mg-207': {
+    title: 'The ranking inverts',
+    hint: 'Two of these are analysis and two are people who are already holding the wrong number.',
+    brief: "Cost per active user puts a different tool at the top than cost per seat did. Re-cut the week around that.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Reallocate.',
+      context: 'By cost per contracted seat, warehouse compute topped the list at ₹1,03,571. By cost per active user the Statistical suite tops it at ₹1,84,000 and warehouse compute falls to third. Diya has Monday’s version. Engineering has heard a rumour off the back of it.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: 'Two corrections to make, both of them yours.' },
+      ],
+      items: [
+        { key: 'recut', label: 'Re-cut every rate on active users and reissue the table', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: { you: 'Taking the rebuild yourself on the day the story changes is how the two conversations that only you can have do not happen.' },
+          why: 'It is the arithmetic that makes every later number defensible, and it is squarely a lead’s work.' },
+        { key: 'capability', label: 'Establish what the Statistical suite is actually used for at quarter end', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'It is about to look like the most wasteful contract in the estate. Before recommending anything, somebody has to know what stops if it goes.' },
+        { key: 'diya', label: 'Walk Diya through why the ranking she has inverts', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She would be explaining why a number you sent was the wrong rate. That is yours.', suresh: 'Same, and he is rebuilding the table she is being asked to throw away.' },
+          why: 'Second correction in three days to the same person. Delegating it is how you lose her.' },
+        { key: 'arjun', label: 'Kill the rumour in engineering that warehouse seats are being cut', days: 1,
+          best: ['you'], acceptable: ['devika', 'suresh'],
+          forbidden: {},
+          why: 'It came out of a table you circulated, and a peer manager planning around a wrong belief is a problem with a clock on it.' },
+      ],
+      whyRight: 'The rebuild and the capability question went to the leads, and both corrections stayed where the wrong number came from.',
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-208': {
+    title: 'Cut the whole contract',
+    hint: 'Look at who the five current users are before you decide how brave this is.',
+    brief: "Half the Statistical suite seats have not been touched in three months. Devika proposes dropping the contract entirely.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Statistical suite: ₹9.2 lakh a year, ten seats, five of them not opened since before April.\nWorst cost per active user in the estate at ₹1,84,000.\n\nHonestly — why are we renewing it at all? Dropping it is ₹9.2 lakh and it is one line in the pack.\nThat is most of Diya’s twenty per cent on its own.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'trim', correct: true, label: 'Renew at seven seats — five active plus headroom — and keep the capability', why: 'Three seats at ₹92,000 is ₹2.76 lakh, recovered with nobody losing anything. Dropping the contract is ₹9.2 lakh and removes a capability you cannot restore inside a financial year, for five current users who include a team lead and your own line manager.' },
+          { key: 'drop', correct: false, label: 'Drop the contract', why: 'The biggest headline in the pack and the one you would spend the rest of the year explaining. Five people used it in the last ninety days, and the reason the other five did not is that it is a quarter-end tool.' },
+          { key: 'keep', correct: false, label: 'Leave it at ten seats and take the saving elsewhere', why: 'Five seats have been idle for three months on the most expensive per-user contract you own. Leaving it whole to avoid an argument is the outcome the review exists to prevent.' },
+          { key: 'ask', correct: false, label: 'Ask the five dormant holders whether they still want their seats', why: 'Everybody says yes to that question. It converts a decision you can make from evidence into a poll you have already lost.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You took the recoverable seats and refused to buy a headline by removing a capability.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'seats', label: 'Names the seat count you will renew at', markers: ['seven', '7', 'seats', 'plus two', 'headroom', 'trim', 'reduce'], why: 'A decision without a number is an opinion, and she needs something to put in the table.' },
+          { key: 'users', label: 'Points at the five people who are still using it', markers: ['five', '5', 'still', 'active', 'users', 'Asha', 'lead', 'quarter'], why: 'It is the fact that turns a bold cut into a bad one, and she has not looked at it.' },
+          { key: 'irreversible', label: 'Says why dropping a contract is not the same size of decision as dropping seats', markers: ['back', 'restore', 'reinstat', 'irreversib', 'year', 'hard', 'return', 'capabilit'], why: 'Seats come back next month. A cancelled contract comes back at next year’s price, if at all.' },
+        ],
+        whyRight: 'You gave her a number, the evidence against her version, and the reason the two decisions are not the same size.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-209': {
+    title: 'Engineering has heard you are cutting the warehouse',
+    hint: 'He is planning around something that is not true. Work out where he got it.',
+    brief: "A peer manager is making September decisions on the strength of a number you circulated on Monday.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Arjun Rao', fromTitle: 'Engineering Manager',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Arjun Rao, Engineering Manager',
+        body: "Diya mentioned analytics is cutting warehouse seats — apparently it is your most expensive tool.\n\nWe have two pipelines landing there in September and I have three people who need access for that.\nAm I planning for fewer seats or not? I would rather know now than in October.",
+      },
+      decision: {
+        prompt: 'How do you handle it?',
+        multi: false,
+        options: [
+          { key: 'correct', correct: true, label: 'Correct the fact today and tell him where the wrong version came from', why: 'Warehouse compute has fourteen seats, fourteen assignments and thirteen active users — it is the best-used contract you own and nothing is being cut. He is planning against a ranking that measured cost per seat bought, and he should know that so he treats the next table you send with the right amount of care.' },
+          { key: 'reassure', correct: false, label: 'Tell him not to worry', why: 'No number, so the rumour survives the conversation and comes back in October with somebody else’s name on it.' },
+          { key: 'diya', correct: false, label: 'Take it up with Diya for repeating a draft', why: 'She repeated a table you sent her without a caveat on it. Making it a leak makes an opponent of the person the whole review is for.' },
+          { key: 'defer', correct: false, label: 'Tell him you will confirm when the review lands', why: 'He asked precisely so he would not have to wait. Two weeks of planning for a cut that is not coming is a cost you chose for him.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'You corrected the fact fast and named the source, rather than managing the feeling.',
+      },
+      reply: {
+        prompt: 'Reply to Arjun.',
+        to: 'Arjun Rao', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'no', label: 'States plainly that warehouse seats are not being cut', markers: ['not', 'no cut', 'fourteen', '14', 'unchanged', 'same', 'keeping'], why: 'He needs a sentence he can repeat to three people, not a reassurance.' },
+          { key: 'evidence', label: 'Gives him the usage number behind it', markers: ['fourteen', '14', 'thirteen', '13', 'active', 'assigned', 'used', 'best'], why: 'It is the fully-used contract in the estate. The number is why the answer will not change next week.' },
+          { key: 'source', label: 'Explains what the ranking he heard about actually measured', markers: ['per seat', 'cost per', 'rate', 'ranking', 'draft', 'early', 'measure'], why: 'Otherwise the next draft that reaches him gets planned around too.' },
+        ],
+        whyRight: 'He got a plain no, the number behind it, and enough about the wrong table that the next one lands better.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 3, difficulty: 'medium',
+  },
+
+  'mg-210': {
+    title: 'Three buckets, three owners',
+    hint: 'One of your two leads is personally inside one of these buckets.',
+    brief: "Twenty seats nobody has, four held by somebody who left, five idle on one tool. Different problems, different people.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the three buckets.',
+      context: 'Never assigned: 20 seats, ₹13.07 lakh. Held by a leaver: 4 seats, ₹2.76 lakh. Held by current staff and idle since before April: 5 seats on the Statistical suite, ₹4.60 lakh. Devika holds one of those five.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: 'One of the five dormant Statistical suite seats is hers.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'never', label: 'Build the renewal position on the twenty never-assigned seats', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the largest number in the review and it is arithmetic and contract dates. A lead can own it end to end.' },
+        { key: 'dormant', label: 'Talk to the five people holding idle Statistical suite seats', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: { you: 'Going round both leads to talk to their own people about their own tools tells fourteen people who they really report to.' },
+          why: 'Devika is one of the five. She could still run it, but Suresh can have the conversation without being in it.' },
+        { key: 'leaver', label: 'The four seats held by January’s leaver, and the offboarding gap behind them', days: 1,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Small money, real access problem, and it needs somebody to go and find out what else was never turned off.' },
+        { key: 'standing', label: 'Agree with Asha what becomes standing process rather than an annual scramble', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Committing your function to a permanent process is above a lead, and she would be agreeing to work she does not control.', suresh: 'Same.' },
+          why: 'It commits your team to ongoing work and it is agreed with your own manager. That is the definition of yours.' },
+      ],
+      whyRight: 'The conversation about idle seats went to the lead who is not in the list, and the standing commitment stayed with you.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 4, difficulty: 'hard',
+  },
+
+  'mg-211': {
+    title: 'Reclaim them quietly',
+    hint: 'Ask what the five people learn about every future usage report.',
+    brief: "Engineering can take back the five idle Statistical suite seats tonight. Nobody would be told.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Rahul Verma', fromTitle: 'Data Engineer',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Rahul Verma, Data Engineer',
+        body: "Got your five names for the stats tool. I can pull the seats tonight — it is two minutes.\n\nMy honest advice: do not announce it. Half of them will not notice and the other half will\nask for it back out of principle. If anyone shouts we just put it back.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'notice', correct: true, label: 'Give the five a week’s notice and reclaim whatever nobody asks to keep', why: 'A week costs you nothing — the contract renews on 5 October. Removing a colleague’s access silently, on the basis of a usage report you commissioned, is how every future report about tool usage gets read as a threat, including the standing one you are about to ask for.' },
+          { key: 'silent', correct: false, label: 'Let him pull them tonight', why: 'It works, and it is the last time anybody in your function believes a usage number is being collected for a neutral reason.' },
+          { key: 'keep', correct: false, label: 'Leave all five alone', why: '₹4.6 lakh of idle seats on your most expensive per-user contract, left untouched because the conversation is awkward. The review would have been better not done.' },
+          { key: 'carveout', correct: false, label: 'Do it, but leave Devika’s seat alone since she is a lead', why: 'Carving out the lead is the fastest possible way to turn a reasonable rule into a story about who it applies to.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'You protected the credibility of every usage report you will ever send, which is worth more than a week.',
+      },
+      reply: {
+        prompt: 'Reply to Rahul.',
+        to: 'Rahul Verma', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'notice', label: 'Asks for notice before anything is removed', markers: ['tell', 'notice', 'week', 'first', 'before', 'let them know', 'heads-up', 'warn'], why: 'It is the whole decision, and his default is the opposite.' },
+          { key: 'why', label: 'Says why silence is expensive', markers: ['trust', 'credib', 'threat', 'report', 'future', 'again', 'next time', 'surveill'], why: 'Otherwise this reads as squeamishness and he proposes it again next quarter.' },
+          { key: 'timing', label: 'Shows there is time to do it properly', markers: ['October', '5 Oct', 'renew', 'weeks', 'no rush', 'not urgent', 'time'], why: 'He is optimising for speed on something with a four-month clock.' },
+        ],
+        whyRight: 'You kept the seats in scope, added the notice, and gave a reason rather than a flinch.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-212': {
+    title: 'Why not the full twenty lakh',
+    hint: 'The gap is not caution. Work out what it is made of before you defend it.',
+    brief: "The recommendation is ₹13.89 lakh. The analysis says ₹20.43 lakh is recoverable. Finance wants the difference.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Diya Chandra', fromTitle: 'Finance Analyst',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra, Finance Analyst',
+        body: "Your own table says ₹20.43 lakh is recoverable and you are recommending ₹13.89 lakh.\n\nThat is ₹6.54 lakh you are choosing not to take. I have to explain that to my director,\nand at the moment the explanation is that analytics did not fancy it.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'headroom', correct: true, label: 'Hold at ₹13.89 lakh and show her exactly what the ₹6.54 lakh is', why: 'The recommendation is active users plus two seats per tool, capped at what we already hold. The gap is that headroom plus the tools already at or under their active count — warehouse compute at fourteen for thirteen users, the catalogue at fourteen for twelve, notebooks at twelve for eleven. Taking it means every joiner waits on a procurement cycle. That is a defensible answer; it just has to be said out loud.' },
+          { key: 'split', correct: false, label: 'Offer half the difference as a stretch target', why: 'An invented number after a week spent arguing that numbers should be counted. She will ask what changed, and there is no answer.' },
+          { key: 'max', correct: false, label: 'Recommend the full ₹20.43 lakh and manage the consequences', why: 'It cuts warehouse compute below its active user count. The first September joiner who cannot get access costs more in delay than the seat saved.' },
+          { key: 'escalate', correct: false, label: 'Ask Asha to take it up with Diya’s director', why: 'You have a good answer and an analyst asking a fair question. Routing it through two managers says you cannot defend your own recommendation.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You defended the gap with what it is made of, rather than splitting the difference or caving.',
+      },
+      reply: {
+        prompt: 'Reply to Diya.',
+        to: 'Diya Chandra', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'rule', label: 'States the rule behind the recommendation', markers: ['plus two', 'headroom', 'active', 'active users', 'cap', 'rule', 'method'], why: 'It turns ₹13.89 lakh from a preference into arithmetic she can repeat.' },
+          { key: 'made', label: 'Says what the ₹6.54 lakh consists of', markers: ['warehouse', 'catalogue', 'notebook', 'below', 'already', 'buffer', 'joiner', 'headroom'], why: 'Her problem is that she cannot explain it. Name the components and she can.' },
+          { key: 'cost', label: 'Names what taking it would cost', markers: ['joiner', 'wait', 'procure', 'delay', 'access', 'new starter', 'risk'], why: 'A saving declined needs a price attached or it reads as reluctance.' },
+        ],
+        whyRight: 'She can now defend your number to her director without you in the room.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-213': {
+    title: 'Who owns what on Monday',
+    hint: 'Two of these outlive the review. Decide who carries them when nobody is watching.',
+    brief: "The review lands today. Set who holds the renewal, the standing checks and the rule for next time.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate what happens next.',
+      context: 'The BI contract renews on 15 August, the Statistical suite on 5 October, scheduling on 12 January. Rahul has offered a weekly seat-and-usage report. Nobody currently signs off a new tool purchase.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'renewal', label: 'Hold the Clearview call and land fifteen seats', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'A vendor negotiation with ₹10.8 lakh on it is not a lead’s to hold, and Clearview will know it.', suresh: 'Same. Sending a lead signals you are not serious about the number.' },
+          why: 'It is the commercial conversation the entire week was building to.' },
+        { key: 'standing', label: 'Stand up the monthly seat-and-usage report with Rahul', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the thing that stops next year being this week again, and it is build-and-own work a lead should hold.' },
+        { key: 'offboard', label: 'Fix the leaver checklist with IT and People so seats come back automatically', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'It is cross-functional legwork with a clear outcome, which is exactly what you develop a lead on.' },
+        { key: 'gate', label: 'Decide who signs off a new tool purchase from now on', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She would be inventing a rule that binds her peer and her own manager.', suresh: 'Same.' },
+          why: 'Setting a spending gate is an authority question, and authority you do not hold cannot be delegated.' },
+      ],
+      whyRight: 'The vendor call and the spending rule stayed with you; the two pieces of durable build went to the leads.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 5, difficulty: 'medium',
+  },
+
+  'mg-214': {
+    title: 'Clearview would like to help',
+    hint: 'Work out the annual cost of each option before you decide which is generous.',
+    brief: "The vendor has heard the seat count is under review and has come back with an offer.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Clearview Account Team', fromTitle: 'Vendor',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Clearview Account Team',
+        body: "We understand you are reviewing seat counts ahead of 15 August.\n\nWe would rather keep you whole: 12% off the current thirty-seat price if you commit for two years.\nThat is a saving against your current ₹21.6 lakh, locked in, with no change to your access.\n\nThe existing terms roll over automatically on 15 August if we do not hear from you.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'decline', correct: true, label: 'Decline and renew fifteen seats at list', why: 'Thirty seats at 12% off is ₹19.01 lakh a year. Fifteen seats at ₹72,000 is ₹10.80 lakh. Their offer costs ₹8.21 lakh a year more than the recommendation, and locks it for two years. A discount on twice what you need is not a discount.' },
+          { key: 'accept', correct: false, label: 'Take the 12% — it is a real saving and reads well', why: 'It is a real saving against the wrong baseline. Measured against what you actually need, it is ₹16.4 lakh worse over the two years.' },
+          { key: 'counter', correct: false, label: 'Counter at twenty seats with the same discount', why: 'Twenty at 12% off is ₹12.67 lakh — still ₹1.87 lakh a year worse than fifteen at list, and you have bought five seats nobody has asked for.' },
+          { key: 'defer', correct: false, label: 'Ask for more time to finish the review', why: 'Read the last line. The existing terms roll over on 15 August unless they hear otherwise — silence is a thirty-seat renewal at full price.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You priced the offer against what you need rather than against what you currently pay.',
+      },
+      reply: {
+        prompt: 'Reply to the account team.',
+        to: 'Clearview Account Team', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'number', label: 'States the seat count you are renewing at', markers: ['fifteen', '15', 'seats', 'renew', 'reduce'], why: 'Their auto-renewal clause means anything short of an explicit number is a thirty-seat renewal.' },
+          { key: 'decline', label: 'Declines the two-year commitment', markers: ['not', 'decline', 'no', 'two-year', 'two year', 'commit', 'pass'], why: 'A polite non-answer to a lock-in offer is how you find yourself locked in.' },
+          { key: 'deadline', label: 'Addresses the 15 August rollover explicitly', markers: ['August', '15', 'before', 'roll', 'auto', 'confirm', 'writing'], why: 'The clause does the work if nobody names it.' },
+        ],
+        whyRight: 'You gave them a number, refused the lock-in, and closed the auto-renewal door in writing.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-215': {
+    title: 'When the saving actually lands',
+    hint: 'Three contracts, three renewal dates. Only one of them is inside the next quarter.',
+    brief: "Finance wants to book ₹13.89 lakh from 1 July. Decide what you tell her before it is in a budget.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Diya Chandra', fromTitle: 'Finance Analyst',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra, Finance Analyst',
+        body: "Great pack, thank you. I am putting ₹13.89 lakh into the analytics line as a delivered saving\nfrom 1 July so it shows in this year in full.\n\nThat replaces the placeholder we argued about on Monday, so I think we are square.",
+      },
+      decision: {
+        prompt: 'What do you tell her?',
+        multi: false,
+        options: [
+          { key: 'phase', correct: true, label: 'Give her the saving by renewal date, not from 1 July', why: 'Nothing changes until each contract renews. The BI reduction — ₹10.80 lakh of the ₹13.89 lakh — starts on 15 August. The Statistical suite seats start on 5 October. Scheduling does not renew until 12 January. Booking the full amount from 1 July is the same mistake as Monday’s placeholder, wearing the pack as a disguise.' },
+          { key: 'july', correct: false, label: 'Let it stand — the analysis supports the number', why: 'It supports the annual number, not the date. Six weeks of BI at thirty seats is already spent and the January contract sits almost entirely outside the year.' },
+          { key: 'next', correct: false, label: 'Ask her to book none of it this year and all of it next', why: 'Over-correcting the other way. Most of the BI saving genuinely does land this year and understating it is its own kind of wrong number.' },
+          { key: 'round', correct: false, label: 'Give her a conservative round ₹12 lakh to be safe', why: 'An invented figure at the end of a week spent insisting numbers get counted. You would be doing on Friday what you stopped her doing on Monday.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You caught the same mistake in a friendlier disguise and answered it with dates.',
+      },
+      reply: {
+        prompt: 'Reply to Diya.',
+        to: 'Diya Chandra', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'dates', label: 'Gives her the renewal dates the saving starts from', markers: ['August', 'October', 'January', '15', '5', '12', 'renew', 'date'], why: 'She needs the phasing, not a warning. Dates are the deliverable.' },
+          { key: 'split', label: 'Separates the part that does land this year', markers: ['10.8', '10.80', 'BI', 'most', 'majority', 'this year', 'part'], why: 'Otherwise it reads as a refusal rather than a correction, and she has a budget to file.' },
+          { key: 'annual', label: 'Is clear ₹13.89 lakh is the full-year run rate', markers: ['full year', 'annual', 'run rate', 'once', 'steady', 'from then', 'ongoing'], why: 'The number is right. Only its start date is wrong, and she should keep the number.' },
+        ],
+        whyRight: 'She got dates, a split, and confirmation that the annual figure stands — everything she needs to file it correctly.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-301': {
+    title: 'Set the week on a complaint',
+    hint: 'One of these is a conversation you have to have before somebody else has it for you.',
+    brief: "A requesting function says it has given up on analytics. Set the week across both teams before you answer them.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the review.',
+      context: 'Ravi Menon says Retail Ops has stopped sending work: nothing marked urgent comes back faster, and things they raised last year were never looked at. Three hundred and eighty-four requests came in over the year and thirty-two have never been started.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Seven people. Carries more open requests herself than anyone on either team.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Six people. Retail Ops work mostly sits with his side.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'fairness', label: 'Settle whether Retail Ops is treated differently from everyone else', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the question he actually asked, it is one group-by, and it belongs with the lead whose side carries their work.' },
+        { key: 'flag', label: 'Establish what the urgent flag currently buys', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'The most consequential claim in the complaint and the one everything later depends on.' },
+        { key: 'asha', label: 'Tell Asha a complaint from another function has landed, before she hears it elsewhere', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Your manager hearing about a cross-functional complaint from a lead means she hears it as a rumour.', suresh: 'Same, and he would be reporting on his own team’s service.' },
+          why: 'A manager who finds out about a complaint against your team from anyone but you starts the week assuming you did not know.' },
+        { key: 'queue', label: 'Go through the thirty-two requests nobody ever started', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Thirty-two requests read one at a time is a full day of analysis you would be taking off a lead to avoid a harder conversation.' },
+          why: 'Either lead can read them, and somebody has to know what is in them before anyone talks about closing them.' },
+      ],
+      whyRight: 'Both measurable claims went to the leads, the queue went to the leads, and the conversation with your own manager stayed with you.',
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mg-302': {
+    title: 'Close the queue and the problem goes away',
+    hint: 'Ask what happens to the thirty-two requesters, and to the complaint you are currently answering.',
+    brief: "Thirty-two requests have never been started. Your lead has an efficient suggestion.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to him.',
+      exhibit: {
+        kind: 'message', from: 'Suresh Balan, Analytics Team Lead',
+        body: "The thirty-two. Oldest is 361 days. Realistically we are never doing any of them.\n\nI can bulk-close the lot this morning with a standard note and the queue metric goes to zero.\nIf anyone still wants one they will raise it again.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'read', correct: true, label: 'Nothing gets closed until somebody has read what is in them', why: 'Three of the thirty-two were raised by the person whose complaint you are answering this week. Bulk-closing them the same morning turns a visible failure into an invisible one and hands Ravi the proof that analytics does not take his team seriously.' },
+          { key: 'bulk', correct: false, label: 'Let him bulk-close them with a standard note', why: 'The metric goes to zero and the problem goes underground. "Raise it again" costs the requester the effort and you the relationship.' },
+          { key: 'silent', correct: false, label: 'Close them without notifying anybody', why: 'Thirty-two people find out at different times over the next six months, each one separately, each one furious.' },
+          { key: 'all', correct: false, label: 'Commit to delivering all thirty-two', why: 'The opposite error. Some of them are a year old and nobody needs them any more; promising all thirty-two is how the queue becomes thirty-two broken promises.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You refused to make a failure invisible in the same week you were asked to account for it.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'no', label: 'Stops the bulk close', markers: ['not yet', 'hold', 'do not', 'don’t', 'dont', 'before', 'wait', 'no'], why: 'He offered to do it this morning. Anything ambiguous and it is done.' },
+          { key: 'ravi', label: 'Points at the three Retail Ops requests in that list', markers: ['Ravi', 'Retail', 'three', '3', 'complaint', 'his', 'this week'], why: 'It is the fact that makes the timing indefensible, and he has not connected the two.' },
+          { key: 'route', label: 'Says what does happen to them', markers: ['read', 'triage', 'sort', 'close with', 'reason', 'tell', 'route', 'decide'], why: 'A refusal with no alternative leaves thirty-two requests exactly where they were.' },
+        ],
+        whyRight: 'You stopped it, gave him the reason, and told him what happens instead.',
+      },
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mg-303': {
+    title: 'The analyst on that request left in January',
+    hint: 'Somebody is still waiting for this, and nobody has told them anything.',
+    brief: "HR flags that a live request is assigned to somebody who no longer works here.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Neha Kulkarni', fromTitle: 'People Partner (HR)',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Neha Kulkarni, People Partner (HR)',
+        body: "Doing the leaver audit and your request tracker still lists Farhan Sheikh as the analyst on a\npiece of work that is marked in progress. He left on 30 January.\n\nIt was raised 161 days ago. I assume this is just a stale record?",
+      },
+      decision: {
+        prompt: 'How do you treat this?',
+        multi: false,
+        options: [
+          { key: 'owner', correct: true, label: 'Reassign it today and find out how many others there are', why: 'A request marked in progress with nobody working on it is worse than a queued one: it reads as active to the requester, so nobody chases it. Five months of somebody waiting quietly. The single record is the symptom; what you need is the count.' },
+          { key: 'stale', correct: false, label: 'Confirm it is a stale record and have it tidied', why: 'It is not stale. The work is genuinely unstarted and somebody is genuinely waiting, and tidying the record makes that permanent.' },
+          { key: 'queue', correct: false, label: 'Move it back to queued and let the normal triage pick it up', why: 'Straight into the queue you already know nobody picks up, five months after it was raised.' },
+          { key: 'week', correct: false, label: 'Add it to the intake review findings for Friday', why: 'It is a live piece of work with a person behind it. Filing it as a finding means nothing happens for a week, on top of the five months.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You treated an orphaned record as somebody waiting, not as data hygiene.',
+      },
+      reply: {
+        prompt: 'Reply to Neha.',
+        to: 'Neha Kulkarni', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'notstale', label: 'Corrects the assumption that it is only a record problem', markers: ['not', 'real', 'actually', 'live', 'waiting', 'genuine', 'more than'], why: 'She has offered you the comfortable reading. Taking it is how it gets tidied away.' },
+          { key: 'action', label: 'Says it is being reassigned', markers: ['reassign', 'pick up', 'owner', 'today', 'moved', 'someone'], why: 'A hundred and sixty-one days in, the requester needs a person, not an explanation.' },
+          { key: 'scan', label: 'Asks for or commits to the wider check', markers: ['others', 'how many', 'check', 'audit', 'rest', 'anyone else', 'all'], why: 'One orphaned record found by accident during an HR audit is not usually the only one.' },
+        ],
+        whyRight: 'You refused the tidy explanation, named an owner, and went looking for the rest.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mg-304': {
+    title: 'The flag buys six days',
+    hint: 'One of these has to happen before the quarterly review, not after it.',
+    brief: "Urgent closes in 25.5 days and low in 31.3. Set the week around what that means.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the work.',
+      context: 'Urgent work closes 5.8 days sooner than low priority. It is also cancelled 21.9% of the time against 5.9% for high priority. Vikram defends the current intake process at the quarterly review in eight days.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'cancel', label: 'Test whether urgent really is the most cancelled, or whether the never-started are doing it', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'It is the most surprising claim you have, so it is the one that has to survive being attacked before it leaves the room.' },
+        { key: 'requesters', label: 'Ask the four biggest requesting functions how they actually choose the flag', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: { you: 'Four discovery conversations is two days you do not have in a week with an exec deadline in it.' },
+          why: 'The data says what the field does. Only the requesters can say what they think it does.' },
+        { key: 'vikram', label: 'Tell Vikram the priority field does not work, before he defends it in the review', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Sending a lead to tell an exec his process is broken is asking them to take a hit that belongs to you.', suresh: 'Same.' },
+          why: 'He is eight days from defending something that does not work. Letting him do that and correcting it afterwards is a choice you would be making for him.' },
+        { key: 'replace', label: 'Draft what replaces the priority dropdown', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Writing the mechanism yourself gets you a proposal neither lead has to live with.' },
+          why: 'Whoever designs it will run it. That should be the people who run it.' },
+      ],
+      whyRight: 'The exec conversation stayed with you and the design went to the people who will have to operate it.',
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 2, difficulty: 'medium',
+  },
+
+  'mg-305': {
+    title: 'Stop honouring the flag from Monday',
+    hint: 'The field is the only lever the requesters have. Ask what they do when it stops working.',
+    brief: "Your lead wants to tell the team to ignore the priority field now that you know what it is worth.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "If urgent only buys six days and it is the most cancelled category, the flag is noise.\n\nI want to tell both teams on Monday to stop treating it as a signal and just work the queue\nby date raised. Cleaner, fairer, and we stop rewarding people for shouting.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'keep', correct: true, label: 'Keep honouring it until something replaces it', why: 'The flag is the only lever a requester has. Removing your response to it before there is another way to say "this one matters in March" does not stop people shouting — it stops them being heard, and the next escalation goes round you to Asha instead.' },
+          { key: 'stop', correct: false, label: 'Tell both teams to stop on Monday', why: 'A unilateral change to how another function’s work is treated, announced internally, with the requesters finding out by experience. It is the fastest way to turn one complaint into four.' },
+          { key: 'quiet', correct: false, label: 'Have the teams quietly deprioritise urgent without announcing it', why: 'Worse than announcing it. The requesters still lose the lever and nobody can tell them why, including your own leads.' },
+          { key: 'date', correct: false, label: 'Move to strict date-raised order immediately', why: 'Strict date order means a genuine month-end blocker waits behind a nine-month-old nice-to-have. Fairness that ignores consequence is its own kind of broken.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You refused to remove a mechanism before its replacement existed, which is the whole difference between a review and a disruption.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'agree', label: 'Agrees the field is broken', markers: ['right', 'agree', 'broken', 'noise', 'does not work', 'doesn’t work', 'yes'], why: 'Her diagnosis is correct and she did the work. Opening with the objection loses her.' },
+          { key: 'sequence', label: 'Says replacement comes before removal', markers: ['replace', 'before', 'until', 'first', 'then', 'sequence', 'once'], why: 'The disagreement is about order, not about the finding, and she needs to hear that.' },
+          { key: 'requester', label: 'Names what the requesters lose if it goes now', markers: ['lever', 'signal', 'nothing', 'no way', 'escalat', 'round us', 'Asha', 'shout'], why: 'Without this it reads as caution rather than reasoning.' },
+        ],
+        whyRight: 'You backed the finding, refused the timing, and made the reason about the requesters rather than about risk.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'mg-306': {
+    title: 'Ravi would like his three moved up',
+    hint: 'You told him yesterday that his team is not treated differently.',
+    brief: "The complaint has been answered. The follow-up asks for exactly the thing you said does not happen.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon, Retail Analyst',
+        body: "Thanks for the straight answer — appreciated, genuinely.\n\nGiven all this, can you get our three queued ones moved to the front? Feels like the least\nanalytics can do after a year of them sitting there, and it would let me tell my director\nthe complaint achieved something.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'all', correct: true, label: 'No special treatment — his three get triaged with the other twenty-nine, this week', why: 'You told him yesterday that Retail Ops is not treated differently. Jumping his three would make that a lie in the most literal way available, and it would teach five other functions that the way to move a request is to complain to your manager. What he can have is all thirty-two dealt with this week, which is more than he asked for.' },
+          { key: 'jump', correct: false, label: 'Move his three to the front as a goodwill gesture', why: 'It buys one relationship at the price of the principle you spent the week establishing, and the other five functions will hear about it.' },
+          { key: 'two', correct: false, label: 'Move one of the three as a compromise', why: 'The same decision, one third the size, and now with no principle behind it at all.' },
+          { key: 'flat', correct: false, label: 'Refuse and point him at the process', why: 'Correct and cold. He is the reason the queue is being dealt with at all, and "the process" is the thing he just told you does not work.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'You held the line and gave him something better than the favour he asked for.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'no', label: 'Declines the queue-jump plainly', markers: ['not', 'no', 'cannot', 'can’t', 'won’t', 'same', 'without'], why: 'A soft no reads as a yes that has not happened yet, and he will chase it.' },
+          { key: 'consistency', label: 'Ties the refusal back to what you told him yesterday', markers: ['yesterday', 'said', 'told you', 'not treated', 'differently', 'everyone', 'consistent'], why: 'It turns a refusal into the proof that the answer he liked was true.' },
+          { key: 'better', label: 'Gives him what he actually gets — all thirty-two triaged this week', markers: ['thirty-two', '32', 'all', 'this week', 'triage', 'decision', 'either way', 'answer'], why: 'He has a director to report to. Send him back with something real.' },
+        ],
+        whyRight: 'He got a no, the reason it proves your earlier answer, and a bigger thing to take to his director.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'mg-307': {
+    title: 'The number on the dashboard is wrong',
+    hint: 'Two of these are analysis. One is a conversation about something that has your name on it.',
+    brief: "The published lead time measures to first delivery. Work that had to be redone is eighteen days worse than reported.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Reallocate the week.',
+      context: 'Reopened work averages 25.3 days to first delivery and 43.3 days to final close. The team dashboard reports the first of those. Asha has been quoting it since January.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'rebuild', label: 'Rebuild the lead time measure on final close and restate the year', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the correction itself, and it has to be done by somebody who will check it twice.' },
+        { key: 'travel', label: 'Find out where the wrong figure has been used and who is quoting it', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: { you: 'Tracing a number through six months of decks is legwork, and you have a correction to deliver while it is being traced.' },
+          why: 'A wrong number that has only been on a dashboard is a fix. One that is in three budget papers is a different job.' },
+        { key: 'asha', label: 'Tell Asha the figure she has been quoting since January is wrong', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Your manager should not learn that she has been repeating a wrong number from somebody who reports to you.', suresh: 'Same.' },
+          why: 'She has said it in rooms you were not in. That correction goes from you, today, before the restated number appears anywhere.' },
+        { key: 'categories', label: 'Re-baseline the reopen rate by category', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Analysis you take back onto your own desk in the week of a correction is analysis nobody is managing.' },
+          why: 'The correction is only useful if it points somewhere, and the category split is where it points.' },
+      ],
+      whyRight: 'The rebuild and the trace went to the leads, and the conversation with your own manager about a wrong number did not.',
+    },
+    estHours: 0.45, priority: 'urgent', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-308': {
+    title: 'Publish both numbers',
+    hint: 'Imagine the slide with two lead times on it. Work out which one gets quoted.',
+    brief: "The corrected measure makes the team look eighteen days slower on the work that went wrong. Your lead proposes a compromise.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to him.',
+      exhibit: {
+        kind: 'message', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Restated. To final close, reopened work is 43.3 days against 25.3 to first delivery.\n\nCould we show both? First-delivery for continuity with what has already been reported, and\nclose-date alongside it. Nobody has to explain why the team suddenly got slower.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'one', correct: true, label: 'Publish the corrected figure only, with the reason it changed', why: 'Two lead times on one slide means every reader picks the one that suits them, and the one that suits everybody is the flattering one. The explanation is not a cost to be avoided — it is the most useful sentence in the pack, because it says the team has been measuring the wrong thing and has stopped.' },
+          { key: 'both', correct: false, label: 'Show both for continuity', why: 'Continuity with a wrong number is not a virtue. In six months somebody quotes 25.3 days in a budget paper and is technically able to point at your own slide.' },
+          { key: 'old', correct: false, label: 'Keep reporting to first delivery and note the caveat in the appendix', why: 'An appendix is where a correction goes to die. The headline stays wrong and you have documented that you knew.' },
+          { key: 'quiet', correct: false, label: 'Switch quietly and do not draw attention to the change', why: 'Somebody will notice an eighteen-day jump. Being asked about it is much worse than saying it.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'One number, with the reason attached, is the only version that survives being quoted by somebody else.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'single', label: 'Decides on one figure', markers: ['one', 'single', 'only', 'corrected', 'close', '43.3', 'just the'], why: 'He offered a compromise. Anything short of a decision means both go on the slide.' },
+          { key: 'why', label: 'Explains what happens when two numbers are published', markers: ['pick', 'choose', 'quote', 'suits', 'flatter', 'both', 'whichever'], why: 'It is the mechanism he has not thought through, and it is obvious once said.' },
+          { key: 'framing', label: 'Gives him the sentence that goes with the change', markers: ['measur', 'wrong thing', 'changed', 'because', 'explain', 'reason', 'say'], why: 'His worry is having to explain it. Handing him the wording removes the worry rather than arguing with it.' },
+        ],
+        whyRight: 'You decided, said why two numbers fail, and gave him the line that makes the correction easy to deliver.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-309': {
+    title: 'She thinks it is about her team',
+    hint: 'Look at what makes a data fix different from a report before you answer.',
+    brief: "The reopen rates land hardest on the work her team does most of, and she has read it as a verdict.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "So reports come back at 18.8% and dashboards at 18%, and data fixes at 1.6%.\n\nMy side does nearly all the reports and dashboards. Suresh's side does most of the data fixes.\nI would rather you did not put that chart in front of Asha without me in the room.",
+      },
+      decision: {
+        prompt: 'How do you handle this?',
+        multi: false,
+        options: [
+          { key: 'reframe', correct: true, label: 'Show her it is about specification, not about her team, and keep the chart', why: 'A data fix has an unambiguous definition of done — the number is right or it is not. A report is reopened because nobody agreed what it was for. The rate is measuring how well-specified the work is at intake, which is precisely the thing this review exists to change, and her team is the evidence rather than the defendant.' },
+          { key: 'pull', correct: false, label: 'Pull the chart to avoid the conflict', why: 'It is the finding that justifies the whole specification step in the proposal. Removing it to protect one person costs you the recommendation.' },
+          { key: 'anon', correct: false, label: 'Keep the chart but strip which team does what', why: 'Asha knows who does reports. Hiding it makes it look like something you were caught concealing rather than something that was never the point.' },
+          { key: 'flat', correct: false, label: 'Tell her the data is the data and it goes in as it is', why: 'True, and it leaves your most loaded lead believing her manager published a chart about her performance without a conversation.' },
+        ],
+        skills: { coaching: 100 },
+        whyRight: 'You kept the finding and changed what it means, which is the only version where she can stand behind it too.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'reframe', label: 'Names the real variable — how well the work was specified', markers: ['specif', 'definition', 'done', 'agreed', 'scope', 'brief', 'ambigu', 'what it was for'], why: 'Without the mechanism she just hears reassurance, and reassurance does not survive the meeting.' },
+          { key: 'contrast', label: 'Uses the data-fix contrast to make it concrete', markers: ['data fix', 'data-fix', '1.6', 'right or', 'unambig', 'clear', 'objective'], why: 'The comparison is the proof. A data fix cannot be reopened for the reason a report can.' },
+          { key: 'room', label: 'Answers her actual request about being in the room', markers: ['room', 'with me', 'together', 'present', 'you present', 'both', 'come'], why: 'She asked for something specific. Ignoring it while explaining the statistics answers a question she did not ask.' },
+        ],
+        whyRight: 'You gave her the mechanism, the proof and an answer to what she actually asked for.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-310': {
+    title: 'Rebalance and cap',
+    hint: 'One of these is about a person who reports to you and cannot be handed to anyone else.',
+    brief: "Thirty-two queued, forty-three in progress, and your most senior lead is carrying seven of them herself.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the rebuild.',
+      context: 'Devika has seven requests in progress — more than any individual on either team — and her oldest open item is 347 days. Nikhil Varma has none in progress and twenty-six delivered. The proposal needs a work-in-progress cap by Friday.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Seven requests in progress. Oldest open item 347 days.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Four in progress. Oldest open item 133 days.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'triage', label: 'Triage the thirty-two into start, close and redirect', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the deliverable the requesters are waiting on, and the lead with the lighter load should carry it.' },
+        { key: 'rebalance', label: 'Rebalance in-progress work across both teams', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Moving named work between named people over two leads’ heads is the single fastest way to stop having leads.' },
+          why: 'It has to be agreed between the two of them or it will be undone within a fortnight.' },
+        { key: 'devika', label: 'The conversation with Devika about carrying seven requests as a lead', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She cannot hold this conversation with herself, and asking her to raise it is asking her to volunteer for a criticism.', suresh: 'A peer telling a peer she is overloaded is a complaint, not a decision.' },
+          why: 'She reports to you and she will not raise it herself. That makes it yours by definition.' },
+        { key: 'cap', label: 'Design the work-in-progress cap', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'The person most affected by a cap is the right person to design one, provided somebody has had the conversation first.' },
+      ],
+      whyRight: 'The rebalance went to the two leads jointly, the cap went to the person it constrains, and the conversation about your own report stayed with you.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 4, difficulty: 'hard',
+  },
+
+  'mg-311': {
+    title: 'Nikhil has nothing open',
+    hint: 'Two readings fit this. One of them costs you a person.',
+    brief: "One senior analyst has twenty-six deliveries and nothing in progress. Your lead wants to fill him up.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Suresh Balan, Analytics Team Lead',
+        body: "Load table is interesting. Nikhil Varma: 26 delivered, highest on the team, zero in progress.\nNo open items at all.\n\nSpare capacity sitting right there. Shall I push four of the triaged ones onto him this week?",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'ask', correct: true, label: 'Find out why the desk is empty before filling it', why: 'Twenty-six delivered and nothing open is either the best-run desk on the team or somebody who has stopped picking work up. One of those you should learn from and the other you have about a month to act on. Four new requests answers neither question and closes the window on both.' },
+          { key: 'load', correct: false, label: 'Push four onto him this week', why: 'If he is disengaged this confirms it. If he is simply finishing things, you have just taught the most productive person on the team that an empty queue is punished.' },
+          { key: 'nothing', correct: false, label: 'Leave him alone — he clearly manages himself', why: 'Possibly true and entirely unexamined. An empty queue is the clearest signal you will get before a resignation.' },
+          { key: 'praise', correct: false, label: 'Hold him up to the team as the model', why: 'Before knowing why. If the answer turns out to be that he has checked out, you will have made it publicly awkward to fix.' },
+        ],
+        skills: { coaching: 100 },
+        whyRight: 'You treated an unusual number as a question about a person rather than as spare capacity.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'hold', label: 'Holds the four requests', markers: ['not yet', 'hold', 'before', 'wait', 'don’t', 'dont', 'first'], why: 'He asked a yes-or-no question about this week. Ambiguity means they land on Monday.' },
+          { key: 'two', label: 'Names both readings of an empty desk', markers: ['either', 'two', 'or', 'might', 'could be', 'best', 'disengag', 'leav', 'check'], why: 'It is what makes the pause obviously worth a week rather than cautious.' },
+          { key: 'who', label: 'Says who finds out and roughly when', markers: ['you', 'talk', 'ask him', 'one to one', '1:1', 'this week', 'conversation', 'find out'], why: 'Without an owner and a date, "let us understand it first" means nothing happens.' },
+        ],
+        whyRight: 'You stopped the load, gave him both readings, and put a name and a date on finding out.',
+      },
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-312': {
+    title: 'People have waited longest',
+    hint: 'Look at how old their five are before deciding how carefully this needs handling.',
+    brief: "Sixteen requests older than six months are about to be closed. One function is asking why theirs are on the list.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Neha Kulkarni', fromTitle: 'People Partner (HR)',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Neha Kulkarni, People Partner (HR)',
+        body: "I hear you are closing the old queue. We have five in there and I gather they are all going.\n\nWe waited because we were told to wait. Closing them because we were patient is a strange\nlesson to teach us — are we supposed to have chased?",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'named', correct: true, label: 'Close them with a named reason and an explicit route to re-raise, and go through her five with her', why: 'People’s requests have waited longest of any function — an average of 251 days, the oldest 318. She has identified the real risk exactly: a queue clean-up punishes the functions that did not escalate. Going through her five by name costs an hour and is the difference between a clean-up and a slight.' },
+          { key: 'bulk', correct: false, label: 'Close all sixteen with the standard note', why: 'Efficient, and it answers none of what she said. The function that waited patiently learns that patience was the mistake.' },
+          { key: 'spare', correct: false, label: 'Leave People’s five open as an exception', why: 'The exception goes to whoever asks, which is the same failure mode as the urgent flag you are in the middle of removing.' },
+          { key: 'defer', correct: false, label: 'Tell her the close-out is paused until the new process starts', why: 'It is not paused, and she will find out when the five close. A comfortable answer today that becomes a broken one on Friday.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'You kept the close-out whole and paid the hour it takes to stop it reading as a punishment.',
+      },
+      reply: {
+        prompt: 'Reply to Neha.',
+        to: 'Neha Kulkarni', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'right', label: 'Concedes the point she is making', markers: ['right', 'fair', 'good point', 'you are', 'you’re', 'agree', 'not wrong'], why: 'She has spotted a real perverse incentive. Defending against it first means she stops telling you things like this.' },
+          { key: 'process', label: 'Says what closing actually involves — reason and a way back', markers: ['reason', 'why', 're-raise', 'reraise', 'raise again', 'route', 'not gone', 'back'], why: 'Her fear is that closed means discarded. The mechanism is the reassurance.' },
+          { key: 'five', label: 'Offers to go through her five specifically', markers: ['five', '5', 'yours', 'together', 'go through', 'with you', 'each'], why: 'The general answer is the same one everyone gets. The specific offer is what makes it not a form letter.' },
+        ],
+        whyRight: 'You agreed with her, explained what closing means, and offered the hour that makes it land differently.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-313': {
+    title: 'Who runs the new intake',
+    hint: 'Two of these are build, and two of them commit somebody outside your team.',
+    brief: "The proposal lands today. Decide who carries each part of it from Monday.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate what happens next.',
+      context: 'The priority dropdown is replaced by a needed-by date and a reason. Reports and dashboards get a specification step. Work in progress is capped. The stale queue is closed. Six functions have to be told.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'run', label: 'Run the new intake for its first month and report what breaks', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'She designed the cap. Owning the first month is how a design becomes a process rather than a document.' },
+        { key: 'spec', label: 'Build the specification step for reports and dashboards', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the answer to the reopen rate and it is a concrete piece of build a lead can own outright.' },
+        { key: 'tell', label: 'Tell the six requesting functions their urgent flag is going', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'Removing a lever from six functions is a commitment made on behalf of your team. A lead delivering it absorbs the pushback without the authority to answer it.', suresh: 'Same.' },
+          why: 'You are taking something away from people outside your team. That message comes from the person accountable for the decision.' },
+        { key: 'cap', label: 'Agree the work-in-progress cap with Asha before it binds anybody', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She would be asking your manager to approve a constraint on her own workload.', suresh: 'Same, and it is not his cap.' },
+          why: 'A cap means saying no to work your own manager has promised elsewhere. She needs to agree to that before it is in force, not after.' },
+      ],
+      whyRight: 'Both pieces of build went to the leads and both commitments outside your team stayed with you.',
+    },
+    estHours: 0.45, priority: 'high', dueInDays: 2, day: 5, difficulty: 'medium',
+  },
+
+  'mg-314': {
+    title: 'Exec would like to keep theirs',
+    hint: 'They are asking for a lever. Work out what they actually need it for.',
+    brief: "The proposal has reached the exec team. They want one exception to it.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Vikram Nair', fromTitle: 'Business Stakeholder',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Vikram Nair, Business Stakeholder',
+        body: "No argument with any of it. One carve-out: exec keeps the urgent flag.\n\nWhen the board asks me something on a Tuesday I cannot fill in a needed-by date and a reason\nand wait my turn. Everyone else on the new process, us as we are.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'slot', correct: true, label: 'No exception, but give exec a standing route that does what they actually need', why: 'A flag one function keeps is a flag, and within a quarter every function has a reason to be the exception. What he genuinely needs is a fast lane for board questions: a standing weekly slot held open and a named contact. That is faster than the flag ever was — exec requests currently deliver at 54.2%, the lowest of any function — and it does not reopen the mechanism for everybody else.' },
+          { key: 'grant', correct: false, label: 'Grant the carve-out — exec is genuinely different', why: 'Within a quarter Finance has a month-end case, Retail Ops has a peak-trading case, and the field is back with an exec-shaped name on it.' },
+          { key: 'refuse', correct: false, label: 'Refuse flatly and point at the proposal', why: 'His need is real even though his solution is wrong. A flat refusal gets the exception granted over your head instead.' },
+          { key: 'review', correct: false, label: 'Grant it for six months and review', why: 'Nothing granted to an exec for six months is ever reviewed, and everyone else will have heard about it by week three.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You refused the mechanism and solved the need, which is the only answer that survives the next three requests for an exception.',
+      },
+      reply: {
+        prompt: 'Reply to Vikram.',
+        to: 'Vikram Nair', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'need', label: 'Acknowledges the Tuesday board question as a real problem', markers: ['board', 'Tuesday', 'real', 'fair', 'understand', 'agree', 'need'], why: 'He will read anything that starts with the rule as a bureaucrat defending a form.' },
+          { key: 'no', label: 'Declines the carve-out and says why one exception ends the rule', why: 'If exec keeps it, the next four functions have an equally good case.', markers: ['exception', 'everyone', 'others', 'unravel', 'same', 'no carve', 'not'] },
+          { key: 'offer', label: 'Offers the standing slot or named route instead', markers: ['slot', 'standing', 'weekly', 'held', 'contact', 'direct', 'reserve', 'lane'], why: 'Taking something away without replacing it is how the exception gets granted over your head.' },
+        ],
+        whyRight: 'He got his problem taken seriously, a clear no on the mechanism, and something faster than what he asked for.',
+      },
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-315': {
+    title: 'Retail Ops would like their own analyst',
+    hint: 'Seventy-six requests in a year. Work out what that is in days a week before you answer.',
+    brief: "The complaint that started the week ends with a request. Decide what you can actually commit to.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Ravi Menon', fromTitle: 'Retail Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'email', from: 'Ravi Menon, Retail Analyst',
+        body: "This is the most seriously anyone has taken us in two years. We will start sending work again.\n\nOne ask: can we have a named analyst permanently attached to Retail Ops? Same person every time,\nthey learn our data, we stop explaining ourselves. It is the only way this does not drift back.",
+      },
+      decision: {
+        prompt: 'What do you commit to?',
+        multi: false,
+        options: [
+          { key: 'contact', correct: true, label: 'No dedicated analyst, but a named point of contact and a standing fortnightly slot', why: 'Seventy-six requests a year is roughly one and a half a week — nowhere near a person, and a dedicated analyst would simply recreate the queue inside one desk with no cover when they are on leave. What he is really asking for is continuity and not having to re-explain retail data, and a named contact plus a standing slot delivers both without pretending to a headcount you do not have.' },
+          { key: 'dedicate', correct: false, label: 'Dedicate an analyst to Retail Ops', why: 'It buys peace this week and creates a single point of failure, an idle desk most of the time, and five other functions asking for the same thing on Monday.' },
+          { key: 'no', correct: false, label: 'Decline — the new intake process covers it', why: 'It does not cover the thing he asked for. Continuity of the person is not something a needed-by date provides, and he has just restarted a relationship on the strength of being listened to.' },
+          { key: 'try', correct: false, label: 'Agree to try it for a quarter and see', why: 'A trial of a headcount commitment is a commitment. Unwinding it in three months will be read as the service getting worse again.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You refused a commitment you cannot staff and delivered the two things he was actually asking for.',
+      },
+      reply: {
+        prompt: 'Reply to Ravi.',
+        to: 'Ravi Menon', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'volume', label: 'Uses the volume to explain why a dedicated person does not work', markers: ['seventy-six', '76', 'a week', 'volume', 'full time', 'full-time', 'not enough', 'one and a half'], why: 'It turns a no into arithmetic he can check, rather than a resourcing excuse.' },
+          { key: 'offer', label: 'Offers the named contact and the standing slot', markers: ['named', 'contact', 'point of', 'standing', 'fortnight', 'every two', 'regular', 'slot'], why: 'It is the part he actually wanted, and it has to be concrete enough for him to hold you to.' },
+          { key: 'continuity', label: 'Addresses the re-explaining problem directly', markers: ['explain', 'context', 'learn', 'know your', 'familiar', 'same person', 'continuity'], why: 'That sentence was the real content of his request and it is easy to answer only the headcount half.' },
+        ],
+        whyRight: 'He got arithmetic instead of an excuse, and the continuity he was asking for under a name you can staff.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 5, difficulty: 'hard',
+  },
+
+  'mg-401': {
+    title: 'Staff a case you may not be able to make',
+    hint: 'One of these has to happen on day one precisely because the answer is not known yet.',
+    brief: "Your manager wants a case for two more analysts. Set the week before anyone assumes the conclusion.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the case work.',
+      context: 'Asha wants an establishment submission for two junior analysts — ₹31.53 lakh at current rates. The budget round closes in three weeks. Nobody has looked at whether demand is growing.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Seven people. Has been expecting growth for two rounds.' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: 'Six people. Sceptical of headcount cases on principle.' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'demand', label: 'Establish the demand trend across both halves of the year', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the first thing anyone will ask and the one number that can kill the case. Give it to the lead least invested in the answer.' },
+        { key: 'backlog', label: 'Track what is still open, month by month', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Demand and backlog are different measures and the case lives or dies on how they move against each other.' },
+        { key: 'asha', label: 'Tell Asha today that the analysis may not support the ask', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She has been expecting these two people for two rounds. Asking her to warn your manager that they may not exist is unfair twice over.', suresh: 'Your manager should hear the possibility from the person who owns the submission, not from a lead.' },
+          why: 'She has asked for a case, not an answer. If it turns out there is no case, the moment to make that thinkable is before three weeks of work, not after.' },
+        { key: 'price', label: 'Price what one more person costs and closes at each level', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Two days of costing on your own desk in the week you need to be managing two leads and a manager’s expectations.' },
+          why: 'Either lead can price it, and the submission needs a defensible rate whatever the conclusion turns out to be.' },
+      ],
+      whyRight: 'The two measurements went to the leads and the uncomfortable early warning to your own manager stayed with you.',
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mg-402': {
+    title: 'She has already told her team',
+    hint: 'Work out how many people are now planning around something that may not happen.',
+    brief: "One of your leads has treated the ask as a decision and passed it on.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "Finally. I told my seven in stand-up this morning that two juniors are coming in the new year —\nmorale needed it after the year we have had.\n\nCan we talk about which of them sits with me? I have three people who would each be better\nwith somebody to hand the routine work to.",
+      },
+      decision: {
+        prompt: 'What do you do?',
+        multi: false,
+        options: [
+          { key: 'unsay', correct: true, label: 'Ask her to correct it with her seven today, and tell her why you are asking', why: 'Seven people now believe two hires are coming and will make choices on that basis — what they take on, whether they stay. The submission has not been written and the demand trend has not been looked at. One awkward correction this morning is much cheaper than seven people discovering in November that it was never true.' },
+          { key: 'leave', correct: false, label: 'Leave it — it is probably going to happen anyway', why: 'Probably is doing a great deal of work in that sentence, and you have not looked at a single number yet.' },
+          { key: 'later', correct: false, label: 'Wait until the submission is decided and correct it then', why: 'By then the team has spent three months planning around it, and the correction arrives attached to a disappointment instead of on its own.' },
+          { key: 'yourself', correct: false, label: 'Go and correct it with her team yourself', why: 'It undercuts her in front of her own seven for a mistake she can fix. She said it; she should unsay it.' },
+        ],
+        skills: { coaching: 100 },
+        whyRight: 'You had it corrected at the cheapest possible moment, by the person who said it.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'correct', label: 'Asks her to correct it with her team today', markers: ['today', 'correct', 'unsay', 'tell them', 'put it right', 'walk it back', 'clarif'], why: 'Anything less specific than today and it waits for a better moment that does not come.' },
+          { key: 'status', label: 'Is clear that nothing has been decided', markers: ['not decided', 'no decision', 'not agreed', 'may not', 'might not', 'asked for', 'case', 'not yet'], why: 'She read a request for a case as a confirmation. That is the misunderstanding to fix, not just the announcement.' },
+          { key: 'kind', label: 'Does not make her feel stupid for it', markers: ['understand', 'why you', 'easy', 'morale', 'get it', 'not blaming', 'my fault', 'should have'], why: 'She did it to help her team after a hard year. Handle it badly and the next thing she tells her team is nothing.' },
+        ],
+        whyRight: 'It gets corrected today, by her, without costing you the lead who told you about it.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 1, difficulty: 'hard',
+  },
+
+  'mg-403': {
+    title: 'Shall I open the requisitions',
+    hint: 'A requisition in the system is a decision somebody can point at.',
+    brief: "HR would like to get ahead of the paperwork before the round closes.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Neha Kulkarni', fromTitle: 'People Partner (HR)',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Neha Kulkarni, People Partner (HR)',
+        body: "Asha mentioned two analyst roles. Shall I raise the requisitions now? If they are in the\nsystem before the round closes we can start advertising the day it is approved, otherwise\nwe lose six weeks.\n\nNo commitment either way — they just sit there until someone approves them.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'hold', correct: true, label: 'Not yet — tell her what the trigger is and ask her to hold them ready', why: 'Two open requisitions with your name on them are not neutral. They appear in HR reports, recruiters start work, and when somebody asks why analytics is hiring while demand is falling, the answer "they just sit there" will not be available. You can have the six weeks back by agreeing the trigger now, without the artefact existing.' },
+          { key: 'raise', correct: false, label: 'Let her raise them — it costs nothing', why: 'It costs the ability to say nothing has been decided. A requisition is the most concrete evidence of intent in the whole HR system.' },
+          { key: 'one', correct: false, label: 'Raise one as a compromise', why: 'Half an unjustified commitment, with no analysis behind either half.' },
+          { key: 'refuse', correct: false, label: 'Tell her there will be no hiring this round', why: 'You do not know that yet either. Declaring the conclusion on day one is the same error as Asha’s, pointing the other way.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept the six weeks without creating an artefact that decides the question for you.',
+      },
+      reply: {
+        prompt: 'Reply to Neha.',
+        to: 'Neha Kulkarni', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'no', label: 'Declines to raise them now', markers: ['not yet', 'hold', 'wait', 'before', 'don’t', 'dont', 'no'], why: 'Her default is to raise them, and she offered a reason to do it quickly.' },
+          { key: 'trigger', label: 'Names what would make them go in', markers: ['once', 'if', 'when', 'submission', 'approved', 'decided', 'trigger', 'tell you'], why: 'She has a genuine six-week problem. A no with a trigger attached solves it; a bare no does not.' },
+          { key: 'why', label: 'Says why an open requisition is not neutral', markers: ['signal', 'looks', 'decided', 'reports', 'commit', 'intent', 'point at', 'not neutral'], why: 'She believes it is free. Unless that is addressed she will offer again next week.' },
+        ],
+        whyRight: 'She got a no, a trigger that protects her timeline, and the reason her assumption was wrong.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 1, difficulty: 'medium',
+  },
+
+  'mg-404': {
+    title: 'Falling demand, growing backlog',
+    hint: 'The simple case is gone. Set the week on the question that replaces it.',
+    brief: "Demand dropped 19.7% and the backlog still grew from 35 to 89. Reallocate around what that means.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the week.',
+      context: 'Requests fell from 213 in the second half of 2025 to 171 in the first half of 2026. The open backlog went from 35 to 89 over the same period. Whatever is wrong, it is not that more work is arriving.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'model', label: 'Model the backlog forward under no change, one hire and two', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'Whatever the submission says, it has to say what happens if nobody is hired. That model is the spine of it.' },
+        { key: 'stuck', label: 'Find where started work is getting stuck', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'A backlog growing while intake falls is a flow problem until proven otherwise, and flow is visible in what is open and how old it is.' },
+        { key: 'asha', label: 'Tell Asha the straightforward version of the case is gone', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She told her team the hires were coming. Sending her to walk it back with your manager as well is two burdens that belong to you.', suresh: 'He is sceptical of the case already. Sending him makes a finding look like an argument.' },
+          why: 'The case she asked for cannot be made the way she expects. Every day she does not know that is a day she may commit to it further.' },
+        { key: 'leads', label: 'Get each lead to write down what they would actually do with one more person', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'Writing their answer for them produces your opinion in their handwriting, which is the least useful document in the submission.' },
+          why: 'If a hire is justified, this is the evidence. If it is not, the gap between the two answers is where the real problem is.' },
+      ],
+      whyRight: 'The modelling and the flow work went to the leads, and the second difficult conversation with your manager was still yours.',
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 2, difficulty: 'medium',
+  },
+
+  'mg-405': {
+    title: 'Put the demand chart next to it',
+    hint: 'Draw the two lines in your head before you answer.',
+    brief: "Your manager has drafted a slide and wants one more chart on it.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Asha Rao', fromTitle: 'Line Manager',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Asha Rao, Line Manager',
+        body: "Draft slide attached — backlog from 35 to 89 over the year, which I think tells the story on its own.\n\nCan you put the demand chart next to it? Two lines going up together will land better with the\npanel than one line on its own.",
+      },
+      decision: {
+        prompt: 'What do you tell her?',
+        multi: false,
+        options: [
+          { key: 'opposite', correct: true, label: 'Tell her today that the two lines go in opposite directions', why: 'Demand fell 19.7% while the backlog rose. Side by side they make the case against hiring, not for it — and she is about to build a slide on the assumption they agree. She needs to know before she has shown it to anyone, and she needs the finding rather than a reason the chart is unavailable.' },
+          { key: 'omit', correct: false, label: 'Send the backlog chart only and say the demand data is not ready', why: 'It is ready and you have seen it. A convenient delay on a number that does not suit the argument is the thing you would sack somebody for.' },
+          { key: 'add', correct: false, label: 'Add the demand chart as asked and let the panel notice', why: 'They will notice, in the room, with your manager presenting. Letting that happen is a decision you made on her behalf.' },
+          { key: 'window', correct: false, label: 'Show demand from January only, where it is flatter', why: 'A window chosen because of the shape it produces. Everything else in the pack becomes unbelievable the moment somebody asks why the year starts in January.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You gave your manager the inconvenient finding before she built anything on the convenient assumption.',
+      },
+      reply: {
+        prompt: 'Reply to Asha.',
+        to: 'Asha Rao', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'numbers', label: 'Gives her both movements with numbers', markers: ['19.7', 'fell', 'down', '213', '171', '35', '89', 'fifth'], why: 'She is going to be surprised. A surprise without numbers gets argued with.' },
+          { key: 'implication', label: 'Says plainly what the pair of lines implies', markers: ['against', 'opposite', 'not support', 'harder', 'undermin', 'other way', 'weakens'], why: 'She asked for a chart. What she needs to hear is what the chart would do to her argument.' },
+          { key: 'next', label: 'Points at the question that is still open', markers: ['flow', 'stuck', 'why', 'backlog grew', 'looking at', 'capacity', 'cancelled', 'next'], why: 'Removing her case without offering the real question leaves her with nothing to take to the round.' },
+        ],
+        whyRight: 'She learned it from you, with numbers, early enough to change what she builds.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 2, difficulty: 'hard',
+  },
+
+  'mg-406': {
+    title: 'Will the new people take the good work',
+    hint: 'Read what she is worried about, not what she is asking.',
+    brief: "The most loaded analyst on the team has heard about the hiring case and is not relieved.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Harini Gopal', fromTitle: 'Junior Analyst',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Harini Gopal, Junior Analyst',
+        body: "Heard we might be getting two more juniors.\n\nCan I ask — would they be picking up the interesting work? I have been doing the month-end\nrebuilds for a year and I was told that was how I got to senior. I do not mind being busy.\nI mind being busy with the same thing forever.",
+      },
+      decision: {
+        prompt: 'How do you handle it?',
+        multi: false,
+        options: [
+          { key: 'hear', correct: true, label: 'Answer honestly about the hiring and treat the development question as the real one', why: 'She has more logged hours and more closed requests than anyone on the team, and what worries her is not workload — it is that a year of month-end rebuilds has not moved her anywhere. The hiring answer takes one sentence. The second question is why your most productive junior might leave, and it is answerable whether or not anybody is hired.' },
+          { key: 'hiring', correct: false, label: 'Answer the hiring question and leave the rest', why: 'She asked one question out loud and a different one underneath it. Answering only the first tells her the second is not welcome.' },
+          { key: 'reassure', correct: false, label: 'Reassure her the new people would take the routine work', why: 'A promise about two people who may never be hired, made to the person who would notice first if it did not happen.' },
+          { key: 'lead', correct: false, label: 'Send it to Devika as her lead', why: 'Her lead should be part of it, and a question about progression sent straight back down the line is how somebody learns not to ask you anything.' },
+        ],
+        skills: { coaching: 100 },
+        whyRight: 'You answered the question she asked and then dealt with the one she was really asking.',
+      },
+      reply: {
+        prompt: 'Reply to Harini.',
+        to: 'Harini Gopal', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'honest', label: 'Is straight about the state of the hiring', markers: ['not decided', 'no decision', 'may not', 'might not', 'looking at', 'case', 'not yet', 'honest'], why: 'She has heard a rumour. Confirming or denying it vaguely makes the rumour stronger.' },
+          { key: 'real', label: 'Takes up the progression question directly', markers: ['senior', 'progress', 'develop', 'same thing', 'year', 'grow', 'next', 'path'], why: 'It is the reason she wrote, and it is the part that does not depend on the budget round.' },
+          { key: 'concrete', label: 'Offers something specific rather than encouragement', markers: ['talk', 'meet', 'this week', 'Devika', 'plan', 'next month', 'take', 'rotate', 'hand over'], why: 'A year of doing the same thing is not fixed by being told it is noticed.' },
+        ],
+        whyRight: 'She got the truth about the hiring and a specific answer to the thing that would have made her leave.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 2, day: 2, difficulty: 'hard',
+  },
+
+  'mg-407': {
+    title: 'The capacity is already here',
+    hint: 'Two of these are analysis. One of them is the hardest conversation in the week.',
+    brief: "Fifteen per cent of logged effort went on work that was later cancelled. Set the week around that.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the week.',
+      context: 'Across the year, 485 of 3,193 logged hours went on requests that were later cancelled — 15.2% of effort, or 1.81 person-years of the 11.92 present below manager level. The ask is for two people.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'size', label: 'Size the recoverable capacity properly and make it survive attack', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the number that replaces the headcount ask. Everything rests on it, so it goes to whoever will try hardest to break it first.' },
+        { key: 'conditions', label: 'Turn the case into four measurable conditions with current values', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'A submission that asks for nobody needs to say what would change the answer, in numbers somebody can check in January.' },
+        { key: 'asha', label: 'Tell Asha the submission should not ask for headcount', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She told her seven the hires were coming. This is the last conversation in the company she should be having.', suresh: 'He has doubted the case from Monday. Him delivering it makes it look like a position rather than a finding.' },
+          why: 'You are telling your own manager that the thing she asked for should not be asked for. There is no version of that which is delegable.' },
+        { key: 'attack', label: 'Stress-test the cancelled-effort finding before it goes anywhere', days: 2,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'The person who wants a finding to hold is the worst possible person to test it.' },
+          why: 'It is about to be the whole submission. If it has a hole, you want a lead to find it this week.' },
+      ],
+      whyRight: 'Both leads were pointed at the number that matters, and the conversation that decides the week stayed with you.',
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-408': {
+    title: 'How you tell her',
+    hint: 'Every option here delivers the same content. Only one of them lets her act on it.',
+    brief: "You are going to tell your manager the submission should ask for nobody. Choose the form.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Asha Rao', fromTitle: 'Line Manager',
+      prompt: 'Decide, then write to her.',
+      exhibit: {
+        kind: 'note', from: 'Your own notes',
+        body: "Recoverable inside the team: 1.81 person-years against an ask of two people.\nDemand down 19.7%. Backlog up from 35 to 89, driven by flow rather than volume.\n\nAsha asked for this case two rounds running. She has told the panel it is coming.\nThe submission deadline is Thursday.",
+      },
+      decision: {
+        prompt: 'How do you tell her?',
+        multi: false,
+        options: [
+          { key: 'private', correct: true, label: 'In person, privately, today, before a line of the submission is written', why: 'She has told a panel this is coming and she needs room to change her own position before anything is on paper. A conversation with no document in it lets her argue, test the numbers, and arrive at the conclusion rather than receive it — and if she finds a hole in the analysis, better today than in the round.' },
+          { key: 'draft', correct: false, label: 'Send the draft submission with the conclusion in it', why: 'She finds out what you decided by reading a document. Whatever she thinks of the analysis, the first thing she feels is that she was not consulted.' },
+          { key: 'meeting', correct: false, label: 'Raise it at the review with the evidence in front of the panel', why: 'Ambushing your own manager in a room she has already committed in. Correct analysis, destroyed relationship.' },
+          { key: 'options', correct: false, label: 'Present both options and ask her to choose', why: 'You have done the work and you know the answer. Handing her a decision you have already made is asking her to take the risk of your conclusion without the reasoning.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'The form you chose gives her room to change position rather than a conclusion to accept.',
+      },
+      reply: {
+        prompt: 'Write the note asking for the conversation.',
+        to: 'Asha Rao', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'flag', label: 'Says the conclusion has moved, without burying it', markers: ['not', 'no headcount', 'different', 'changed', 'may not ask', 'nobody', 'conclusion'], why: 'A note that hides the direction means she walks into the conversation unprepared, which is the thing you were trying to avoid.' },
+          { key: 'ask', label: 'Asks for time today, in person', markers: ['today', 'half an hour', 'meet', 'call', 'in person', 'sit down', 'before'], why: 'Thursday is the deadline. Anything vaguer becomes next week.' },
+          { key: 'evidence', label: 'Names the evidence so she can come ready to test it', markers: ['1.81', 'person-year', 'cancelled', '15.2', '19.7', 'backlog', 'numbers'], why: 'She should arrive able to attack the analysis. That is the point of telling her first.' },
+        ],
+        whyRight: 'She knows the direction, has the numbers, and has a slot today to argue with you before anything is written.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-409': {
+    title: 'Ask for two and we will get one',
+    hint: 'Think about January, when somebody asks whether the thing you asked for was needed.',
+    brief: "Your lead has a view on how budget rounds actually work.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "I understand the analysis. But nobody ever gets what they ask for in these rounds.\n\nAsk for two, get told one, and we are a person better off than asking for nobody. Every other\nfunction is doing exactly this. Submitting zero is the only guaranteed way to get zero.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'zero', correct: true, label: 'Submit the honest case, with the four conditions and a January review', why: 'A case you do not believe is one you cannot defend in January, and in January somebody will ask what the person you were given is doing. The four conditions are worth more than a coin flip on one junior: they commit the round to revisiting the question on evidence, which is the one thing a padded ask cannot do.' },
+          { key: 'two', correct: false, label: 'Ask for two and take whatever comes', why: 'It works this round and costs you the next three. The submission that inflates is the one nobody reads carefully again.' },
+          { key: 'one', correct: false, label: 'Ask for one as a middle position', why: 'Half a case you do not believe in. You would still have to explain in January what that person changed.' },
+          { key: 'note', correct: false, label: 'Submit zero but tell the panel informally you would take one', why: 'A written position and a verbal one that contradict it. Whichever is convenient is the one that gets quoted back at you.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You kept a submission you can still defend in January, which is the only currency a manager has in these rounds.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'january', label: 'Uses January — what happens when the ask is tested', markers: ['January', 'review', 'later', 'asked', 'defend', 'explain', 'next round', 'six months'], why: 'Her argument is about this round only. The cost lands in the next one.' },
+          { key: 'conditions', label: 'Shows what the conditions buy instead', markers: ['condition', 'trigger', 'measur', 'if', 'threshold', 'test', 'review'], why: 'Otherwise you are offering her nothing in place of the person she wants.' },
+          { key: 'respect', label: 'Takes her read of the politics seriously', markers: ['right that', 'true', 'fair', 'understand', 'everyone does', 'not wrong', 'see why'], why: 'She is describing the game accurately. Dismissing it makes you sound naive rather than principled.' },
+        ],
+        whyRight: 'You conceded her politics, refused her tactic, and showed her what the conditions buy instead.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 3, difficulty: 'hard',
+  },
+
+  'mg-410': {
+    title: 'Getting the submission out',
+    hint: 'One of these is a conversation with an exec who has read your paper and disagreed with it.',
+    brief: "The submission goes on Thursday. Set who builds what, and who answers the challenge.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate the build.',
+      context: 'The submission asks for no increase, states four measured conditions and commits to a January review. Vikram has read the draft and come back on it. The tooling handback from the licence review also has to be reconciled into the numbers.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'chart', label: 'Build the backlog chart and the supporting appendix', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: { you: 'Building the pack yourself on the day an exec has challenged it is the most comfortable way to avoid the actual job.' },
+          why: 'It is presentation of work already done, and it is a lead’s to own end to end.' },
+        { key: 'mechanics', label: 'Design the January review mechanics — what is measured, by whom, how often', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'Four conditions with no measurement process behind them are four sentences. Whoever builds the mechanics will run them.' },
+        { key: 'vikram', label: 'Answer Vikram’s challenge to the submission', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'An exec who has disagreed with a submission gets an answer from the person whose name is on it.', suresh: 'Same. Sending a lead reads as the author declining to defend it.' },
+          why: 'He has found the one number in the pack that points the other way. That is yours to answer, today.' },
+        { key: 'tooling', label: 'Reconcile the tooling handback into the submission numbers', days: 1,
+          best: ['devika', 'suresh'], acceptable: [],
+          forbidden: { you: 'A day of reconciliation is not what a manager does on the day the submission goes.' },
+          why: 'It is bookkeeping between two pieces of work you already own, and either lead can close it out.' },
+      ],
+      whyRight: 'Both build items went to the leads and the exec who disagreed with your paper got you.',
+    },
+    estHours: 0.4, priority: 'urgent', dueInDays: 1, day: 4, difficulty: 'medium',
+  },
+
+  'mg-411': {
+    title: 'Finance would like to bank it',
+    hint: 'Work out whether anything was actually saved.',
+    brief: "The submission asks for nobody. Finance sees a number they can use.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Diya Chandra', fromTitle: 'Finance Analyst',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Diya Chandra, Finance Analyst',
+        body: "You were down for two juniors at ₹31.53 lakh and you are asking for nobody. That is a saving\nand I would like to book it against the analytics line — it is the best number in my whole pack.\n\nSay the word and it goes in.",
+      },
+      decision: {
+        prompt: 'How do you answer?',
+        multi: false,
+        options: [
+          { key: 'no', correct: true, label: 'Nothing was saved — you declined to spend money that had not been granted', why: 'A saving is a cost you were carrying and have stopped. This is a request that was never approved. Booking ₹31.53 lakh you never had makes it a baseline: in January, when the conditions are tested and the answer may genuinely be yes, asking for two juniors will read as giving back a saving rather than making a case.' },
+          { key: 'yes', correct: false, label: 'Let her book it — it is a good number for both of you', why: 'It is a good number this quarter and a trap in January. Nobody will remember it was never real, including Diya.' },
+          { key: 'half', correct: false, label: 'Let her book one of the two', why: 'Half a fictional saving, and now with no principle available to argue the other half.' },
+          { key: 'tooling', correct: false, label: 'Offer the tooling saving instead and stay quiet on this', why: 'The tooling saving is real and should already be in her pack. Offering it as a substitute implies the headcount number would otherwise have been fine.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You refused to let a decision not to ask become a baseline you would have to argue against in January.',
+      },
+      reply: {
+        prompt: 'Reply to Diya.',
+        to: 'Diya Chandra', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'distinction', label: 'Separates a saving from an unspent request', markers: ['not a saving', 'never', 'not approved', 'not granted', 'did not have', 'unspent', 'declin', 'baseline'], why: 'It is the whole argument, and it is not obvious from her side of the ledger.' },
+          { key: 'january', label: 'Names what booking it would cost in January', markers: ['January', 'review', 'condition', 'ask again', 'giving back', 'harder', 'next'], why: 'Without the future cost it sounds like accounting pedantry.' },
+          { key: 'offer', label: 'Points her at the saving that is real', markers: ['tooling', 'licence', 'renewal', '13.89', 'real', 'that one', 'do have'], why: 'She has a pack to fill and you spent a week producing a genuine number for it.' },
+        ],
+        whyRight: 'She got the distinction, the cost of ignoring it, and a real number to use instead.',
+      },
+    },
+    estHours: 0.35, priority: 'high', dueInDays: 1, day: 4, difficulty: 'hard',
+  },
+
+  'mg-412': {
+    title: 'What the team hears',
+    hint: 'Seven of them were told in stand-up that two people were coming.',
+    brief: "The submission asks for nobody and goes on Thursday. Decide how the fourteen find out.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Suresh Balan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply.',
+      exhibit: {
+        kind: 'message', from: 'Suresh Balan, Analytics Team Lead',
+        body: "How are we telling people? Devika's seven were told in February that two juniors were coming.\n\nMy instinct is to say nothing until the round actually concludes in October — no point\ndisappointing everyone over a submission that might still change.",
+      },
+      decision: {
+        prompt: 'What do you decide?',
+        multi: false,
+        options: [
+          { key: 'before', correct: true, label: 'Tell the whole team before the submission goes, in person, with the reason and what changes instead', why: 'The submission is a document other people will see; the team finding out second-hand is a certainty, not a risk. And there is something real to tell them: the capacity is being recovered from cancelled work, the intake changes, and four conditions will be tested in January. That is a different message from "no hires" and it only lands if it comes first.' },
+          { key: 'wait', correct: false, label: 'Say nothing until the round concludes in October', why: 'Four months of a team believing something you know to be false, ending with them learning you knew in July.' },
+          { key: 'email', correct: false, label: 'Send it round in writing on Thursday with the submission', why: 'Fourteen people reading a decision about their own workload in an attachment, with nobody in the room to answer the obvious question.' },
+          { key: 'leads', correct: false, label: 'Tell the two leads and let them cascade it', why: 'Devika told her seven the hires were coming. Asking her to also deliver the reversal is using her as a shield for a decision that is yours.' },
+        ],
+        skills: { communication: 100 },
+        whyRight: 'They heard it from you, before the document, with the part that is actually good news attached.',
+      },
+      reply: {
+        prompt: 'Reply to Suresh.',
+        to: 'Suresh Balan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'timing', label: 'Says it happens before the submission goes', markers: ['before', 'Thursday', 'first', 'ahead', 'this week', 'not after', 'now'], why: 'His proposal is silence for four months. Only a specific moment overrides that.' },
+          { key: 'content', label: 'Names what they are actually told beyond "no hires"', markers: ['condition', 'January', 'cancelled', 'capacity', 'intake', 'chang', 'instead', 'what we are doing'], why: 'A bare no is what he is afraid of delivering, and he is right to be.' },
+          { key: 'who', label: 'Is clear you deliver it, not the leads', markers: ['I will', 'I’ll', 'me', 'myself', 'together', 'both teams', 'all of'], why: 'Otherwise it cascades to Devika, who has the worst possible position from which to deliver it.' },
+        ],
+        whyRight: 'You set the moment, the content and the messenger, which is the whole of what he was asking.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 1, day: 4, difficulty: 'medium',
+  },
+
+  'mg-413': {
+    title: 'What outlives the round',
+    hint: 'Two of these are commitments made to people outside your team.',
+    brief: "The submission is in. Decide who carries the four conditions and the changes behind them.",
+    tool: 'assign',
+    datasetKey: 'analytics_ops',
+    assign: {
+      prompt: 'Allocate what happens from Monday.',
+      context: 'Four conditions with their June values go into the submission, to be tested in January. The recovered capacity depends on cancelled work falling. Asha presents the pack to the panel; Diya carries the analytics line into the round.',
+      team: [
+        { key: 'devika', name: 'Devika Raghavan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'suresh', name: 'Suresh Balan', title: 'Analytics Team Lead', capacityDays: 4, note: '' },
+        { key: 'you', name: 'You', title: 'Data Analytics Manager', capacityDays: 3, note: '' },
+      ],
+      items: [
+        { key: 'measure', label: 'Own the monthly measurement of the four conditions through to January', days: 2,
+          best: ['devika'], acceptable: ['suresh'],
+          forbidden: {},
+          why: 'A condition nobody measures monthly is a condition that gets measured for the first time in January, badly.' },
+        { key: 'cancel', label: 'Drive down the effort lost to cancelled work', days: 2,
+          best: ['suresh'], acceptable: ['devika'],
+          forbidden: {},
+          why: 'It is the 1.81 person-years the whole submission rests on. Somebody has to be accountable for it, by name.' },
+        { key: 'panel', label: 'Brief Asha for the panel, including what to concede', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'She is about to defend your submission in a room. The brief comes from its author.', suresh: 'Same.' },
+          why: 'She will be asked why analytics asked for nobody. What she says depends entirely on how well you have briefed her.' },
+        { key: 'january', label: 'Agree with Asha what January actually triggers', days: 1,
+          best: ['you'], acceptable: [],
+          forbidden: { devika: 'A lead cannot commit your manager to a future decision.', suresh: 'Same.' },
+          why: 'Conditions with no agreed consequence are a way of postponing the argument, not of settling it.' },
+      ],
+      whyRight: 'The two durable pieces of work went to the leads, and both commitments involving your own manager stayed with you.',
+    },
+    estHours: 0.4, priority: 'high', dueInDays: 2, day: 5, difficulty: 'medium',
+  },
+
+  'mg-414': {
+    title: 'She is going to look elsewhere',
+    hint: 'Separate the thing she is angry about from the thing she actually wants.',
+    brief: "Your most loaded lead has read the submission and drawn a conclusion about her own future.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Devika Raghavan', fromTitle: 'Analytics Team Lead',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'message', from: 'Devika Raghavan, Analytics Team Lead',
+        body: "I have read it and I understand the reasoning. I am also going to start looking.\n\nI have carried seven live requests and seven people for a year, I told my team something that\nturned out not to be true, and the answer is a review in January. I do not think anything\nchanges here for me.",
+      },
+      decision: {
+        prompt: 'How do you handle this?',
+        multi: false,
+        options: [
+          { key: 'separate', correct: true, label: 'Treat it as a conversation about her, separately from the submission, and start it this week', why: 'She has given three reasons and only one of them is the headcount decision. Arguing the submission again answers the reason she is least likely to leave over. What she is describing is a year of carrying more open work than anyone on either team, with no visible path — and that is answerable now, by you, whatever the budget round decides.' },
+          { key: 'defend', correct: false, label: 'Take her through the analysis again so she sees the decision was right', why: 'She said she understands the reasoning. Repeating it tells her you heard the part about the submission and not the part about her.' },
+          { key: 'counter', correct: false, label: 'Ask what it would take to keep her and go to Asha with it', why: 'A counter-offer before a conversation. It turns a retention problem into a negotiation and teaches everyone how to open one.' },
+          { key: 'accept', correct: false, label: 'Thank her for being open and let it run its course', why: 'Losing the most loaded lead on the team three months after telling her team something untrue, without a single conversation, is a manager choosing the comfortable option.' },
+        ],
+        skills: { coaching: 100 },
+        whyRight: 'You separated the decision she accepts from the situation she does not, and dealt with the one you can change.',
+      },
+      reply: {
+        prompt: 'Reply to Devika.',
+        to: 'Devika Raghavan', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'nodefend', label: 'Does not re-argue the submission', markers: ['not going to', 'won’t', 'understand', 'heard', 'separate', 'different', 'aside'], why: 'She has conceded the analysis. Re-opening it is the single fastest way to confirm her decision.' },
+          { key: 'load', label: 'Names what she has actually been carrying', markers: ['seven', 'carried', 'load', 'year', 'more than', 'too much', 'open'], why: 'It is measurable and it is the thing she is right about. Saying it first is what makes the rest credible.' },
+          { key: 'meet', label: 'Asks for a real conversation, soon and specific', markers: ['this week', 'meet', 'talk', 'time', 'sit', 'properly', 'hour', 'tomorrow'], why: 'An open door is not an answer. A slot is.' },
+        ],
+        whyRight: 'You left the submission alone, said the true thing about her year, and put a time in the diary.',
+      },
+    },
+    estHours: 0.35, priority: 'urgent', dueInDays: 1, day: 5, difficulty: 'hard',
+  },
+
+  'mg-415': {
+    title: 'Who owns January',
+    hint: 'Assume you are not here in January. Decide what still works.',
+    brief: "The last decision of the track. Your manager asks what happens if the person who wrote this has moved on.",
+    tool: 'signoff',
+    datasetKey: 'analytics_ops',
+    signoff: {
+      fromName: 'Asha Rao', fromTitle: 'Line Manager',
+      prompt: 'Decide, then reply to her.',
+      exhibit: {
+        kind: 'email', from: 'Asha Rao, Line Manager',
+        body: "One last thing before this goes. The four conditions are the whole reason I can defend asking\nfor nobody — but they depend on somebody remembering them in six months.\n\nIf you are running something else by January, or I am, what actually happens to them?",
+      },
+      decision: {
+        prompt: 'What do you commit to?',
+        multi: false,
+        options: [
+          { key: 'written', correct: true, label: 'Put the four conditions, their June values and what each one triggers into the submission itself, with a named owner', why: 'A condition that lives in your head is a condition that dies with your job title. Written into the submission with its June value and its consequence, it is a document the panel holds, that anyone can test without you, and that cannot quietly become a different question in January. The named owner is what makes it somebody’s job rather than everybody’s intention.' },
+          { key: 'diary', correct: false, label: 'Put a January reminder in both your diaries', why: 'A reminder tells whoever still holds the diary that something was supposed to happen, without saying what was measured, what it was then, or what it means.' },
+          { key: 'handover', correct: false, label: 'Cover it in the handover if either of you moves', why: 'Handovers carry what the person leaving remembers matters. This is precisely the kind of commitment that does not survive one.' },
+          { key: 'informal', correct: false, label: 'Keep it between the two of you so it stays flexible', why: 'Flexible is what it will be. In January it becomes whatever is convenient, which is the outcome the conditions exist to prevent.' },
+        ],
+        skills: { businessLogic: 100 },
+        whyRight: 'You made the commitment survive the people who made it, which is the only version worth submitting.',
+      },
+      reply: {
+        prompt: 'Reply to Asha.',
+        to: 'Asha Rao', subject: null, maxWords: 170,
+        rubric: [
+          { key: 'in', label: 'Says the conditions go into the submission itself', markers: ['in the submission', 'in the paper', 'written', 'document', 'on the record', 'in it', 'appendix'], why: 'It is the difference between a commitment and a memory, and she asked exactly this.' },
+          { key: 'values', label: 'Says the June values go in beside them', markers: ['June', 'value', 'now', 'current', 'baseline', 'today', 'starting'], why: 'A condition without the number it started from can be argued into any conclusion six months later.' },
+          { key: 'owner', label: 'Names an owner or a role that outlives either of you', markers: ['owner', 'named', 'whoever', 'role', 'the manager', 'lead', 'responsible', 'accountab'], why: 'Without it, January belongs to nobody.' },
+        ],
+        whyRight: 'The conditions, their starting values and an owner all went into the document, so January happens whoever is there.',
+      },
+    },
+    estHours: 0.3, priority: 'high', dueInDays: 2, day: 5, difficulty: 'hard',
   },
 
   'sa-001': {
@@ -12719,6 +15069,9 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining, level)
       // Only the Line Manager grades — a real, load-bearing rule of the character engine,
       // not a label. It's why "Review work" only makes sense for one person.
       grades: person.archetype === 'line_manager',
+      // Whether this person is a direct report at the learner's level, rather than a
+      // colleague. Lead and manager get reports; junior and senior get none.
+      reportsToYou: Boolean(person.reportsToYou),
       owned,
       skillDemand,
       hasDemand: Object.values(demand).some((v) => v > 0),

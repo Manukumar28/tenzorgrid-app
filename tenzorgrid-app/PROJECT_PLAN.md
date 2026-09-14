@@ -787,7 +787,7 @@ after month one.** Three consequences, all of which change what gets built next:
   | Junior | 6 | — | 2.0 | 2.34 |
   | Senior | 5 | 1 — coaching | 3.0 | **3.00** |
   | Lead | 4 | 2 — staffing + sign-off | 3.25 | **3.27** |
-  | Manager | 3 | 3 — not built yet | 3.5 | 3.91 |
+  | Manager | 3 | 3 — allocation + two sign-offs | 3.5 | **3.49** |
 
   - **Senior: coaching.** Ishaan Varghese, four months in, sends work that is wrong in
     ways he cannot see. Graded 50/50 on what you spotted (the judgement grader, including
@@ -811,11 +811,34 @@ after month one.** Three consequences, all of which change what gets built next:
     step, so every salary and date is byte-identical. `test/coach-test.js` and
     `test/lead-test.js` keep the reserved list in step with the cast.
 
-  **Manager is the one left.** 3 analysis + 3 responsibility — team through leads,
-  portfolio, and the people decisions — and its day still measures 3.91 against 3.5 until
-  that lands. `analytics_ops` already holds a complete team (14 named analysts with levels,
-  day rates, leave dates, 384 requests, 32 queued and unassigned) and is currently only
-  ever queried, never staffed.
+  - **Manager: two teams through two leads.** The widest layer in the track — one
+    allocation and two sign-offs every day, 15 a project, 60 in all. The allocation runs at
+    a grain the level actually manages at: workstreams to Devika Raghavan and Suresh Balan,
+    never to a named analyst, and every one contains at least one item that is yours and
+    cannot be handed down (a vendor negotiation, a correction to your own manager, a
+    commitment made outside your team). `test/manager-test.js` asserts that last rule
+    against every one of the twenty allocations rather than trusting the prose. The
+    sign-offs are the portfolio: a lead who accepted everything and called it a plan, a
+    vendor discount on twice the seats you need, Finance booking money you never had, a
+    lead who has decided to leave.
+  - **Devika and Suresh are the dataset, deliberately.** Every other colleague is kept out
+    of the generator's name pool so a learner never meets two people with the same name.
+    These two are the exception: the manager's own leads *are* the two `lead`-level rows in
+    the `analytics_ops` team table, which is what lets a task about Devika's seven open
+    requests be checked against 384 real rows. `test/manager-test.js` asserts the overlap
+    is declared rather than accidental.
+  - **The week lands where it is sold.** Against a 3.5 h/day target, three of the four
+    manager projects total exactly 17.50 hours and the fourth 17.40 — 3.49 h/day across the
+    level, measured from `estHours` in the test rather than asserted in prose. The test's
+    bar is a quarter of an hour across the week, because `estHours` are estimates; it is
+    still tight enough to catch a project drifting back to four hours a day. Getting there
+    meant displacing 15 analysis tasks per project, chosen so that no task carrying the
+    dataset's characteristic population filter and no rework task was ever removed; the
+    content gate still passes on all four.
+  - **"Reports to you" is now visible.** `reportsForLevel` existed and was never called —
+    the Team tab could not tell a direct report from a colleague. The flag now travels
+    roster → `getTeam` → card, and the test asserts it survives that trip, because it
+    shipped broken through the first half of it.
 
 - **Phase 7 — after that.** The weekly retro/1:1, the performance record, and the
   interview defence — the last three of the user's thirteen points that are not yet built.

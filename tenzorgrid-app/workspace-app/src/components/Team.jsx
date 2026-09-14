@@ -72,6 +72,11 @@ function MemberCard({ member, selected, index, onSelect }) {
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold truncate">{member.name}</div>
           <div className="text-[11px] text-slate-500 truncate">{member.title}</div>
+          {member.reportsToYou && (
+            <span className="inline-block mt-1 text-[10px] font-semibold rounded px-1.5 py-0.5 bg-indigo-50 text-indigo-700">
+              Reports to you
+            </span>
+          )}
         </div>
         {member.unread > 0 && (
           <span className="shrink-0 min-w-[18px] px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold text-center">

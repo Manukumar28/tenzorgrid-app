@@ -194,13 +194,13 @@ function chunkFor(key) {
     }
     mem.close();
   }
-  const clash = leadRoster.filter((p) => generated.has(p.name) && p.archetype !== 'line_manager');
+  const clash = leadRoster.filter((p) => generated.has(p.name) && p.archetype !== 'line_manager' && !p.alsoInDataset);
   check('no colleague shares a name with a generated person', clash.length === 0, clash.map((p) => p.name).join(','));
   const dsSrc = fs.readFileSync(path.join(ROOT, 'lib/datasets.js'), 'utf8');
   const reservedBlock = (dsSrc.match(/const RESERVED_NAMES = new Set\(\[([\s\S]*?)\]\)/) || [])[1]
     .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   const reserved = new Set([...reservedBlock.matchAll(/'([^']+)'/g)].map((m) => m[1]));
-  const unguarded = leadRoster.filter((p) => p.archetype !== 'line_manager' && !reserved.has(p.name));
+  const unguarded = leadRoster.filter((p) => p.archetype !== 'line_manager' && !p.alsoInDataset && !reserved.has(p.name));
   check('and every one of them is in the generator’s reserved list',
     unguarded.length === 0, unguarded.map((p) => p.name).join(','));
 

@@ -197,7 +197,7 @@ const coachKeys = [...new Set([...src.slice(TASKS_START, TASKS_END).matchAll(/\n
   check('no generated person shares his name', !generated.has('Ishaan Varghese'));
   // Asha is the one deliberate exception: she really is the line manager, so her appearing
   // in a people dataset is correct rather than a clash.
-  const collisions = roster.filter((p) => generated.has(p.name) && p.archetype !== 'line_manager');
+  const collisions = roster.filter((p) => generated.has(p.name) && p.archetype !== 'line_manager' && !p.alsoInDataset);
   check('and none of the cast collides with generated data either',
     collisions.length === 0, collisions.map((p) => p.name).join(','));
 
@@ -208,7 +208,7 @@ const coachKeys = [...new Set([...src.slice(TASKS_START, TASKS_END).matchAll(/\n
   const reservedBlock = (dsSrc.match(/const RESERVED_NAMES = new Set\(\[([\s\S]*?)\]\)/) || [])[1]
     .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   const reserved = new Set([...reservedBlock.matchAll(/'([^']+)'/g)].map((m) => m[1]));
-  const unguarded = roster.filter((p) => p.archetype !== 'line_manager' && !reserved.has(p.name));
+  const unguarded = roster.filter((p) => p.archetype !== 'line_manager' && !p.alsoInDataset && !reserved.has(p.name));
   check('every colleague is named in the generator’s reserved list',
     unguarded.length === 0, unguarded.map((p) => p.name).join(','));
 
