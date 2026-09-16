@@ -23,9 +23,9 @@ function Exhibit({ exhibit }) {
     <div className="rounded-xl border border-slate-200 overflow-hidden">
       <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border-b border-slate-200">
         <Icon size={13} className="text-slate-500 shrink-0" />
-        <span className="text-[11px] font-bold text-slate-600 truncate">{exhibit.from}</span>
+        <span className="text-[12px] font-bold text-slate-600 truncate">{exhibit.from}</span>
         {exhibit.subject && (
-          <span className="text-[11px] text-slate-400 truncate">· {exhibit.subject}</span>
+          <span className="text-[12px] text-slate-500 truncate">· {exhibit.subject}</span>
         )}
       </div>
       <pre className={`px-3.5 py-3 text-xs leading-relaxed whitespace-pre-wrap overflow-x-auto ${
@@ -54,7 +54,7 @@ function ChoiceTask({ wb, onSubmit, submitting, isGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Your judgement</span>
+        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Your judgement</span>
         <button
           onClick={send}
           disabled={submitting || isGraded}
@@ -72,7 +72,7 @@ function ChoiceTask({ wb, onSubmit, submitting, isGraded }) {
           <p className="text-sm font-bold text-slate-900 mb-1">{spec.prompt}</p>
           {/* Stated plainly, because it changes how people answer: a learner who thinks
               caution is free will tick everything, and that is the habit worth breaking. */}
-          <p className="text-[11px] text-slate-500 mb-3">
+          <p className="text-[12px] text-slate-500 mb-3">
             Flagging something that isn't a problem costs you the same as missing one.
           </p>
 
@@ -91,7 +91,7 @@ function ChoiceTask({ wb, onSubmit, submitting, isGraded }) {
                     on ? 'border-indigo-500 bg-indigo-50 text-slate-900 font-semibold'
                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                 >
-                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-300'}`} />
+                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-500'}`} />
                   <span className="leading-snug">{o.label}</span>
                 </button>
               );
@@ -127,7 +127,7 @@ function WriteupTask({ wb, onSubmit, submitting, isGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Compose</span>
+        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Compose</span>
         <button
           onClick={send}
           disabled={submitting || isGraded}
@@ -156,19 +156,19 @@ function WriteupTask({ wb, onSubmit, submitting, isGraded }) {
             className="w-full px-3.5 py-3 text-sm resize-y focus:outline-none disabled:bg-slate-50"
           />
           <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-t border-slate-200 bg-slate-50">
-            <span className={`text-[11px] font-bold ${over ? 'text-rose-600' : 'text-slate-500'}`}>
+            <span className={`text-[12px] font-bold ${over ? 'text-rose-600' : 'text-slate-500'}`}>
               {words} / {spec.maxWords} words
             </span>
-            {over && <span className="text-[11px] text-rose-600">Over the brief</span>}
+            {over && <span className="text-[12px] text-rose-600">Over the brief</span>}
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-1.5">It needs to cover</p>
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500 mb-1.5">It needs to cover</p>
           <ul className="space-y-1">
             {spec.covers.map((c, i) => (
               <li key={i} className="text-xs text-slate-700 flex gap-2">
-                <span className="text-slate-400">·</span>{c}
+                <span className="text-slate-500">·</span>{c}
               </li>
             ))}
           </ul>

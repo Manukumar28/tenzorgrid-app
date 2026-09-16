@@ -30,10 +30,10 @@ const SCHEDULES = [
 function Stat({ icon: Icon, value, label }) {
   return (
     <div className="flex items-start gap-2.5">
-      <Icon size={15} className="text-indigo-500 mt-0.5 shrink-0" />
+      <Icon size={15} className="text-indigo-600 mt-0.5 shrink-0" />
       <div className="min-w-0">
         <div className="text-sm font-bold text-gray-900 leading-tight">{value}</div>
-        <div className="text-[11px] text-gray-500 leading-tight">{label}</div>
+        <div className="text-[12px] text-gray-500 leading-tight">{label}</div>
       </div>
     </div>
   );
@@ -44,7 +44,7 @@ function Stat({ icon: Icon, value, label }) {
 function PitchHeader({ detail, totalRoles, liveRoles }) {
   return (
     <div>
-      <div className="text-[11px] font-bold tracking-[0.14em] uppercase text-indigo-600 mb-2">
+      <div className="text-[12px] font-bold tracking-[0.14em] uppercase text-indigo-600 mb-2">
         TenzorGrid · Virtual Workspace
       </div>
       <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.1]">
@@ -86,7 +86,7 @@ function PitchDetail({ detail, level }) {
         >
           <div className="rounded-xl border border-gray-200 bg-white p-5">
             <div className="flex items-start gap-2.5 mb-3">
-              <Building2 size={15} className="text-indigo-500 mt-0.5 shrink-0" />
+              <Building2 size={15} className="text-indigo-600 mt-0.5 shrink-0" />
               <p className="text-xs text-gray-600">{detail.company}</p>
             </div>
             <div className="flex items-center gap-2.5 pt-3 border-t border-gray-100">
@@ -95,7 +95,7 @@ function PitchDetail({ detail, level }) {
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-gray-900">{detail.manager.name}</div>
-                <div className="text-[11px] text-gray-500">
+                <div className="text-[12px] text-gray-500">
                   {detail.manager.title} — the only person who grades your work
                 </div>
               </div>
@@ -104,14 +104,14 @@ function PitchDetail({ detail, level }) {
 
           {lvl && lvl.firstProject && (
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-5">
-              <div className="text-[10px] font-bold tracking-wider uppercase text-indigo-600 mb-1.5">
+              <div className="text-[12px] font-bold tracking-wider uppercase text-indigo-600 mb-1.5">
                 Your first project
               </div>
               <div className="text-sm font-bold text-gray-900">{lvl.firstProject}</div>
               {lvl.firstProjectBlurb && (
                 <p className="text-xs text-gray-600 mt-1.5">{lvl.firstProjectBlurb}</p>
               )}
-              <p className="text-[11px] text-gray-500 mt-3 pt-3 border-t border-indigo-100">
+              <p className="text-[12px] text-gray-500 mt-3 pt-3 border-t border-indigo-100">
                 Day one is a 15-minute skills check, not a task — it sets the baseline your
                 skill matrix is measured against.
               </p>
@@ -120,7 +120,7 @@ function PitchDetail({ detail, level }) {
 
           {detail.week && (
             <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-3">
+              <div className="text-[12px] font-bold tracking-wider uppercase text-gray-500 mb-3">
                 What a week is
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
@@ -135,8 +135,8 @@ function PitchDetail({ detail, level }) {
           {detail.ladder && detail.ladder.length > 0 && (
             <div className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp size={14} className="text-indigo-500" />
-                <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400">
+                <TrendingUp size={14} className="text-indigo-600" />
+                <div className="text-[12px] font-bold tracking-wider uppercase text-gray-500">
                   The ladder
                 </div>
               </div>
@@ -144,13 +144,13 @@ function PitchDetail({ detail, level }) {
                 {detail.ladder.map((r) => (
                   <div key={r.to} className="flex items-baseline justify-between gap-3 text-xs">
                     <span className="text-gray-700 font-semibold truncate">{r.to}</span>
-                    <span className="text-gray-400 shrink-0 tabular-nums">
+                    <span className="text-gray-500 shrink-0 tabular-nums">
                       {r.minAverage} avg · {detail.projectsRequired} projects
                     </span>
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-gray-500 mt-3 pt-3 border-t border-gray-100">
+              <p className="text-[12px] text-gray-500 mt-3 pt-3 border-t border-gray-100">
                 Promotion needs both: the average <em>and</em> the projects finished. Your
                 manager opens the conversation a project before she decides.
               </p>
@@ -160,14 +160,14 @@ function PitchDetail({ detail, level }) {
           {detail.tools && detail.tools.length > 0 && (
             <div className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Wrench size={14} className="text-indigo-500" />
-                <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400">
+                <Wrench size={14} className="text-indigo-600" />
+                <div className="text-[12px] font-bold tracking-wider uppercase text-gray-500">
                   Tools you get
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {detail.tools.map((t) => (
-                  <span key={t.label} className="text-[11px] font-semibold text-gray-600 bg-gray-100 rounded-md px-2 py-1">
+                  <span key={t.label} className="text-[12px] font-semibold text-gray-600 bg-gray-100 rounded-md px-2 py-1">
                     {t.label}
                   </span>
                 ))}
@@ -211,11 +211,11 @@ function ComingSoon({ role, alreadyAsked, onAsk, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} aria-label="Close"
-                className="absolute top-4 right-4 text-gray-300 hover:text-gray-500">
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-500">
           <X size={18} />
         </button>
 
-        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center mb-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 grid place-items-center mb-4">
           <Wrench size={18} />
         </div>
         <h3 className="text-base font-extrabold text-gray-900">{role.label}</h3>
@@ -225,14 +225,14 @@ function ComingSoon({ role, alreadyAsked, onAsk, onClose }) {
           at a time rather than half-finished.
         </p>
         {role.note && (
-          <p className="text-xs text-gray-400 mt-3 border-l-2 border-gray-100 pl-3">{role.note}</p>
+          <p className="text-xs text-gray-500 mt-3 border-l-2 border-gray-100 pl-3">{role.note}</p>
         )}
 
         {err && <div className="text-red-500 text-xs mt-4">{err}</div>}
 
         <div className="mt-5">
           {asked ? (
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600 bg-emerald-50 rounded-lg px-4 py-2.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-4 py-2.5">
               <Check size={15} /> You are on the list for this one.
             </div>
           ) : (
@@ -245,7 +245,7 @@ function ComingSoon({ role, alreadyAsked, onAsk, onClose }) {
             </button>
           )}
         </div>
-        <p className="text-[11px] text-gray-400 mt-3 text-center">
+        <p className="text-[12px] text-gray-500 mt-3 text-center">
           We build the roles most people ask for first.
         </p>
       </motion.div>
@@ -271,11 +271,11 @@ function RoleButton({ role, selected, onClick }) {
           {role.label}
         </span>
         {live ? (
-          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5">
+          <span className="shrink-0 text-[12px] font-bold uppercase tracking-wide text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5">
             Open
           </span>
         ) : (
-          <Lock size={12} className="shrink-0 text-gray-300" />
+          <Lock size={12} className="shrink-0 text-gray-500" />
         )}
       </div>
     </button>
@@ -363,7 +363,7 @@ export default function EnrollForm({ onEnrolled }) {
       <div className="min-h-screen bg-gray-50 grid place-items-center px-4">
         <div className="text-center">
           <p className="text-sm text-gray-600">Could not load the role catalogue.</p>
-          <p className="text-xs text-gray-400 mt-1">{loadError}</p>
+          <p className="text-xs text-gray-500 mt-1">{loadError}</p>
         </div>
       </div>
     );
@@ -372,7 +372,7 @@ export default function EnrollForm({ onEnrolled }) {
   if (!catalogue) {
     return (
       <div className="min-h-screen bg-gray-50 grid place-items-center px-4">
-        <div className="text-sm text-gray-400">Loading roles…</div>
+        <div className="text-sm text-gray-500">Loading roles…</div>
       </div>
     );
   }
@@ -397,12 +397,12 @@ export default function EnrollForm({ onEnrolled }) {
           <h2 className="text-base font-extrabold text-gray-900">Choose your role</h2>
           <p className="text-xs text-gray-500 mt-1 mb-4">
             {catalogue.totalRoles} roles across {catalogue.categories.length} categories.
-            The ones marked <span className="font-semibold text-emerald-600">Open</span> can be
+            The ones marked <span className="font-semibold text-emerald-700">Open</span> can be
             started today.
           </p>
 
           <div className="relative mb-4">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -416,11 +416,11 @@ export default function EnrollForm({ onEnrolled }) {
           {results ? (
             <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
               {results.length === 0 && (
-                <p className="text-xs text-gray-400 py-4 text-center">No role matches that.</p>
+                <p className="text-xs text-gray-500 py-4 text-center">No role matches that.</p>
               )}
               {results.map((r) => (
                 <div key={r.key}>
-                  <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-0.5">{r.subcategory}</div>
+                  <div className="text-[12px] uppercase tracking-wide text-gray-500 mb-0.5">{r.subcategory}</div>
                   <RoleButton role={r} selected={r.key === roleKey} onClick={() => pick(r)} />
                 </div>
               ))}
@@ -436,13 +436,13 @@ export default function EnrollForm({ onEnrolled }) {
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-bold text-gray-900">{c.label}</span>
                     {c.liveCount > 0 && (
-                      <span className="shrink-0 text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5">
+                      <span className="shrink-0 text-[12px] font-bold uppercase text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5">
                         {c.liveCount} open
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-gray-500 mt-1">{c.blurb}</p>
-                  <p className="text-[11px] text-gray-400 mt-1.5">{c.roleCount} roles</p>
+                  <p className="text-[12px] text-gray-500 mt-1">{c.blurb}</p>
+                  <p className="text-[12px] text-gray-500 mt-1.5">{c.roleCount} roles</p>
                 </button>
               ))}
             </div>
@@ -457,7 +457,7 @@ export default function EnrollForm({ onEnrolled }) {
               <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
                 {activeCategory.subcategories.map((s) => (
                   <div key={s.label}>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                    <div className="text-[12px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
                       {s.label}
                     </div>
                     <div className="space-y-1.5">
@@ -474,12 +474,12 @@ export default function EnrollForm({ onEnrolled }) {
           {selected && selected.status === 'live' && (
             <div className="mt-5 pt-5 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-4">
-                <UserRound size={15} className="text-indigo-500" />
+                <UserRound size={15} className="text-indigo-600" />
                 <span className="text-sm font-bold text-gray-900">{selected.label}</span>
               </div>
 
               <label className="block text-xs font-bold text-gray-500 mb-1.5">Level</label>
-              <p className="text-[11px] text-gray-400 mb-2">
+              <p className="text-[12px] text-gray-500 mb-2">
                 Each level gets different projects, not the same work described differently.
                 Starting above Junior skips the promotion rounds below it.
               </p>
@@ -510,7 +510,7 @@ export default function EnrollForm({ onEnrolled }) {
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-gray-400 mb-4">
+              <p className="text-[12px] text-gray-500 mb-4">
                 The programme runs Monday to Friday today. Weekend and custom schedules are
                 not wired up yet, so we are not offering them rather than quietly ignoring
                 what you pick.

@@ -63,7 +63,7 @@ export default function ReviewPanel({ task, manager, learnerName, learnerPhotoUr
           {manager ? `${manager.name.split(' ')[0]} is reviewing this` : 'In review'}
         </span>
         {!outcome && (
-          <span className="ml-auto text-[11px] font-bold text-amber-700">
+          <span className="ml-auto text-[12px] font-bold text-amber-700">
             {roundsLeft} {roundsLeft === 1 ? 'attempt' : 'attempts'} left
           </span>
         )}
@@ -103,7 +103,7 @@ export default function ReviewPanel({ task, manager, learnerName, learnerPhotoUr
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-amber-300"
             />
             <div className="flex items-center justify-between gap-3 mt-2">
-              <p className="text-[11px] text-slate-500 leading-snug">
+              <p className="text-[12px] text-slate-500 leading-snug">
                 Say <em>why</em>, not what the code does. She's checking you understood the choice.
               </p>
               <button
@@ -121,7 +121,7 @@ export default function ReviewPanel({ task, manager, learnerName, learnerPhotoUr
         {outcome && outcome.kind === 'accepted' && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <div className="flex items-center gap-2 mb-1.5">
-              <CheckCircle2 size={15} className="text-emerald-600" />
+              <CheckCircle2 size={15} className="text-emerald-700" />
               <span className="text-sm font-extrabold text-slate-900">Signed off — {outcome.score}/100</span>
             </div>
             <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{outcome.feedback}</p>

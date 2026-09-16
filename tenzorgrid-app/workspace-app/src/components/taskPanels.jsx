@@ -70,7 +70,7 @@ export function CompletionDonut({ tally }) {
           <span className="text-sm font-extrabold leading-none text-gray-900">
             {tally.by.completed} / {tally.assignedTotal}
           </span>
-          <span className="text-[11px] font-bold text-gray-400 mt-0.5">{tally.pct}%</span>
+          <span className="text-[12px] font-bold text-gray-500 mt-0.5">{tally.pct}%</span>
         </div>
       </div>
 
@@ -113,7 +113,7 @@ export function StatTile({ bucket, value, sub, index }) {
         <div className="min-w-0">
           <div className="text-2xl font-extrabold text-gray-900 leading-none">{value}</div>
           <div className={`text-sm font-bold ${b.ink} mt-1`}>{b.label}</div>
-          <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{sub}</div>
+          <div className="text-[12px] text-gray-500 mt-0.5 leading-snug">{sub}</div>
         </div>
       </div>
     </motion.div>
@@ -130,26 +130,26 @@ function FocusRow({ task, person, onOpen, compact }) {
     later: 'border-l-4 border-l-slate-200 bg-white',
   }[urgent];
   const flag = {
-    overdue: <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-red-700 bg-red-100 rounded px-1.5 py-0.5"><TriangleAlert size={11} />{task.dueLabel}</span>,
-    today: <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-800 bg-amber-100 rounded px-1.5 py-0.5"><Clock3 size={11} />Due today</span>,
-    later: <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><CalendarDays size={11} />Due {task.dueLabel}</span>,
+    overdue: <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-red-700 bg-red-100 rounded px-1.5 py-0.5"><TriangleAlert size={11} />{task.dueLabel}</span>,
+    today: <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-amber-800 bg-amber-100 rounded px-1.5 py-0.5"><Clock3 size={11} />Due today</span>,
+    later: <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-slate-500"><CalendarDays size={11} />Due {task.dueLabel}</span>,
   }[urgent];
 
   return (
     <div className={`rounded-xl border border-gray-100 ${skin} p-3.5`}>
       <div className="flex items-start justify-between gap-3 mb-1.5">
         {flag}
-        <span className={`shrink-0 inline-flex text-[10px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[task.priority]}`}>
+        <span className={`shrink-0 inline-flex text-[12px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[task.priority]}`}>
           {task.priorityLabel}
         </span>
       </div>
       <h4 className="text-sm font-bold text-gray-900 leading-snug">{task.title}</h4>
-      {task.projectTitle && <p className="text-[11px] text-gray-500 mt-0.5 truncate">Project: {task.projectTitle}</p>}
+      {task.projectTitle && <p className="text-[12px] text-gray-500 mt-0.5 truncate">Project: {task.projectTitle}</p>}
 
       {!compact && (
         <div className="flex items-center gap-2 mt-2">
           <Avatar name={person ? person.name : 'Asha Rao'} avatarUrl={person && person.avatarUrl} size={20} />
-          <span className="text-[11px] text-gray-500 truncate">{person ? person.name : 'Asha Rao'}</span>
+          <span className="text-[12px] text-gray-500 truncate">{person ? person.name : 'Asha Rao'}</span>
         </div>
       )}
 
@@ -159,7 +159,7 @@ function FocusRow({ task, person, onOpen, compact }) {
             <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 transition-all"
               style={{ width: `${task.stagePct}%` }} />
           </div>
-          <div className="text-[10px] font-semibold text-gray-400 mt-1">{task.stage}</div>
+          <div className="text-[12px] font-semibold text-gray-500 mt-1">{task.stage}</div>
         </div>
         <motion.button
           whileTap={{ scale: 0.96 }}
@@ -208,7 +208,7 @@ export function UpcomingTable({ tasks, onViewAll, compact = false }) {
     <div className="overflow-x-auto -mx-1 px-1">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">
+          <tr className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
             <th className="py-2 pr-3 font-bold">Opens</th>
             <th className="py-2 pr-3 font-bold">Task</th>
             {!compact && <th className="py-2 pr-3 font-bold hidden sm:table-cell">Project</th>}
@@ -222,10 +222,10 @@ export function UpcomingTable({ tasks, onViewAll, compact = false }) {
             <tr key={t.id} className="border-t border-gray-100 hover:bg-gray-50/70 transition-colors">
               <td className="py-2.5 pr-3 align-middle whitespace-nowrap">
                 <div className="text-xs font-bold text-gray-800">Day {t.dayIndex || '—'}</div>
-                <div className="text-[11px] text-gray-400">{t.opensLabel || 'Open now'}</div>
+                <div className="text-[12px] text-gray-500">{t.opensLabel || 'Open now'}</div>
               </td>
               <td className="py-2.5 pr-3 align-middle">
-                <span className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</span>
+                <span className="text-[14px] font-semibold text-gray-800 leading-snug">{t.title}</span>
               </td>
               {!compact && (
                 <td className="py-2.5 pr-3 align-middle hidden sm:table-cell">
@@ -233,7 +233,7 @@ export function UpcomingTable({ tasks, onViewAll, compact = false }) {
                 </td>
               )}
               <td className="py-2.5 pr-3 align-middle">
-                <span className={`inline-flex text-[10px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[t.priority]}`}>
+                <span className={`inline-flex text-[12px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[t.priority]}`}>
                   {t.priorityLabel}
                 </span>
               </td>
@@ -245,7 +245,7 @@ export function UpcomingTable({ tasks, onViewAll, compact = false }) {
               <td className="py-2.5 align-middle text-right">
                 {/* Opening a task that has not opened yet would land the learner in an
                     editor they cannot submit from, so these are not clickable. */}
-                <ChevronRight size={15} className="text-gray-300 inline" />
+                <ChevronRight size={15} className="text-gray-500 inline" />
               </td>
             </tr>
           ))}
@@ -284,7 +284,7 @@ export function TaskFlow({ rows, onOpen }) {
           <div className="flex items-center gap-1.5 mb-2.5 px-0.5">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c.color }} />
             <span className="text-xs font-bold text-gray-700 truncate">{c.label}</span>
-            <span className="ml-auto text-[11px] font-bold text-gray-400">{c.items.length}</span>
+            <span className="ml-auto text-[12px] font-bold text-gray-500">{c.items.length}</span>
           </div>
           <div className="space-y-2">
             {c.items.slice(0, 4).map((t) => {
@@ -298,15 +298,15 @@ export function TaskFlow({ rows, onOpen }) {
                     clickable ? 'hover:shadow-md cursor-pointer' : 'opacity-70 cursor-default'
                   }`}
                 >
-                  <div className="text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{t.title}</div>
+                  <div className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-2">{t.title}</div>
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    <span className="text-[10px] font-semibold text-gray-400">
+                    <span className="text-[12px] font-semibold text-gray-500">
                       {t.status === 'graded' && t.score !== null ? `${t.score}/100`
                         : t.notYetOpen ? (t.opensLabel || `Day ${t.dayIndex}`)
                           : t.overdue ? t.dueLabel : `Day ${t.dayIndex || '—'}`}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-gray-300" />
-                    <span className={`text-[10px] font-bold ${t.overdue && t.status !== 'graded' ? 'text-red-600' : 'text-gray-400'}`}>
+                    <span className={`text-[12px] font-bold ${t.overdue && t.status !== 'graded' ? 'text-red-600' : 'text-gray-500'}`}>
                       {t.overdue && t.status !== 'graded' ? 'Overdue' : t.priorityLabel}
                     </span>
                   </div>
@@ -314,11 +314,11 @@ export function TaskFlow({ rows, onOpen }) {
               );
             })}
             {c.items.length > 4 && (
-              <div className="text-[11px] font-semibold text-gray-400 px-0.5 pt-0.5">
+              <div className="text-[12px] font-semibold text-gray-500 px-0.5 pt-0.5">
                 + {c.items.length - 4} more
               </div>
             )}
-            {!c.items.length && <div className="text-[11px] text-gray-400 px-0.5 py-1">Nothing here</div>}
+            {!c.items.length && <div className="text-[12px] text-gray-500 px-0.5 py-1">Nothing here</div>}
           </div>
         </div>
       ))}
@@ -346,30 +346,30 @@ export function Timeline({ rows }) {
         }`}>
           <div className="flex items-baseline gap-2 flex-wrap mb-2">
             <span className="text-sm font-bold text-gray-800">Day {d}</span>
-            {open && <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-100 rounded px-1.5 py-0.5">Open now</span>}
-            {locked && <span className="text-[10px] font-semibold text-gray-500">{items[0].opensLabel || 'Opens later'}</span>}
-            <span className="ml-auto text-[11px] font-bold text-gray-400">{done} / {items.length}</span>
+            {open && <span className="text-[12px] font-extrabold text-indigo-700 bg-indigo-100 rounded px-1.5 py-0.5">Open now</span>}
+            {locked && <span className="text-[12px] font-semibold text-gray-500">{items[0].opensLabel || 'Opens later'}</span>}
+            <span className="ml-auto text-[12px] font-bold text-gray-500">{done} / {items.length}</span>
           </div>
           <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
               style={{ width: items.length ? `${(done / items.length) * 100}%` : '0%' }} />
           </div>
           {items.length > 0 && (
-            <p className="text-[11px] text-gray-500 mt-1.5 truncate">
+            <p className="text-[12px] text-gray-500 mt-1.5 truncate">
               {items.slice(0, 2).map((t) => t.title).join(' · ')}{items.length > 2 ? ` · +${items.length - 2}` : ''}
             </p>
           )}
         </div>
       ))}
       {unplaced > 0 && (
-        <p className="text-[11px] text-gray-400">{unplaced} task{unplaced === 1 ? '' : 's'} not tied to a day.</p>
+        <p className="text-[12px] text-gray-500">{unplaced} task{unplaced === 1 ? '' : 's'} not tied to a day.</p>
       )}
     </div>
   );
 }
 
 const ACTIVITY_SKIN = {
-  signoff: { ring: 'bg-emerald-100 text-emerald-600', Icon: CircleCheckBig },
+  signoff: { ring: 'bg-emerald-100 text-emerald-700', Icon: CircleCheckBig },
   submitted: { ring: 'bg-indigo-100 text-indigo-600', Icon: CirclePlay },
   message: { ring: 'bg-amber-100 text-amber-600', Icon: MessageSquare },
 };
@@ -402,7 +402,7 @@ export function ActivityFeed({ events, personByArchetype }) {
             </span>
             {person && <Avatar name={person.name} avatarUrl={person.avatarUrl} size={22} className="shrink-0" />}
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] text-gray-700 leading-snug">
+              <p className="text-[14px] text-gray-700 leading-snug">
                 {e.kind === 'signoff' && (
                   <>
                     <b className="font-semibold">{e.who}</b> signed off{' '}
@@ -420,7 +420,7 @@ export function ActivityFeed({ events, personByArchetype }) {
                   </>
                 )}
               </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{ago(e.at)}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{ago(e.at)}</p>
             </div>
           </div>
         );
@@ -438,7 +438,7 @@ export function ProgressBanner({ tally }) {
         : 'Every task assigned to you is signed off. Nicely done.';
   return (
     <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 p-4 flex items-start gap-3">
-      <span className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
+      <span className="shrink-0 w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center">
         <Target size={18} />
       </span>
       <div className="min-w-0">

@@ -13,7 +13,7 @@ import { Avatar } from './ui.jsx';
 export function SkillPointsBar({ data }) {
   if (!data || !data.length) {
     return (
-      <div className="h-44 flex items-center justify-center text-sm text-gray-400 font-medium text-center px-4">
+      <div className="h-44 flex items-center justify-center text-sm text-gray-500 font-medium text-center px-4">
         No skill points yet — they're earned when a task is graded.
       </div>
     );
@@ -25,7 +25,7 @@ export function SkillPointsBar({ data }) {
           <CartesianGrid vertical={false} stroke="#f1f5f9" />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11.5, fill: '#64748b', fontWeight: 600 }}
+            tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }}
             axisLine={false}
             tickLine={false}
             interval={0}
@@ -37,7 +37,7 @@ export function SkillPointsBar({ data }) {
             formatter={(v) => [`${v} pts`, 'Skill points']}
           />
           <Bar dataKey="points" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive>
-            <LabelList dataKey="points" position="top" style={{ fill: '#334155', fontSize: 11.5, fontWeight: 700 }} />
+            <LabelList dataKey="points" position="top" style={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -47,7 +47,7 @@ export function SkillPointsBar({ data }) {
 
 export function Sparkline({ data, dataKey = 'score', color = '#14b8a6', height = 'h-10', emptyNote = 'Not enough data yet' }) {
   if (!data || data.length < 2) {
-    return <div className={`${height} flex items-center text-xs text-gray-400 font-medium`}>{emptyNote}</div>;
+    return <div className={`${height} flex items-center text-xs text-gray-500 font-medium`}>{emptyNote}</div>;
   }
   return (
     <div className={`${height} -mx-1`}>
@@ -74,7 +74,7 @@ export function TaskHealthDonut({ data, onTimeRate }) {
   const total = (data || []).reduce((s, d) => s + d.value, 0);
   if (!total) {
     return (
-      <div className="h-40 flex items-center justify-center text-sm text-gray-400 font-medium text-center px-4">
+      <div className="h-40 flex items-center justify-center text-sm text-gray-500 font-medium text-center px-4">
         No tasks with a deadline yet.
       </div>
     );
@@ -103,7 +103,7 @@ export function TaskHealthDonut({ data, onTimeRate }) {
         {onTimeRate !== null && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-lg font-extrabold leading-none text-gray-900">{onTimeRate}%</span>
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">On time</span>
+            <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">On time</span>
           </div>
         )}
       </div>
@@ -113,7 +113,7 @@ export function TaskHealthDonut({ data, onTimeRate }) {
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: HEALTH_COLOR[d.key] }} />
             <span className="text-gray-600 font-medium flex-1 min-w-0">{d.label}</span>
             <span className="font-bold text-gray-800 shrink-0">{d.value}</span>
-            <span className="text-gray-400 shrink-0 w-9 text-right">{Math.round((d.value / total) * 100)}%</span>
+            <span className="text-gray-500 shrink-0 w-9 text-right">{Math.round((d.value / total) * 100)}%</span>
           </div>
         ))}
       </div>
@@ -126,7 +126,7 @@ export function TaskHealthDonut({ data, onTimeRate }) {
 export function TaskVelocityBar({ data }) {
   if (!data || !data.length) {
     return (
-      <div className="h-40 flex items-center justify-center text-sm text-gray-400 font-medium text-center px-4">
+      <div className="h-40 flex items-center justify-center text-sm text-gray-500 font-medium text-center px-4">
         No delivered tasks yet — turnaround appears once work is graded.
       </div>
     );
@@ -139,7 +139,7 @@ export function TaskVelocityBar({ data }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 22, right: 8, bottom: 0, left: 8 }}>
           <CartesianGrid vertical={false} stroke="#f1f5f9" />
-          <XAxis dataKey="label" tick={{ fontSize: 11.5, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} interval={0} />
+          <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} interval={0} />
           <Tooltip
             cursor={{ fill: '#f8fafc' }}
             contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
@@ -147,7 +147,7 @@ export function TaskVelocityBar({ data }) {
             formatter={(v, n, p) => [`${fmt(v)} avg over ${p.payload.count} task${p.payload.count === 1 ? '' : 's'}`, 'Turnaround']}
           />
           <Bar dataKey="minutes" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive>
-            <LabelList dataKey="minutes" position="top" formatter={fmt} style={{ fill: '#334155', fontSize: 11.5, fontWeight: 700 }} />
+            <LabelList dataKey="minutes" position="top" formatter={fmt} style={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -178,12 +178,12 @@ export function SkillGauge({ label, value, hasData }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-x-0 bottom-0 text-center">
-          <span className={`text-sm font-extrabold ${hasData ? 'text-slate-900' : 'text-slate-300'}`}>
+          <span className={`text-sm font-extrabold ${hasData ? 'text-slate-900' : 'text-slate-500'}`}>
             {hasData ? pct : '—'}
           </span>
         </div>
       </div>
-      <span className="text-[11px] font-bold text-slate-500 mt-1">{label}</span>
+      <span className="text-[12px] font-bold text-slate-500 mt-1">{label}</span>
     </div>
   );
 }
@@ -191,21 +191,21 @@ export function SkillGauge({ label, value, hasData }) {
 // Progress per project. One measure across categories, so a single hue.
 export function MilestoneBars({ data }) {
   if (!data || !data.length) {
-    return <div className="h-40 flex items-center justify-center text-sm text-slate-400 font-medium">No projects yet.</div>;
+    return <div className="h-40 flex items-center justify-center text-sm text-slate-500 font-medium">No projects yet.</div>;
   }
   return (
     <div className="h-40 -mx-1">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 22, right: 8, bottom: 0, left: 8 }}>
           <CartesianGrid vertical={false} stroke="#f1f5f9" />
-          <XAxis dataKey="short" tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} interval={0} />
+          <XAxis dataKey="short" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} interval={0} />
           <Tooltip
             cursor={{ fill: '#f8fafc' }}
             contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
             formatter={(v, n, p) => [`${v}% — ${p.payload.status}`, p.payload.title]}
           />
           <Bar dataKey="progressPct" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={46} isAnimationActive>
-            <LabelList dataKey="progressPct" position="top" formatter={(v) => `${v}%`} style={{ fill: '#334155', fontSize: 11, fontWeight: 700 }} />
+            <LabelList dataKey="progressPct" position="top" formatter={(v) => `${v}%`} style={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -218,9 +218,12 @@ export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
   return (
     <div className="relative h-64 -mx-2">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={axes} outerRadius="42%" margin={{ top: 10, right: 58, bottom: 10, left: 58 }}>
+        {/* The axis labels sit outside the web, so the plot has to give them room. At
+            12px labels, "Business Logic" and "Communication" were losing a character
+            each side — the radius comes in and the side margins go out to pay for it. */}
+        <RadarChart data={axes} outerRadius="38%" margin={{ top: 10, right: 72, bottom: 10, left: 72 }}>
           <PolarGrid stroke="#eef0f4" />
-          <PolarAngleAxis dataKey="label" tick={{ fontSize: 11.5, fill: '#4b5563', fontWeight: 700 }} />
+          <PolarAngleAxis dataKey="label" tick={{ fontSize: 12, fill: '#4b5563', fontWeight: 700 }} />
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
           <Radar dataKey="value" stroke="#6366f1" fill="#6366f1" fillOpacity={0.22} strokeWidth={2} isAnimationActive />
         </RadarChart>
@@ -229,7 +232,7 @@ export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
         <Avatar name={learnerName} photoUrl={learnerPhotoUrl} size={40} className="ring-2 ring-white shadow" />
       </div>
       {!hasAnyData && (
-        <p className="absolute bottom-0 inset-x-0 text-center text-xs text-gray-400 font-medium">Complete a task to populate your skill matrix</p>
+        <p className="absolute bottom-0 inset-x-0 text-center text-xs text-gray-500 font-medium">Complete a task to populate your skill matrix</p>
       )}
     </div>
   );

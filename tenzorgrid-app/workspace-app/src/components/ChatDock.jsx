@@ -93,7 +93,7 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
         <Avatar name={person.name} avatarUrl={person.avatarUrl} size={24} />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold leading-tight truncate">{person.name}</p>
-          <p className="text-[10px] text-slate-300 truncate">
+          <p className="text-[12px] text-slate-500 truncate">
             {review ? `Signing off "${review.title}"` : person.title}
           </p>
         </div>
@@ -120,10 +120,10 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
         <>
           {review && (
             <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 border-b border-amber-200">
-              <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wide truncate">
+              <span className="text-[12px] font-extrabold text-amber-900 uppercase tracking-wide truncate">
                 Sign-off · {review.title}
               </span>
-              <span className="ml-auto text-[11px] font-bold text-amber-700 shrink-0">
+              <span className="ml-auto text-[12px] font-bold text-amber-700 shrink-0">
                 {review.roundsLeft} {review.roundsLeft === 1 ? 'attempt' : 'attempts'} left
               </span>
             </div>
@@ -135,12 +135,12 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
                   {person.about}
                 </p>
                 {person.helpsWith && person.helpsWith.length > 0 && (
-                  <p className="text-[11px] text-slate-400 mt-2 px-3">
+                  <p className="text-[12px] text-slate-500 mt-2 px-3">
                     Ask about: {person.helpsWith.join(', ')}
                   </p>
                 )}
                 {!person.core && !person.friend && person.messagesToFriend > 0 && (
-                  <p className="text-[11px] text-indigo-500 font-semibold mt-2.5">
+                  <p className="text-[12px] text-indigo-600 font-semibold mt-2.5">
                     {person.messagesToFriend} more {person.messagesToFriend === 1 ? 'message' : 'messages'} and they'll know you well enough to really help
                   </p>
                 )}
@@ -150,7 +150,7 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
               const mine = m.from === 'learner';
               return (
                 <div key={i} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-line ${
+                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-line ${
                     mine ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}`}>
                     {m.body}
                   </div>
@@ -160,18 +160,18 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
             {busy && (
               <div className="flex justify-start">
                 <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3 py-2">
-                  <span className="text-[11px] text-slate-400">{person.name.split(' ')[0]} is typing…</span>
+                  <span className="text-[12px] text-slate-500">{person.name.split(' ')[0]} is typing…</span>
                 </div>
               </div>
             )}
           </div>
 
-          {error && <p className="px-3 py-1.5 text-[11px] text-rose-700 bg-rose-50 font-semibold">{error}</p>}
+          {error && <p className="px-3 py-1.5 text-[12px] text-rose-700 bg-rose-50 font-semibold">{error}</p>}
 
           <div className="relative border-t border-slate-200 p-2">
             {emoji && <EmojiPicker onPick={(e) => setText((t) => t + e)} onClose={() => setEmoji(false)} />}
             {review && (
-              <p className="text-[11px] text-slate-500 mb-1.5 px-0.5">
+              <p className="text-[12px] text-slate-500 mb-1.5 px-0.5">
                 Say <em>why</em>, not what the code does. She's checking you understood the choice.
               </p>
             )}
@@ -186,12 +186,12 @@ function ChatWindow({ person, messages, onClose, onMinimise, onSend, enterToSend
                 placeholder={review
                   ? 'Answer her — say why you made that choice…'
                   : (enterToSend ? 'Message… (Enter to send)' : 'Message… (Shift+Enter to send)')}
-                className="flex-1 resize-none max-h-32 rounded-lg border border-slate-200 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="flex-1 resize-none max-h-32 rounded-lg border border-slate-200 px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <button
                 onClick={() => setEmoji((v) => !v)}
                 aria-label="Add an emoji"
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 shrink-0"
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0"
               >
                 <Smile size={16} />
               </button>
@@ -319,7 +319,7 @@ export default function ChatDock({ state, onStateChange, enterToSend, openWith }
               className="absolute bottom-full right-0 mb-2 w-96 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
             >
               <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200">
-                <Search size={14} className="text-slate-400 shrink-0" />
+                <Search size={14} className="text-slate-500 shrink-0" />
                 <input
                   autoFocus
                   value={query}
@@ -331,7 +331,7 @@ export default function ChatDock({ state, onStateChange, enterToSend, openWith }
               </div>
               <div className="max-h-[26rem] overflow-y-auto">
                 {found.length === 0 && (
-                  <p className="px-3 py-4 text-xs text-slate-400 text-center">Nobody here matches that.</p>
+                  <p className="px-3 py-4 text-xs text-slate-500 text-center">Nobody here matches that.</p>
                 )}
                 {found.map((p) => (
                   <button
@@ -346,10 +346,10 @@ export default function ChatDock({ state, onStateChange, enterToSend, openWith }
                         {p.name}
                         {p.friend && <Handshake size={11} className="inline ml-1.5 text-teal-500 -mt-0.5" />}
                       </p>
-                      <p className="text-[11px] text-slate-400 truncate">{p.title}</p>
+                      <p className="text-[12px] text-slate-500 truncate">{p.title}</p>
                     </div>
                     {p.unread > 0 && (
-                      <span className="shrink-0 min-w-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold text-center">
+                      <span className="shrink-0 min-w-[18px] px-1 rounded-full bg-red-600 text-white text-[12px] font-bold text-center">
                         {p.unread}
                       </span>
                     )}

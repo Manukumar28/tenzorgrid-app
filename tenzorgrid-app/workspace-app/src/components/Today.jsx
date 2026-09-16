@@ -25,7 +25,7 @@ function Counter({ label, done, total, tone }) {
           : <span className="text-white text-xs font-extrabold tabular-nums">{Math.max(0, total - done)}</span>}
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500">{label}</p>
+        <p className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500">{label}</p>
         <p className="text-sm font-bold text-slate-900 tabular-nums">{done} of {total}</p>
       </div>
     </div>
@@ -35,7 +35,7 @@ function Counter({ label, done, total, tone }) {
 function Via({ via }) {
   const Icon = via === 'chat' ? MessageSquare : Mail;
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+    <span className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-wide text-slate-500">
       <Icon size={11} />{via === 'chat' ? 'Chat' : 'Email'}
     </span>
   );
@@ -64,22 +64,22 @@ function Activity({ item, onDone }) {
     <div className={`rounded-xl border p-4 ${done ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'}`}>
       <div className="flex items-start gap-2.5 mb-2">
         {done
-          ? <CheckCircle2 size={17} className="text-emerald-600 shrink-0 mt-0.5" />
-          : <Circle size={17} className="text-slate-300 shrink-0 mt-0.5" />}
+          ? <CheckCircle2 size={17} className="text-emerald-700 shrink-0 mt-0.5" />
+          : <Circle size={17} className="text-slate-500 shrink-0 mt-0.5" />}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             <Via via={item.via} />
-            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{item.type}</span>
-            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400"><Timer size={10} />{item.minutes} min</span>
+            <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{item.type}</span>
+            <span className="inline-flex items-center gap-1 text-[12px] text-slate-500"><Timer size={10} />{item.minutes} min</span>
             {done && typeof item.score === 'number' && (
-              <span className="text-[10px] font-extrabold text-emerald-700">{item.score}%</span>
+              <span className="text-[12px] font-extrabold text-emerald-700">{item.score}%</span>
             )}
           </div>
           <p className="font-bold text-sm text-slate-900 leading-snug">{item.title}</p>
         </div>
       </div>
 
-      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed mb-3 pl-[27px]">{item.body}</p>
+      <p className="text-[14px] text-slate-600 whitespace-pre-wrap leading-relaxed mb-3 pl-[27px]">{item.body}</p>
 
       {!done && (
         <div className="pl-[27px] space-y-2">
@@ -93,7 +93,7 @@ function Activity({ item, onDone }) {
                     onClick={() => setPicked(o.key)}
                     aria-label={o.label}
                     aria-pressed={picked === o.key}
-                    className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[13px] transition-colors ${
+                    className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[14px] transition-colors ${
                       picked === o.key ? 'border-indigo-500 bg-indigo-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}
                   >{o.label}</button>
                 ))}
@@ -109,10 +109,10 @@ function Activity({ item, onDone }) {
                 rows={3}
                 aria-label={item.check.prompt}
                 placeholder="A few lines is enough…"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[14px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               {item.check.maxWords && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[12px] text-slate-500">
                   {answer.trim().split(/\s+/).filter(Boolean).length} / {item.check.maxWords} words
                 </p>
               )}
@@ -161,35 +161,35 @@ function Situation({ item, onHandle }) {
     <div className={`rounded-xl border p-4 ${done ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/30'}`}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
         <Via via={item.via} />
-        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{item.type}</span>
+        <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{item.type}</span>
         {done && (
-          <span className="text-[10px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+          <span className="text-[12px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
             {item.handledAs}
           </span>
         )}
         {done && typeof item.score === 'number' && (
-          <span className={`text-[10px] font-extrabold ${item.score >= 70 ? 'text-emerald-700' : item.score >= 40 ? 'text-amber-700' : 'text-rose-700'}`}>
+          <span className={`text-[12px] font-extrabold ${item.score >= 70 ? 'text-emerald-700' : item.score >= 40 ? 'text-amber-700' : 'text-rose-700'}`}>
             {item.score}%
           </span>
         )}
       </div>
       {item.senderName && (
-        <p className="text-[11px] font-bold text-slate-400 mb-0.5">{item.senderName}</p>
+        <p className="text-[12px] font-bold text-slate-500 mb-0.5">{item.senderName}</p>
       )}
       {item.subject && <p className="font-bold text-sm text-slate-900 leading-snug mb-1">{item.subject}</p>}
-      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
+      <p className="text-[14px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
 
       {/* What it was looking for is shown only AFTER it is handled. Telling the learner
           which mail matters is the answer to the only question triage asks. */}
       {done && item.expect && item.expect.length > 0 && (
         <div className="mt-3 rounded-lg bg-white border border-slate-200 px-3 py-2">
-          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">It needed</p>
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500 mb-1">It needed</p>
           <ul className="space-y-0.5">
             {item.expect.map((e, i) => (
-              <li key={i} className="text-[12px] text-slate-600 flex gap-1.5"><span className="text-slate-300">·</span>{e}</li>
+              <li key={i} className="text-[13px] text-slate-600 flex gap-1.5"><span className="text-slate-500">·</span>{e}</li>
             ))}
           </ul>
-          {item.note && <p className="text-[12px] text-slate-500 mt-2 leading-relaxed">{item.note}</p>}
+          {item.note && <p className="text-[13px] text-slate-500 mt-2 leading-relaxed">{item.note}</p>}
         </div>
       )}
 
@@ -202,7 +202,7 @@ function Situation({ item, onHandle }) {
               rows={3}
               aria-label="Your reply"
               placeholder="Your reply…"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[14px] resize-y focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
           )}
           <div className="flex flex-wrap gap-1.5">
@@ -250,25 +250,25 @@ function Chore({ item, onDone }) {
   return (
     <div className={`rounded-xl border p-4 ${item.done ? 'border-slate-200 bg-slate-50/60' : 'border-slate-200 bg-white'}`}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
+        <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-slate-500">
           <ClipboardList size={11} /> Admin
         </span>
         {item.done && (
-          <span className="text-[10px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+          <span className="text-[12px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
             Done
           </span>
         )}
       </div>
-      {item.senderName && <p className="text-[11px] font-bold text-slate-400 mb-0.5">{item.senderName}</p>}
+      {item.senderName && <p className="text-[12px] font-bold text-slate-500 mb-0.5">{item.senderName}</p>}
       <p className="font-bold text-sm text-slate-900 leading-snug mb-1">{item.subject}</p>
-      <p className="text-[13px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
+      <p className="text-[14px] text-slate-600 whitespace-pre-wrap leading-relaxed">{item.body}</p>
 
       {item.done ? (
         <div className="mt-3 rounded-lg bg-white border border-slate-200 px-3 py-2">
-          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">Submitted</p>
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500 mb-1">Submitted</p>
           <ul className="space-y-0.5">
             {Object.entries(item.values || {}).map(([k, v]) => (
-              <li key={k} className="text-[12px] text-slate-600">{k}: <span className="font-semibold text-slate-800">{v}</span></li>
+              <li key={k} className="text-[13px] text-slate-600">{k}: <span className="font-semibold text-slate-800">{v}</span></li>
             ))}
           </ul>
         </div>
@@ -277,7 +277,7 @@ function Chore({ item, onDone }) {
           {item.action.fields.map((f) => (
             <div key={f.key}>
               {f.kind === 'ack' ? (
-                <label className="flex items-start gap-2 text-[13px] text-slate-700 cursor-pointer">
+                <label className="flex items-start gap-2 text-[14px] text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={values[f.key] === true}
@@ -288,7 +288,7 @@ function Chore({ item, onDone }) {
                 </label>
               ) : (
                 <>
-                  <label className="block text-[11px] font-bold text-slate-500 mb-1" htmlFor={`ch-${item.key}-${f.key}`}>
+                  <label className="block text-[12px] font-bold text-slate-500 mb-1" htmlFor={`ch-${item.key}-${f.key}`}>
                     {f.label}
                   </label>
                   {f.kind === 'number' ? (
@@ -299,14 +299,14 @@ function Chore({ item, onDone }) {
                       placeholder={f.placeholder}
                       value={values[f.key] ?? ''}
                       onChange={(e) => set(f.key, e.target.value)}
-                      className="w-full max-w-[180px] rounded-lg border border-slate-200 px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      className="w-full max-w-[180px] rounded-lg border border-slate-200 px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     />
                   ) : (
                     <select
                       id={`ch-${item.key}-${f.key}`}
                       value={values[f.key] ?? ''}
                       onChange={(e) => set(f.key, e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-[14px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     >
                       <option value="">Choose…</option>
                       {(f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
@@ -343,7 +343,7 @@ function Quiz({ quiz, onSubmit }) {
     return (
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-1">
-          <GraduationCap size={18} className="text-indigo-500" />
+          <GraduationCap size={18} className="text-indigo-600" />
           <h3 className="text-base font-bold">{quiz.title}</h3>
         </div>
         <p className="text-sm text-slate-500">
@@ -357,15 +357,15 @@ function Quiz({ quiz, onSubmit }) {
     return (
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-2">
-          <GraduationCap size={18} className="text-indigo-500" />
+          <GraduationCap size={18} className="text-indigo-600" />
           <h3 className="text-base font-bold">{result.right} of {result.total}</h3>
         </div>
         <div className="space-y-2.5">
           {result.results.map((r) => (
             <div key={r.id} className={`rounded-lg border px-3 py-2 ${r.correct ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'}`}>
-              <p className="text-[13px] font-semibold text-slate-800 mb-1">{r.q}</p>
+              <p className="text-[14px] font-semibold text-slate-800 mb-1">{r.q}</p>
               {/* The reason is the point. A score with no explanation teaches nothing. */}
-              <p className="text-[12px] text-slate-600 leading-relaxed">{r.why}</p>
+              <p className="text-[13px] text-slate-600 leading-relaxed">{r.why}</p>
             </div>
           ))}
         </div>
@@ -377,7 +377,7 @@ function Quiz({ quiz, onSubmit }) {
     return (
       <BentoCard hover={false} className="border-slate-200">
         <div className="flex items-center gap-2 mb-1">
-          <GraduationCap size={18} className="text-slate-300" />
+          <GraduationCap size={18} className="text-slate-500" />
           <h3 className="text-base font-bold text-slate-500">{quiz.title}</h3>
         </div>
         <p className="text-sm text-slate-500">Opens on the last day, once the week's work is delivered.</p>
@@ -390,7 +390,7 @@ function Quiz({ quiz, onSubmit }) {
   return (
     <BentoCard hover={false}>
       <div className="flex items-center gap-2 mb-1">
-        <GraduationCap size={18} className="text-indigo-500" />
+        <GraduationCap size={18} className="text-indigo-600" />
         <h3 className="text-base font-bold">{quiz.title}</h3>
       </div>
       <p className="text-sm text-slate-500 mb-4">{quiz.intro}</p>
@@ -398,7 +398,7 @@ function Quiz({ quiz, onSubmit }) {
         {quiz.questions.map((q, i) => (
           <div key={q.id}>
             <p className="text-sm font-semibold text-slate-900 mb-2">
-              <span className="text-slate-400 mr-1.5 tabular-nums">{i + 1}.</span>{q.q}
+              <span className="text-slate-500 mr-1.5 tabular-nums">{i + 1}.</span>{q.q}
             </p>
             <div className="space-y-1.5 pl-5">
               {q.options.map((o) => (
@@ -407,7 +407,7 @@ function Quiz({ quiz, onSubmit }) {
                   onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.key }))}
                   aria-label={o.label}
                   aria-pressed={answers[q.id] === o.key}
-                  className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[13px] transition-colors ${
+                  className={`w-full text-left rounded-lg border-2 px-3 py-2 text-[14px] transition-colors ${
                     answers[q.id] === o.key ? 'border-indigo-500 bg-indigo-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}
                 >{o.label}</button>
               ))}
@@ -497,7 +497,7 @@ export default function Today({ state, onStateChange, onTab }) {
     <div className="space-y-4">
       <div className="flex items-baseline gap-2.5 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Today</h1>
-        <span className="text-sm font-semibold text-slate-400">
+        <span className="text-sm font-semibold text-slate-500">
           {day ? `Day ${day.unlocked} of ${day.totalDays}` : 'Nothing running'}
         </span>
       </div>
@@ -505,7 +505,7 @@ export default function Today({ state, onStateChange, onTab }) {
       {finished && (
         <BentoCard hover={false} className="border-emerald-300 bg-emerald-50/50">
           <div className="flex items-start gap-3">
-            <PartyPopper size={22} className="text-emerald-600 shrink-0 mt-0.5" />
+            <PartyPopper size={22} className="text-emerald-700 shrink-0 mt-0.5" />
             <div className="min-w-0">
               <h3 className="text-base font-bold text-slate-900 mb-1">Project complete</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
@@ -607,14 +607,14 @@ export default function Today({ state, onStateChange, onTab }) {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         <div className="space-y-3 min-w-0">
           <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Activities</h2>
-          {acts.length === 0 && <p className="text-sm text-slate-400">Nothing yet.</p>}
+          {acts.length === 0 && <p className="text-sm text-slate-500">Nothing yet.</p>}
           {acts.map((a) => <Activity key={a.key} item={a} onDone={doActivity} />)}
         </div>
         <div className="space-y-3 min-w-0">
           <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
             What landed on you
           </h2>
-          {sits.length === 0 && <p className="text-sm text-slate-400">Quiet so far.</p>}
+          {sits.length === 0 && <p className="text-sm text-slate-500">Quiet so far.</p>}
           {sits.map((x) => <Situation key={x.key} item={x} onHandle={doSituation} />)}
         </div>
       </div>
@@ -628,7 +628,7 @@ export default function Today({ state, onStateChange, onTab }) {
             <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
               Addressed to you
             </h2>
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">
               {deskOpen > 0
                 ? `${deskOpen} waiting on a reply — they don't finish the day, but people are waiting`
                 : 'All answered'}
@@ -644,7 +644,7 @@ export default function Today({ state, onStateChange, onTab }) {
         <div className="space-y-3">
           <div className="flex items-baseline gap-2.5 flex-wrap">
             <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Company admin</h2>
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">
               Dull, compulsory, fifteen seconds — like the real ones
             </span>
           </div>

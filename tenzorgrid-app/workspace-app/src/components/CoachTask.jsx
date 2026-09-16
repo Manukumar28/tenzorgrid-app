@@ -20,8 +20,8 @@ function Exhibit({ exhibit }) {
     <div className="rounded-xl border border-slate-200 overflow-hidden">
       <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border-b border-slate-200">
         <Icon size={13} className="text-slate-500 shrink-0" />
-        <span className="text-[11px] font-bold text-slate-600 truncate">{exhibit.from}</span>
-        {exhibit.subject && <span className="text-[11px] text-slate-400 truncate">· {exhibit.subject}</span>}
+        <span className="text-[12px] font-bold text-slate-600 truncate">{exhibit.from}</span>
+        {exhibit.subject && <span className="text-[12px] text-slate-500 truncate">· {exhibit.subject}</span>}
       </div>
       <pre className={`px-3.5 py-3 text-xs leading-relaxed whitespace-pre-wrap overflow-x-auto ${
         exhibit.kind === 'sql' ? 'font-mono text-slate-800' : 'font-sans text-slate-700'}`}>
@@ -55,7 +55,7 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <span className="flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wider">
           <GraduationCap size={13} /> Coaching
         </span>
         <button
@@ -85,10 +85,10 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
         {/* Half one — the diagnosis. */}
         <div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 1</span>
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">Step 1</span>
             <p className="text-sm font-bold text-slate-900">{spec.diagnose.prompt}</p>
           </div>
-          <p className="text-[11px] text-slate-500 mb-3">
+          <p className="text-[12px] text-slate-500 mb-3">
             Flagging something that isn't a problem costs you the same as missing one — and it
             costs him more, because he'll go and "fix" it.
           </p>
@@ -107,7 +107,7 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
                     on ? 'border-indigo-500 bg-indigo-50 text-slate-900 font-semibold'
                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                 >
-                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-300'}`} />
+                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-500'}`} />
                   <span className="leading-snug">{o.label}</span>
                 </button>
               );
@@ -118,10 +118,10 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
         {/* Half two — what he actually receives. */}
         <div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 2</span>
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">Step 2</span>
             <p className="text-sm font-bold text-slate-900">{spec.reply.prompt}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 mb-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500 mb-2">
             {spec.reply.to && <span>To: <span className="font-semibold text-slate-700">{spec.reply.to}</span></span>}
             {max && (
               <span className={over ? 'text-rose-600 font-bold' : ''}>
@@ -132,7 +132,7 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
           {spec.reply.covers && spec.reply.covers.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {spec.reply.covers.map((c) => (
-                <span key={c} className="text-[11px] text-slate-600 bg-slate-100 rounded-md px-2 py-0.5">{c}</span>
+                <span key={c} className="text-[12px] text-slate-600 bg-slate-100 rounded-md px-2 py-0.5">{c}</span>
               ))}
             </div>
           )}
@@ -145,7 +145,7 @@ export default function CoachTask({ wb, onSubmit, submitting, isGraded }) {
             placeholder={`Write to ${spec.mentee ? spec.mentee.split(' ')[0] : 'them'}…`}
             className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm leading-relaxed focus:outline-none focus:border-indigo-400 disabled:bg-slate-50"
           />
-          <p className="text-[11px] text-slate-400 mt-1.5">
+          <p className="text-[12px] text-slate-500 mt-1.5">
             He has to be able to fix it himself afterwards. Handing him the corrected version
             gets today sorted and teaches him nothing.
           </p>

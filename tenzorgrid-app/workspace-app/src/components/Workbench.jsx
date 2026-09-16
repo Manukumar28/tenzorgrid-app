@@ -45,7 +45,7 @@ function ResultGrid({ result }) {
   if (!result) return null;
   if (!result.rows.length) {
     return (
-      <div className="p-6 text-center text-sm text-slate-400 font-medium">
+      <div className="p-6 text-center text-sm text-slate-500 font-medium">
         Query ran fine but returned no rows.
       </div>
     );
@@ -68,7 +68,7 @@ function ResultGrid({ result }) {
                   {/* NULL is rendered distinctly — telling NULL apart from an empty
                       string is exactly the kind of thing these tasks turn on. */}
                   {row[c] === null || row[c] === undefined
-                    ? <span className="text-slate-300 italic">NULL</span>
+                    ? <span className="text-slate-500 italic">NULL</span>
                     : String(row[c])}
                 </td>
               ))}
@@ -94,10 +94,10 @@ function SchemaBrowser({ dataset, onInsert }) {
     <div className="h-full overflow-y-auto">
       <div className="px-3 py-2.5 border-b border-slate-200 sticky top-0 bg-white z-10">
         <div className="flex items-center gap-2">
-          <Database size={14} className="text-indigo-500" />
+          <Database size={14} className="text-indigo-600" />
           <span className="text-xs font-bold text-slate-800">{dataset.label}</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{dataset.description}</p>
+        <p className="text-[12px] text-slate-500 mt-0.5 leading-snug">{dataset.description}</p>
       </div>
 
       {dataset.tables.map((t) => (
@@ -106,15 +106,15 @@ function SchemaBrowser({ dataset, onInsert }) {
             onClick={() => toggle(t.name)}
             className="w-full flex items-center gap-1.5 px-3 py-2 hover:bg-slate-50 text-left"
           >
-            <ChevronRight size={12} className={`text-slate-400 transition-transform ${open.has(t.name) ? 'rotate-90' : ''}`} />
-            <Table2 size={13} className="text-slate-400 shrink-0" />
+            <ChevronRight size={12} className={`text-slate-500 transition-transform ${open.has(t.name) ? 'rotate-90' : ''}`} />
+            <Table2 size={13} className="text-slate-500 shrink-0" />
             <span className="text-xs font-bold text-slate-700 flex-1 min-w-0 truncate">{t.name}</span>
-            <span className="text-[10px] text-slate-400 font-semibold tabular-nums shrink-0">{t.rowCount}</span>
+            <span className="text-[12px] text-slate-500 font-semibold tabular-nums shrink-0">{t.rowCount}</span>
           </button>
 
           {open.has(t.name) && (
             <div className="pb-1.5">
-              {t.note && <p className="text-[10px] text-slate-400 px-3 pb-1.5 leading-snug italic">{t.note}</p>}
+              {t.note && <p className="text-[12px] text-slate-500 px-3 pb-1.5 leading-snug italic">{t.note}</p>}
               {t.columns.map((c) => (
                 <button
                   key={c.name}
@@ -122,8 +122,8 @@ function SchemaBrowser({ dataset, onInsert }) {
                   title={c.note || `${c.name} — ${c.type}`}
                   className="w-full flex items-baseline gap-2 pl-8 pr-3 py-1 hover:bg-indigo-50 text-left group"
                 >
-                  <span className="text-[11px] font-mono text-slate-700 group-hover:text-indigo-700">{c.name}</span>
-                  <span className="text-[10px] text-slate-400 ml-auto shrink-0">{c.type}</span>
+                  <span className="text-[12px] font-mono text-slate-700 group-hover:text-indigo-700">{c.name}</span>
+                  <span className="text-[12px] text-slate-500 ml-auto shrink-0">{c.type}</span>
                 </button>
               ))}
             </div>
@@ -253,7 +253,7 @@ export default function Workbench({ taskId, onGraded }) {
   }
 
   if (error) return <p className="text-sm text-rose-600 font-medium p-4">{error}</p>;
-  if (!wb) return <p className="text-sm text-slate-400 font-medium p-4">Opening the workbench…</p>;
+  if (!wb) return <p className="text-sm text-slate-500 font-medium p-4">Opening the workbench…</p>;
 
   const isGraded = wb.status === 'graded' || graded;
 
@@ -292,7 +292,7 @@ export default function Workbench({ taskId, onGraded }) {
         ) : (
         <div className="flex flex-col min-w-0">
           <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">SQL Editor</span>
+            <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">SQL Editor</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={runQuery}
@@ -317,9 +317,9 @@ export default function Workbench({ taskId, onGraded }) {
 
           <div className="flex-1 min-h-[9rem] overflow-hidden flex flex-col">
             <div className="flex items-center gap-3 px-3 py-1.5 border-b border-slate-100 bg-white">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Results</span>
+              <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Results</span>
               {result && (
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                <span className="text-[12px] text-slate-500 font-medium flex items-center gap-1">
                   <Clock size={10} />
                   {result.totalRows} row{result.totalRows === 1 ? '' : 's'} · {result.elapsedMs}ms
                   {result.truncated && <span className="text-amber-600 font-semibold ml-1">(showing first {result.rows.length})</span>}
@@ -335,7 +335,7 @@ export default function Workbench({ taskId, onGraded }) {
                 </div>
               )}
               {!runError && !result && (
-                <p className="p-4 text-xs text-slate-400 font-medium">
+                <p className="p-4 text-xs text-slate-500 font-medium">
                   Run your query to see results. Running is free and unlimited — only Submit is graded.
                 </p>
               )}
@@ -349,7 +349,7 @@ export default function Workbench({ taskId, onGraded }) {
       {(graded || wb.status === 'graded') && (
         <div className="border-t border-slate-200 p-4 bg-emerald-50/50">
           <div className="flex items-center gap-2 mb-1.5">
-            <CheckCircle2 size={15} className="text-emerald-600" />
+            <CheckCircle2 size={15} className="text-emerald-700" />
             <span className="text-sm font-extrabold text-slate-900">
               Graded — {graded ? graded.score : wb.score}/100
             </span>

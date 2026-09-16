@@ -8,20 +8,20 @@ import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 // undefined here and render an unstyled, unlabelled pill.
 export const PRIORITY_PILL = {
   urgent: 'bg-red-600 text-white',
-  high: 'bg-red-500 text-white',
-  medium: 'bg-amber-400 text-white',
-  normal: 'bg-amber-400 text-white',
-  low: 'bg-emerald-500 text-white',
+  high: 'bg-red-600 text-white',
+  medium: 'bg-amber-700 text-white',
+  normal: 'bg-amber-700 text-white',
+  low: 'bg-emerald-700 text-white',
 };
 
 const DIFFICULTY_PILL = {
-  Easy: 'bg-emerald-50 text-emerald-600',
-  Medium: 'bg-amber-50 text-amber-600',
-  Hard: 'bg-red-50 text-red-500',
+  Easy: 'bg-emerald-50 text-emerald-700',
+  Medium: 'bg-amber-50 text-amber-700',
+  Hard: 'bg-red-50 text-red-700',
 };
 
 function Pill({ children, className = '' }) {
-  return <span className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-md px-2 py-1 ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 text-[12px] font-bold rounded-md px-2 py-1 ${className}`}>{children}</span>;
 }
 
 // The bar reports the stage the task is genuinely at (Assigned -> Submitted -> Graded).
@@ -51,7 +51,7 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
           onClick={(e) => { e.stopPropagation(); onTestComplete(task.id); }}
           aria-label={`Mark "${task.title}" done for testing`}
           title="Testing only — marks this done without grading it"
-          className="self-start mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-[10px] font-extrabold uppercase tracking-wide hover:bg-amber-100"
+          className="self-start mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-[12px] font-extrabold uppercase tracking-wide hover:bg-amber-100"
         >
           <FlaskConical size={11} /> Mark done
         </button>
@@ -81,9 +81,9 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
               </Pill>
             )}
             {task.overdue && !soon && (
-              <Pill className="bg-red-50 text-red-600"><AlertTriangle size={11} /> Overdue</Pill>
+              <Pill className="bg-red-50 text-red-700"><AlertTriangle size={11} /> Overdue</Pill>
             )}
-            {graded && <Pill className="bg-emerald-50 text-emerald-600">{task.score}%</Pill>}
+            {graded && <Pill className="bg-emerald-50 text-emerald-700">{task.score}%</Pill>}
           </div>
           <h3 className={`text-sm font-bold leading-snug ${soon ? 'text-slate-600' : ''}`}>{task.title}</h3>
         </div>
@@ -105,7 +105,7 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
 
       <div className="mb-3">
         <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Stage</span>
+          <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">Stage</span>
           <span className="text-xs font-bold text-gray-700">{task.stage}</span>
         </div>
         <ProgressBar value={task.stagePct} max={100} colorClass={STAGE_COLOR[task.stage]} />
@@ -146,20 +146,20 @@ export function LockedTaskCard({ task, index }) {
           <Lock size={18} className="text-gray-500" strokeWidth={2.2} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-0.5">Locked</div>
+          <div className="text-[12px] font-bold uppercase tracking-wide text-gray-500 mb-0.5">Locked</div>
           <h3 className="text-sm font-bold leading-snug text-gray-600">{task.title}</h3>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">{task.brief}</p>
+      <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">{task.brief}</p>
 
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 bg-white border border-gray-100 rounded-lg px-2.5 py-2 mb-3">
+      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 bg-white border border-gray-100 rounded-lg px-2.5 py-2 mb-3">
         <Lock size={12} className="shrink-0" />
         <span className="truncate">{task.requirement}</span>
       </div>
 
       <div className="mt-auto space-y-2">
-        <div className="text-xs text-gray-400 truncate">Project: <span className="font-semibold text-gray-500">{task.projectTitle}</span></div>
+        <div className="text-xs text-gray-500 truncate">Project: <span className="font-semibold text-gray-500">{task.projectTitle}</span></div>
         <div className="flex flex-wrap gap-1.5">
           <Pill className={`${DIFFICULTY_PILL[task.difficulty] || DIFFICULTY_PILL.Medium} opacity-80`}>{task.difficulty}</Pill>
           {task.estHours ? <Pill className="bg-white border border-gray-100 text-gray-500"><Clock size={11} /> ~{task.estHours}h</Pill> : null}

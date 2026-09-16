@@ -36,7 +36,7 @@ function FilterSelect({ label, value, onChange, options }) {
         <option value="">{label}</option>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <ChevronDown size={13} className={`absolute right-2.5 pointer-events-none ${active ? 'text-indigo-500' : 'text-gray-400'}`} />
+      <ChevronDown size={13} className={`absolute right-2.5 pointer-events-none ${active ? 'text-indigo-600' : 'text-gray-500'}`} />
     </div>
   );
 }
@@ -45,7 +45,7 @@ function SectionTitle({ children, count }) {
   return (
     <div className="flex items-baseline gap-2 mb-3.5">
       <h2 className="text-sm font-bold text-gray-700">{children}</h2>
-      {count !== undefined && <span className="text-xs font-semibold text-gray-400">{count}</span>}
+      {count !== undefined && <span className="text-xs font-semibold text-gray-500">{count}</span>}
     </div>
   );
 }
@@ -59,15 +59,15 @@ function Badge({ badge }) {
           badge.earned ? 'bg-gradient-to-br from-amber-400 to-orange-400 shadow-sm' : 'bg-gray-100'
         }`}
       >
-        <Icon size={24} className={badge.earned ? 'text-white' : 'text-gray-300'} strokeWidth={2.1} />
+        <Icon size={24} className={badge.earned ? 'text-white' : 'text-gray-500'} strokeWidth={2.1} />
       </div>
-      <span className={`text-[10px] font-bold text-center leading-tight ${badge.earned ? 'text-gray-700' : 'text-gray-400'}`}>
+      <span className={`text-[12px] font-bold text-center leading-tight ${badge.earned ? 'text-gray-700' : 'text-gray-500'}`}>
         {badge.label}
       </span>
       <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 w-40">
-        <div className="bg-gray-900 text-white text-[11px] font-medium rounded-lg px-2.5 py-1.5 text-center leading-snug shadow-lg">
+        <div className="bg-gray-900 text-white text-[12px] font-medium rounded-lg px-2.5 py-1.5 text-center leading-snug shadow-lg">
           {badge.note}
-          {!badge.earned && <div className="text-gray-400 mt-0.5">Not earned yet</div>}
+          {!badge.earned && <div className="text-gray-500 mt-0.5">Not earned yet</div>}
         </div>
       </div>
     </div>
@@ -119,7 +119,10 @@ export default function Projects({ state, onStateChange, onTab }) {
   // document, once the learner has read the objective and the constraints.
   const [briefKey, setBriefKey] = useState(null);
 
-  const trackLabel = `${enrollment.level === 'senior' ? 'Senior' : 'Junior'} Data Analyst track`;
+  // The engine sends the real title for the role and level. Deriving it here got a Team
+  // Lead and a Manager both labelled "Junior Data Analyst track" — the same bug that was
+  // fixed in the header, still living in this one.
+  const trackLabel = `${enrollment.levelTitle || 'Junior Data Analyst'} track`;
 
   return (
     <div className="space-y-6">
@@ -127,7 +130,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       <div>
         <div className="flex items-baseline gap-2.5 flex-wrap mb-3">
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Projects</h1>
-          <span className="text-sm font-semibold text-gray-400">[{trackLabel}]</span>
+          <span className="text-sm font-semibold text-gray-500">[{trackLabel}]</span>
         </div>
 
         <div className="flex items-center justify-between gap-4 flex-wrap border-y border-gray-100 py-2.5">
@@ -151,7 +154,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</div>
+        <div className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</div>
       )}
 
       {/* Section 1 — in progress */}
@@ -202,7 +205,7 @@ export default function Projects({ state, onStateChange, onTab }) {
 
       {!visible.length && (
         <BentoCard hover={false} className="text-center py-10">
-          <FolderOpen size={30} className="text-gray-300 mx-auto mb-3" />
+          <FolderOpen size={30} className="text-gray-500 mx-auto mb-3" />
           <p className="text-sm text-gray-500 font-medium">
             {filtersOn ? 'No projects match these filters.' : 'No projects in this track yet.'}
           </p>
@@ -224,7 +227,7 @@ export default function Projects({ state, onStateChange, onTab }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <BentoCard index={0}>
             <h3 className="text-base font-bold mb-0.5">Skill points earned</h3>
-            <p className="text-xs text-gray-400 mb-2">From graded project tasks</p>
+            <p className="text-xs text-gray-500 mb-2">From graded project tasks</p>
             <SkillPointsBar data={data.skillPoints} />
           </BentoCard>
 
@@ -240,7 +243,7 @@ export default function Projects({ state, onStateChange, onTab }) {
 
           <BentoCard index={2}>
             <h3 className="text-base font-bold mb-0.5">Achievements</h3>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-gray-500 mb-4">
               {data.badges.filter((b) => b.earned).length} of {data.badges.length} earned
             </p>
             <div className="grid grid-cols-4 gap-2">

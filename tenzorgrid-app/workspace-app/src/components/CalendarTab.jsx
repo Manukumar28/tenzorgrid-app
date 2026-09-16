@@ -30,7 +30,7 @@ const PRIORITY_PILL = {
 
 function StatusPill({ tone, icon: Icon, children }) {
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold rounded px-1 py-0.5 leading-none ${tone}`}>
+    <span className={`inline-flex items-center gap-0.5 text-[12px] font-bold rounded px-1 py-0.5 leading-none ${tone}`}>
       <Icon size={9} strokeWidth={3} /> {children}
     </span>
   );
@@ -124,10 +124,10 @@ export default function CalendarTab({ state }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Calendar</h1>
-          <span className="text-sm font-semibold text-slate-400">[Work schedule]</span>
+          <span className="text-sm font-semibold text-slate-500">[Work schedule]</span>
         </div>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -148,7 +148,7 @@ export default function CalendarTab({ state }) {
           <span>Joined: <b className="text-slate-800">{calendar.joinedOn}</b></span>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-[11px] font-semibold text-slate-500">Holidays</label>
+          <label className="text-[12px] font-semibold text-slate-500">Holidays</label>
           <select
             value={region}
             onChange={(e) => { setRegion(e.target.value); saveRegion(e.target.value); }}
@@ -175,7 +175,7 @@ export default function CalendarTab({ state }) {
 
           <div className="grid grid-cols-7 gap-1.5 mb-1.5">
             {DOWS.map((d) => (
-              <div key={d} className="text-center text-[10px] font-bold text-slate-400 uppercase pb-1">{d}</div>
+              <div key={d} className="text-center text-[12px] font-bold text-slate-500 uppercase pb-1">{d}</div>
             ))}
           </div>
 
@@ -198,7 +198,7 @@ export default function CalendarTab({ state }) {
                 let cls = 'bg-white hover:bg-slate-50 border-slate-100';
                 if (st.beforeJoining) cls = 'bg-slate-50 border-slate-100 cursor-not-allowed';
                 else if (st.holiday) cls = 'bg-red-500 border-red-500 text-white hover:bg-red-500';
-                else if (st.weekend) cls = 'bg-slate-100 border-slate-100 text-slate-400';
+                else if (st.weekend) cls = 'bg-slate-100 border-slate-100 text-slate-500';
                 if (st.isJoinDay) cls = 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-600';
 
                 return (
@@ -211,9 +211,9 @@ export default function CalendarTab({ state }) {
                       isSel ? 'ring-2 ring-indigo-400' : ''
                     } ${st.isToday && !isSel ? 'ring-1 ring-indigo-300' : ''}`}
                   >
-                    <span className={`text-[11px] font-bold ${st.beforeJoining ? 'text-slate-300' : ''}`}>{d}</span>
+                    <span className={`text-[12px] font-bold ${st.beforeJoining ? 'text-slate-500' : ''}`}>{d}</span>
 
-                    {st.beforeJoining && <Lock size={9} className="absolute top-1 right-1 text-slate-300" />}
+                    {st.beforeJoining && <Lock size={9} className="absolute top-1 right-1 text-slate-500" />}
                     {st.isJoinDay && <Star size={10} className="absolute top-1 right-1 text-white fill-white" />}
                     {st.holiday && !st.isJoinDay && <Flag size={9} className="absolute top-1 right-1 text-white" />}
 
@@ -234,7 +234,7 @@ export default function CalendarTab({ state }) {
           </AnimatePresence>
 
           {/* Legend — states are named, never colour-only */}
-          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-500 font-medium">
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 mt-4 pt-3 border-t border-slate-100 text-[12px] text-slate-500 font-medium">
             <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-indigo-600" /> Joined</span>
             <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-red-500" /> Holiday</span>
             <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-slate-100 border border-slate-200" /> Weekend</span>
@@ -244,7 +244,7 @@ export default function CalendarTab({ state }) {
             <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Message</span>
           </div>
           {region === 'NONE' && (
-            <p className="text-[10px] text-slate-400 mt-2">
+            <p className="text-[12px] text-slate-500 mt-2">
               No holiday calendar for your region — pick one above to show public holidays.
             </p>
           )}
@@ -255,19 +255,19 @@ export default function CalendarTab({ state }) {
           <h3 className="text-base font-bold mb-0.5">
             {MONTHS[sm - 1]} {sd}, {sy}
           </h3>
-          <p className="text-xs text-slate-400 mb-4">Selected day</p>
+          <p className="text-xs text-slate-500 mb-4">Selected day</p>
 
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {selectedState.isJoinDay && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-indigo-100 text-indigo-700">You joined today</span>}
-            {selectedState.holiday && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-red-100 text-red-700">{selectedState.holiday}</span>}
-            {selectedState.weekend && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-slate-100 text-slate-600">Weekend</span>}
-            {selectedState.present && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-emerald-100 text-emerald-700">Present</span>}
-            {selectedState.absent && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-red-100 text-red-700">Absent</span>}
+            {selectedState.isJoinDay && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-indigo-100 text-indigo-700">You joined today</span>}
+            {selectedState.holiday && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-red-100 text-red-700">{selectedState.holiday}</span>}
+            {selectedState.weekend && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-slate-100 text-slate-600">Weekend</span>}
+            {selectedState.present && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-emerald-100 text-emerald-700">Present</span>}
+            {selectedState.absent && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-red-100 text-red-700">Absent</span>}
             {/* Only nudge on a day the learner was actually expected to work. */}
             {selectedState.isToday && !selectedState.present && !selectedState.weekend && !selectedState.holiday && (
-              <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-amber-100 text-amber-700">Not checked in yet</span>
+              <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-amber-100 text-amber-700">Not checked in yet</span>
             )}
-            {selectedState.isFuture && <span className="text-[11px] font-bold rounded-md px-2 py-1 bg-slate-100 text-slate-500">Upcoming</span>}
+            {selectedState.isFuture && <span className="text-[12px] font-bold rounded-md px-2 py-1 bg-slate-100 text-slate-500">Upcoming</span>}
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
@@ -290,10 +290,10 @@ export default function CalendarTab({ state }) {
                     className={`border border-slate-100 border-l-[3px] ${k.chip} rounded-lg px-3 py-2.5 bg-white`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                      <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wide">
                         <Icon size={11} /> {k.label}
                       </span>
-                      <span className="text-[10px] text-slate-400 shrink-0">
+                      <span className="text-[12px] text-slate-500 shrink-0">
                         {new Date(e.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -303,11 +303,11 @@ export default function CalendarTab({ state }) {
                       {person && (
                         <span className="inline-flex items-center gap-1.5">
                           <Avatar name={person.name} avatarUrl={person.avatarUrl} size={18} />
-                          <span className="text-[11px] text-slate-500">{person.name}</span>
+                          <span className="text-[12px] text-slate-500">{person.name}</span>
                         </span>
                       )}
                       {e.priority && (
-                        <span className={`text-[10px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[e.priority]}`}>
+                        <span className={`text-[12px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[e.priority]}`}>
                           {e.priority[0].toUpperCase() + e.priority.slice(1)}
                         </span>
                       )}
@@ -316,7 +316,7 @@ export default function CalendarTab({ state }) {
                 );
               }) : (
                 <div className="text-center py-8">
-                  <CalendarDays size={26} className="text-slate-300 mx-auto mb-2.5" />
+                  <CalendarDays size={26} className="text-slate-500 mx-auto mb-2.5" />
                   <p className="text-sm text-slate-500 font-medium">
                     {selectedState.beforeJoining
                       ? 'Before you joined the workspace.'
@@ -329,7 +329,7 @@ export default function CalendarTab({ state }) {
 
           {upcoming.length > 0 && (
             <div className="mt-4 pt-3.5 border-t border-slate-100">
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2.5">Coming up</h4>
+              <h4 className="text-[12px] font-bold text-slate-500 uppercase tracking-wide mb-2.5">Coming up</h4>
               <div className="space-y-1.5">
                 {upcoming.map((e) => (
                   <button
@@ -343,7 +343,7 @@ export default function CalendarTab({ state }) {
                     className="w-full text-left flex items-center gap-2 text-xs hover:bg-slate-50 rounded px-1.5 py-1"
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${KIND[e.kind]?.dot || 'bg-slate-400'}`} />
-                    <span className="text-slate-400 shrink-0 w-16">{e.date.slice(5)}</span>
+                    <span className="text-slate-500 shrink-0 w-16">{e.date.slice(5)}</span>
                     <span className="font-semibold text-slate-700 truncate">{e.title}</span>
                   </button>
                 ))}

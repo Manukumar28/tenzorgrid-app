@@ -24,7 +24,7 @@ function Exhibit({ exhibit }) {
     <div className="rounded-xl border border-slate-200 overflow-hidden">
       <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border-b border-slate-200">
         <Icon size={13} className="text-slate-500 shrink-0" />
-        <span className="text-[11px] font-bold text-slate-600 truncate">{exhibit.from}</span>
+        <span className="text-[12px] font-bold text-slate-600 truncate">{exhibit.from}</span>
       </div>
       <pre className={`px-3.5 py-3 text-xs leading-relaxed whitespace-pre-wrap overflow-x-auto ${
         exhibit.kind === 'sql' ? 'font-mono text-slate-800' : 'font-sans text-slate-700'}`}>
@@ -61,7 +61,7 @@ export function AssignTask({ wb, onSubmit, submitting, isGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <span className="flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wider">
           <Users size={13} /> Staffing — {staffed} of {spec.items.length} assigned
         </span>
         <button
@@ -91,14 +91,14 @@ export function AssignTask({ wb, onSubmit, submitting, isGraded }) {
                 over ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-bold text-slate-900 truncate">{m.name}</span>
-                  <span className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-bold tabular-nums ${
+                  <span className={`shrink-0 inline-flex items-center gap-1 text-[12px] font-bold tabular-nums ${
                     over ? 'text-rose-600' : 'text-slate-500'}`}>
                     <Clock size={11} />{used}/{m.capacityDays}d
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500">{m.title}</div>
-                {m.note && <p className="text-[11px] text-slate-500 mt-1 leading-snug">{m.note}</p>}
-                {over && <p className="text-[11px] font-bold text-rose-600 mt-1">Over capacity</p>}
+                <div className="text-[12px] text-slate-500">{m.title}</div>
+                {m.note && <p className="text-[12px] text-slate-500 mt-1 leading-snug">{m.note}</p>}
+                {over && <p className="text-[12px] font-bold text-rose-600 mt-1">Over capacity</p>}
               </div>
             );
           })}
@@ -111,10 +111,10 @@ export function AssignTask({ wb, onSubmit, submitting, isGraded }) {
               <div className="flex items-start justify-between gap-3 mb-2">
                 <span className="text-sm font-semibold text-slate-900">{item.label}</span>
                 {item.days ? (
-                  <span className="shrink-0 text-[11px] font-bold text-slate-500 tabular-nums">{item.days}d</span>
+                  <span className="shrink-0 text-[12px] font-bold text-slate-500 tabular-nums">{item.days}d</span>
                 ) : null}
               </div>
-              {item.note && <p className="text-[11px] text-slate-500 mb-2">{item.note}</p>}
+              {item.note && <p className="text-[12px] text-slate-500 mb-2">{item.note}</p>}
               <div className="flex flex-wrap gap-1.5">
                 {spec.team.map((m) => {
                   const on = picks[item.key] === m.key;
@@ -138,7 +138,7 @@ export function AssignTask({ wb, onSubmit, submitting, isGraded }) {
           ))}
         </div>
 
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[12px] text-slate-500">
           Leaving something unstaffed is allowed, and sometimes it is the answer. It is marked
           as a decision either way.
         </p>
@@ -174,7 +174,7 @@ export function SignoffTask({ wb, onSubmit, submitting, isGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <span className="flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wider">
           <Gavel size={13} /> Sign-off
         </span>
         <button
@@ -203,7 +203,7 @@ export function SignoffTask({ wb, onSubmit, submitting, isGraded }) {
 
         <div>
           <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">The call</span>
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">The call</span>
             <p className="text-sm font-bold text-slate-900">{spec.decision.prompt}</p>
           </div>
           <div className="space-y-1.5">
@@ -221,7 +221,7 @@ export function SignoffTask({ wb, onSubmit, submitting, isGraded }) {
                     on ? 'border-indigo-500 bg-indigo-50 text-slate-900 font-semibold'
                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                 >
-                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-300'}`} />
+                  <Box size={16} className={`shrink-0 mt-0.5 ${on ? 'text-indigo-600' : 'text-slate-500'}`} />
                   <span className="leading-snug">{o.label}</span>
                 </button>
               );
@@ -231,17 +231,17 @@ export function SignoffTask({ wb, onSubmit, submitting, isGraded }) {
 
         <div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Then tell them</span>
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500">Then tell them</span>
             <p className="text-sm font-bold text-slate-900">{spec.reply.prompt}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 mb-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500 mb-2">
             {spec.reply.to && <span>To: <span className="font-semibold text-slate-700">{spec.reply.to}</span></span>}
             {max && <span className={over ? 'text-rose-600 font-bold' : ''}>{words}/{max} words{over ? ' — over' : ''}</span>}
           </div>
           {spec.reply.covers && spec.reply.covers.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {spec.reply.covers.map((c) => (
-                <span key={c} className="text-[11px] text-slate-600 bg-slate-100 rounded-md px-2 py-0.5">{c}</span>
+                <span key={c} className="text-[12px] text-slate-600 bg-slate-100 rounded-md px-2 py-0.5">{c}</span>
               ))}
             </div>
           )}

@@ -19,7 +19,7 @@ function Section({ n, title, subtitle, children }) {
         <span className="w-6 h-6 rounded-md bg-slate-900 text-white text-xs font-bold grid place-items-center shrink-0">{n}</span>
         <div>
           <h3 className="text-base font-extrabold text-slate-900 leading-tight">{title}</h3>
-          {subtitle && <p className="text-xs text-slate-400 font-medium mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
         </div>
       </div>
       {children}
@@ -30,9 +30,9 @@ function Section({ n, title, subtitle, children }) {
 function Field({ icon: Icon, label, children }) {
   return (
     <div className="flex gap-3">
-      {Icon && <Icon size={15} className="text-slate-400 mt-0.5 shrink-0" />}
+      {Icon && <Icon size={15} className="text-slate-500 mt-0.5 shrink-0" />}
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</div>
+        <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
         <div className="text-sm text-slate-800 font-medium mt-0.5">{children}</div>
       </div>
     </div>
@@ -54,20 +54,20 @@ function ToolCard({ tool }) {
   return (
     <div className={`rounded-xl border p-3 ${live ? 'border-slate-200 bg-white' : 'border-dashed border-slate-200 bg-slate-50/60'}`}>
       <div className="flex items-center gap-2.5">
-        <span className={`w-8 h-8 rounded-lg grid place-items-center shrink-0 ${live ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+        <span className={`w-8 h-8 rounded-lg grid place-items-center shrink-0 ${live ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
           <Icon size={16} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className={`text-sm font-bold leading-tight ${live ? 'text-slate-900' : 'text-slate-400'}`}>{tool.label}</div>
-          <div className="text-[11px] font-semibold mt-0.5">
+          <div className={`text-sm font-bold leading-tight ${live ? 'text-slate-900' : 'text-slate-500'}`}>{tool.label}</div>
+          <div className="text-[12px] font-semibold mt-0.5">
             {live
-              ? <span className="text-emerald-600">Available in this workspace</span>
-              : <span className="text-slate-400">Not yet available</span>}
+              ? <span className="text-emerald-700">Available in this workspace</span>
+              : <span className="text-slate-500">Not yet available</span>}
           </div>
         </div>
       </div>
-      <p className={`text-xs mt-2 leading-relaxed ${live ? 'text-slate-600' : 'text-slate-400'}`}>{tool.summary}</p>
-      {live && tool.detail && <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">{tool.detail}</p>}
+      <p className={`text-xs mt-2 leading-relaxed ${live ? 'text-slate-600' : 'text-slate-500'}`}>{tool.summary}</p>
+      {live && tool.detail && <p className="text-[12px] text-slate-500 mt-1.5 leading-relaxed">{tool.detail}</p>}
     </div>
   );
 }
@@ -113,7 +113,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
       >
         <header className="flex items-start justify-between gap-4 p-6 pb-0">
           <div className="min-w-0">
-            <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Project brief</div>
+            <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Project brief</div>
             <h2 className="text-xl font-extrabold text-slate-900 leading-tight">
               {doc ? doc.projectTitle : brief ? brief.title : 'Loading…'}
             </h2>
@@ -121,7 +121,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
           <button
             onClick={onClose}
             aria-label="Close project brief"
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 shrink-0"
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-600 shrink-0"
           >
             <X size={18} />
           </button>
@@ -129,7 +129,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
 
         <div className="p-6">
           {error && <p className="text-sm text-rose-600 font-medium mb-4">{error}</p>}
-          {!brief && !error && <p className="text-sm text-slate-400 font-medium">Loading the brief…</p>}
+          {!brief && !error && <p className="text-sm text-slate-500 font-medium">Loading the brief…</p>}
 
           {brief && !doc && (
             <p className="text-sm text-slate-500 font-medium">
@@ -144,28 +144,28 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                 <div className="grid sm:grid-cols-2 gap-4 mb-4">
                   <Field icon={Building2} label="Company">
                     {doc.companyName}
-                    <span className="block text-xs text-slate-400 font-normal mt-0.5">{doc.companyBlurb}</span>
+                    <span className="block text-xs text-slate-500 font-normal mt-0.5">{doc.companyBlurb}</span>
                   </Field>
                   <Field icon={UserRound} label="Your role">{doc.yourRole}</Field>
                   <Field icon={Clock} label="Estimated time">{doc.estimatedMinutes} minutes</Field>
                   <Field icon={Target} label="Difficulty">
-                    <span className={`inline-block px-2 py-0.5 rounded-md border text-xs font-bold ${DIFFICULTY_TONE[brief.difficulty] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded-md border text-xs font-bold ${DIFFICULTY_TONE[brief.difficulty] || 'bg-slate-50 text-slate-700 border-slate-200'}`}>
                       {brief.difficulty}
                     </span>
                   </Field>
                 </div>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">The scenario</div>
+                  <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">The scenario</div>
                   <p className="text-sm text-slate-700 leading-relaxed">{doc.scenario}</p>
                 </div>
 
                 <div className="mt-4">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Your responsibilities</div>
+                  <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-2">Your responsibilities</div>
                   <ul className="space-y-1.5">
                     {doc.roleResponsibilities.map((r, i) => (
                       <li key={i} className="flex gap-2.5 text-sm text-slate-700 leading-relaxed">
-                        <ShieldCheck size={14} className="text-indigo-500 mt-1 shrink-0" />
+                        <ShieldCheck size={14} className="text-indigo-600 mt-1 shrink-0" />
                         <span>{r}</span>
                       </li>
                     ))}
@@ -176,11 +176,11 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
               {/* 2 — What must actually be produced. */}
               <Section n="2" title="Objectives & Deliverables" subtitle="What you must produce to pass">
                 <div className="rounded-xl border-2 border-indigo-100 bg-indigo-50/50 p-4 mb-4">
-                  <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Primary objective</div>
+                  <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">Primary objective</div>
                   <p className="text-sm text-slate-800 font-semibold leading-relaxed">{doc.primaryObjective}</p>
                 </div>
 
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Constraints</div>
+                <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-2">Constraints</div>
                 <div className="space-y-2 mb-5">
                   {doc.constraints.map((c, i) => (
                     <div key={i} className="flex gap-3 text-sm">
@@ -190,11 +190,11 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                   ))}
                 </div>
 
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Required deliverables</div>
+                <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required deliverables</div>
                 <ol className="space-y-2 mb-5">
                   {doc.deliverables.map((d, i) => (
                     <li key={i} className="flex gap-3 text-sm text-slate-700">
-                      <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-bold grid place-items-center shrink-0 mt-px">{i + 1}</span>
+                      <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 text-[12px] font-bold grid place-items-center shrink-0 mt-px">{i + 1}</span>
                       <span className="leading-relaxed">{d.text}</span>
                     </li>
                   ))}
@@ -204,7 +204,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                   <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <AlertTriangle size={14} className="text-amber-600" />
-                      <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Watch out for</span>
+                      <span className="text-[12px] font-bold text-amber-700 uppercase tracking-wider">Watch out for</span>
                     </div>
                     <ul className="space-y-1.5">
                       {doc.watchOutFor.map((w, i) => (
@@ -223,7 +223,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                   {doc.tools.map((t) => <ToolCard key={t.key} tool={t} />)}
                 </div>
                 {doc.plannedTools.length > 0 && (
-                  <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-3 leading-relaxed">
                     {doc.plannedTools.length === 1 ? 'One tool listed above is' : `${doc.plannedTools.length} tools listed above are`}{' '}
                     still being built. You can complete this project without{' '}
                     {doc.plannedTools.length === 1 ? 'it' : 'them'} — it is listed so you know what the full brief would involve.
@@ -238,11 +238,11 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                     <div key={t.taskKey} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-bold text-slate-800">{t.title}</div>
-                        <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                        <div className="text-[12px] text-slate-500 font-medium mt-0.5">
                           {t.estHours ? `~${t.estHours}h` : 'Unestimated'} · {t.priority} priority
                         </div>
                       </div>
-                      <span className={`text-[11px] font-bold px-2 py-1 rounded-md shrink-0 ${
+                      <span className={`text-[12px] font-bold px-2 py-1 rounded-md shrink-0 ${
                         t.status === 'graded' ? 'bg-emerald-50 text-emerald-700'
                           : t.status === 'not-started' ? 'bg-slate-100 text-slate-500'
                           : 'bg-indigo-50 text-indigo-700'}`}>
@@ -260,7 +260,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
           <footer className="flex items-center justify-between gap-4 border-t border-slate-200 p-5 bg-slate-50/60 rounded-b-2xl">
             {!brief.unlocked ? (
               <p className="text-xs text-slate-500 font-medium flex items-center gap-2">
-                <Lock size={14} className="text-slate-400" />
+                <Lock size={14} className="text-slate-500" />
                 Unlocks after {brief.unlockAfter} graded task{brief.unlockAfter === 1 ? '' : 's'} — you have {brief.gradedCount}.
               </p>
             ) : brief.started ? (
