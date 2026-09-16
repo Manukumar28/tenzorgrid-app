@@ -62,7 +62,7 @@ function Result({ result, onDone }) {
     <div className="max-w-2xl mx-auto">
       <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles size={18} className="text-indigo-500" />
+          <Sparkles size={18} className="text-indigo-600" />
           <h1 className="text-2xl font-extrabold text-slate-900">Your starting line</h1>
         </div>
         <p className="text-sm text-slate-600 mb-6">
@@ -96,16 +96,16 @@ function Result({ result, onDone }) {
               <li key={r.id} className="rounded-xl border border-slate-200 p-3.5">
                 <div className="flex items-start gap-2 mb-1.5">
                   {r.ok
-                    ? <Check size={14} className="text-emerald-600 mt-0.5 shrink-0" />
+                    ? <Check size={14} className="text-emerald-700 mt-0.5 shrink-0" />
                     : <X size={14} className="text-rose-500 mt-0.5 shrink-0" />}
                   <span className="text-xs font-bold text-slate-800 leading-snug">{r.prompt}</span>
                 </div>
                 {!r.ok && r.correctLabel && (
-                  <p className="text-[11px] text-slate-600 mb-1 pl-6">
+                  <p className="text-[12px] text-slate-600 mb-1 pl-6">
                     Answer: <span className="font-semibold text-slate-800">{r.correctLabel}</span>
                   </p>
                 )}
-                <p className="text-[11px] text-slate-500 leading-relaxed pl-6">{r.why}</p>
+                <p className="text-[12px] text-slate-500 leading-relaxed pl-6">{r.why}</p>
               </li>
             ))}
           </ul>
@@ -183,7 +183,7 @@ export default function SkillTest({ skillTest, timeTravel, onDone }) {
             >
               <FlaskConical size={13} /> {busy ? 'Skipping…' : 'Skip — testing only'}
             </button>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[12px] text-slate-500">
               Fills a deliberately imperfect baseline (7 of 12) so the skill matrix still has
               somewhere to move. Only appears with TIME_TRAVEL=1.
             </span>
@@ -199,10 +199,10 @@ export default function SkillTest({ skillTest, timeTravel, onDone }) {
     <div className="max-w-2xl mx-auto">
       <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
         <div className="flex items-center gap-3 mb-5">
-          <span className="text-[11px] font-extrabold uppercase tracking-wide text-indigo-500">
+          <span className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
             {AXIS_LABEL[q.axis] || q.axis}
           </span>
-          <span className="text-[11px] font-bold text-slate-400">Question {i + 1} of {qs.length}</span>
+          <span className="text-[12px] font-bold text-slate-500">Question {i + 1} of {qs.length}</span>
           <div className="ml-auto flex gap-1">
             {qs.map((x, n) => (
               <span key={x.id} className={`h-1.5 w-4 rounded-full ${
@@ -260,7 +260,7 @@ export default function SkillTest({ skillTest, timeTravel, onDone }) {
             </motion.button>
           )}
         </div>
-        <p className="text-[11px] text-slate-400 mt-3">
+        <p className="text-[12px] text-slate-500 mt-3">
           You can skip anything you're unsure of — an unanswered area is left blank on your
           matrix rather than scored as a zero.
         </p>

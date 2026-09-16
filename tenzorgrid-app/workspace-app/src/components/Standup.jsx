@@ -124,7 +124,7 @@ export default function Standup({ standup, manager, learnerName, learnerPhotoUrl
           <Avatar name={managerName} photoUrl={manager && manager.avatarUrl} size={30} />
           <div className="min-w-0">
             <p className="text-sm font-extrabold text-slate-900 leading-tight">{managerName}</p>
-            <p className="text-[11px] text-slate-500">Daily stand-up · {standup.minutes} minutes</p>
+            <p className="text-[12px] text-slate-500">Daily stand-up · {standup.minutes} minutes</p>
           </div>
           <div className="ml-auto flex items-center gap-1">
             {canSpeak && (
@@ -146,11 +146,11 @@ export default function Standup({ standup, manager, learnerName, learnerPhotoUrl
           {reply ? (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 size={17} className="text-emerald-600" />
+                <CheckCircle2 size={17} className="text-emerald-700" />
                 <span className="text-sm font-extrabold text-slate-900">Stand-up done</span>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-5">{reply.reply}</p>
-              <p className="text-[11px] text-slate-500 mb-5">
+              <p className="text-[12px] text-slate-500 mb-5">
                 It's in your thread with {managerName.split(' ')[0]}, so you can both refer back to it.
               </p>
               <button
@@ -170,7 +170,7 @@ export default function Standup({ standup, manager, learnerName, learnerPhotoUrl
               </div>
 
               <p className="text-base font-bold text-slate-900 leading-relaxed mb-1">{q.text}</p>
-              {q.hint && <p className="text-[11px] text-slate-500 mb-4">{q.hint}</p>}
+              {q.hint && <p className="text-[12px] text-slate-500 mb-4">{q.hint}</p>}
 
               <div className="relative">
                 <textarea
@@ -194,14 +194,14 @@ export default function Standup({ standup, manager, learnerName, learnerPhotoUrl
               </div>
 
               {!SR && (
-                <p className="text-[11px] text-slate-400 mt-2">
+                <p className="text-[12px] text-slate-500 mt-2">
                   Your browser can't do speech input — Chrome and Edge can. Typing works exactly the same.
                 </p>
               )}
               {error && <p className="text-xs text-rose-700 font-semibold mt-3">{error}</p>}
 
               <div className="flex items-center justify-between gap-3 mt-5">
-                <span className="text-[11px] text-slate-400">Question {i + 1} of {standup.questions.length}</span>
+                <span className="text-[12px] text-slate-500">Question {i + 1} of {standup.questions.length}</span>
                 {last ? (
                   <motion.button
                     whileTap={{ scale: 0.97 }}

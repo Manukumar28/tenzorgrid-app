@@ -21,8 +21,8 @@ export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleC
           <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
             Welcome back, {name} <span className="hidden sm:inline">— {roleLabel}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1 sm:hidden">{roleLabel}</p>
-          <p className="text-sm text-gray-400 mt-1 hidden sm:block">Here's how your Virtual Workspace is going.</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 sm:hidden">{roleLabel}</p>
+          <p className="text-sm text-gray-500 mt-1 hidden sm:block">Here's how your Virtual Workspace is going.</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function Header({ name, photoUrl, roleLabel, checkedIn, onToggleC
             <LogOut size={17} /> Log out
           </button>
           {pendingCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-gray-50">
+            <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] px-1 rounded-full bg-red-600 text-white text-[12px] font-bold flex items-center justify-center border-2 border-gray-50">
               {pendingCount}
             </span>
           )}

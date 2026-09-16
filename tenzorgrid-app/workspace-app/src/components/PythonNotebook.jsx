@@ -135,7 +135,7 @@ function ResultGrid({ rows }) {
               {cols.map((c) => (
                 <td key={c} className="px-3 py-1.5 border-b border-slate-100 text-slate-700 whitespace-nowrap tabular-nums">
                   {row[c] === null || row[c] === undefined
-                    ? <span className="text-slate-300 italic">None</span>
+                    ? <span className="text-slate-500 italic">None</span>
                     : String(row[c])}
                 </td>
               ))}
@@ -251,8 +251,8 @@ export default function PythonNotebook({ wb, onGraded }) {
   return (
     <div className="flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-          <Cpu size={12} className="text-indigo-500" />Python Notebook
+        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <Cpu size={12} className="text-indigo-600" />Python Notebook
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -278,16 +278,16 @@ export default function PythonNotebook({ wb, onGraded }) {
 
       <div className="flex-1 min-h-[9rem] flex flex-col">
         <div className="flex items-center gap-3 px-3 py-1.5 border-b border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <TerminalIcon size={11} />Output
           </span>
           {elapsed !== null && (
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[12px] text-slate-500 font-medium">
               {rows ? `${rows.length} row${rows.length === 1 ? '' : 's'} · ` : ''}{elapsed}ms
             </span>
           )}
           {booting && (
-            <span className="text-[11px] text-indigo-600 font-semibold flex items-center gap-1.5">
+            <span className="text-[12px] text-indigo-600 font-semibold flex items-center gap-1.5">
               <Loader2 size={10} className="animate-spin" />{booting}
             </span>
           )}
@@ -295,7 +295,7 @@ export default function PythonNotebook({ wb, onGraded }) {
 
         <div className="flex-1 overflow-auto">
           {!ready && !booting && !error && (
-            <p className="p-4 text-xs text-slate-400 font-medium leading-relaxed">
+            <p className="p-4 text-xs text-slate-500 font-medium leading-relaxed">
               Real Python runs here, in your browser — nothing you try is sent anywhere.
               The first run downloads the runtime (about 14MB) and takes a few seconds; after
               that it is instant. Running is free and unlimited — only Submit is graded.
@@ -320,12 +320,12 @@ export default function PythonNotebook({ wb, onGraded }) {
 
           {rows && rows.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">result</div>
+              <div className="px-3 py-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">result</div>
               <ResultGrid rows={rows} />
             </>
           )}
           {rows && rows.length === 0 && (
-            <p className="p-4 text-xs text-slate-400 font-medium">
+            <p className="p-4 text-xs text-slate-500 font-medium">
               Your code ran, but <code className="font-mono">result</code> is empty.
             </p>
           )}
@@ -340,7 +340,7 @@ export default function PythonNotebook({ wb, onGraded }) {
       {isGraded && (
         <div className="border-t border-slate-200 p-4 bg-emerald-50/50">
           <div className="flex items-center gap-2 mb-1.5">
-            <CheckCircle2 size={15} className="text-emerald-600" />
+            <CheckCircle2 size={15} className="text-emerald-700" />
             <span className="text-sm font-extrabold text-slate-900">Graded — {graded ? graded.score : wb.score}/100</span>
           </div>
           <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{graded ? graded.feedback : wb.feedback}</p>

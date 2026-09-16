@@ -5,9 +5,9 @@ import { SkillRadar } from './charts.jsx';
 import { api } from '../api.js';
 
 const ROLE_BADGE = {
-  stakeholder: 'bg-blue-50 text-blue-600',
-  line_manager: 'bg-emerald-50 text-emerald-600',
-  people_partner: 'bg-amber-50 text-amber-600',
+  stakeholder: 'bg-blue-50 text-blue-700',
+  line_manager: 'bg-emerald-50 text-emerald-700',
+  people_partner: 'bg-amber-50 text-amber-700',
   learner: 'bg-gray-100 text-gray-500',
 };
 const ROLE_TITLE = {
@@ -37,7 +37,7 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, corner, children 
         {corner}
       </div>
       <div className="text-3xl font-extrabold leading-none">{value}</div>
-      <div className="text-[13px] text-gray-500 font-medium mt-1.5 mb-2">{label}</div>
+      <div className="text-[14px] text-gray-500 font-medium mt-1.5 mb-2">{label}</div>
       <div className="mt-auto">{children}</div>
     </BentoCard>
   );
@@ -63,17 +63,17 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
   const delta = performance.scoreDeltaToday;
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
-      <div className="min-w-0 xl:col-span-9 space-y-4 sm:space-y-6">
+    <div className="grid grid-cols-1 xl:grid-cols-16 gap-4 sm:gap-6">
+      <div className="min-w-0 xl:col-span-11 space-y-4 sm:space-y-6">
 
         {/* KPI row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           <KpiCard
             index={0} icon={CheckCircle2} iconClass="bg-gradient-to-br from-indigo-500 to-indigo-400"
             label="Tasks completed" value={`${performance.tasksCompleted}/${performance.tasksTotal}`}
-            corner={<CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={40} strokeWidth={4.5} colorClass="text-indigo-500" />}
+            corner={<CircularProgress value={performance.tasksCompleted} max={performance.tasksTotal || 1} size={40} strokeWidth={4.5} colorClass="text-indigo-600" />}
           >
-            <div className="text-xs font-semibold text-indigo-500">{tasksPct}% complete</div>
+            <div className="text-xs font-semibold text-indigo-600">{tasksPct}% complete</div>
           </KpiCard>
           <KpiCard
             index={1} icon={BarChart3} iconClass="bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500"
@@ -83,7 +83,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
               Avg Grade: <span className="text-gray-700 font-semibold">{performance.avgGrade === null ? '—' : `${performance.avgGrade}%`}</span>
             </div>
             {delta !== null && (
-              <div className={`text-xs font-bold mt-0.5 ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+              <div className={`text-xs font-bold mt-0.5 ${delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                 {delta > 0 ? '+' : ''}{delta}% today
               </div>
             )}
@@ -103,16 +103,16 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
 
         {/* Middle row — the skill radar needs the widest slot, its axis labels clip below ~300px */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-          <BentoCard index={4} className="lg:col-span-3">
+          <BentoCard index={4} className="lg:col-span-4">
             <h3 className="text-base font-bold mb-3.5">Task progress</h3>
             <div className="space-y-3">
               {tasks.map((t) => (
                 <div key={t.id} className="flex items-start gap-2.5">
                   <CheckCircle2 size={20} className={`shrink-0 mt-px ${t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'}`} strokeWidth={2.3} />
-                  <span className={`text-sm font-medium ${t.status === 'graded' ? 'line-through text-gray-400' : 'text-gray-700'}`}>{t.title}</span>
+                  <span className={`text-sm font-medium ${t.status === 'graded' ? 'line-through text-gray-500' : 'text-gray-700'}`}>{t.title}</span>
                 </div>
               ))}
-              {!tasks.length && <p className="text-sm text-gray-400">No tasks assigned yet.</p>}
+              {!tasks.length && <p className="text-sm text-gray-500">No tasks assigned yet.</p>}
             </div>
           </BentoCard>
 
@@ -121,8 +121,8 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
             <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} />
           </BentoCard>
 
-          <BentoCard index={6} className="lg:col-span-4 flex flex-col">
-            <h3 className="text-base font-bold mb-3.5">Your momentum</h3>
+          <BentoCard index={6} className="lg:col-span-3 flex flex-col">
+            <h3 className="text-base font-bold mb-3.5">Momentum</h3>
 
             <div className="flex items-center gap-3.5">
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shrink-0">
@@ -130,7 +130,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
               </div>
               <div className="min-w-0">
                 <div className="text-3xl font-extrabold leading-none">{streak.current}</div>
-                <div className="text-[13px] text-gray-500 font-medium mt-1">
+                <div className="text-[14px] text-gray-500 font-medium mt-1">
                   {streak.current === 1 ? 'day streak' : 'day streak'}
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                   <p className="text-xs text-gray-500 mt-1.5 leading-snug">{personalBest.title}</p>
                 </>
               ) : (
-                <p className="text-xs text-gray-400">Complete a task to set your first best score.</p>
+                <p className="text-xs text-gray-500">Complete a task to set your first best score.</p>
               )}
             </div>
           </BentoCard>
@@ -177,20 +177,20 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold">{m.sender_name}</span>
                       <Pill className={ROLE_BADGE[m.sender_archetype] || ROLE_BADGE.learner}>{(ROLE_TITLE[m.sender_archetype] || m.sender_archetype).toUpperCase()}</Pill>
-                      <span className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-xs text-gray-500">{new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">{m.body}</p>
                   </div>
                 </div>
               ))}
-              {!activity.length && <p className="text-sm text-gray-400">Nothing yet.</p>}
+              {!activity.length && <p className="text-sm text-gray-500">Nothing yet.</p>}
             </div>
           </BentoCard>
 
           <div className="space-y-6">
             <BentoCard index={8}>
               <div className="flex items-center gap-2.5 mb-2.5">
-                <Target size={22} className="text-indigo-500" />
+                <Target size={22} className="text-indigo-600" />
                 <h3 className="text-base font-bold">Weekly goal: 80% performance score</h3>
               </div>
               <ProgressBar value={performance.avgScore || 0} max={80} colorClass="from-indigo-500 to-teal-400" />
@@ -204,17 +204,17 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
       </div>
 
       {/* Far right column */}
-      <div className="min-w-0 xl:col-span-3 space-y-4 sm:space-y-6">
+      <div className="min-w-0 xl:col-span-5 space-y-4 sm:space-y-6">
         <BentoCard index={2}>
           <div className="flex items-center gap-2.5 mb-3.5">
-            <ClipboardList size={22} className="text-indigo-500" />
+            <ClipboardList size={22} className="text-indigo-600" />
             <h3 className="text-base font-bold">Quick tasks</h3>
           </div>
           <div className="space-y-3">
             {checklist.map((item) => (
               <label key={item.key} className="flex items-center gap-2.5 cursor-pointer select-none">
                 <input type="checkbox" checked={item.checked} onChange={() => toggleItem(item)} className="w-4 h-4 rounded accent-indigo-500" />
-                <span className={`text-sm ${item.checked ? 'line-through text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                <span className={`text-sm ${item.checked ? 'line-through text-gray-500' : 'text-gray-700'}`}>{item.label}</span>
               </label>
             ))}
           </div>
@@ -233,9 +233,9 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                   <div className="flex items-center gap-2 mt-2">
                     <Avatar name={s.from} avatarUrl={rosterByArchetype.line_manager?.avatarUrl} size={22} />
                     <span className="text-xs font-semibold text-gray-600">{s.from}</span>
-                    <Pill className="bg-amber-50 text-amber-600">{s.score}%</Pill>
+                    <Pill className="bg-amber-50 text-amber-700">{s.score}%</Pill>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 truncate">{s.title}</p>
+                  <p className="text-xs text-gray-500 mt-1 truncate">{s.title}</p>
                 </div>
               ))}
             </div>
@@ -265,7 +265,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         {promotion && (
           <BentoCard index={5} className={promotion.atTheTop ? 'border-emerald-200 bg-emerald-50/40' : ''}>
             <div className="flex items-center gap-2.5 mb-1.5">
-              <TrendingUp size={22} className={promotion.atTheTop ? 'text-emerald-600' : 'text-indigo-500'} />
+              <TrendingUp size={22} className={promotion.atTheTop ? 'text-emerald-700' : 'text-indigo-600'} />
               <h3 className="text-base font-bold">
                 {promotion.atTheTop ? 'Top of the ladder'
                   : promotion.negotiation?.open ? 'Promotion conversation open'
@@ -299,7 +299,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                   />
                   <div className="min-w-0">
                     <p className="text-sm text-gray-700 leading-snug">{c.label}</p>
-                    <p className={`text-xs font-semibold ${c.met ? 'text-emerald-600' : 'text-gray-500'}`}>{c.detail}</p>
+                    <p className={`text-xs font-semibold ${c.met ? 'text-emerald-700' : 'text-gray-500'}`}>{c.detail}</p>
                   </div>
                 </div>
               ))}
@@ -324,7 +324,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
               {milestone.requirements.map((r) => (
                 <div key={r.key} className="flex items-center gap-2.5">
                   <CheckCircle2 size={20} className={r.done ? 'text-amber-500' : 'text-gray-200'} strokeWidth={2.3} />
-                  <span className="text-sm text-gray-700">{r.label} <span className="text-gray-400">({r.current}/{r.target})</span></span>
+                  <span className="text-sm text-gray-700">{r.label} <span className="text-gray-500">({r.current}/{r.target})</span></span>
                 </div>
               ))}
             </div>

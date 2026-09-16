@@ -54,11 +54,11 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, u
       >
       <div className="px-2 mb-6 flex items-center gap-2">
         <img src="/assets/icon.svg" alt="" className="w-7 h-7" />
-        <span className="font-extrabold text-gray-900">Tenzor<span className="text-teal-500">Grid</span></span>
+        <span className="font-extrabold text-gray-900">Tenzor<span className="text-teal-700">Grid</span></span>
         <button
           onClick={onClose}
           aria-label="Close the menu"
-          className="lg:hidden ml-auto p-1.5 -mr-1 rounded-lg text-slate-400 hover:bg-slate-100"
+          className="lg:hidden ml-auto p-1.5 -mr-1 rounded-lg text-slate-500 hover:bg-slate-100"
         >
           <X size={18} />
         </button>
@@ -76,7 +76,7 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, u
             <Icon size={26} strokeWidth={2} className="shrink-0" />
             <span className="flex-1">{label}</span>
             {key === 'emails' && unreadCount > 0 && (
-              <span className="shrink-0 min-w-[20px] px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold text-center">
+              <span className="shrink-0 min-w-[20px] px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[12px] font-bold text-center">
                 {unreadCount}
               </span>
             )}
@@ -86,10 +86,10 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, u
 
       <div className="mt-4 space-y-2">
         <div className="rounded-lg bg-indigo-50 px-3 py-2.5">
-          <div className="text-[10px] font-bold tracking-wide text-indigo-400 uppercase">{roleLabel}</div>
+          <div className="text-[12px] font-bold tracking-wide text-indigo-700 uppercase">{roleLabel}</div>
           <div className="text-xs font-bold text-indigo-700">{levelLabel}</div>
         </div>
-        <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-[11px] text-gray-500 font-medium">
+        <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-[12px] text-gray-500 font-medium">
           {time}, {date}, {weather}
         </div>
         <div className="flex flex-col gap-1 pt-1">

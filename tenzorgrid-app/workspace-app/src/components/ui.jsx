@@ -40,7 +40,7 @@ export function ProgressBar({ value, max = 100, colorClass = 'from-indigo-500 to
   );
 }
 
-export function CircularProgress({ value, max = 100, size = 56, strokeWidth = 6, colorClass = 'text-indigo-500' }) {
+export function CircularProgress({ value, max = 100, size = 56, strokeWidth = 6, colorClass = 'text-indigo-600' }) {
   const pct = Math.max(0, Math.min(1, max ? value / max : 0));
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -60,7 +60,7 @@ export function CircularProgress({ value, max = 100, size = 56, strokeWidth = 6,
 }
 
 export function Pill({ children, className = '' }) {
-  return <span className={`inline-block text-[11px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full ${className}`}>{children}</span>;
+  return <span className={`inline-block text-[12px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full ${className}`}>{children}</span>;
 }
 
 // `photoUrl` is a real uploaded photo (only ever the current learner's own — never
@@ -87,7 +87,9 @@ export function Avatar({ name, size = 32, className = '', photoUrl, avatarUrl })
   return (
     <div
       className={`flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 text-white font-semibold shrink-0 ${className}`}
-      style={{ width: size, height: size, fontSize: size * 0.38 }}
+      // Initials never drop below 12px however small the circle is. At size * 0.38 a
+      // 28px avatar rendered them at 10.6px, which was the last sub-12px text in the app.
+      style={{ width: size, height: size, fontSize: Math.max(12, Math.round(size * 0.38)) }}
     >
       {initials}
     </div>

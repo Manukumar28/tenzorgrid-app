@@ -17,9 +17,9 @@ const KIND_ACCENT = {
   api: 'from-blue-500 to-cyan-400',
 };
 const DIFFICULTY_STYLE = {
-  Easy: 'bg-emerald-50 text-emerald-600',
-  Medium: 'bg-amber-50 text-amber-600',
-  Hard: 'bg-red-50 text-red-500',
+  Easy: 'bg-emerald-50 text-emerald-700',
+  Medium: 'bg-amber-50 text-amber-700',
+  Hard: 'bg-red-50 text-red-700',
 };
 
 function KindIcon({ kind, size = 'w-12 h-12', icon = 22 }) {
@@ -33,7 +33,7 @@ function KindIcon({ kind, size = 'w-12 h-12', icon = 22 }) {
 
 function Tag({ children, className = '' }) {
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-md px-2 py-1 ${className}`}>
+    <span className={`inline-flex items-center gap-1 text-[12px] font-semibold rounded-md px-2 py-1 ${className}`}>
       {children}
     </span>
   );
@@ -86,7 +86,7 @@ export function BriefLink({ onClick }) {
     <button
       onClick={onClick}
       aria-label="Read the project brief"
-      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
+      className="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-indigo-600"
     >
       <FileText size={12} />Read brief
     </button>
@@ -125,10 +125,10 @@ export function WeekStrip({ week }) {
     <div className={`rounded-xl border px-3.5 py-3 mb-4 ${late ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-slate-50/70'}`}>
       <div className="flex items-center gap-2 mb-2.5">
         <CalendarClock size={13} className={late ? 'text-rose-600' : 'text-slate-500'} />
-        <span className="text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+        <span className="text-[12px] font-extrabold uppercase tracking-wide text-slate-600">
           Day {Math.min(week.day, week.totalDays)} of {week.totalDays}
         </span>
-        <span className={`ml-auto text-[11px] font-extrabold ${late ? 'text-rose-600' : 'text-slate-500'}`}>
+        <span className={`ml-auto text-[12px] font-extrabold ${late ? 'text-rose-600' : 'text-slate-500'}`}>
           {dueLabel(week)}
         </span>
       </div>
@@ -147,7 +147,7 @@ export function WeekStrip({ week }) {
       </div>
 
       {week.blocking.length > 0 && (
-        <div className="flex items-start gap-1.5 text-[11px] font-bold text-rose-700 mb-2.5">
+        <div className="flex items-start gap-1.5 text-[12px] font-bold text-rose-700 mb-2.5">
           <AlertTriangle size={12} className="shrink-0 mt-px" />
           <span>
             {week.blocking.join(' and ')} {week.blocking.length === 1 ? 'is' : 'are'} waiting on you
@@ -158,7 +158,7 @@ export function WeekStrip({ week }) {
       {/* Everything available is done and the rest is waiting on its day. Without saying
           so, a card reading "6 of 7" next to an empty board looks like something broke. */}
       {week.allCaughtUp && (
-        <div className="flex items-start gap-1.5 text-[11px] font-bold text-emerald-700 mb-2.5">
+        <div className="flex items-start gap-1.5 text-[12px] font-bold text-emerald-700 mb-2.5">
           <Check size={12} className="shrink-0 mt-px" />
           <span>
             You're up to date — {week.waitingOn === 1 ? 'the last task opens' : `${week.waitingOn} more open`} {week.waitingUntil}
@@ -171,12 +171,12 @@ export function WeekStrip({ week }) {
           const st = CONTRIB_STATE[c.state] || CONTRIB_STATE.scheduled;
           const you = !c.name;
           return (
-            <li key={i} className="flex items-center gap-2 text-[11px] min-w-0">
+            <li key={i} className="flex items-center gap-2 text-[12px] min-w-0">
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
               <span className={`font-bold shrink-0 ${you ? 'text-slate-900' : 'text-slate-700'}`}>
                 {you ? 'You' : c.name}
               </span>
-              <span className="text-slate-400 shrink-0">· {c.role}</span>
+              <span className="text-slate-500 shrink-0">· {c.role}</span>
               <span className={`ml-auto font-semibold truncate ${st.text}`}>{c.note}</span>
             </li>
           );
@@ -192,7 +192,7 @@ export function ActiveProjectCard({ project, person, index, onOpenTasks, onOpenB
       <div className="flex items-start gap-3.5 mb-4">
         <KindIcon kind={project.kind} />
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-indigo-500 mb-0.5">Active project</div>
+          <div className="text-[12px] font-bold uppercase tracking-wide text-indigo-600 mb-0.5">Active project</div>
           <h3 className="text-base font-bold leading-snug truncate">{project.title}</h3>
           <div className="mt-1.5"><Stakeholder person={person} /></div>
         </div>
@@ -216,7 +216,7 @@ export function ActiveProjectCard({ project, person, index, onOpenTasks, onOpenB
         )}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* Not banked yet — this project is still open, so it reads as a target. */}
-          <span className="text-xs font-bold text-emerald-600">{money(project.impactValue)} on delivery</span>
+          <span className="text-xs font-bold text-emerald-700">{money(project.impactValue)} on delivery</span>
           <div className="flex items-center gap-3">
             <BriefLink onClick={onOpenBrief} />
             <ActionButton onClick={onOpenTasks}>
@@ -235,7 +235,7 @@ export function AvailableProjectCard({ project, person, index, onStart, starting
       <div className="flex items-start gap-3 mb-3">
         <KindIcon kind={project.kind} size="w-10 h-10" icon={19} />
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-blue-500 mb-0.5">Available</div>
+          <div className="text-[12px] font-bold uppercase tracking-wide text-blue-500 mb-0.5">Available</div>
           <h3 className="text-sm font-bold leading-snug">{project.title}</h3>
         </div>
       </div>
@@ -253,12 +253,12 @@ export function AvailableProjectCard({ project, person, index, onStart, starting
 
       <div className="flex flex-wrap gap-1.5 mb-3">
         {project.skillFocus.map((s) => (
-          <Tag key={s.axis} className="bg-indigo-50 text-indigo-600">{s.label}</Tag>
+          <Tag key={s.axis} className="bg-indigo-50 text-indigo-700">{s.label}</Tag>
         ))}
       </div>
 
       <div className="mt-auto space-y-2.5">
-        <div className="text-xs font-bold text-emerald-600">{money(project.impactValue)} on delivery</div>
+        <div className="text-xs font-bold text-emerald-700">{money(project.impactValue)} on delivery</div>
         <div className="mb-0.5"><Stakeholder person={person} /></div>
         <ActionButton onClick={onStart} disabled={starting} className="w-full">
           {starting ? 'Opening…' : 'View brief & start'}
@@ -277,15 +277,15 @@ export function LockedProjectCard({ project, person, index, onOpenBrief }) {
           <Lock size={18} className="text-gray-500" strokeWidth={2.2} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-0.5">Locked</div>
+          <div className="text-[12px] font-bold uppercase tracking-wide text-gray-500 mb-0.5">Locked</div>
           <h3 className="text-sm font-bold leading-snug text-gray-600">{project.title}</h3>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-3">{project.description}</p>
+      <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-3">{project.description}</p>
 
       {/* The real gate, stated plainly rather than dressed up as a mystery. */}
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 bg-white border border-gray-100 rounded-lg px-2.5 py-2 mb-3">
+      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 bg-white border border-gray-100 rounded-lg px-2.5 py-2 mb-3">
         <Lock size={12} className="shrink-0" />
         <span className="truncate">{project.requirement}</span>
       </div>
@@ -305,7 +305,7 @@ export function LockedProjectCard({ project, person, index, onOpenBrief }) {
 }
 
 const GRADE_RING = {
-  A: 'border-emerald-400 text-emerald-600',
+  A: 'border-emerald-400 text-emerald-700',
   B: 'border-teal-400 text-teal-600',
   C: 'border-amber-400 text-amber-600',
   D: 'border-orange-400 text-orange-500',
@@ -319,7 +319,7 @@ export function CompletedProjectCard({ project, person, index, onOpenBrief }) {
 
   return (
     <BentoCard index={index} className="flex flex-col">
-      <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-500 mb-2.5">Completed</div>
+      <div className="text-[12px] font-bold uppercase tracking-wide text-emerald-500 mb-2.5">Completed</div>
       <div className="flex items-start gap-3 mb-3">
         <div className={`w-14 h-14 rounded-full border-4 shrink-0 flex items-center justify-center bg-white ${GRADE_RING[project.grade] || GRADE_RING.C}`}>
           <span className="text-xl font-extrabold leading-none">{project.grade}</span>
@@ -333,7 +333,7 @@ export function CompletedProjectCard({ project, person, index, onOpenBrief }) {
       <div className="space-y-2 mb-3">
         <Stakeholder person={person} />
         <div className="text-xs text-gray-500">
-          Impact banked: <span className="font-bold text-emerald-600">{money(project.impactValue)}</span>
+          Impact banked: <span className="font-bold text-emerald-700">{money(project.impactValue)}</span>
         </div>
       </div>
 

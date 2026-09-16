@@ -134,7 +134,7 @@ function TimeTravel({ tt, onStateChange }) {
       <div className="mt-3 pt-3 border-t border-amber-200/70">
         <div className="flex flex-wrap items-end gap-2 mb-2.5">
           <label className="flex flex-col gap-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Role</span>
+            <span className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500">Role</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
@@ -146,7 +146,7 @@ function TimeTravel({ tt, onStateChange }) {
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Level</span>
+            <span className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500">Level</span>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
@@ -158,8 +158,10 @@ function TimeTravel({ tt, onStateChange }) {
             </select>
           </label>
           {(role !== tt.role || level !== tt.level) && (
-            <span className="text-[11px] text-amber-800 font-semibold pb-2">
-              Switching from {tt.level === 'senior' ? 'Senior' : 'Junior'}
+            <span className="text-[12px] text-amber-800 font-semibold pb-2">
+              {/* tt.levels already carries the real title for every level of this role,
+                  so look the current one up rather than guessing Senior-or-Junior. */}
+              Switching from {((tt.levels || []).find((l) => l.key === tt.level) || {}).label || tt.level}
             </span>
           )}
         </div>
@@ -196,7 +198,7 @@ function TimeTravel({ tt, onStateChange }) {
             <RotateCcw size={13} /> {role !== tt.role || level !== tt.level ? 'Switch and start over' : 'Start over from day 1'}
           </button>
         )}
-        <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+        <p className="text-[12px] text-slate-500 mt-2 leading-relaxed">
           Back to a brand-new joiner at the role and level above: the welcome mail and the
           skills check, on a clean board. Nothing is rewound — the run is deleted and started
           again, which is the only version of "start over" that is actually true.
@@ -205,7 +207,7 @@ function TimeTravel({ tt, onStateChange }) {
 
       {error && <p className="text-xs text-rose-700 font-semibold mt-3">{error}</p>}
 
-      <p className="text-[11px] text-amber-800/80 mt-3 leading-relaxed">
+      <p className="text-[12px] text-amber-800/80 mt-3 leading-relaxed">
         This panel only appears when the server is started with <code>TIME_TRAVEL=1</code>.
         Turn that off before real learners arrive.
       </p>
@@ -278,13 +280,13 @@ function ResetWorkspace({ onStateChange }) {
           </p>
           {lines.length > 0 ? (
             <>
-              <p className="text-[11px] text-slate-500 mt-1.5">Resetting deletes:</p>
-              <ul className="text-[11px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside">
+              <p className="text-[12px] text-slate-500 mt-1.5">Resetting deletes:</p>
+              <ul className="text-[12px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside">
                 {lines.map((l) => <li key={l}>{l}</li>)}
               </ul>
             </>
           ) : (
-            <p className="text-[11px] text-slate-500 mt-1.5">
+            <p className="text-[12px] text-slate-500 mt-1.5">
               There is nothing graded yet, so there is nothing much to lose.
             </p>
           )}
@@ -340,7 +342,7 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-1">
-          <Keyboard size={18} className="text-indigo-500" />
+          <Keyboard size={18} className="text-indigo-600" />
           <h3 className="text-base font-bold">Chat &amp; sound</h3>
         </div>
         <p className="text-xs text-slate-500 mb-2">How messages get sent, and whether you hear them arrive.</p>
@@ -366,7 +368,7 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
           />
         </div>
 
-        <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">
+        <p className="text-[12px] text-slate-500 mt-3 leading-relaxed">
           Saved in this browser. It is a typing habit rather than account data, so it does
           not follow you to another machine.
         </p>
@@ -380,7 +382,7 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
 
       <BentoCard hover={false}>
         <div className="flex items-center gap-2 mb-1">
-          <Info size={18} className="text-slate-400" />
+          <Info size={18} className="text-slate-500" />
           <h3 className="text-base font-bold">Everything else</h3>
         </div>
         <p className="text-sm text-slate-500 leading-relaxed">

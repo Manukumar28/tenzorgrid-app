@@ -35,8 +35,8 @@ function DemandBars({ axes }) {
       {shown.map((a) => (
         <div key={a.axis}>
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-[11px] font-semibold text-slate-600">{a.label}</span>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[12px] font-semibold text-slate-600">{a.label}</span>
+            <span className="text-[12px] text-slate-500">
               {a.projects} project{a.projects === 1 ? '' : 's'}
             </span>
           </div>
@@ -71,15 +71,15 @@ function MemberCard({ member, selected, index, onSelect }) {
         <Avatar name={member.name} avatarUrl={member.avatarUrl} size={38} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-bold truncate">{member.name}</div>
-          <div className="text-[11px] text-slate-500 truncate">{member.title}</div>
+          <div className="text-[12px] text-slate-500 truncate">{member.title}</div>
           {member.reportsToYou && (
-            <span className="inline-block mt-1 text-[10px] font-semibold rounded px-1.5 py-0.5 bg-indigo-50 text-indigo-700">
+            <span className="inline-block mt-1 text-[12px] font-semibold rounded px-1.5 py-0.5 bg-indigo-50 text-indigo-700">
               Reports to you
             </span>
           )}
         </div>
         {member.unread > 0 && (
-          <span className="shrink-0 min-w-[18px] px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold text-center">
+          <span className="shrink-0 min-w-[18px] px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[12px] font-bold text-center">
             {member.unread}
           </span>
         )}
@@ -88,22 +88,22 @@ function MemberCard({ member, selected, index, onSelect }) {
       {/* Availability is real: it says whether a reply can actually be had right now. */}
       <div className="flex items-center gap-1.5 mb-2.5">
         <span className={`w-2 h-2 rounded-full ${member.available ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-        <span className={`text-[11px] font-semibold ${member.available ? 'text-emerald-600' : 'text-slate-400'}`}>
+        <span className={`text-[12px] font-semibold ${member.available ? 'text-emerald-700' : 'text-slate-500'}`}>
           {member.available ? 'Available to message' : 'Daily message limit reached'}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-1">
         {member.owned.length ? member.owned.slice(0, 2).map((p) => (
-          <span key={p.key} className={`text-[10px] font-semibold rounded px-1.5 py-0.5 truncate max-w-full ${PROJECT_STATUS_PILL[p.status]}`}>
+          <span key={p.key} className={`text-[12px] font-semibold rounded px-1.5 py-0.5 truncate max-w-full ${PROJECT_STATUS_PILL[p.status]}`}>
             {p.title}
           </span>
         )) : (
-          <span className="text-[10px] text-slate-400">No projects assigned</span>
+          <span className="text-[12px] text-slate-500">No projects assigned</span>
         )}
       </div>
 
-      <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-slate-100 text-[10px] text-slate-400">
+      <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-slate-100 text-[12px] text-slate-500">
         <span>{member.messageCount} message{member.messageCount === 1 ? '' : 's'}</span>
         {member.lastContactAt && <span>· {relativeTime(member.lastContactAt)}</span>}
       </div>
@@ -172,10 +172,10 @@ export default function Team({ state, onStateChange, onTab }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Team</h1>
-          <span className="text-sm font-semibold text-slate-400">[Collaboration hub]</span>
+          <span className="text-sm font-semibold text-slate-500">[Collaboration hub]</span>
         </div>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -215,41 +215,41 @@ export default function Team({ state, onStateChange, onTab }) {
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-md px-2 py-1 ${
+                  <span className={`inline-flex items-center gap-1 text-[12px] font-bold rounded-md px-2 py-1 ${
                     selected.available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
                   }`}>
                     {selected.available ? <CheckCircle2 size={11} /> : <Circle size={11} />}
                     {selected.available ? 'Available' : 'Limit reached'}
                   </span>
                   {selected.grades && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold rounded-md px-2 py-1 bg-amber-50 text-amber-700">
+                    <span className="inline-flex items-center gap-1 text-[12px] font-bold rounded-md px-2 py-1 bg-amber-50 text-amber-700">
                       <Gavel size={11} /> Grades your work
                     </span>
                   )}
                   {selected.lastContactAt && (
-                    <span className="text-[11px] font-semibold rounded-md px-2 py-1 bg-slate-100 text-slate-500">
+                    <span className="text-[12px] font-semibold rounded-md px-2 py-1 bg-slate-100 text-slate-500">
                       Last contact {relativeTime(selected.lastContactAt)}
                     </span>
                   )}
                 </div>
 
                 <h4 className="text-xs font-bold text-slate-600 mb-0.5">Skills their work demands</h4>
-                <p className="text-[11px] text-slate-400 mb-1">
+                <p className="text-[12px] text-slate-500 mb-1">
                   {selected.hasDemand
                     ? 'From the projects they own — not a rating of them.'
                     : 'No projects assigned to them yet.'}
                 </p>
                 {selected.hasDemand
                   ? <DemandBars axes={selected.skillDemand} />
-                  : <div className="h-20 flex items-center justify-center text-sm text-slate-400">Nothing to show yet</div>}
+                  : <div className="h-20 flex items-center justify-center text-sm text-slate-500">Nothing to show yet</div>}
 
                 <h4 className="text-xs font-bold text-slate-600 mb-2 mt-3">Their projects</h4>
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {selected.owned.length ? selected.owned.map((p) => (
-                    <span key={p.key} className={`text-[11px] font-semibold rounded-md px-2 py-1 ${PROJECT_STATUS_PILL[p.status]}`}>
+                    <span key={p.key} className={`text-[12px] font-semibold rounded-md px-2 py-1 ${PROJECT_STATUS_PILL[p.status]}`}>
                       {p.title} · {p.status}
                     </span>
-                  )) : <span className="text-xs text-slate-400">None assigned.</span>}
+                  )) : <span className="text-xs text-slate-500">None assigned.</span>}
                 </div>
 
                 <textarea
@@ -300,7 +300,7 @@ export default function Team({ state, onStateChange, onTab }) {
               </motion.div>
             ) : (
               <div className="text-center py-10">
-                <Users size={28} className="text-slate-300 mx-auto mb-3" />
+                <Users size={28} className="text-slate-500 mx-auto mb-3" />
                 <p className="text-sm text-slate-500 font-medium">No one matches that search.</p>
               </div>
             )}
@@ -312,7 +312,7 @@ export default function Team({ state, onStateChange, onTab }) {
           <div>
             <div className="flex items-baseline gap-2 mb-3">
               <h2 className="text-sm font-bold text-slate-700">Your org chart</h2>
-              <span className="text-xs font-semibold text-slate-400">{visible.length}</span>
+              <span className="text-xs font-semibold text-slate-500">{visible.length}</span>
             </div>
             {visible.length ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -331,7 +331,7 @@ export default function Team({ state, onStateChange, onTab }) {
                 <p className="text-sm text-slate-500 font-medium">No one matches that search.</p>
               </BentoCard>
             )}
-            <p className="text-[11px] text-slate-400 mt-2.5">
+            <p className="text-[12px] text-slate-500 mt-2.5">
               This is the whole cast for the individual-contributor track. Direct reports appear here when the manager track ships.
             </p>
           </div>
@@ -341,14 +341,14 @@ export default function Team({ state, onStateChange, onTab }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <h3 className="text-base font-bold mb-0.5">Your skill levels</h3>
-                <p className="text-xs text-slate-400 mb-4">Measured from your graded work, not a team average</p>
+                <p className="text-xs text-slate-500 mb-4">Measured from your graded work, not a team average</p>
                 <div className="flex items-end justify-around gap-2">
                   {gaugeAxes.map((a) => (
                     <SkillGauge key={a.axis} label={a.label} value={a.value} hasData={a.hasData} />
                   ))}
                 </div>
                 {gaugeAxes.every((a) => !a.hasData) && (
-                  <p className="text-[11px] text-slate-400 text-center mt-3">
+                  <p className="text-[12px] text-slate-500 text-center mt-3">
                     Complete a task to populate these.
                   </p>
                 )}
@@ -356,7 +356,7 @@ export default function Team({ state, onStateChange, onTab }) {
 
               <div>
                 <h3 className="text-base font-bold mb-0.5">Project progress</h3>
-                <p className="text-xs text-slate-400 mb-2">Across the track's projects</p>
+                <p className="text-xs text-slate-500 mb-2">Across the track's projects</p>
                 <MilestoneBars data={milestones} />
               </div>
             </div>

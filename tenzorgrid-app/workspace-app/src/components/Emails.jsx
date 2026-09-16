@@ -71,7 +71,7 @@ function FilterSelect({ label, value, onChange, options }) {
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <ChevronDown size={13} className={`absolute right-2.5 pointer-events-none ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
+      <ChevronDown size={13} className={`absolute right-2.5 pointer-events-none ${active ? 'text-indigo-600' : 'text-slate-500'}`} />
     </div>
   );
 }
@@ -109,7 +109,7 @@ function Composer({ roster, onClose, onSent }) {
       <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold">New message</h3>
-          <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-700"><X size={18} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-700"><X size={18} /></button>
         </div>
 
         <label className="block text-xs font-bold text-slate-500 mb-1">To</label>
@@ -134,7 +134,7 @@ function Composer({ roster, onClose, onSent }) {
         />
         {error && <div className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3">{error}</div>}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] text-slate-400">Saved as a draft while you type</span>
+          <span className="text-[12px] text-slate-500">Saved as a draft while you type</span>
           <motion.button
             whileTap={{ scale: 0.97 }} onClick={send} disabled={busy || !body.trim()}
             aria-label="Send message"
@@ -262,10 +262,10 @@ export default function Emails({ state, onStateChange }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Emails</h1>
-          <span className="text-sm font-semibold text-slate-400">[Unified communications]</span>
+          <span className="text-sm font-semibold text-slate-500">[Unified communications]</span>
         </div>
         <div className="relative flex-1 min-w-[240px] max-w-md">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -312,7 +312,7 @@ export default function Emails({ state, onStateChange }) {
             >
               <Icon size={14} /> {t.label}
               {t.count > 0 && (
-                <span className={`text-[10px] rounded-full px-1.5 py-0.5 ${on ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
+                <span className={`text-[12px] rounded-full px-1.5 py-0.5 ${on ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
                   {t.count}
                 </span>
               )}
@@ -347,7 +347,7 @@ export default function Emails({ state, onStateChange }) {
                   >
                     <Star
                       size={15}
-                      className={`transition-colors ${t.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-300 hover:text-slate-400'}`}
+                      className={`transition-colors ${t.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-500 hover:text-slate-500'}`}
                     />
                   </span>
 
@@ -355,25 +355,25 @@ export default function Emails({ state, onStateChange }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className={`text-[10px] font-bold rounded-md px-1.5 py-0.5 ${TONE[t.tone] || TONE.gray}`}>
+                      <span className={`text-[12px] font-bold rounded-md px-1.5 py-0.5 ${TONE[t.tone] || TONE.gray}`}>
                         {t.categoryLabel}
                       </span>
                       {t.unread > 0 && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" aria-label="Unread" />}
-                      {drafts[t.key] && <span className="text-[10px] font-bold text-amber-600">Draft</span>}
+                      {drafts[t.key] && <span className="text-[12px] font-bold text-amber-600">Draft</span>}
                     </div>
                     <div className={`text-sm truncate ${t.unread > 0 ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>
                       {t.subject}
                     </div>
-                    <div className="text-xs text-slate-400 truncate">{t.snippet}</div>
+                    <div className="text-xs text-slate-500 truncate">{t.snippet}</div>
                   </div>
 
-                  <span className="text-[11px] text-slate-400 shrink-0 mt-0.5">{relativeTime(t.lastAt)}</span>
+                  <span className="text-[12px] text-slate-500 shrink-0 mt-0.5">{relativeTime(t.lastAt)}</span>
                 </motion.button>
               ))}
             </div>
           ) : (
             <div className="text-center py-12 px-6">
-              <Inbox size={28} className="text-slate-300 mx-auto mb-3" />
+              <Inbox size={28} className="text-slate-500 mx-auto mb-3" />
               <p className="text-sm text-slate-500 font-medium">
                 {query ? 'Nothing matches that search.' : tab === 'drafts' ? 'No drafts.' : 'Nothing here yet.'}
               </p>
@@ -385,7 +385,7 @@ export default function Emails({ state, onStateChange }) {
         <BentoCard hover={false} className="lg:sticky lg:top-4">
           {!selected ? (
             <div className="text-center py-12">
-              <MailOpen size={28} className="text-slate-300 mx-auto mb-3" />
+              <MailOpen size={28} className="text-slate-500 mx-auto mb-3" />
               <p className="text-sm text-slate-500 font-medium">Select a message to read it.</p>
             </div>
           ) : (
@@ -394,7 +394,7 @@ export default function Emails({ state, onStateChange }) {
                 <Avatar name={selected.senderName} avatarUrl={personByArchetype[selected.archetype]?.avatarUrl} size={40} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-[10px] font-bold rounded-md px-1.5 py-0.5 ${TONE[selected.tone] || TONE.gray}`}>
+                    <span className={`text-[12px] font-bold rounded-md px-1.5 py-0.5 ${TONE[selected.tone] || TONE.gray}`}>
                       {selected.categoryLabel}
                     </span>
                     <span className="text-xs font-semibold text-slate-600">{selected.senderName}</span>
@@ -406,7 +406,7 @@ export default function Emails({ state, onStateChange }) {
                   aria-label={selected.starred ? 'Unstar' : 'Star'}
                   className="shrink-0"
                 >
-                  <Star size={17} className={selected.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-300 hover:text-slate-400'} />
+                  <Star size={17} className={selected.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-500 hover:text-slate-500'} />
                 </button>
               </div>
 
@@ -431,11 +431,11 @@ export default function Emails({ state, onStateChange }) {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline justify-between gap-3">
                             <span className="text-xs font-bold text-slate-800 truncate">{who}</span>
-                            <span className="text-[10px] text-slate-400 shrink-0">
+                            <span className="text-[12px] text-slate-500 shrink-0">
                               {new Date(m.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400">to {to}</p>
+                          <p className="text-[12px] text-slate-500">to {to}</p>
                         </div>
                       </div>
                       <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed pl-[38px]">{m.body}</p>
