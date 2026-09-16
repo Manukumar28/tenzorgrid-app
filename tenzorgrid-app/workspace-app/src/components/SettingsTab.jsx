@@ -73,8 +73,10 @@ function TimeTravel({ tt, onStateChange }) {
 
   return (
     <BentoCard hover={false} className="border-amber-200 bg-amber-50/40">
-      <div className="flex items-center gap-2 mb-1">
-        <FlaskConical size={18} className="text-amber-600" />
+      <div className="flex items-center gap-2.5 mb-1">
+        <span className="shrink-0 w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center">
+          <FlaskConical size={18} />
+        </span>
         <h3 className="text-base font-bold">Testing — move the clock</h3>
       </div>
       <p className="text-xs text-slate-600 mb-3 leading-relaxed">
@@ -263,8 +265,10 @@ function ResetWorkspace({ onStateChange }) {
 
   return (
     <BentoCard hover={false}>
-      <div className="flex items-center gap-2 mb-1">
-        <RotateCcw size={18} className="text-rose-500" />
+      <div className="flex items-center gap-2.5 mb-1">
+        <span className="shrink-0 w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center">
+          <RotateCcw size={18} />
+        </span>
         <h3 className="text-base font-bold">Reset the workspace</h3>
       </div>
       <p className="text-xs text-slate-500 mb-3">
@@ -341,8 +345,10 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
       <BentoCard hover={false}>
-        <div className="flex items-center gap-2 mb-1">
-          <Keyboard size={18} className="text-indigo-600" />
+        <div className="flex items-center gap-2.5 mb-1">
+          <span className="shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+            <Keyboard size={18} />
+          </span>
           <h3 className="text-base font-bold">Chat &amp; sound</h3>
         </div>
         <p className="text-xs text-slate-500 mb-2">How messages get sent, and whether you hear them arrive.</p>
@@ -381,8 +387,10 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
       <ResetWorkspace onStateChange={onStateChange} />
 
       <BentoCard hover={false}>
-        <div className="flex items-center gap-2 mb-1">
-          <Info size={18} className="text-slate-500" />
+        <div className="flex items-center gap-2.5 mb-1">
+          <span className="shrink-0 w-9 h-9 rounded-xl bg-slate-500 text-white flex items-center justify-center">
+            <Info size={18} />
+          </span>
           <h3 className="text-base font-bold">Everything else</h3>
         </div>
         <p className="text-sm text-slate-500 leading-relaxed">

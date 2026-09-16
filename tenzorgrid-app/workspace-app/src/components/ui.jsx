@@ -95,3 +95,73 @@ export function Avatar({ name, size = 32, className = '', photoUrl, avatarUrl })
     </div>
   );
 }
+
+// A row of small coloured stat tiles, and the section heading that sits above a card.
+//
+// Both exist because measuring the eight tabs found coloured area at about 1% on every
+// one of them: white cards on a white page, with the key numbers of each tab rendered as
+// a grey pipe-separated sentence. The tiles give those numbers a shape and a colour, and
+// the heading gives every card an icon chip, so a tab reads as something rather than as
+// a wall of white.
+export const TONE = {
+  indigo: { tile: 'bg-indigo-50 border-indigo-100', chip: 'bg-indigo-600', ink: 'text-indigo-700' },
+  violet: { tile: 'bg-violet-50 border-violet-100', chip: 'bg-violet-600', ink: 'text-violet-700' },
+  emerald: { tile: 'bg-emerald-50 border-emerald-100', chip: 'bg-emerald-600', ink: 'text-emerald-700' },
+  amber: { tile: 'bg-amber-50 border-amber-100', chip: 'bg-amber-600', ink: 'text-amber-800' },
+  rose: { tile: 'bg-rose-50 border-rose-100', chip: 'bg-rose-600', ink: 'text-rose-700' },
+  sky: { tile: 'bg-sky-50 border-sky-100', chip: 'bg-sky-600', ink: 'text-sky-700' },
+  slate: { tile: 'bg-slate-50 border-slate-200', chip: 'bg-slate-500', ink: 'text-slate-700' },
+};
+
+export function StatTiles({ items }) {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {items.filter(Boolean).map(({ key, label, value, sub, tone = 'slate', icon: Icon }, i) => {
+        const t = TONE[tone] || TONE.slate;
+        return (
+          <motion.div
+            key={key || label}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            custom={i}
+            className={`rounded-xl border p-3.5 min-w-0 ${t.tile}`}
+          >
+            <div className="flex items-start gap-2.5">
+              {Icon && (
+                <span className={`shrink-0 w-8 h-8 rounded-lg ${t.chip} text-white flex items-center justify-center`}>
+                  <Icon size={16} />
+                </span>
+              )}
+              <div className="min-w-0">
+                <div className="text-xl font-extrabold text-gray-900 leading-none">{value}</div>
+                <div className={`text-xs font-bold mt-1 ${t.ink}`}>{label}</div>
+                {sub && <div className="text-[12px] text-gray-600 mt-0.5 leading-snug">{sub}</div>}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function SectionHeading({ icon: Icon, tone = 'indigo', title, note, right }) {
+  const t = TONE[tone] || TONE.indigo;
+  return (
+    <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start gap-2.5 min-w-0">
+        {Icon && (
+          <span className={`shrink-0 w-9 h-9 rounded-xl ${t.chip} text-white flex items-center justify-center`}>
+            <Icon size={18} />
+          </span>
+        )}
+        <div className="min-w-0">
+          <h3 className="text-base font-bold leading-tight">{title}</h3>
+          {note && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{note}</p>}
+        </div>
+      </div>
+      {right}
+    </div>
+  );
+}

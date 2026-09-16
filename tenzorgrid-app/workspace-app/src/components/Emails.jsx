@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Search, Star, Inbox, Pencil, Reply, ChevronDown, Plus, X, Mail, MailOpen, CheckCheck,
-} from 'lucide-react';
-import { BentoCard, Avatar } from './ui.jsx';
+import { CheckCheck, ChevronDown, Inbox, Mail, MailOpen, Pencil, Plus, Reply, Search, Star, X } from 'lucide-react';
+import { Avatar, BentoCard, StatTiles } from './ui.jsx';
 import { api } from '../api.js';
 
 // Pastel category badges, one per real sender archetype. `tone` comes from the backend,
@@ -277,14 +275,13 @@ export default function Emails({ state, onStateChange }) {
       </div>
 
       {/* Stats + sort */}
-      <div className="flex items-center justify-between gap-4 flex-wrap border-y border-slate-100 py-2.5">
-        <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-xs text-slate-500">
-          <span>Inbox: <b className="text-slate-800">{inbox.counts.total}</b></span>
-          <span className="text-slate-200">|</span>
-          <span>Unread: <b className="text-slate-800">{inbox.counts.unread}</b></span>
-          <span className="text-slate-200">|</span>
-          <span>Starred: <b className="text-slate-800">{inbox.counts.starred}</b></span>
-        </div>
+      <StatTiles items={[
+        { key: 'inbox', label: 'Inbox', value: inbox.counts.total, sub: 'threads', tone: 'indigo', icon: Inbox },
+        { key: 'unread', label: 'Unread', value: inbox.counts.unread, sub: inbox.counts.unread ? 'need reading' : 'all caught up', tone: inbox.counts.unread ? 'rose' : 'emerald', icon: MailOpen },
+        { key: 'starred', label: 'Starred', value: inbox.counts.starred, sub: 'kept for later', tone: 'amber', icon: Star },
+      ]} />
+
+      <div className="flex items-center justify-end gap-4 flex-wrap pt-1">
         <div className="flex items-center gap-2">
           <FilterSelect label="Sort" value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
           <motion.button

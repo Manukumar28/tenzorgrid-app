@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search, MessageSquare, ClipboardCheck, FolderOpen, Send, Users, CheckCircle2, Circle, Gavel,
-} from 'lucide-react';
-import { BentoCard, Avatar } from './ui.jsx';
+import { CheckCircle2, Circle, ClipboardCheck, FolderOpen, Gavel, MailOpen, MessageSquare, Search, Send, UserCheck, Users } from 'lucide-react';
+import { Avatar, BentoCard, StatTiles } from './ui.jsx';
 import { SkillGauge, MilestoneBars } from './charts.jsx';
 import { api } from '../api.js';
 
@@ -186,13 +184,12 @@ export default function Team({ state, onStateChange, onTab }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-x-5 gap-y-1 flex-wrap border-y border-slate-100 py-2.5 text-xs text-slate-500">
-        <span>People: <b className="text-slate-800">{team.length}</b></span>
-        <span className="text-slate-200">|</span>
-        <span>Unread: <b className="text-slate-800">{team.reduce((s, m) => s + m.unread, 0)}</b></span>
-        <span className="text-slate-200">|</span>
-        <span>Messages left today: <b className="text-slate-800">{messagesRemaining}</b></span>
-      </div>
+      <StatTiles items={[
+        { key: 'people', label: 'People', value: team.length, sub: 'in your org chart', tone: 'indigo', icon: Users },
+        { key: 'reports', label: 'Report to you', value: team.filter((m) => m.reportsToYou).length, sub: 'direct reports', tone: 'violet', icon: UserCheck },
+        { key: 'unread', label: 'Unread', value: team.reduce((s, m) => s + m.unread, 0), sub: 'waiting on you', tone: 'rose', icon: MailOpen },
+        { key: 'left', label: 'Messages left', value: messagesRemaining, sub: 'today', tone: 'emerald', icon: Send },
+      ]} />
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-5 items-start">
         {/* Profile */}
