@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, ChevronRight, CircleCheckBig, CirclePlay, CalendarDays, TriangleAlert, Clock3 } from 'lucide-react';
+import { ArrowRight, ChevronRight, CircleCheckBig, CirclePlay, CalendarDays, TriangleAlert, Clock3,
+  MessageSquare, Target } from 'lucide-react';
 import { Avatar } from './ui.jsx';
 import { PRIORITY_PILL } from './taskCards.jsx';
 
@@ -255,6 +256,197 @@ export function UpcomingTable({ tasks, onViewAll, compact = false }) {
           View all {tasks.length} upcoming <ArrowRight size={12} />
         </button>
       )}
+    </div>
+  );
+}
+
+// Task Flow — read-only, by your call. A column is earned by submitting and being signed
+// off, so there is nothing to drag: a card moves right when the work does. Clicking one
+// opens it in the Workspace tab, which is the only action that makes sense here.
+const FLOW_COLUMNS = ['upcoming', 'assigned', 'inProgress', 'completed'];
+const FLOW_HEADING = { ...BUCKET, assigned: { ...BUCKET.assigned, label: 'To do' } };
+
+export function TaskFlow({ rows, onOpen }) {
+  const cols = FLOW_COLUMNS.map((k) => ({
+    key: k,
+    label: FLOW_HEADING[k].label,
+    color: BUCKET[k].color,
+    // Overdue is a warning on a card, not a column of its own — an overdue task is still
+    // something you have to do, and filing it separately hides it from the queue it
+    // belongs in.
+    items: rows.filter((t) => (t.overdue && t.status !== 'graded' ? 'assigned' : bucketOf(t)) === k),
+  }));
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      {cols.map((c) => (
+        <div key={c.key} className="rounded-xl border border-gray-100 bg-gray-50/70 p-2.5 min-w-0">
+          <div className="flex items-center gap-1.5 mb-2.5 px-0.5">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c.color }} />
+            <span className="text-xs font-bold text-gray-700 truncate">{c.label}</span>
+            <span className="ml-auto text-[11px] font-bold text-gray-400">{c.items.length}</span>
+          </div>
+          <div className="space-y-2">
+            {c.items.slice(0, 4).map((t) => {
+              const clickable = !t.notYetOpen;
+              return (
+                <button
+                  key={t.id}
+                  onClick={clickable ? () => onOpen(t.id) : undefined}
+                  disabled={!clickable}
+                  className={`w-full text-left bg-white border border-gray-100 rounded-lg p-2.5 transition-shadow ${
+                    clickable ? 'hover:shadow-md cursor-pointer' : 'opacity-70 cursor-default'
+                  }`}
+                >
+                  <div className="text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{t.title}</div>
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span className="text-[10px] font-semibold text-gray-400">
+                      {t.status === 'graded' && t.score !== null ? `${t.score}/100`
+                        : t.notYetOpen ? (t.opensLabel || `Day ${t.dayIndex}`)
+                          : t.overdue ? t.dueLabel : `Day ${t.dayIndex || '—'}`}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className={`text-[10px] font-bold ${t.overdue && t.status !== 'graded' ? 'text-red-600' : 'text-gray-400'}`}>
+                      {t.overdue && t.status !== 'graded' ? 'Overdue' : t.priorityLabel}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+            {c.items.length > 4 && (
+              <div className="text-[11px] font-semibold text-gray-400 px-0.5 pt-0.5">
+                + {c.items.length - 4} more
+              </div>
+            )}
+            {!c.items.length && <div className="text-[11px] text-gray-400 px-0.5 py-1">Nothing here</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Timeline — the project week, by your call. Five days, what sits in each, and how far
+// each day has been cleared. This is the shape a project actually has; a calendar would
+// spread five days of authored work across whatever dates the learner happened to log in.
+export function Timeline({ rows }) {
+  const days = [1, 2, 3, 4, 5].map((d) => {
+    const items = rows.filter((t) => (t.dayIndex || 0) === d);
+    const done = items.filter((t) => t.status === 'graded').length;
+    const open = items.some((t) => !t.notYetOpen && t.status !== 'graded');
+    return { d, items, done, open, locked: items.length > 0 && items.every((t) => t.notYetOpen) };
+  });
+  const unplaced = rows.filter((t) => !t.dayIndex).length;
+
+  return (
+    <div className="space-y-2.5">
+      {days.map(({ d, items, done, open, locked }) => (
+        <div key={d} className={`rounded-xl border p-3 ${
+          open ? 'border-indigo-200 bg-indigo-50/50' : locked ? 'border-gray-100 bg-gray-50/70' : 'border-gray-100 bg-white'
+        }`}>
+          <div className="flex items-baseline gap-2 flex-wrap mb-2">
+            <span className="text-sm font-bold text-gray-800">Day {d}</span>
+            {open && <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-100 rounded px-1.5 py-0.5">Open now</span>}
+            {locked && <span className="text-[10px] font-semibold text-gray-500">{items[0].opensLabel || 'Opens later'}</span>}
+            <span className="ml-auto text-[11px] font-bold text-gray-400">{done} / {items.length}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
+              style={{ width: items.length ? `${(done / items.length) * 100}%` : '0%' }} />
+          </div>
+          {items.length > 0 && (
+            <p className="text-[11px] text-gray-500 mt-1.5 truncate">
+              {items.slice(0, 2).map((t) => t.title).join(' · ')}{items.length > 2 ? ` · +${items.length - 2}` : ''}
+            </p>
+          )}
+        </div>
+      ))}
+      {unplaced > 0 && (
+        <p className="text-[11px] text-gray-400">{unplaced} task{unplaced === 1 ? '' : 's'} not tied to a day.</p>
+      )}
+    </div>
+  );
+}
+
+const ACTIVITY_SKIN = {
+  signoff: { ring: 'bg-emerald-100 text-emerald-600', Icon: CircleCheckBig },
+  submitted: { ring: 'bg-indigo-100 text-indigo-600', Icon: CirclePlay },
+  message: { ring: 'bg-amber-100 text-amber-600', Icon: MessageSquare },
+};
+
+function ago(iso) {
+  const ms = Date.now() - Date.parse(iso);
+  if (!Number.isFinite(ms)) return '';
+  const m = Math.round(ms / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d} day${d === 1 ? '' : 's'} ago`;
+}
+
+export function ActivityFeed({ events, personByArchetype }) {
+  if (!events || !events.length) {
+    return <p className="text-sm text-gray-500">Nothing yet. Submit a task and it shows up here.</p>;
+  }
+  return (
+    <div className="space-y-3">
+      {events.map((e, i) => {
+        const skin = ACTIVITY_SKIN[e.kind] || ACTIVITY_SKIN.submitted;
+        const person = e.archetype ? personByArchetype[e.archetype] : null;
+        return (
+          <div key={`${e.kind}-${e.at}-${i}`} className="flex items-start gap-2.5">
+            <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${skin.ring}`}>
+              <skin.Icon size={13} />
+            </span>
+            {person && <Avatar name={person.name} avatarUrl={person.avatarUrl} size={22} className="shrink-0" />}
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] text-gray-700 leading-snug">
+                {e.kind === 'signoff' && (
+                  <>
+                    <b className="font-semibold">{e.who}</b> signed off{' '}
+                    <span className="font-semibold text-gray-900">{e.title}</span>
+                    {e.score !== null && e.score !== undefined && <> — {e.score}/100</>}
+                  </>
+                )}
+                {e.kind === 'submitted' && (
+                  <>You submitted <span className="font-semibold text-gray-900">{e.title}</span></>
+                )}
+                {e.kind === 'message' && (
+                  <>
+                    <b className="font-semibold">{e.who}</b> wrote about{' '}
+                    <span className="font-semibold text-gray-900">{e.title}</span>
+                  </>
+                )}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{ago(e.at)}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ProgressBanner({ tally }) {
+  const pct = tally.pct;
+  const line = pct === 0
+    ? 'Nothing signed off yet — open the first task and get going.'
+    : pct < 50 ? `You've signed off ${pct}% of what you've been given. Keep going.`
+      : pct < 100 ? `You've signed off ${pct}% of your tasks. Keep it up!`
+        : 'Every task assigned to you is signed off. Nicely done.';
+  return (
+    <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 p-4 flex items-start gap-3">
+      <span className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
+        <Target size={18} />
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-extrabold text-emerald-900">
+          {pct === 0 ? 'Fresh start' : pct === 100 ? 'All clear' : 'Good progress'}
+        </div>
+        <p className="text-xs text-emerald-800/80 mt-0.5 leading-snug">{line}</p>
+      </div>
     </div>
   );
 }

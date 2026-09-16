@@ -1,11 +1,12 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw, Search,
+import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw, Search, History,
   Target, ListChecks, CalendarClock, CheckCircle2, LayoutGrid, MonitorPlay } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
-import { CompletionDonut, StatTile, FocusList, UpcomingTable, tallyTasks, bucketOf } from './taskPanels.jsx';
+import { CompletionDonut, StatTile, FocusList, UpcomingTable, TaskFlow, Timeline,
+  ActivityFeed, ProgressBanner, tallyTasks, bucketOf } from './taskPanels.jsx';
 import { api } from '../api.js';
 const Workbench = lazy(() => import('./Workbench.jsx'));
 
@@ -249,6 +250,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   const [sortBy, setSortBy] = useState('due');
   const [selectedId, setSelectedId] = useState(null);
   const [view, setView] = useState('focus');
+  const [boardTab, setBoardTab] = useState('flow');
 
   // Opening a task switches to the Workspace tab rather than scrolling to it. The old
   // behaviour smooth-scrolled the learner to an editor seventeen thousand pixels down
@@ -426,8 +428,12 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       {/* The Focus view is the landing screen, so it gets the designed layout rather than
           a card grid: what needs you now on the left, what is coming on the right. Every
           other view stays a plain list, because that is what you switched to it for. */}
+      {/* Two columns only while there is something in Focus. At the end of a day, when
+          every workable task is signed off, My Focus is a single sentence — beside a
+          six-row Upcoming table that left 514px of empty page next to it. */}
       {view === 'focus' && !filtersOn && (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)] gap-4 sm:gap-6 items-start">
+        <div className={`grid gap-4 sm:gap-6 items-start ${
+          focusTasks.length ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]' : 'grid-cols-1'}`}>
           <BentoCard hover={false}>
             <div className="flex items-center gap-2 mb-0.5">
               <Target size={17} className="text-indigo-500 shrink-0" />
@@ -450,6 +456,49 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
             <p className="text-xs text-gray-400 mb-4">Your next tasks, by the day they open</p>
             <UpcomingTable tasks={upcomingTasks} onViewAll={() => changeView('upcoming')} compact />
           </BentoCard>
+        </div>
+      )}
+
+      {/* Task Flow and Timeline. Read-only: a card moves right when the work does, so
+          there is nothing here to drag. */}
+      {view === 'focus' && !filtersOn && (
+        <BentoCard hover={false}>
+          <div className="flex items-center gap-1 mb-4 border-b border-gray-100 -mt-1">
+            {[
+              { key: 'flow', label: 'Task Flow', Icon: LayoutGrid },
+              { key: 'timeline', label: 'Timeline', Icon: CalendarClock },
+            ].map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={boardTab === key}
+                onClick={() => setBoardTab(key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                  boardTab === key ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <Icon size={15} /> {label}
+              </button>
+            ))}
+          </div>
+          {boardTab === 'flow'
+            ? <TaskFlow rows={taskBoard.rows} onOpen={openTask} />
+            : <Timeline rows={taskBoard.rows} />}
+        </BentoCard>
+      )}
+
+      {view === 'focus' && !filtersOn && (
+        <div className={`grid gap-4 sm:gap-6 items-start ${
+          (taskBoard.activity || []).length ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)]' : 'grid-cols-1'}`}>
+          <BentoCard hover={false}>
+            <div className="flex items-center gap-2 mb-0.5">
+              <History size={17} className="text-amber-500 shrink-0" />
+              <h2 className="text-base font-bold">Recent activity</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">What has actually happened on your work</p>
+            <ActivityFeed events={taskBoard.activity} personByArchetype={personByArchetype} />
+          </BentoCard>
+          <ProgressBanner tally={tally} />
         </div>
       )}
 
