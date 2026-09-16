@@ -1,6 +1,7 @@
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw } from 'lucide-react';
+import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw,
+  Target, ListChecks, CalendarClock, CheckCircle2, LayoutGrid, MonitorPlay } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
@@ -18,6 +19,69 @@ const SORT_OPTIONS = [
   { value: 'title', label: 'Title' },
 ];
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+
+// The six views of the task list. Workspace is the one that matters: before it existed
+// the editor lived at the bottom of a page that was 120 cards long, so opening a task
+// scrolled the learner nineteen screens down and picking the next one scrolled them back.
+// As a tab it is one click from anywhere and the travel disappears entirely.
+const VIEWS = [
+  { key: 'focus', label: 'Focus', Icon: Target },
+  { key: 'mine', label: 'My Tasks', Icon: ListChecks },
+  { key: 'upcoming', label: 'Upcoming', Icon: CalendarClock },
+  { key: 'completed', label: 'Completed', Icon: CheckCircle2 },
+  { key: 'all', label: 'All', Icon: LayoutGrid },
+  { key: 'workspace', label: 'Workspace', Icon: MonitorPlay },
+];
+
+// What each view is for, said once so an empty one can explain itself rather than
+// showing a bare "nothing here".
+const EMPTY_COPY = {
+  focus: 'Nothing to work on right now — check Upcoming for what opens next.',
+  mine: 'No tasks assigned yet.',
+  upcoming: 'Nothing waiting. Everything assigned to you is open.',
+  completed: 'Nothing signed off yet.',
+  all: 'No tasks assigned yet.',
+};
+
+const VIEW_BLURB = {
+  focus: 'Tasks you can work on right now',
+  mine: 'Everything assigned to you on this project',
+  upcoming: 'Assigned, but not open yet',
+  completed: 'Signed off',
+  all: 'Every task in the track, including what is still locked',
+};
+
+function ViewTabs({ view, onView, counts }) {
+  return (
+    <div role="tablist" aria-label="Task views" className="flex items-center gap-1 flex-wrap border-b border-gray-200">
+      {VIEWS.map(({ key, label, Icon }) => {
+        const active = view === key;
+        const count = counts[key];
+        return (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onView(key)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 rounded-t ${
+              active
+                ? 'border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200'
+            }`}
+          >
+            <Icon size={15} className="shrink-0" />
+            <span>{label}</span>
+            {count !== undefined && count !== null && (
+              <span className={`text-[11px] font-bold rounded-full px-1.5 py-0.5 ${
+                active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'
+              }`}>{count}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function FilterSelect({ label, value, onChange, options }) {
   const active = value !== '';
@@ -165,19 +229,20 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   const [projectFilter, setProjectFilter] = useState('');
   const [sortBy, setSortBy] = useState('due');
   const [selectedId, setSelectedId] = useState(null);
-  // Opening a task should take the learner to the editor, not leave them hunting for
-  // it further down the page. The board and the workbench are far apart on a tall
-  // screen, and "Open task" that visibly does nothing reads as broken.
-  const workspaceRef = useRef(null);
+  const [view, setView] = useState('focus');
 
+  // Opening a task switches to the Workspace tab rather than scrolling to it. The old
+  // behaviour smooth-scrolled the learner to an editor seventeen thousand pixels down
+  // the page, which worked once and then stranded them there.
   function openTask(id) {
     setSelectedId(id);
-    // Wait for the workbench to render for the newly selected task before scrolling.
-    requestAnimationFrame(() => {
-      if (workspaceRef.current) {
-        workspaceRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
+    setView('workspace');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function changeView(next) {
+    setView(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const personByArchetype = useMemo(
@@ -204,20 +269,50 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
     setSelectedId((open || taskBoard.rows[taskBoard.rows.length - 1] || {}).id || null);
   }, [taskBoard.rows, selectedId]);
 
+  // Which rows each view is made of. Focus is the only one that matters on a normal
+  // morning: of the 120 rows a manager carries, six are workable and the rest either
+  // have not opened yet or sit behind a project gate.
+  const viewRows = useMemo(() => ({
+    focus: taskBoard.rows.filter((r) => r.status !== 'graded' && !r.notYetOpen),
+    mine: taskBoard.rows.filter((r) => r.status !== 'graded'),
+    upcoming: taskBoard.rows.filter((r) => r.notYetOpen),
+    completed: taskBoard.rows.filter((r) => r.status === 'graded'),
+    all: taskBoard.rows,
+  }), [taskBoard.rows]);
+
+  const viewCounts = useMemo(() => ({
+    focus: viewRows.focus.length,
+    mine: viewRows.mine.length,
+    upcoming: viewRows.upcoming.length,
+    completed: viewRows.completed.length,
+    all: viewRows.all.length + taskBoard.locked.length,
+    workspace: undefined,
+  }), [viewRows, taskBoard.locked.length]);
+
   const visible = useMemo(() => {
-    const list = taskBoard.rows.filter((r) => {
+    const base = viewRows[view] || viewRows.focus;
+    const list = base.filter((r) => {
       if (priorityFilter && r.priority !== priorityFilter) return false;
       if (projectFilter && r.projectKey !== projectFilter) return false;
       return true;
     });
     const sorted = [...list];
-    if (sortBy === 'priority') sorted.sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
-    else if (sortBy === 'title') sorted.sort((a, b) => a.title.localeCompare(b.title));
-    else sorted.sort((a, b) => (a.dueAt || '9999').localeCompare(b.dueAt || '9999'));
+    // Work that has not opened yet always sorts last, whichever key is chosen. Without
+    // this, every task in a project shares one deadline, so a due-date sort interleaved
+    // Monday's work with Thursday's and put an "Opens Thursday" card second on the page.
+    const byOpen = (a, b) => (a.notYetOpen === b.notYetOpen ? 0 : a.notYetOpen ? 1 : -1);
+    const then = sortBy === 'priority'
+      ? (a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+      : sortBy === 'title'
+        ? (a, b) => a.title.localeCompare(b.title)
+        : (a, b) => (a.dueAt || '9999').localeCompare(b.dueAt || '9999') || (a.dayIndex || 0) - (b.dayIndex || 0);
+    sorted.sort((a, b) => byOpen(a, b) || then(a, b));
     return sorted;
-  }, [taskBoard.rows, priorityFilter, projectFilter, sortBy]);
+  }, [viewRows, view, priorityFilter, projectFilter, sortBy]);
 
-  const lockedVisible = priorityFilter || projectFilter ? [] : taskBoard.locked;
+  // Locked work is a real part of the track, but it is 90 of the 120 cards and none of
+  // it can be clicked. It belongs in All, where somebody has gone looking for it.
+  const lockedVisible = view === 'all' && !priorityFilter && !projectFilter ? taskBoard.locked : [];
   const selected = taskBoard.rows.find((r) => r.id === selectedId);
   const filtersOn = priorityFilter || projectFilter;
   const { counts, health, velocity, onTimeRate, productivity, trend, taskSources } = taskBoard;
@@ -228,7 +323,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       <div>
         <div className="flex items-baseline gap-2.5 flex-wrap mb-3">
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Tasks</h1>
-          <span className="text-sm font-semibold text-gray-400">[Focus on deadlines]</span>
+          <span className="text-sm font-semibold text-gray-400">[Track your work and stay ahead]</span>
         </div>
 
         <div className="flex items-center justify-between gap-4 flex-wrap border-y border-gray-100 py-2.5">
@@ -254,9 +349,15 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         </div>
       </div>
 
+      <ViewTabs view={view} onView={changeView} counts={viewCounts} />
+
       {/* Section 1 — task grid */}
+      {view !== 'workspace' && (
       <section>
-        <SectionTitle count={visible.length + lockedVisible.length}>Your tasks</SectionTitle>
+        <SectionTitle count={visible.length + lockedVisible.length}>
+          {VIEWS.find((v) => v.key === view).label}
+        </SectionTitle>
+        <p className="text-xs text-gray-400 -mt-2.5 mb-3.5">{VIEW_BLURB[view]}</p>
         {visible.length || lockedVisible.length ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {visible.map((t, i) => (
@@ -278,7 +379,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
           <BentoCard hover={false} className="text-center py-10">
             <ClipboardCheck size={30} className="text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-500 font-medium">
-              {filtersOn ? 'No tasks match these filters.' : 'No tasks assigned yet.'}
+              {filtersOn ? 'No tasks match these filters.' : EMPTY_COPY[view]}
             </p>
             {filtersOn && (
               <motion.button
@@ -292,26 +393,43 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
           </BentoCard>
         )}
       </section>
+      )}
 
-      {/* Selected task workspace */}
-      {selected && (
+      {/* The Workspace tab — the editor, on its own, full width. */}
+      {view === 'workspace' && (
         <section>
-          <SectionTitle>
-            {selected.reviewState === 'pending' ? 'Sign-off' : selected.status === 'graded' ? 'Feedback' : 'Workspace'}
-          </SectionTitle>
-          <span ref={workspaceRef} className="block scroll-mt-4" aria-hidden="true" />
-          <TaskWorkspace
-            task={selected}
-            onOpenChat={onOpenChat}
-            manager={personByArchetype.line_manager}
-            learnerName={learnerName}
-            learnerPhotoUrl={learnerPhotoUrl}
-            onStateChange={onStateChange}
-          />
+          {selected ? (
+            <>
+              <SectionTitle>
+                {selected.reviewState === 'pending' ? 'Sign-off' : selected.status === 'graded' ? 'Feedback' : 'Workspace'}
+              </SectionTitle>
+              <TaskWorkspace
+                task={selected}
+                onOpenChat={onOpenChat}
+                manager={personByArchetype.line_manager}
+                learnerName={learnerName}
+                learnerPhotoUrl={learnerPhotoUrl}
+                onStateChange={onStateChange}
+              />
+            </>
+          ) : (
+            <BentoCard hover={false} className="text-center py-12">
+              <MonitorPlay size={30} className="text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 font-medium">No task open.</p>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => changeView('focus')}
+                className="mt-3 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+              >
+                Pick one from Focus
+              </motion.button>
+            </BentoCard>
+          )}
         </section>
       )}
 
-      {/* Section 2 — analytics */}
+      {/* Section 2 — analytics. Not on the Workspace tab: the editor gets the page. */}
+      {view !== 'workspace' && (
       <section>
         <SectionTitle>Delivery analytics</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -413,6 +531,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
           </BentoCard>
         </div>
       </section>
+      )}
     </div>
   );
 }
