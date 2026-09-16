@@ -3,9 +3,14 @@ import { motion } from 'framer-motion';
 import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle, CalendarClock, FlaskConical } from 'lucide-react';
 import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
 
+// Keyed on every spelling the task definitions actually use, not just the three the
+// filter dropdown offers. A task marked `urgent` or `normal` used to fall through to
+// undefined here and render an unstyled, unlabelled pill.
 export const PRIORITY_PILL = {
+  urgent: 'bg-red-600 text-white',
   high: 'bg-red-500 text-white',
   medium: 'bg-amber-400 text-white',
+  normal: 'bg-amber-400 text-white',
   low: 'bg-emerald-500 text-white',
 };
 

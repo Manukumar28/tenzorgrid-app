@@ -1,24 +1,40 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw,
+import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw, Search,
   Target, ListChecks, CalendarClock, CheckCircle2, LayoutGrid, MonitorPlay } from 'lucide-react';
 import { BentoCard, Avatar, ProgressBar } from './ui.jsx';
 import { Sparkline, TaskHealthDonut, TaskVelocityBar } from './charts.jsx';
 import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
+import { CompletionDonut, StatTile, FocusList, UpcomingTable, tallyTasks, bucketOf } from './taskPanels.jsx';
 import { api } from '../api.js';
 const Workbench = lazy(() => import('./Workbench.jsx'));
 
 const PRIORITY_OPTIONS = [
+  { value: 'urgent', label: 'Urgent' },
   { value: 'high', label: 'High' },
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
 ];
+// The definitions spell the middle tier both `medium` and `normal`, so the filter and
+// the sort both have to fold them together or a Medium filter hides half its matches.
+const samePriority = (a, b) => (a === 'normal' ? 'medium' : a) === (b === 'normal' ? 'medium' : b);
 const SORT_OPTIONS = [
   { value: 'due', label: 'Due date' },
   { value: 'priority', label: 'Priority' },
   { value: 'title', label: 'Title' },
 ];
-const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+const PRIORITY_RANK = { urgent: 0, high: 1, medium: 2, normal: 2, low: 3 };
+// Status here means the bucket a task sits in, which is the same vocabulary the donut,
+// the tiles and the tabs use. "Assignee" is deliberately absent: every task belongs to
+// the learner, so the useful question is who asked for it, which is the Requested by
+// filter below.
+const STATUS_OPTIONS = [
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'inProgress', label: 'In Progress' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'completed', label: 'Completed' },
+];
 
 // The six views of the task list. Workspace is the one that matters: before it existed
 // the editor lived at the bottom of a page that was 120 cards long, so opening a task
@@ -53,7 +69,7 @@ const VIEW_BLURB = {
 
 function ViewTabs({ view, onView, counts }) {
   return (
-    <div role="tablist" aria-label="Task views" className="flex items-center gap-1 flex-wrap border-b border-gray-200">
+    <div role="tablist" aria-label="Task views" className="flex items-center gap-1 flex-wrap">
       {VIEWS.map(({ key, label, Icon }) => {
         const active = view === key;
         const count = counts[key];
@@ -227,6 +243,9 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   }
   const [priorityFilter, setPriorityFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [askedByFilter, setAskedByFilter] = useState('');
+  const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('due');
   const [selectedId, setSelectedId] = useState(null);
   const [view, setView] = useState('focus');
@@ -289,11 +308,46 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
     workspace: undefined,
   }), [viewRows, taskBoard.locked.length]);
 
+  const tally = useMemo(
+    () => tallyTasks(taskBoard.rows, taskBoard.locked.length),
+    [taskBoard.rows, taskBoard.locked.length],
+  );
+
+  // My Focus: what is actually workable, worst first. Overdue, then due today, then the
+  // rest in due order — the order somebody would pick them up in.
+  const focusTasks = useMemo(() => {
+    const rank = (t) => (t.overdue ? 0 : t.dueLabel === 'Today' ? 1 : 2);
+    return [...viewRows.focus].sort((a, b) => rank(a) - rank(b)
+      || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+      || (a.dayIndex || 0) - (b.dayIndex || 0));
+  }, [viewRows.focus]);
+
+  const upcomingTasks = useMemo(
+    () => [...viewRows.upcoming].sort((a, b) => (a.dayIndex || 0) - (b.dayIndex || 0)),
+    [viewRows.upcoming],
+  );
+
+  const askedByOptions = useMemo(() => {
+    const seen = new Map();
+    for (const r of taskBoard.rows) {
+      const who = stakeholderByProject[r.projectKey];
+      if (who && !seen.has(who.archetype)) seen.set(who.archetype, who.name);
+    }
+    return [...seen].map(([value, label]) => ({ value, label }));
+  }, [taskBoard.rows, stakeholderByProject]);
+
   const visible = useMemo(() => {
     const base = viewRows[view] || viewRows.focus;
+    const q = query.trim().toLowerCase();
     const list = base.filter((r) => {
-      if (priorityFilter && r.priority !== priorityFilter) return false;
+      if (priorityFilter && !samePriority(r.priority, priorityFilter)) return false;
       if (projectFilter && r.projectKey !== projectFilter) return false;
+      if (statusFilter && bucketOf(r) !== statusFilter) return false;
+      if (askedByFilter) {
+        const who = stakeholderByProject[r.projectKey];
+        if (!who || who.archetype !== askedByFilter) return false;
+      }
+      if (q && !`${r.title} ${r.projectTitle || ''}`.toLowerCase().includes(q)) return false;
       return true;
     });
     const sorted = [...list];
@@ -308,13 +362,13 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         : (a, b) => (a.dueAt || '9999').localeCompare(b.dueAt || '9999') || (a.dayIndex || 0) - (b.dayIndex || 0);
     sorted.sort((a, b) => byOpen(a, b) || then(a, b));
     return sorted;
-  }, [viewRows, view, priorityFilter, projectFilter, sortBy]);
+  }, [viewRows, view, priorityFilter, projectFilter, statusFilter, askedByFilter, query, sortBy, stakeholderByProject]);
 
   // Locked work is a real part of the track, but it is 90 of the 120 cards and none of
   // it can be clicked. It belongs in All, where somebody has gone looking for it.
-  const lockedVisible = view === 'all' && !priorityFilter && !projectFilter ? taskBoard.locked : [];
+  const filtersOn = priorityFilter || projectFilter || statusFilter || askedByFilter || query.trim();
+  const lockedVisible = view === 'all' && !filtersOn ? taskBoard.locked : [];
   const selected = taskBoard.rows.find((r) => r.id === selectedId);
-  const filtersOn = priorityFilter || projectFilter;
   const { counts, health, velocity, onTimeRate, productivity, trend, taskSources } = taskBoard;
 
   return (
@@ -326,33 +380,81 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
           <span className="text-sm font-semibold text-gray-400">[Track your work and stay ahead]</span>
         </div>
 
-        <div className="flex items-center justify-between gap-4 flex-wrap border-y border-gray-100 py-2.5">
-          <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-xs text-gray-500">
-            <span>My open tasks: <b className="text-gray-800">{counts.open}</b></span>
-            <span className="text-gray-200">|</span>
-            <span>Due today: <b className="text-gray-800">{counts.dueToday}</b></span>
-            <span className="text-gray-200">|</span>
-            <span>High priority: <b className="text-gray-800">{counts.highPriority}</b></span>
-            {counts.overdue > 0 && (
-              <>
-                <span className="text-gray-200">|</span>
-                <span className="text-red-600 font-semibold">Overdue: {counts.overdue}</span>
-              </>
-            )}
-          </div>
+      </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <FilterSelect label="Priority" value={priorityFilter} onChange={setPriorityFilter} options={PRIORITY_OPTIONS} />
-            <FilterSelect label="Project" value={projectFilter} onChange={setProjectFilter} options={projectOptions} />
-            <FilterSelect label="Sort" value={sortBy === 'due' ? '' : sortBy} onChange={(v) => setSortBy(v || 'due')} options={SORT_OPTIONS} />
-          </div>
+      {/* Completion, and the four states a task can be in. Every figure here is counted
+          from the same rows the tabs and the list below are built from. */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 sm:gap-5">
+        <BentoCard hover={false}>
+          <CompletionDonut tally={tally} />
+        </BentoCard>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatTile index={0} bucket="completed" value={tally.by.completed}
+            sub={`${tally.trackPct}% of the whole track`} />
+          <StatTile index={1} bucket="inProgress" value={tally.by.inProgress} sub="Submitted or in review" />
+          <StatTile index={2} bucket="upcoming" value={tally.by.upcoming}
+            sub={tally.by.upcoming ? 'Later this week' : 'Nothing waiting'} />
+          <StatTile index={3} bucket="overdue" value={tally.by.overdue}
+            sub={tally.by.overdue ? 'Needs attention' : 'All on time'} />
         </div>
       </div>
 
-      <ViewTabs view={view} onView={changeView} counts={viewCounts} />
+      {/* Tabs on the left, search and filters on the right — one row, as drawn. */}
+      <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap border-b border-gray-200">
+        <ViewTabs view={view} onView={changeView} counts={viewCounts} />
+        <div className="flex items-center gap-2 flex-wrap pb-2">
+        <div className="relative min-w-[170px]">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search tasks..."
+            aria-label="Search tasks"
+            className="w-full text-xs font-medium rounded-full border border-gray-200 bg-white pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          />
+        </div>
+
+          <FilterSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={STATUS_OPTIONS} />
+          <FilterSelect label="Priority" value={priorityFilter} onChange={setPriorityFilter} options={PRIORITY_OPTIONS} />
+          <FilterSelect label="Project" value={projectFilter} onChange={setProjectFilter} options={projectOptions} />
+          <FilterSelect label="Requested by" value={askedByFilter} onChange={setAskedByFilter} options={askedByOptions} />
+          <FilterSelect label="Sort" value={sortBy === 'due' ? '' : sortBy} onChange={(v) => setSortBy(v || 'due')} options={SORT_OPTIONS} />
+        </div>
+      </div>
+
+      {/* The Focus view is the landing screen, so it gets the designed layout rather than
+          a card grid: what needs you now on the left, what is coming on the right. Every
+          other view stays a plain list, because that is what you switched to it for. */}
+      {view === 'focus' && !filtersOn && (
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,380px)] gap-4 sm:gap-6 items-start">
+          <BentoCard hover={false}>
+            <div className="flex items-center gap-2 mb-0.5">
+              <Target size={17} className="text-indigo-500 shrink-0" />
+              <h2 className="text-base font-bold">My Focus</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Tasks that need your attention right now</p>
+            <FocusList tasks={focusTasks} stakeholderByProject={stakeholderByProject} onOpen={openTask} />
+            {focusTasks.length > 6 && (
+              <button onClick={() => changeView('mine')} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700">
+                View all {focusTasks.length} open
+              </button>
+            )}
+          </BentoCard>
+
+          <BentoCard hover={false}>
+            <div className="flex items-center gap-2 mb-0.5">
+              <CalendarClock size={17} className="text-violet-500 shrink-0" />
+              <h2 className="text-base font-bold">Upcoming</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Your next tasks, by the day they open</p>
+            <UpcomingTable tasks={upcomingTasks} onViewAll={() => changeView('upcoming')} compact />
+          </BentoCard>
+        </div>
+      )}
 
       {/* Section 1 — task grid */}
-      {view !== 'workspace' && (
+      {view !== 'workspace' && !(view === 'focus' && !filtersOn) && (
       <section>
         <SectionTitle count={visible.length + lockedVisible.length}>
           {VIEWS.find((v) => v.key === view).label}
