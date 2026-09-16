@@ -278,18 +278,31 @@ const openTasks = (uid) => ws.getState(uid).taskBoard.rows.filter((r) => !r.notY
     // the button is pressed. What must hold is the same either way: the day advances by
     // exactly one, and work that was shut is now open.
     const s0 = ws.getState(u);
-    const dayBefore = s0.projects.projects.find((x) => x.status === 'active').week.day;
+    const active0 = s0.projects.projects.find((x) => x.status === 'active');
+    const dayBefore = active0.week.day;
+    const lastDay = active0.week.totalDays;
     const before = s0.taskBoard.rows.filter((r) => !r.notYetOpen && r.status !== 'graded').length;
+
+    // On the last day of the week there is no next day to move to, and timeTravel says so
+    // rather than inventing a day 6. This used to assert that the call clamped silently
+    // and STILL opened more work, which cannot both be true on a day where everything is
+    // already open — so the suite crashed here on every run and nobody saw it, because
+    // run-all.sh counted PASS lines and never looked at the exit code.
+    if (dayBefore >= lastDay) {
+      let msg = '';
+      try { ws.timeTravel(u, { workingDays: 1 }); } catch (e) { msg = e.message; }
+      check(`a ${startedOn} start is on the last day and is told so, not moved to day ${lastDay + 1}`,
+        /A project week is \d+ days/.test(msg), msg || '(no error thrown)');
+      continue;
+    }
+
     ws.timeTravel(u, { workingDays: 1 });
     const s = ws.getState(u);
     const p = s.projects.projects.find((x) => x.status === 'active');
     const after = s.taskBoard.rows.filter((r) => !r.notYetOpen && r.status !== 'graded').length;
-    // The counter stops at the last day of the week — a project does not have a day 6 — so
-    // a start far enough back is already on day 5 and stays there. Work must still open.
-    const wantDay = Math.min(dayBefore + 1, p.week.totalDays);
     check(`a ${startedOn} start advances a day AND opens work`,
-      p.week.day === wantDay && after > before,
-      `day ${dayBefore} -> ${p.week.day} (wanted ${wantDay}), ${before} -> ${after} open`);
+      p.week.day === dayBefore + 1 && after > before,
+      `day ${dayBefore} -> ${p.week.day} (wanted ${dayBefore + 1}), ${before} -> ${after} open`);
   }
 
   console.log(fails ? `\n${fails} FAILURE(S)` : '\nAll time-travel checks passed.');

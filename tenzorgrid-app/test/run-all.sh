@@ -33,10 +33,24 @@ for t in $SUITES; do
   [ -f "$HERE/$t.js" ] || { echo "MISSING SUITE $t"; fails=$((fails+1)); continue; }
   d="$WORK/$t"; mkdir -p "$d"
   out=$(cd "$ROOT" && node "$HERE/$t.js" "$d" 2>&1)
+  code=$?
   n=$(echo "$out" | grep -c "  PASS  ")
   f=$(echo "$out" | grep -c "  FAIL  ")
   total=$((total+n)); fails=$((fails+f)); suites=$((suites+1))
-  if [ "$f" != "0" ] || echo "$out" | grep -q "FAILED"; then
+  # A suite that crashes before it prints anything scores zero passes and zero fails,
+  # which used to read as "fine". backup-test.js sat like that for weeks: it required a
+  # lib/backup.js that had never been written, died on MODULE_NOT_FOUND every run, and
+  # the runner counted it among the green. Exit code and an empty result are now
+  # failures in their own right.
+  if [ "$code" != "0" ]; then
+    echo "SUITE $t: CRASHED (exit $code)"
+    echo "$out" | tail -5
+    fails=$((fails+1))
+  elif [ "$n" = "0" ]; then
+    echo "SUITE $t: produced no assertions at all"
+    echo "$out" | tail -5
+    fails=$((fails+1))
+  elif [ "$f" != "0" ] || echo "$out" | grep -q "FAILED"; then
     echo "SUITE $t: $n pass / $f FAIL"
     echo "$out" | grep "  FAIL  " | head -5
   fi

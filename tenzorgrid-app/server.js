@@ -13,6 +13,7 @@ const { listEducation, addEducation, deleteEducation } = require('./lib/educatio
 const { savePhoto } = require('./lib/profile');
 const { computeInsights } = require('./lib/insights');
 const { syncJobsFromAdzuna } = require('./lib/jobsync');
+const backup = require('./lib/backup');
 const workspace = require('./lib/workspace');
 
 const PORT = process.env.PORT || 3000;
@@ -802,3 +803,26 @@ server.listen(PORT, () => {
 const JOB_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 setTimeout(() => { syncJobsFromAdzuna().catch((e) => console.error('[jobsync] initial sync failed:', e.message)); }, 10 * 1000);
 setInterval(() => { syncJobsFromAdzuna().catch((e) => console.error('[jobsync] scheduled sync failed:', e.message)); }, JOB_SYNC_INTERVAL_MS);
+
+// Back the database up off this box, daily.
+//
+// The volume this database sits on is not a backup: delete the service, lose the disk or
+// mis-restore a deploy and every learner's work is gone with no second copy. The first
+// run is a minute after boot rather than immediately, so a crash-looping deploy does not
+// spend its life snapshotting, and so the boot log says plainly whether backups are on.
+const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+function runBackupLogged(why) {
+  return backup.runBackup().then((r) => {
+    if (r.ok) console.log(`[backup] ${why}: ${r.key} (${(r.bytes / 1024).toFixed(0)}KB)${r.pruned ? `, pruned ${r.pruned}` : ''}`);
+    else console.error(`[backup] ${why} FAILED: ${r.error}`);
+    return r;
+  });
+}
+if (require('./lib/supabase').isSupabaseConfigured()) {
+  setTimeout(() => { runBackupLogged('initial'); }, 60 * 1000);
+  setInterval(() => { runBackupLogged('scheduled'); }, BACKUP_INTERVAL_MS);
+} else {
+  // Said once, loudly, at boot. A backup that is silently not running is the worst of
+  // both worlds: no copy, and nobody aware there is no copy.
+  console.error('[backup] DISABLED — SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set. The database has no off-box copy.');
+}
