@@ -176,6 +176,38 @@ const emails = (s) => s.messages.filter((m) => m.sender_archetype !== 'learner' 
 
   check('project 1 is not affected', projects.find((p) => p.key === 'compensation-review').status === 'active');
 
+  // The Recent activity feed on the Tasks page. Every event has to be a real recorded
+  // timestamp — a submission, a sign-off, or a colleague writing about a task — because
+  // the design it came from also asked for "you created a task", which a learner cannot
+  // do and which would therefore have to be invented.
+  const board = ws.getState(u).taskBoard;
+  check('the task board carries an activity feed', Array.isArray(board.activity));
+  const kinds = new Set(board.activity.map((e) => e.kind));
+  check('and only reports things that actually happen',
+    [...kinds].every((k) => ['signoff', 'submitted', 'message'].includes(k)), [...kinds].join(','));
+  check('every event carries a real timestamp and a task title',
+    board.activity.every((e) => e.at && !Number.isNaN(Date.parse(e.at)) && e.title),
+    JSON.stringify(board.activity.slice(0, 2)));
+  check('newest first', board.activity.every((e, i, a) => i === 0 || a[i - 1].at >= e.at));
+  const graded = board.rows.filter((r) => r.status === 'graded');
+  // The feed is the twelve newest events, so a given task need not be in it. What must
+  // hold is that nothing is invented: every sign-off named is a task that really is
+  // signed off, and every event points at a task the learner actually has.
+  const titles = new Set(board.rows.map((r) => r.title));
+  const gradedTitles = new Set(graded.map((r) => r.title));
+  check('every event points at a real task', board.activity.every((e) => titles.has(e.title)),
+    board.activity.filter((e) => !titles.has(e.title)).map((e) => e.title).join(','));
+  check('every sign-off in the feed is a task that really is signed off',
+    board.activity.filter((e) => e.kind === 'signoff').every((e) => gradedTitles.has(e.title)),
+    board.activity.filter((e) => e.kind === 'signoff' && !gradedTitles.has(e.title)).map((e) => e.title).join(','));
+  check('sign-offs carry the score the learner was given',
+    board.activity.filter((e) => e.kind === 'signoff').every((e) => e.score === null || Number.isInteger(e.score)));
+  // Priorities: the definitions use five spellings and every one has to render a label,
+  // or a task comes back with an unlabelled pill on its card and in the workbench.
+  check('every task on the board has a priority label',
+    board.rows.every((r) => Boolean(r.priorityLabel)),
+    board.rows.filter((r) => !r.priorityLabel).map((r) => `${r.title}:${r.priority}`).join(','));
+
   console.log(fails ? `\n${fails} FAILURE(S)` : '\nAll day-end checks passed.');
   process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

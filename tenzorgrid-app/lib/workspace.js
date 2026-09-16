@@ -14640,6 +14640,35 @@ function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartM
 // Everything the Tasks tab shows. A task in this product is completed by submitting work
 // and being graded — there is no "mark done" flag — so `stage` reports where the task
 // genuinely is (Assigned -> Submitted -> Graded) rather than an invented percentage.
+// What actually happened, newest first. Three kinds of event, all of them real rows:
+// work you sent, work Asha signed off, and a colleague writing to you about a task.
+// Deliberately not "you created a task" — a learner cannot create one — and not every
+// message, only the ones attached to a piece of work, or the feed becomes the inbox.
+function buildActivity(tasks, messages, limit = 12) {
+  const titleById = Object.fromEntries(tasks.map((t) => [t.id, t.title]));
+  const events = [];
+
+  for (const t of tasks) {
+    if (t.graded_at) {
+      events.push({
+        kind: 'signoff', at: t.graded_at, title: t.title,
+        score: t.review_state === 'pending' ? null : t.score, who: LINE_MANAGER_NAME,
+      });
+    }
+    if (t.submitted_at) events.push({ kind: 'submitted', at: t.submitted_at, title: t.title, who: null });
+  }
+
+  for (const m of messages) {
+    if (m.sender_archetype === 'learner' || !m.task_id) continue;
+    const title = titleById[m.task_id];
+    if (!title) continue;
+    events.push({ kind: 'message', at: m.created_at, title, who: m.sender_name, archetype: m.sender_archetype });
+  }
+
+  events.sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+  return events.slice(0, limit);
+}
+
 function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex) {
   const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const projectByTaskKey = {};
@@ -15254,6 +15283,11 @@ function getState(userId) {
     issueDayMail(enrollment, runNow, d);
   }
 
+  // The Recent Activity feed. Every event is a real recorded timestamp — a submission, a
+  // sign-off, or a colleague writing about a piece of work — rather than a synthesised
+  // "you created a task", which a learner cannot do.
+  const activity = buildActivity(tasks, messages);
+
   const taskBoard = getTasksView(
     enrollment.role, tasks, projects, Date.now(),
     attendanceRows.map((r) => r.attended_on),
@@ -15290,7 +15324,7 @@ function getState(userId) {
     roster: rosterList,
     emailArchetypes: EMAIL_ARCHETYPES,
     projects,
-    taskBoard,
+    taskBoard: { ...taskBoard, activity },
     inbox: getInbox(messages, Date.now()),
     calendar: getCalendar(enrollment, tasks, messages, Date.now()),
     team: getTeam(enrollment.role, rosterList, projects, messages, messagesRemaining, enrollment.level),
