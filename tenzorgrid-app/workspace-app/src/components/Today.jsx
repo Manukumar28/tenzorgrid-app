@@ -1,9 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  CheckCircle2, Circle, Mail, MessageSquare, Clock, Send, Archive,
-  ArrowUpRight, Timer, GraduationCap, PartyPopper, AlertTriangle,
-  Moon, Sunrise, ClipboardList,
-} from 'lucide-react';
+import { AlertTriangle, Archive, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, Clock, GraduationCap, Mail, MessageSquare, Moon, PartyPopper, Send, Sunrise, Timer } from 'lucide-react';
 import { BentoCard } from './ui.jsx';
 import { api } from '../api.js';
 
@@ -26,7 +22,15 @@ function Counter({ label, done, total, tone }) {
       </div>
       <div className="min-w-0">
         <p className="text-[12px] font-extrabold uppercase tracking-wide text-slate-500">{label}</p>
-        <p className="text-sm font-bold text-slate-900 tabular-nums">{done} of {total}</p>
+        {/* "6 of 6" on its own is read as a total, not as progress — the number in the
+            chip beside it is what is LEFT, so the two together were saying opposite
+            things with no label to tell them apart. */}
+        <p className="text-sm font-bold text-slate-900 tabular-nums">
+          {done}<span className="text-slate-500 font-semibold">/{total}</span>{' '}
+          <span className={`text-[12px] font-bold ${complete ? 'text-emerald-700' : 'text-slate-500'}`}>
+            {complete ? 'done' : `· ${total - done} left`}
+          </span>
+        </p>
       </div>
     </div>
   );
@@ -43,12 +47,16 @@ function Via({ via }) {
 
 // ---- Activities ----------------------------------------------------------------------
 
-function Activity({ item, onDone }) {
+function Activity({ item, onDone, openByDefault }) {
   const [answer, setAnswer] = useState('');
   const [picked, setPicked] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const done = item.status === 'done';
+  // An activity is a piece of reading with a question at the end, and rendering every one
+  // of them open meant the column was 1,635px of essay before a learner had decided what
+  // to do first — one card alone ran to 884px. Only the one being worked on is open.
+  const [open, setOpen] = useState(Boolean(openByDefault) && !done);
 
   async function send() {
     setBusy(true); setError('');
@@ -77,11 +85,26 @@ function Activity({ item, onDone }) {
           </div>
           <p className="font-bold text-sm text-slate-900 leading-snug">{item.title}</p>
         </div>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={`${open ? 'Collapse' : 'Open'}: ${item.title}`}
+          className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
+        >
+          {open ? 'Close' : done ? 'Review' : 'Read'}
+          <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
-      <p className="text-[14px] text-slate-600 whitespace-pre-wrap leading-relaxed mb-3 pl-[27px]">{item.body}</p>
+      {open
+        ? <p className="text-[14px] text-slate-600 whitespace-pre-wrap leading-relaxed mb-3 pl-[27px]">{item.body}</p>
+        : (
+          <p className="text-[13px] text-slate-500 leading-snug mb-1 pl-[27px] line-clamp-2">
+            {String(item.body || '').replace(/\s+/g, ' ').trim()}
+          </p>
+        )}
 
-      {!done && (
+      {!done && open && (
         <div className="pl-[27px] space-y-2">
           {item.check.kind === 'choice' && (
             <>
@@ -437,11 +460,70 @@ function Quiz({ quiz, onSubmit }) {
 
 // ---- The tab ------------------------------------------------------------------------------
 
+// Today's six tasks, listed on Today.
+//
+// This tab counted tasks in its header and then never showed one: a learner saw
+// "TASKS 6/6", scrolled past two essays, four emails and a timesheet, and never found the
+// six pieces of work the day is actually made of, because they live on the Tasks tab.
+// That was the single biggest reason the page was hard to follow.
+function TodaysTasks({ rows, onOpen }) {
+  if (!rows.length) return null;
+  return (
+    <BentoCard hover={false}>
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <span className="shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+            <ClipboardCheck size={18} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold leading-tight">Today's tasks</h2>
+            <p className="text-xs text-slate-500 mt-0.5">The work itself — open one to write the answer</p>
+          </div>
+        </div>
+        <button
+          onClick={onOpen}
+          className="shrink-0 inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800"
+        >
+          Open the board <ArrowRight size={13} />
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {rows.map((t) => {
+          const done = t.status === 'graded';
+          return (
+            <button
+              key={t.id}
+              onClick={onOpen}
+              className={`flex items-center gap-2.5 text-left rounded-lg border px-3 py-2.5 transition-colors ${
+                done ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-white hover:border-indigo-300'}`}
+            >
+              {done
+                ? <CheckCircle2 size={16} className="text-emerald-700 shrink-0" />
+                : <Circle size={16} className="text-slate-400 shrink-0" />}
+              <span className={`text-[13px] font-semibold leading-snug min-w-0 flex-1 ${
+                done ? 'text-slate-500 line-through' : 'text-slate-800'}`}>{t.title}</span>
+              <span className="shrink-0 text-[12px] font-semibold text-slate-500 tabular-nums">
+                {done && t.score !== null && t.score !== undefined ? `${t.score}%` : `~${t.estHours}h`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </BentoCard>
+  );
+}
+
 export default function Today({ state, onStateChange, onTab }) {
-  const { day, activities, situations, quiz, projectCompletion } = state;
+  const { day, activities, situations, quiz, projectCompletion, taskBoard } = state;
   const [filter, setFilter] = useState('today');
 
   const shownDay = day ? day.unlocked : null;
+  // Scoped to the day the header is counting, so the list and the "TASKS 6/6" beside it
+  // are always the same six things.
+  const todaysTasks = useMemo(
+    () => ((taskBoard && taskBoard.rows) || []).filter((r) => (r.dayIndex || null) === shownDay),
+    [taskBoard, shownDay],
+  );
   const acts = useMemo(
     () => (activities || []).filter((a) => (filter === 'today' ? a.day === shownDay : true)),
     [activities, filter, shownDay],
@@ -604,16 +686,36 @@ export default function Today({ state, onStateChange, onTab }) {
         ))}
       </div>
 
+      <TodaysTasks rows={todaysTasks} onOpen={() => onTab && onTab('tasks')} />
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         <div className="space-y-3 min-w-0">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Activities</h2>
+          {/* Both columns used to be a bare shouty label. A learner on day one has no way
+              to know that "activities" is reading-with-a-question and the other column is
+              mail that has to be dealt with, so each says so in one line. */}
+          <div>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Activities</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Short reading, each with a question at the end</p>
+          </div>
           {acts.length === 0 && <p className="text-sm text-slate-500">Nothing yet.</p>}
-          {acts.map((a) => <Activity key={a.key} item={a} onDone={doActivity} />)}
+          {/* The first one still to do opens itself, so the column always offers something
+              to start rather than a row of shut doors. */}
+          {acts.map((a) => (
+            <Activity
+              key={a.key}
+              item={a}
+              onDone={doActivity}
+              openByDefault={a.key === (acts.find((x) => x.status !== 'done') || {}).key}
+            />
+          ))}
         </div>
         <div className="space-y-3 min-w-0">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
-            What landed on you
-          </h2>
+          <div>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">
+              What landed on you
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Messages that need a decision — reply, defer, archive or escalate</p>
+          </div>
           {sits.length === 0 && <p className="text-sm text-slate-500">Quiet so far.</p>}
           {sits.map((x) => <Situation key={x.key} item={x} onHandle={doSituation} />)}
         </div>
