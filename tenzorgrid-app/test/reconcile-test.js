@@ -100,14 +100,33 @@ const REF = {
   check('progress is 100%', pe2.progressPct === 100, String(pe2.progressPct));
 
   console.log('\n4. The repair did not cost them the ladder');
-  // Both authored junior projects are delivered, so the promotion bar is met and the
-  // senior board is what comes next. The bar counts projects that are finished being
-  // WRITTEN, so it moves as content lands rather than demanding projects that do not
-  // exist yet.
-  const keys4 = st2.projects.projects.map((p) => p.key);
-  check('the senior board is now what is on offer', keys4.includes('reliability-review'), JSON.stringify(keys4));
-  check('and the repaired project is still counted as delivered',
-    st2.projects.projects.find((p) => p.key === 'headcount-trends').status === 'completed');
+  // The point here is that a project repaired mid-flight still counts toward promotion.
+  // This used to assert the senior board appeared after two deliveries, because two was
+  // the whole junior track when it was written; there are four now, so it asserted a
+  // promotion the learner had not earned and had been failing unnoticed. Rather than
+  // hard-coding a number that goes stale every time content lands, it finishes whatever
+  // the junior board currently holds and then checks the ladder moved.
+  const juniorKeys = st2.projects.projects.map((p) => p.key);
+  for (const key of juniorKeys) {
+    const cur = ws.getState(uid).projects.projects.find((p) => p.key === key);
+    if (!cur || cur.status === 'completed') continue;
+    if (cur.status === 'locked') continue;
+    if (cur.status !== 'active') ws.startProject(uid, key);
+    await finishProject(uid);
+  }
+  const st3 = ws.getState(uid);
+  // Look each junior key up by name. Counting completed rows on the board does not work
+  // here: promotion swaps the board to the senior one, so the count is of a different set.
+  const undelivered = juniorKeys.filter((k) => {
+    const p = st3.projects.projects.find((x) => x.key === k);
+    return !p || p.status !== 'completed';
+  });
+  check('every junior project is delivered', undelivered.length === 0, undelivered.join(','));
+  check('the repaired project is among them',
+    st3.projects.projects.find((p) => p.key === 'headcount-trends').status === 'completed');
+  check('the senior board is now what is on offer',
+    st3.projects.projects.map((p) => p.key).includes('reliability-review'),
+    JSON.stringify(st3.projects.projects.map((p) => p.key)));
 
   console.log('\n5. Reconciliation must NOT start projects the learner never touched');
   const uid2 = cryptoRandomId();

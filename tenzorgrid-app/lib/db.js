@@ -259,12 +259,17 @@ CREATE TABLE IF NOT EXISTS sim_quiz (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
   question_key TEXT NOT NULL,
-  project_key TEXT,
+  -- NOT NULL with a default, deliberately. Every project's quiz reuses the same ten
+  -- question ids, so the unique key has to include the project or a learner is blocked
+  -- at the end of their second project. It also has to be NOT NULL: SQLite treats NULLs
+  -- as distinct from each other, so a nullable column in a UNIQUE key silently stops
+  -- constraining anything the moment a row leaves it unset.
+  project_key TEXT NOT NULL DEFAULT '',
   answered_on TEXT NOT NULL,
   chosen TEXT,
   correct INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
-  UNIQUE(enrollment_id, question_key)
+  UNIQUE(enrollment_id, project_key, question_key)
 );
 
 -- Something that happened which the learner did not plan for: the stakeholder adding to the
@@ -436,6 +441,50 @@ ensureColumn('sim_tasks', 'carried_from_day', 'INTEGER');
 ensureColumn('sim_enrollments', 'conduct_score', 'INTEGER');
 // Added after sim_days shipped, so a live volume that already has the table gets it too.
 ensureColumn('sim_days', 'started_at', 'TEXT');
+
+// sim_quiz was UNIQUE(enrollment_id, question_key), and every project's quiz reuses the
+// same ten question ids q1..q10. So a learner answered q1 in their first project, reached
+// the quiz at the end of their SECOND project, and the insert failed with
+// "UNIQUE constraint failed: sim_quiz.enrollment_id, sim_quiz.question_key". The quiz
+// could not be submitted, so the project could not complete, so nothing further unlocked:
+// every learner stuck permanently at the end of project two.
+//
+// project_key was already being written on every row — it was only missing from the
+// constraint. SQLite cannot alter a constraint, so the table is rebuilt once, guarded on
+// the old constraint still being there. Existing answers are carried over.
+const quizSql = (db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='sim_quiz'").get() || {}).sql || '';
+if (quizSql && !/UNIQUE\s*\(\s*enrollment_id\s*,\s*project_key\s*,\s*question_key\s*\)/i.test(quizSql)) {
+  db.exec('BEGIN');
+  try {
+    db.exec(`CREATE TABLE sim_quiz_rebuilt (
+      id TEXT PRIMARY KEY,
+      enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+      question_key TEXT NOT NULL,
+      project_key TEXT NOT NULL DEFAULT '',
+      answered_on TEXT NOT NULL,
+      chosen TEXT,
+      correct INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      UNIQUE(enrollment_id, project_key, question_key)
+    )`);
+    // COALESCE because legacy rows predate project_key being written, and a NULL in the
+    // new key would exempt that row from the constraint entirely. INSERT OR IGNORE
+    // because two legacy NULL rows for the same question collapse to one under it — they
+    // are the same answer to the same question and only one can survive.
+    db.exec(`INSERT OR IGNORE INTO sim_quiz_rebuilt (id, enrollment_id, question_key, project_key, answered_on, chosen, correct, created_at)
+             SELECT id, enrollment_id, question_key, COALESCE(project_key, ''), answered_on, chosen, correct, created_at
+             FROM sim_quiz ORDER BY created_at`);
+    const before = db.prepare('SELECT COUNT(*) c FROM sim_quiz').get().c;
+    const after = db.prepare('SELECT COUNT(*) c FROM sim_quiz_rebuilt').get().c;
+    db.exec('DROP TABLE sim_quiz');
+    db.exec('ALTER TABLE sim_quiz_rebuilt RENAME TO sim_quiz');
+    db.exec('COMMIT');
+    console.log(`[migrate] sim_quiz: unique key now includes project_key (${after} of ${before} rows kept)`);
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+}
 
 // Seed a small starter set of jobs the first time the DB is created, so the
 // dashboard has something real (if modest) to match against on day one.

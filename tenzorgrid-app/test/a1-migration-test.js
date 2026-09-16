@@ -84,7 +84,20 @@ check('a quiz row inserts', fresh.db.prepare('SELECT COUNT(*) c FROM sim_quiz').
 let dup = false;
 try { fresh.db.prepare(`INSERT INTO sim_quiz (id,enrollment_id,question_key,answered_on,correct,created_at) VALUES (?,?,?,?,?,?)`)
   .run(fresh.cryptoRandomId(), r.id, 'q-null-compare', '2026-09-11', 0, iso); } catch (e) { dup = true; }
-check('the same question cannot be asked twice', dup);
+check('the same question cannot be asked twice in one project', dup);
+// The other half of that key, and the reason it has three columns. Every project's quiz
+// reuses the same ten question ids, so with the key on (enrollment, question) alone a
+// learner answered q1 in project one and was then permanently unable to submit the quiz
+// at the end of project two — the project could not complete and nothing further
+// unlocked. Nothing caught it because the only suite that runs two projects on one
+// enrollment was crashing, and run-all.sh did not look at exit codes.
+let across = false;
+try {
+  fresh.db.prepare(`INSERT INTO sim_quiz (id,enrollment_id,question_key,project_key,answered_on,correct,created_at) VALUES (?,?,?,?,?,?,?)`)
+    .run(fresh.cryptoRandomId(), r.id, 'q-null-compare', 'a-different-project', '2026-09-12', 1, iso);
+  across = true;
+} catch { across = false; }
+check('but the same question CAN be asked again in a different project', across);
 fresh.db.prepare('DELETE FROM sim_enrollments WHERE id = ?').run(r.id);
 check('deleting the enrollment cascades the new tables',
   fresh.db.prepare('SELECT COUNT(*) c FROM sim_activities').get().c === 0 &&
