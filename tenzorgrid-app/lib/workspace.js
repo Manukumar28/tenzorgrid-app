@@ -14559,7 +14559,11 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
-const PRIORITY_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
+// Four tiers, and two spellings of the middle one. The task definitions were authored
+// over months and use `urgent`, `high`, `medium`, `normal` and `low`; before this map
+// covered them, the 135 tasks marked urgent or normal came back with priorityLabel
+// undefined and rendered a blank pill on every card, table row and workbench header.
+const PRIORITY_LABEL = { urgent: 'Urgent', high: 'High', medium: 'Medium', normal: 'Medium', low: 'Low' };
 
 function startOfDay(ms) {
   const d = new Date(ms);

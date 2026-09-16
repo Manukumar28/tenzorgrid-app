@@ -1,0 +1,260 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { ArrowRight, ChevronRight, CircleCheckBig, CirclePlay, CalendarDays, TriangleAlert, Clock3 } from 'lucide-react';
+import { Avatar } from './ui.jsx';
+import { PRIORITY_PILL } from './taskCards.jsx';
+
+// The four states a task can be in, in the order it moves through them. Everything on
+// this page — the donut, the tiles, the kanban — is cut from this one function, so a
+// task counted as "In progress" in the ring is the same task in the tile beside it.
+export function bucketOf(t) {
+  if (t.status === 'graded') return 'completed';
+  if (t.reviewState === 'pending' || t.stage === 'Submitted') return 'inProgress';
+  if (t.notYetOpen) return 'upcoming';
+  if (t.overdue) return 'overdue';
+  return 'assigned';
+}
+
+export const BUCKET = {
+  completed: { label: 'Completed', color: '#10b981', tile: 'bg-emerald-50 border-emerald-100', ink: 'text-emerald-700', chip: 'bg-emerald-500', Icon: CircleCheckBig },
+  inProgress: { label: 'In Progress', color: '#3b82f6', tile: 'bg-blue-50 border-blue-100', ink: 'text-blue-700', chip: 'bg-blue-500', Icon: CirclePlay },
+  upcoming: { label: 'Upcoming', color: '#8b5cf6', tile: 'bg-violet-50 border-violet-100', ink: 'text-violet-700', chip: 'bg-violet-500', Icon: CalendarDays },
+  overdue: { label: 'Overdue', color: '#ef4444', tile: 'bg-red-50 border-red-100', ink: 'text-red-700', chip: 'bg-red-500', Icon: TriangleAlert },
+  assigned: { label: 'Assigned', color: '#94a3b8', tile: 'bg-slate-50 border-slate-100', ink: 'text-slate-600', chip: 'bg-slate-400', Icon: Clock3 },
+};
+
+// Counts every panel on the page reads from.
+export function tallyTasks(rows, lockedCount) {
+  const by = { completed: 0, inProgress: 0, upcoming: 0, overdue: 0, assigned: 0 };
+  for (const t of rows) by[bucketOf(t)] += 1;
+  const assignedTotal = rows.length;
+  return {
+    by,
+    assignedTotal,
+    // Progress is against what you have actually been given, not the whole track —
+    // otherwise a manager's first morning reads 0 of 120 and stays near zero for a month.
+    pct: assignedTotal ? Math.round((by.completed / assignedTotal) * 100) : 0,
+    // Share of everything the track holds, locked projects included. A different, honest
+    // number, and the one that answers "how far through the whole thing am I".
+    trackPct: assignedTotal + lockedCount
+      ? Math.round((by.completed / (assignedTotal + lockedCount)) * 1000) / 10
+      : 0,
+  };
+}
+
+export function CompletionDonut({ tally }) {
+  const data = ['completed', 'inProgress', 'upcoming', 'overdue', 'assigned']
+    .map((k) => ({ key: k, label: BUCKET[k].label, value: tally.by[k] }))
+    .filter((d) => d.value > 0);
+
+  return (
+    <div className="flex items-center gap-5 flex-wrap">
+      <div className="relative w-[104px] h-[104px] shrink-0">
+        {data.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} dataKey="value" nameKey="label" innerRadius="70%" outerRadius="100%"
+                paddingAngle={2} stroke="#fff" strokeWidth={2} isAnimationActive>
+                {data.map((d) => <Cell key={d.key} fill={BUCKET[d.key].color} />)}
+              </Pie>
+              <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                formatter={(v, n) => [`${v} task${v === 1 ? '' : 's'}`, n]} />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="w-full h-full rounded-full border-[10px] border-gray-100" />
+        )}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-sm font-extrabold leading-none text-gray-900">
+            {tally.by.completed} / {tally.assignedTotal}
+          </span>
+          <span className="text-[11px] font-bold text-gray-400 mt-0.5">{tally.pct}%</span>
+        </div>
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm font-bold text-gray-800 mb-2">Task completion</div>
+        {/* Every bucket with anything in it, so the legend adds up to the total in the
+            middle of the ring. Dropping the "assigned" slice to keep the design's four
+            rows left a legend reading 24 beside a ring reading 30. */}
+        <div className="space-y-1">
+          {['completed', 'inProgress', 'assigned', 'upcoming', 'overdue']
+            .filter((k) => tally.by[k] > 0 || k !== 'assigned')
+            .map((k) => (
+            <div key={k} className="flex items-center gap-2 text-xs">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: BUCKET[k].color }} />
+              <span className="font-bold text-gray-800 w-6 text-right">{tally.by[k]}</span>
+              <span className="text-gray-500">{BUCKET[k].label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function StatTile({ bucket, value, sub, index }) {
+  const b = BUCKET[bucket];
+  // Deliberately not a BentoCard: that sets bg-white, and a tinted tile passed in through
+  // className would be fighting it for which background rule the stylesheet emits last.
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: (index || 0) * 0.05, duration: 0.25 }}
+      className={`rounded-xl border p-4 min-w-0 ${b.tile}`}
+    >
+      <div className="flex items-start gap-3">
+        <span className={`shrink-0 w-9 h-9 rounded-xl ${b.chip} text-white flex items-center justify-center`}>
+          <b.Icon size={18} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-2xl font-extrabold text-gray-900 leading-none">{value}</div>
+          <div className={`text-sm font-bold ${b.ink} mt-1`}>{b.label}</div>
+          <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{sub}</div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// One row of My Focus. The left edge carries the urgency so a glance down the column
+// sorts itself: red is late, amber is today, slate is simply next.
+function FocusRow({ task, person, onOpen, compact }) {
+  const urgent = task.overdue ? 'overdue' : task.dueLabel === 'Today' ? 'today' : 'later';
+  const skin = {
+    overdue: 'border-l-4 border-l-red-400 bg-red-50/60',
+    today: 'border-l-4 border-l-amber-400 bg-amber-50/60',
+    later: 'border-l-4 border-l-slate-200 bg-white',
+  }[urgent];
+  const flag = {
+    overdue: <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-red-700 bg-red-100 rounded px-1.5 py-0.5"><TriangleAlert size={11} />{task.dueLabel}</span>,
+    today: <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-800 bg-amber-100 rounded px-1.5 py-0.5"><Clock3 size={11} />Due today</span>,
+    later: <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><CalendarDays size={11} />Due {task.dueLabel}</span>,
+  }[urgent];
+
+  return (
+    <div className={`rounded-xl border border-gray-100 ${skin} p-3.5`}>
+      <div className="flex items-start justify-between gap-3 mb-1.5">
+        {flag}
+        <span className={`shrink-0 inline-flex text-[10px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[task.priority]}`}>
+          {task.priorityLabel}
+        </span>
+      </div>
+      <h4 className="text-sm font-bold text-gray-900 leading-snug">{task.title}</h4>
+      {task.projectTitle && <p className="text-[11px] text-gray-500 mt-0.5 truncate">Project: {task.projectTitle}</p>}
+
+      {!compact && (
+        <div className="flex items-center gap-2 mt-2">
+          <Avatar name={person ? person.name : 'Asha Rao'} avatarUrl={person && person.avatarUrl} size={20} />
+          <span className="text-[11px] text-gray-500 truncate">{person ? person.name : 'Asha Rao'}</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-3 mt-2.5">
+        <div className="min-w-0 flex-1">
+          <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 transition-all"
+              style={{ width: `${task.stagePct}%` }} />
+          </div>
+          <div className="text-[10px] font-semibold text-gray-400 mt-1">{task.stage}</div>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={onOpen}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700"
+        >
+          Open task <ArrowRight size={13} />
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+export function FocusList({ tasks, stakeholderByProject, onOpen }) {
+  if (!tasks.length) {
+    return (
+      <p className="text-sm text-gray-500">
+        Nothing needs you right now. Everything open has been submitted or has not opened yet.
+      </p>
+    );
+  }
+  const [first, second, ...rest] = tasks;
+  return (
+    <div className="space-y-3">
+      <FocusRow task={first} person={stakeholderByProject[first.projectKey]} onOpen={() => onOpen(first.id)} />
+      {second && <FocusRow task={second} person={stakeholderByProject[second.projectKey]} onOpen={() => onOpen(second.id)} />}
+      {rest.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {rest.slice(0, 4).map((t) => (
+            <FocusRow key={t.id} task={t} person={stakeholderByProject[t.projectKey]} onOpen={() => onOpen(t.id)} compact />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Upcoming, keyed on the project week rather than on a date. Every task in a project
+// carries the same deadline, so a date column would print the same Friday five times;
+// what a learner plans around is which day a task opens.
+export function UpcomingTable({ tasks, onViewAll, compact = false }) {
+  if (!tasks.length) {
+    return <p className="text-sm text-gray-500">Nothing waiting — everything assigned to you is already open.</p>;
+  }
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">
+            <th className="py-2 pr-3 font-bold">Opens</th>
+            <th className="py-2 pr-3 font-bold">Task</th>
+            {!compact && <th className="py-2 pr-3 font-bold hidden sm:table-cell">Project</th>}
+            <th className="py-2 pr-3 font-bold">Priority</th>
+            {!compact && <th className="py-2 pr-3 font-bold hidden md:table-cell">Stage</th>}
+            <th className="py-2 w-6" />
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.slice(0, 6).map((t) => (
+            <tr key={t.id} className="border-t border-gray-100 hover:bg-gray-50/70 transition-colors">
+              <td className="py-2.5 pr-3 align-middle whitespace-nowrap">
+                <div className="text-xs font-bold text-gray-800">Day {t.dayIndex || '—'}</div>
+                <div className="text-[11px] text-gray-400">{t.opensLabel || 'Open now'}</div>
+              </td>
+              <td className="py-2.5 pr-3 align-middle">
+                <span className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</span>
+              </td>
+              {!compact && (
+                <td className="py-2.5 pr-3 align-middle hidden sm:table-cell">
+                  <span className="text-xs text-gray-500">{t.projectTitle}</span>
+                </td>
+              )}
+              <td className="py-2.5 pr-3 align-middle">
+                <span className={`inline-flex text-[10px] font-bold rounded px-1.5 py-0.5 ${PRIORITY_PILL[t.priority]}`}>
+                  {t.priorityLabel}
+                </span>
+              </td>
+              {!compact && (
+                <td className="py-2.5 pr-3 align-middle hidden md:table-cell">
+                  <span className="text-xs text-gray-500">{t.stage}</span>
+                </td>
+              )}
+              <td className="py-2.5 align-middle text-right">
+                {/* Opening a task that has not opened yet would land the learner in an
+                    editor they cannot submit from, so these are not clickable. */}
+                <ChevronRight size={15} className="text-gray-300 inline" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {tasks.length > 6 && (
+        <button onClick={onViewAll} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700">
+          View all {tasks.length} upcoming <ArrowRight size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
