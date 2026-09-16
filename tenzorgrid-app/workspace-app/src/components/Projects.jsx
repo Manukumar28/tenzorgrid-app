@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, Award, Medal, Flame, Trophy, FolderOpen } from 'lucide-react';
-import { BentoCard } from './ui.jsx';
+import { Award, CheckCircle2, ChevronDown, Flame, FolderOpen, Medal, Sparkles, Trophy, UserRound } from 'lucide-react';
+import { BentoCard, StatTiles } from './ui.jsx';
 import { SkillPointsBar } from './charts.jsx';
 import { ActiveProjectCard, AvailableProjectCard, LockedProjectCard, CompletedProjectCard, money } from './projectCards.jsx';
 import { api } from '../api.js';
@@ -133,18 +133,14 @@ export default function Projects({ state, onStateChange, onTab }) {
           <span className="text-sm font-semibold text-gray-500">[{trackLabel}]</span>
         </div>
 
-        <div className="flex items-center justify-between gap-4 flex-wrap border-y border-gray-100 py-2.5">
-          <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-xs text-gray-500">
-            <span>Active projects: <b className="text-gray-800">{data.activeCount}</b></span>
-            <span className="text-gray-200">|</span>
-            <span>Skill points gained: <b className="text-gray-800">{data.skillPointsTotal}</b></span>
-            <span className="text-gray-200">|</span>
-            <span>
-              Top stakeholder:{' '}
-              <b className="text-gray-800">{data.topStakeholder || '—'}</b>
-            </span>
-          </div>
+        <StatTiles items={[
+          { key: 'active', label: 'Active', value: data.activeCount, sub: data.activeCount === 1 ? 'project underway' : 'projects underway', tone: 'indigo', icon: FolderOpen },
+          { key: 'done', label: 'Completed', value: data.completedCount ?? 0, sub: 'signed off', tone: 'emerald', icon: CheckCircle2 },
+          { key: 'points', label: 'Skill points', value: data.skillPointsTotal, sub: 'earned so far', tone: 'violet', icon: Sparkles },
+          { key: 'who', label: 'Top stakeholder', value: (data.topStakeholder || '—').split(' ')[0], sub: data.topStakeholder ? 'raises most of your work' : 'nobody yet', tone: 'amber', icon: UserRound },
+        ]} />
 
+        <div className="flex items-center justify-end gap-4 flex-wrap pt-1">
           <div className="flex items-center gap-2 flex-wrap">
             <FilterSelect label="By status" value={statusFilter} onChange={setStatusFilter} options={STATUS_OPTIONS} />
             <FilterSelect label="By skill" value={skillFilter} onChange={setSkillFilter} options={skillOptions} />

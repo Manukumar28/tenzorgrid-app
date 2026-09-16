@@ -1,10 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronLeft, ChevronRight, Search, Flag, Check, X as XIcon, Lock, Star,
-  ClipboardCheck, Mail, CalendarDays, AlertTriangle,
-} from 'lucide-react';
-import { BentoCard, Avatar } from './ui.jsx';
+import { AlertTriangle, CalendarCheck, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Flag, Lock, Mail, Search, Star, X as XIcon } from 'lucide-react';
+import { Avatar, BentoCard, StatTiles } from './ui.jsx';
 import { REGIONS, holidaysForYear, loadRegion, saveRegion } from '../lib/holidays.js';
 
 const DOWS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -139,14 +136,13 @@ export default function CalendarTab({ state }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-between gap-4 flex-wrap border-y border-slate-100 py-2.5">
-        <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-xs text-slate-500">
-          <span>Attendance: <b className="text-slate-800">{attendance.attendedDays}/{attendance.milestoneDays}</b> toward your first certificate</span>
-          <span className="text-slate-200">|</span>
-          <span>This month: <b className="text-slate-800">{monthAttended}</b></span>
-          <span className="text-slate-200">|</span>
-          <span>Joined: <b className="text-slate-800">{calendar.joinedOn}</b></span>
-        </div>
+      <StatTiles items={[
+        { key: 'att', label: 'Attendance', value: `${attendance.attendedDays}/${attendance.milestoneDays}`, sub: 'toward your first certificate', tone: 'indigo', icon: CalendarCheck },
+        { key: 'month', label: 'This month', value: monthAttended, sub: monthAttended === 1 ? 'day checked in' : 'days checked in', tone: 'emerald', icon: CalendarDays },
+        { key: 'joined', label: 'Joined', value: calendar.joinedOn, sub: 'your first day', tone: 'violet', icon: Flag },
+      ]} />
+
+      <div className="flex items-center justify-end gap-4 flex-wrap pt-1">
         <div className="flex items-center gap-2">
           <label className="text-[12px] font-semibold text-slate-500">Holidays</label>
           <select
