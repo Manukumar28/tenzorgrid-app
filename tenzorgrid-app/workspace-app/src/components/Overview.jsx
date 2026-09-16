@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, BarChart3, CalendarDays, Clock, Trophy, GraduationCap, ClipboardList, Target, Flame, Award, Quote, TrendingUp } from 'lucide-react';
+import { ArrowRight, Award, BarChart3, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock, Flame, GraduationCap, Quote, Target, TrendingUp, Trophy } from 'lucide-react';
 import { BentoCard, ProgressBar, CircularProgress, Pill, Avatar } from './ui.jsx';
 import { SkillRadar } from './charts.jsx';
 import { api } from '../api.js';
@@ -60,6 +60,12 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
     ? Math.round((milestone.requirements.reduce((s, r) => s + r.current / r.target, 0) / milestone.requirements.length) * 100)
     : 0;
   const tasksPct = performance.tasksTotal ? Math.round((performance.tasksCompleted / performance.tasksTotal) * 100) : 0;
+  // What is actually workable. state.tasks are raw rows, so this reads opens_at directly
+  // rather than the taskBoard's derived notYetOpen, which is not on them. A task whose day
+  // has not arrived is not open, and listing all of those is what made this card a wall.
+  const nowMs = Date.now();
+  const openTasks = tasks.filter((t) => t.status !== 'graded'
+    && (!t.opens_at || Date.parse(t.opens_at) <= nowMs));
   const delta = performance.scoreDeltaToday;
 
   return (
@@ -103,17 +109,56 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
 
         {/* Middle row — the skill radar needs the widest slot, its axis labels clip below ~300px */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+          {/* An overview summarises; it does not re-list the Tasks tab. This card used to
+              print every assigned task — thirty of them at manager level, each wrapping to
+              three lines in a quarter-width column, 1,912px tall. Because a grid row is as
+              tall as its tallest cell, it also stretched the two cards beside it to 1,912px
+              and left about 1,500px of white in each. It now shows the shape of the week
+              and the few things actually open, and points at the tab that holds the rest. */}
           <BentoCard index={4} className="lg:col-span-4">
-            <h3 className="text-base font-bold mb-3.5">Task progress</h3>
-            <div className="space-y-3">
-              {tasks.map((t) => (
-                <div key={t.id} className="flex items-start gap-2.5">
-                  <CheckCircle2 size={20} className={`shrink-0 mt-px ${t.status === 'graded' ? 'text-teal-500' : 'text-gray-200'}`} strokeWidth={2.3} />
-                  <span className={`text-sm font-medium ${t.status === 'graded' ? 'line-through text-gray-500' : 'text-gray-700'}`}>{t.title}</span>
+            <h3 className="text-base font-bold mb-1">Task progress</h3>
+            <p className="text-xs text-gray-500 mb-3.5">
+              {performance.tasksCompleted} of {performance.tasksTotal} signed off
+            </p>
+            <ProgressBar
+              value={performance.tasksCompleted}
+              max={performance.tasksTotal || 1}
+              colorClass="from-teal-500 to-emerald-400"
+            />
+
+            {openTasks.length ? (
+              <>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mt-4 mb-2">Open now</p>
+                <div className="space-y-2.5">
+                  {openTasks.slice(0, 4).map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => onTab && onTab('tasks')}
+                      className="w-full flex items-start gap-2.5 text-left group"
+                    >
+                      <Circle size={17} className="text-gray-300 shrink-0 mt-0.5" strokeWidth={2.3} />
+                      <span className="text-sm font-medium text-gray-700 leading-snug group-hover:text-indigo-700">{t.title}</span>
+                    </button>
+                  ))}
                 </div>
-              ))}
-              {!tasks.length && <p className="text-sm text-gray-500">No tasks assigned yet.</p>}
-            </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 mt-4">
+                {tasks.length ? 'Nothing open right now.' : 'No tasks assigned yet.'}
+              </p>
+            )}
+
+            {tasks.length > 0 && (
+              <button
+                onClick={() => onTab && onTab('tasks')}
+                className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-800"
+              >
+                {openTasks.length > 4
+                  ? `See all ${tasks.length} in Tasks`
+                  : 'Open the Tasks board'}
+                <ArrowRight size={13} />
+              </button>
+            )}
           </BentoCard>
 
           <BentoCard index={5} className="lg:col-span-5">
