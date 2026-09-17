@@ -8,6 +8,7 @@ import { TaskCard, LockedTaskCard, PRIORITY_PILL } from './taskCards.jsx';
 import { CompletionDonut, StatTile, FocusList, UpcomingTable, TaskFlow, Timeline,
   ActivityFeed, ProgressBanner, tallyTasks, bucketOf } from './taskPanels.jsx';
 import { api } from '../api.js';
+import { appForTask } from '../lib/apps.js';
 const Workbench = lazy(() => import('./Workbench.jsx'));
 
 const PRIORITY_OPTIONS = [
@@ -134,17 +135,27 @@ function SectionTitle({ children, count }) {
 // bare textarea. Graded tasks keep the compact feedback panel, since there is nothing
 // left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
 // don't pay to download a code editor.
-function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
+function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat, app, company, requestedBy, onBack }) {
   const managerFirst = (manager ? manager.name : 'Asha Rao').split(' ')[0];
+  // Work that opens in one of the company's applications gets the application's chrome
+  // instead of a card: the shell already names the task, the project and who is waiting
+  // on it, so the card header would be all of that a second time.
+  const inApp = Boolean(app) && task.reviewState !== 'pending' && task.status !== 'graded';
+  const Frame = inApp
+    ? ({ children }) => <div>{children}</div>
+    : ({ children }) => <BentoCard hover={false}>{children}</BentoCard>;
+
   return (
-    <BentoCard hover={false}>
-      <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
-        <div className="min-w-0">
-          <h3 className="text-base font-bold">{task.title}</h3>
-          {task.projectTitle && <p className="text-xs text-gray-500 mt-0.5">{task.projectTitle}</p>}
+    <Frame>
+      {!inApp && (
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
+          <div className="min-w-0">
+            <h3 className="text-base font-bold">{task.title}</h3>
+            {task.projectTitle && <p className="text-xs text-gray-500 mt-0.5">{task.projectTitle}</p>}
+          </div>
+          <span className={`inline-flex text-[12px] font-bold rounded-md px-2 py-1 ${PRIORITY_PILL[task.priority]}`}>{task.priorityLabel}</span>
         </div>
-        <span className={`inline-flex text-[12px] font-bold rounded-md px-2 py-1 ${PRIORITY_PILL[task.priority]}`}>{task.priorityLabel}</span>
-      </div>
+      )}
 
       {/* Three states, in the order a task actually moves through them: waiting on the
           manager's sign-off, done, or still being worked on. */}
@@ -203,7 +214,7 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
               reopened task is one you have to do again, so the reason and the tools to
               act on it need to be on the same screen. */}
           {task.sentBack && (
-            <div className={`mb-4 rounded-lg border px-4 py-3.5 ${task.sentBack === 'rework' ? 'bg-violet-50 border-violet-200' : 'bg-amber-50 border-amber-200'}`}>
+            <div className={`mb-3 rounded-lg border px-4 py-3.5 ${task.sentBack === 'rework' ? 'bg-violet-50 border-violet-200' : 'bg-amber-50 border-amber-200'}`}>
               <div className="flex items-center gap-2 mb-1.5">
                 <RotateCcw size={14} className={task.sentBack === 'rework' ? 'text-violet-700' : 'text-amber-700'} />
                 <span className={`text-sm font-bold ${task.sentBack === 'rework' ? 'text-violet-800' : 'text-amber-800'}`}>
@@ -220,11 +231,20 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
             </div>
           )}
           <Suspense fallback={<p className="text-sm text-gray-500 font-medium py-6">Loading the editor…</p>}>
-            <Workbench taskId={task.id} onGraded={onStateChange} />
+            <Workbench
+              taskId={task.id}
+              onGraded={onStateChange}
+              app={inApp ? app : null}
+              company={company}
+              task={task}
+              requestedBy={requestedBy}
+              reviewer={manager}
+              onBack={onBack}
+            />
           </Suspense>
         </>
       )}
-    </BentoCard>
+    </Frame>
   );
 }
 
@@ -292,13 +312,20 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   }, [taskBoard.rows]);
 
   // Default to the most urgent open task so the workspace is never empty on arrival.
+  //
+  // It defers to an explicit request. Both effects run on mount when Home or the app
+  // launcher opens a specific task, and this one reads `selectedId` from the same render
+  // -- still null -- so it happily overwrote the task somebody had just asked for with
+  // whatever sat at the top of the board. Launching Analytics Studio landed on a
+  // judgement task, which is the one thing it cannot open.
   useEffect(() => {
+    if (openRequest && openRequest.id && taskBoard.rows.some((r) => r.id === openRequest.id)) return;
     if (selectedId && taskBoard.rows.some((r) => r.id === selectedId)) return;
     // A task whose day has not arrived is not a candidate — landing on a workspace the
     // learner cannot use yet would read as broken.
     const open = taskBoard.rows.find((r) => r.status !== 'graded' && !r.notYetOpen);
     setSelectedId((open || taskBoard.rows[taskBoard.rows.length - 1] || {}).id || null);
-  }, [taskBoard.rows, selectedId]);
+  }, [taskBoard.rows, selectedId, openRequest]);
 
   // Which rows each view is made of. Focus is the only one that matters on a normal
   // morning: of the 120 rows a manager carries, six are workable and the rest either
@@ -381,12 +408,21 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
   const filtersOn = priorityFilter || projectFilter || statusFilter || askedByFilter || query.trim();
   const lockedVisible = view === 'all' && !filtersOn ? taskBoard.locked : [];
   const selected = taskBoard.rows.find((r) => r.id === selectedId);
+  // Working inside one of the company's applications, on a phone.
+  //
+  // The board's headline figures and its filter bar belong to BROWSING work. When a tool
+  // is open on a 390px screen they are about twelve hundred pixels of it, and the
+  // application -- the thing the learner just asked for -- starts below the fold. They
+  // stay exactly as they are on a laptop, where there is room for both.
+  const focusedInApp = view === 'workspace' && selected
+    && Boolean(appForTask(state.apps, selected))
+    && selected.reviewState !== 'pending' && selected.status !== 'graded';
   const { counts, health, velocity, onTimeRate, productivity, trend, taskSources } = taskBoard;
 
   return (
     <div className="space-y-6">
       {/* Title + metric sub-bar */}
-      <div>
+      <div className={focusedInApp ? 'hidden lg:block' : ''}>
         <div className="flex items-baseline gap-2.5 flex-wrap mb-3">
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Work</h1>
           <span className="text-sm font-semibold text-gray-500">Everything assigned to you, and the bench you do it on</span>
@@ -396,7 +432,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
 
       {/* Completion, and the four states a task can be in. Every figure here is counted
           from the same rows the tabs and the list below are built from. */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 sm:gap-5">
+      <div className={`${focusedInApp ? 'hidden lg:grid' : 'grid'} grid-cols-1 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-4 sm:gap-5`}>
         <BentoCard hover={false}>
           <CompletionDonut tally={tally} />
         </BentoCard>
@@ -412,7 +448,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       </div>
 
       {/* Tabs on the left, search and filters on the right — one row, as drawn. */}
-      <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap border-b border-gray-200">
+      <div className={`${focusedInApp ? 'hidden lg:flex' : 'flex'} items-end justify-between gap-x-4 gap-y-3 flex-wrap border-b border-gray-200`}>
         <ViewTabs view={view} onView={changeView} counts={viewCounts} />
         <div className="flex items-center gap-2 flex-wrap pb-2">
         <div className="relative min-w-[170px]">
@@ -561,9 +597,13 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         <section>
           {selected ? (
             <>
-              <SectionTitle>
-                {selected.reviewState === 'pending' ? 'Sign-off' : selected.status === 'graded' ? 'Feedback' : 'Workspace'}
-              </SectionTitle>
+              {/* Inside an application the shell says which one; a second heading above it
+                  saying "Workspace" would be the product talking over its own tool. */}
+              {!(appForTask(state.apps, selected) && selected.reviewState !== 'pending' && selected.status !== 'graded') && (
+                <SectionTitle>
+                  {selected.reviewState === 'pending' ? 'Sign-off' : selected.status === 'graded' ? 'Feedback' : 'Workspace'}
+                </SectionTitle>
+              )}
               <TaskWorkspace
                 task={selected}
                 onOpenChat={onOpenChat}
@@ -571,6 +611,10 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
                 learnerName={learnerName}
                 learnerPhotoUrl={learnerPhotoUrl}
                 onStateChange={onStateChange}
+                app={appForTask(state.apps, selected)}
+                company={state.company}
+                requestedBy={stakeholderByProject[selected.projectKey] || null}
+                onBack={() => changeView('focus')}
               />
             </>
           ) : (

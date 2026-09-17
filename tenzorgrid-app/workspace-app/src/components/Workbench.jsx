@@ -13,6 +13,7 @@ import ChartBuilder from './ChartBuilder.jsx';
 import JudgementTask from './JudgementTask.jsx';
 import CoachTask from './CoachTask.jsx';
 import { AssignTask, SignoffTask } from './LeadTasks.jsx';
+import AppShell from './AppShell.jsx';
 
 // CodeMirror 6 rather than Monaco. Monaco is literally VS Code's editor but ships
 // ~2.5MB before a learner can type a character; CodeMirror gives the same felt
@@ -138,7 +139,12 @@ function SchemaBrowser({ dataset, onInsert }) {
 // Run is free and unlimited (pure SQLite, no AI call); Submit is the graded action and
 // is spent from the daily budget — the UI keeps that distinction obvious, because a
 // learner who is afraid to experiment does not learn.
-export default function Workbench({ taskId, onGraded }) {
+// `app` is set when this task's tool belongs in one of the employer's applications --
+// SQL and Python in Analytics Studio, a chart in BI Studio. When it is, the bench wears
+// the application's chrome and the assignment context travels with it. When it is not --
+// a judgement call, a write-up, a sign-off -- nothing changes: those are done at your
+// desk, and dressing them as an application would be inventing one.
+export default function Workbench({ taskId, onGraded, app, company, task, requestedBy, reviewer, onBack }) {
   const [wb, setWb] = useState(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -165,6 +171,10 @@ export default function Workbench({ taskId, onGraded }) {
   const showSchema = useMemo(() => {
     if (!wb) return false;
     if (wb.tool === 'writeup' || wb.tool === 'assign') return false;
+    // A chart task hands over the rows already queried -- there is no query to write, so
+    // the table list is 220px of reference nobody needs, taken from the preview, which
+    // is the thing BI Studio is actually for.
+    if (wb.tool === 'chart') return false;
     if (wb.tool === 'signoff') {
       const kind = wb.signoff && wb.signoff.exhibit && wb.signoff.exhibit.kind;
       return kind === 'sql' || kind === 'table';
@@ -257,12 +267,21 @@ export default function Workbench({ taskId, onGraded }) {
 
   const isGraded = wb.status === 'graded' || graded;
 
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-200">
-        <h3 className="text-sm font-extrabold text-slate-900">{wb.title}</h3>
-        <p className="text-xs text-slate-500 mt-1 leading-relaxed">{wb.brief}</p>
-      </div>
+  // Inside an application the shell already names the task, so repeating it here would
+  // be the title twice on one screen. Outside one, this header IS the only title.
+  const body = (
+    <>
+      {!app && (
+        <div className="px-4 py-3 border-b border-slate-200">
+          <h3 className="text-sm font-extrabold text-slate-900">{wb.title}</h3>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{wb.brief}</p>
+        </div>
+      )}
+      {app && (
+        <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/60">
+          <p className="text-xs text-slate-600 leading-relaxed">{wb.brief}</p>
+        </div>
+      )}
 
       {/* A write-up has no schema pane, so it gets the full width rather than an empty
           220px column beside it. Same for an allocation, and for a sign-off whose exhibit
@@ -272,8 +291,24 @@ export default function Workbench({ taskId, onGraded }) {
       <div className={`grid grid-cols-1 min-h-[26rem] ${
         showSchema ? 'lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]' : ''}`}>
         {showSchema && (
-          <div className="border-b lg:border-b-0 lg:border-r border-slate-200 max-h-56 lg:max-h-none overflow-hidden">
-            <SchemaBrowser dataset={wb.dataset} onInsert={['python','choice','coach','assign','signoff'].includes(wb.tool) ? null : insertAtCursor} />
+          <div className="border-b lg:border-b-0 lg:border-r border-slate-200 lg:max-h-none lg:overflow-hidden">
+            {/* On a laptop the data explorer is a permanent column, which is what it
+                should be. On a 390px phone a fixed 224px of table list above the editor
+                is most of the screen spent on reference, so there it collapses and the
+                editor gets the room. Same component either way. */}
+            <details className="lg:hidden group">
+              <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none text-[12px] font-bold text-slate-600 bg-slate-50/60">
+                <Database size={13} className="shrink-0" />
+                Data explorer
+                <ChevronRight size={13} className="ml-auto transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="max-h-64 overflow-auto border-t border-slate-100">
+                <SchemaBrowser dataset={wb.dataset} onInsert={['python','choice','coach','assign','signoff'].includes(wb.tool) ? null : insertAtCursor} />
+              </div>
+            </details>
+            <div className="hidden lg:block h-full overflow-hidden">
+              <SchemaBrowser dataset={wb.dataset} onInsert={['python','choice','coach','assign','signoff'].includes(wb.tool) ? null : insertAtCursor} />
+            </div>
           </div>
         )}
 
@@ -291,24 +326,36 @@ export default function Workbench({ taskId, onGraded }) {
           <JudgementTask wb={wb} onSubmit={submitChoices} submitting={submitting} isGraded={isGraded} />
         ) : (
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60">
-            <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">SQL Editor</span>
+          {/* Two buttons doing very different things, and the difference is the whole
+              working habit this is trying to build. Running is free, unlimited and
+              unmarked -- it is how you find out what the data says. Submitting is the
+              deliverable going to a person. They are weighted to say so: a quiet
+              bordered button and a solid one, with the promise spelled out beside them
+              rather than left to be discovered. */}
+          <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50/60 flex-wrap">
+            <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">
+              {app ? 'Query editor' : 'SQL Editor'}
+            </span>
             <div className="flex items-center gap-2">
+              <span className="hidden md:inline text-[11px] text-slate-500">
+                Running is free · only a submission is reviewed
+              </span>
               <button
                 onClick={runQuery}
                 disabled={running || isGraded}
-                aria-label="Run query"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 disabled:opacity-40"
+                aria-label="Run the query against the dataset"
+                title="Ctrl-Enter"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
-                <Play size={12} />{running ? 'Running…' : 'Run'}
+                <Play size={12} />{running ? 'Running…' : 'Run query'}
               </button>
               <button
                 onClick={submit}
                 disabled={submitting || isGraded}
-                aria-label="Submit for grading"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-40"
+                aria-label="Submit this work for review"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
-                <Send size={12} />{submitting ? 'Submitting…' : 'Submit'}
+                <Send size={12} />{submitting ? 'Submitting…' : 'Submit for review'}
               </button>
             </div>
           </div>
@@ -328,15 +375,24 @@ export default function Workbench({ taskId, onGraded }) {
             </div>
 
             <div className="flex-1 overflow-auto">
+              {/* A failed query is the tool telling you what it could not do, not a
+                  marker telling you that you are wrong. The engine's own message is
+                  quoted verbatim, in a monospace face, because "no such column:
+                  customer_status" is the entire lesson and paraphrasing it would
+                  remove the thing worth learning. */}
               {runError && (
                 <div className="m-3 rounded-lg border border-rose-200 bg-rose-50 p-3 flex gap-2">
                   <AlertCircle size={14} className="text-rose-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-rose-800 font-medium leading-relaxed">{runError}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-rose-900">Query failed</p>
+                    <p className="text-xs text-rose-800 font-mono leading-relaxed mt-1 break-words">{runError}</p>
+                  </div>
                 </div>
               )}
               {!runError && !result && (
                 <p className="p-4 text-xs text-slate-500 font-medium">
-                  Run your query to see results. Running is free and unlimited — only Submit is graded.
+                  Run the query to see what the data says. Run it as often as you like — nothing
+                  is recorded until you submit.
                 </p>
               )}
               {!runError && <ResultGrid result={result} />}
@@ -351,7 +407,7 @@ export default function Workbench({ taskId, onGraded }) {
           <div className="flex items-center gap-2 mb-1.5">
             <CheckCircle2 size={15} className="text-emerald-700" />
             <span className="text-sm font-extrabold text-slate-900">
-              Graded — {graded ? graded.score : wb.score}/100
+              Reviewed — {graded ? graded.score : wb.score}/100
             </span>
           </div>
           <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
@@ -359,6 +415,22 @@ export default function Workbench({ taskId, onGraded }) {
           </p>
         </div>
       )}
-    </div>
+    </>
+  );
+
+  if (!app) {
+    return <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">{body}</div>;
+  }
+  return (
+    <AppShell
+      app={app}
+      company={company}
+      task={task}
+      requestedBy={requestedBy}
+      reviewer={reviewer}
+      onBack={onBack}
+    >
+      {body}
+    </AppShell>
   );
 }

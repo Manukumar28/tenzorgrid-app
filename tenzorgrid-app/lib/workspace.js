@@ -23,6 +23,7 @@ const dayitems = require('./dayitems');
 const ambientmail = require('./ambientmail');
 const roles = require('./roles');
 const company = require('./company');
+const apps = require('./apps');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -14738,6 +14739,10 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       gradedAt: t.graded_at || null,
       dayIndex: t.day_index || null,
       difficulty: t.difficulty || def.difficulty || null,
+      // What this piece of work is made of, so the button that opens it can name the
+      // application it opens into. Read off the authored task rather than guessed from
+      // the title -- "Open in Analytics Studio" has to be true, not usually true.
+      tool: def.tool || 'sql',
       notYetOpen,
       opensAt: t.opens_at || null,
       // "Opens Thursday" beats a locked padlock with no date — the learner should be able
@@ -15498,6 +15503,9 @@ function getState(userId) {
   // rather than the database. Anything the Workday Home shows is therefore the same
   // object the tab it links to is showing, and the two cannot drift.
   payload.company = company.companyFor((roles.getRole(enrollment.role) || {}).subcategory, null);
+  // The tools this employer hands out for this role. A set, not a hard-coded list in a
+  // component, so a later role's employer can provide different ones.
+  payload.apps = apps.appsForRole(enrollment.role);
   payload.employee = getEmployee(enrollment, userId, rosterList);
   payload.workday = buildWorkday(payload, new Date(), sinceIso);
   return payload;
@@ -19210,6 +19218,12 @@ function currentAssignment(state) {
 
   return {
     taskId: pick.id,
+    // The board row's id AND its own id, because the Home card is handed straight to the
+    // application registry, which keys on `id` and `tool` like every other task object.
+    // Without these the button fell back to "Start work" on a task the engine knew
+    // perfectly well belonged in Analytics Studio.
+    id: pick.id,
+    tool: pick.tool,
     title: pick.title,
     brief: pick.brief,
     projectKey: pick.projectKey,
@@ -19264,7 +19278,7 @@ function buildQueue(state, currentId) {
         ? (state.roster || []).find((x) => x.archetype === project.stakeholderArchetype) || null
         : null;
       return {
-        taskId: r.id, title: r.title,
+        taskId: r.id, id: r.id, tool: r.tool, title: r.title,
         projectTitle: r.projectTitle,
         requestedBy: requester ? requester.name : null,
         dueLabel: r.dueLabel,
