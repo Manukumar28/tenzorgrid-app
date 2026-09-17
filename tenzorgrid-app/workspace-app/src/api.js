@@ -62,4 +62,11 @@ export const api = {
   attendanceCsvUrl: '/api/workspace/attendance/register.csv',
   submitAttendance: (csv) =>
     jsonFetch('/api/workspace/attendance/submit', { method: 'POST', body: JSON.stringify({ csv }) }),
+
+  appraisal: () => jsonFetch('/api/workspace/appraisal'),
+  appraisalCsvUrl: '/api/workspace/appraisal/performance.csv',
+  submitAppraisal: (entries) =>
+    jsonFetch('/api/workspace/appraisal/submit', { method: 'POST', body: JSON.stringify({ entries }) }),
+  promotePerson: (archetype, justification) =>
+    jsonFetch('/api/workspace/appraisal/promote', { method: 'POST', body: JSON.stringify({ archetype, justification }) }),
 };

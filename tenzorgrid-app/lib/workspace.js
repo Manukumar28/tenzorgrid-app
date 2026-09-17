@@ -193,10 +193,20 @@ function rosterWithAvatars(enrollmentId, level) {
     ? Object.fromEntries(db.prepare('SELECT * FROM sim_contacts WHERE enrollment_id = ?').all(enrollmentId)
         .map((c) => [c.archetype, c]))
     : {};
+  // A promotion the learner made is permanent and shows everywhere a person's title is
+  // read -- Team, the timesheet grid, the attendance register. Applied here because this
+  // is the one place the roster reaches the UI, so there is nowhere left showing the old
+  // title and disagreeing with the new one.
+  const promoted = enrollmentId
+    ? Object.fromEntries(db.prepare('SELECT archetype, to_title FROM sim_promotions WHERE enrollment_id = ?')
+        .all(enrollmentId).map((r) => [r.archetype, r.to_title]))
+    : {};
   return rosterForLevel(level).map((p) => {
     const c = contacts[p.archetype];
     return {
       ...p,
+      title: promoted[p.archetype] || p.title,
+      promoted: Boolean(promoted[p.archetype]),
       avatarUrl: pickAvatar(p.archetype, p.gender, used),
       reportsToYou: reports.has(p.archetype),
       friend: Boolean(c && c.friends_at),
@@ -15098,6 +15108,9 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining, level)
       archetype: person.archetype,
       name: person.name,
       title: person.title,
+      // Set by rosterWithAvatars when the learner has promoted this person. The card says
+      // so, because a title that changes with no explanation reads as a bug.
+      promoted: Boolean(person.promoted),
       avatarUrl: person.avatarUrl,
       // Only the Line Manager grades — a real, load-bearing rule of the character engine,
       // not a label. It's why "Review work" only makes sense for one person.
@@ -18136,6 +18149,10 @@ function getTimesheets(userId) {
   const byDay = Object.fromEntries(mine.map((r) => [r.day_index, r]));
 
   const reports = reportsForLevel(enrollment.level);
+  // Somebody the learner promoted carries their new title here too. A grid still calling
+  // them a Graduate Analyst a month after you signed the letter is the kind of thing
+  // people notice about a system and stop trusting.
+  const titles = promotedTitles(enrollment.id);
   const team = reports.map((p) => {
     const rows = [];
     for (let d = 1; d <= dayNow; d += 1) rows.push(ensureTeamTimesheet(enrollment, run.id, p.archetype, d));
@@ -18143,7 +18160,7 @@ function getTimesheets(userId) {
     return {
       archetype: p.archetype,
       name: p.name,
-      title: p.title,
+      title: titles[p.archetype] || p.title,
       habit: habitFor(enrollment.id, p.archetype).label,
       days: rows.map((r) => ({
         day: r.day_index, hours: r.hours,
@@ -18384,9 +18401,9 @@ function attendanceCsv(userId) {
   const run = activeRun(enrollment);
   if (!run) throw new Error('No project is running yet.');
 
-  const lines = [ATTENDANCE_HEADER.join(',')];
+  const lines = [ATTENDANCE_HEADER.map(csvCell).join(',')];
   for (const p of reportsForLevel(enrollment.level)) {
-    lines.push([p.name, ...Array.from({ length: PROJECT_WEEK_DAYS }, () => 'Present')].join(','));
+    lines.push([p.name, ...Array.from({ length: PROJECT_WEEK_DAYS }, () => 'Present')].map(csvCell).join(','));
   }
   return `${lines.join('\n')}\n`;
 }
@@ -18524,8 +18541,9 @@ function getAttendance(userId) {
     projectTitle: (catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key) || {}).title || null,
     people: (() => {
       const faces = Object.fromEntries(rosterWithAvatars(enrollment.id, enrollment.level).map((r) => [r.archetype, r.avatarUrl]));
+      const titles = promotedTitles(enrollment.id);
       return reportsForLevel(enrollment.level)
-        .map((p) => ({ archetype: p.archetype, name: p.name, title: p.title, avatarUrl: faces[p.archetype] || null }));
+        .map((p) => ({ archetype: p.archetype, name: p.name, title: titles[p.archetype] || p.title, avatarUrl: faces[p.archetype] || null }));
     })(),
     // What HR sent, which is everybody present -- shown so the learner can see what they
     // are correcting without it telling them what the corrections are.
@@ -18571,6 +18589,356 @@ function submitAttendance(userId, csvText) {
   return { ...getAttendance(userId), justGraded: graded };
 }
 
+// ---- Appraisal: rating the people who work for you --------------------------------------
+//
+// The tab exists for one lesson, and everything in it is arranged to teach that lesson:
+//
+//   compliance is not performance.
+//
+// The Timesheets tab is right there. It tells you, precisely and daily, who files and who
+// does not, and it is the most legible thing a new manager has about their team. It is also
+// almost nothing to do with how good they are at the job. So the performance pack carries
+// the filing record on purpose, next to the delivery record, and the strongest performer on
+// the board is always somebody from the bottom half of the filing table. A learner who
+// rates from the Timesheets tab gets it backwards, and is told so in those words.
+//
+// The second thing it teaches is that a rating is a ranking whether you admit it or not.
+// There is a distribution and it is enforced, because "everybody exceeded" is the thing
+// every manager does the first time and it is how a rating scale stops meaning anything.
+const RATINGS = ['Outstanding', 'Exceeds expectations', 'Meets expectations', 'Below expectations'];
+const RATING_RANK = Object.fromEntries(RATINGS.map((r, i) => [r, i]));
+const APPRAISAL_OPENS_ON = PROJECT_WEEK_DAYS;
+const JUSTIFICATION_MIN = 40;
+
+// One Outstanding, and no more than a third of the board above Meets. Not a house style --
+// it is the constraint that turns rating into ranking, which is the part that is actually
+// hard and the part a form with four radio buttons lets you skip.
+function appraisalQuota(n) {
+  return { outstanding: 1, aboveMeets: Math.max(1, Math.ceil(n / 3)) };
+}
+
+function promotedTitles(enrollmentId) {
+  return Object.fromEntries(db.prepare('SELECT archetype, to_title FROM sim_promotions WHERE enrollment_id = ?')
+    .all(enrollmentId).map((r) => [r.archetype, r.to_title]));
+}
+
+// Where a promotion takes somebody. Deliberately short: one step, and it is the step the
+// learner has to be able to defend, not a jump to whatever sounds impressive.
+const PROMOTION_STEP = {
+  'Graduate Analyst': 'Junior Data Analyst',
+  'Junior Data Analyst': 'Data Analyst',
+  'Data Analyst': 'Senior Data Analyst',
+  'Retail Analyst': 'Senior Retail Analyst',
+  'Analyst, Data Quality': 'Senior Analyst, Data Quality',
+  'Analytics Team Lead': 'Principal Analytics Lead',
+};
+function nextTitleFor(title) {
+  return PROMOTION_STEP[title] || (/^Senior /.test(title) ? title.replace(/^Senior /, 'Principal ') : `Senior ${title}`);
+}
+
+// How many days each report actually filed, read off the real grid rather than invented --
+// this has to be the same number the Timesheets tab shows or the pack is lying.
+function filingRecord(enrollment, runId, dayNow) {
+  const out = {};
+  for (const p of reportsForLevel(enrollment.level)) {
+    let filed = 0;
+    for (let d = 1; d <= dayNow; d += 1) {
+      const row = ensureTeamTimesheet(enrollment, runId, p.archetype, d);
+      if (row.submitted_at) filed += 1;
+    }
+    out[p.archetype] = filed;
+  }
+  return out;
+}
+
+// The delivery record, seeded -- and then rearranged so the best performer is never the
+// best filer. That rearrangement is the whole point of the tab, so it is one explicit
+// step rather than something buried in a weighting.
+function performanceOf(enrollment, runId, dayNow) {
+  const people = reportsForLevel(enrollment.level);
+  const filed = filingRecord(enrollment, runId, dayNow);
+
+  const seeded = people.map((p) => {
+    const rng = seededRng(`${enrollment.id}:${runId}:perf:${p.archetype}`);
+    return { archetype: p.archetype, name: p.name, title: p.title, score: rng(), rng };
+  });
+
+  // Rank by delivery, then hand the top slot to somebody who is NOT one of the best
+  // filers. Not always the very worst filer -- that would just be a different rule to
+  // memorise -- but never somebody sitting at the top of the timesheet column, because
+  // that is the confusion the tab exists to break.
+  //
+  // Strictly below the maximum, not "in the bottom half": with six people and a tie at
+  // the top, the bottom half of the sorted list can still be somebody on full marks, and
+  // two boards in thirty came out with the star and the best filer as the same person.
+  // When every filing count is equal the column carries no signal at all and there is
+  // nothing to mislead anybody, so any pick will do.
+  const topFiled = Math.max(...people.map((p) => filed[p.archetype]));
+  const notTopFilers = people.filter((p) => filed[p.archetype] < topFiled);
+  const pool = (notTopFilers.length ? notTopFilers : people).map((p) => p.archetype);
+  const pickRng = seededRng(`${enrollment.id}:${runId}:perf:invert`);
+  const star = pool[Math.floor(pickRng() * pool.length) % pool.length];
+  for (const s of seeded) if (s.archetype === star) s.score = 1.5;
+
+  const ranked = [...seeded].sort((a, b) => b.score - a.score);
+  // About half of boards carry somebody genuinely under the bar. Every team having one is
+  // as unrealistic as no team ever having one.
+  const hasWeak = seededRng(`${enrollment.id}:${runId}:perf:weak`)() < 0.5;
+
+  return ranked.map((s, i) => {
+    const rng = seededRng(`${enrollment.id}:${runId}:pack:${s.archetype}`);
+    const weak = hasWeak && i === ranked.length - 1;
+    const band = weak ? 0.15 : 1 - (i / Math.max(1, ranked.length));
+    const delivered = Math.max(1, Math.round(4 + band * 7 + rng() * 2));
+    const onTime = weak ? 40 + Math.round(rng() * 20) : Math.min(100, 62 + Math.round(band * 34 + rng() * 6));
+    const review = weak ? 2.1 + rng() * 0.5 : 3.0 + band * 1.7 + rng() * 0.2;
+    const rework = weak ? 3 + Math.floor(rng() * 3) : Math.max(0, Math.round((1 - band) * 3 + rng()));
+    const tier = weak ? 'Below expectations'
+      : i === 0 ? 'Outstanding'
+        : i === 1 ? 'Exceeds expectations' : 'Meets expectations';
+    return {
+      archetype: s.archetype, name: s.name, title: s.title,
+      rank: i + 1,
+      delivered, onTime,
+      review: Math.round(Math.min(5, review) * 10) / 10,
+      rework,
+      timesheetsFiled: filed[s.archetype], timesheetsDue: dayNow,
+      tier,
+    };
+  });
+}
+
+const APPRAISAL_HEADER = ['Employee', 'Role', 'Deliverables', 'On time %', 'Review score', 'Reworks', 'Timesheets filed'];
+
+// "Analyst, Data Quality" is a real job title on this roster and it has a comma in it,
+// which silently shifted every column after it one to the right and made the pack
+// unopenable. Anything with a comma or a quote in it gets quoted, the way CSV has always
+// said it should.
+function csvCell(value) {
+  const text = String(value == null ? '' : value);
+  return /[",\n]/.test(text) ? `"${text.split('"').join('""')}"` : text;
+}
+
+function appraisalCsv(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) throw new Error('Appraisals are a lead and above responsibility.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  const titles = promotedTitles(enrollment.id);
+
+  const lines = [APPRAISAL_HEADER.join(',')];
+  // Alphabetical, not by rank. The pack is the evidence; ordering it by the answer would
+  // hand over the ranking the learner is supposed to do.
+  for (const r of performanceOf(enrollment, run.id, dayNow).sort((a, b) => a.name.localeCompare(b.name))) {
+    lines.push([r.name, titles[r.archetype] || r.title, r.delivered, r.onTime, r.review, r.rework,
+      `${r.timesheetsFiled} of ${r.timesheetsDue}`].map(csvCell).join(','));
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function gradeAppraisal(people, ratings) {
+  const right = [];
+  const wrong = [];
+  const byArch = Object.fromEntries(people.map((p) => [p.archetype, p]));
+  for (const [archetype, given] of Object.entries(ratings)) {
+    const p = byArch[archetype];
+    if (!p) continue;
+    if (given === p.tier) { right.push(p.name); continue; }
+    const overFiler = p.timesheetsFiled >= p.timesheetsDue && RATING_RANK[given] < RATING_RANK[p.tier];
+    const underStar = p.rank === 1 && RATING_RANK[given] > RATING_RANK.Outstanding;
+    wrong.push({
+      name: p.name, given, tier: p.tier,
+      why: underStar
+        ? `${p.name} shipped ${p.delivered} deliverables at ${p.onTime}% on time with a review score of ${p.review} — the strongest record on your team. Their timesheet record is ${p.timesheetsFiled} of ${p.timesheetsDue}, which is an admin problem and a separate conversation.`
+        : overFiler
+          ? `${p.name} files every timesheet, which is not what you are rating. ${p.delivered} deliverables at ${p.onTime}% on time and ${p.rework} reworks puts them at ${p.tier.toLowerCase()}.`
+          : `${p.name}: ${p.delivered} deliverables, ${p.onTime}% on time, review ${p.review}, ${p.rework} reworks — that is ${p.tier.toLowerCase()}, not ${given.toLowerCase()}.`,
+    });
+  }
+  const total = people.length;
+  const score = total ? Math.round((right.length / total) * 100) : 100;
+  const parts = [];
+  if (!wrong.length) {
+    parts.push('Every rating on this board is supported by the pack. That is rarer than you would think.');
+  } else {
+    parts.push(`${right.length} of ${total} ratings hold up against the pack.`);
+    parts.push(wrong.map((w) => w.why).join('\n\n'));
+    if (wrong.some((w) => w.tier === 'Outstanding')) {
+      parts.push('The person who files best is the easiest one to see and the least informative. Rate the work.');
+    }
+  }
+  return { score, right: right.length, total, wrong, feedback: parts.join('\n\n') };
+}
+
+function getAppraisal(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) {
+    return { open: false, reason: 'Appraisals are written by your line manager. You will write them yourself from Team Lead.' };
+  }
+  const run = activeRun(enrollment);
+  if (!run) return { open: false, reason: 'No project is running yet.' };
+
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  const people = performanceOf(enrollment, run.id, dayNow);
+  const titles = promotedTitles(enrollment.id);
+  const filed = db.prepare('SELECT * FROM sim_appraisals WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id);
+  const promos = db.prepare('SELECT * FROM sim_promotions WHERE enrollment_id = ?').all(enrollment.id);
+  const thisRun = promos.filter((p) => p.project_run_id === run.id);
+
+  const submitted = filed.length ? {
+    at: filed[0].submitted_at,
+    score: filed[0].score,
+    feedback: filed[0].feedback,
+    ratings: Object.fromEntries(filed.map((r) => [r.archetype, { rating: r.rating, justification: r.justification }])),
+  } : null;
+
+  return {
+    open: true,
+    ratings: RATINGS,
+    header: APPRAISAL_HEADER,
+    quota: appraisalQuota(people.length),
+    justificationMin: JUSTIFICATION_MIN,
+    dayNow,
+    totalDays: PROJECT_WEEK_DAYS,
+    opensOn: APPRAISAL_OPENS_ON,
+    canSubmit: dayNow >= APPRAISAL_OPENS_ON && !submitted,
+    canPromote: LEVEL_RANK[enrollment.level] >= LEVEL_RANK.manager,
+    promotionUsed: thisRun.length > 0,
+    projectTitle: (catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key) || {}).title || null,
+    // Alphabetical and without the tier: the pack is what the learner gets, and the
+    // answer is not in it.
+    people: (() => {
+      const faces = Object.fromEntries(rosterWithAvatars(enrollment.id, enrollment.level).map((r) => [r.archetype, r.avatarUrl]));
+      return people.slice().sort((a, b) => a.name.localeCompare(b.name)).map((r) => ({
+        archetype: r.archetype, name: r.name,
+        title: titles[r.archetype] || r.title,
+        avatarUrl: faces[r.archetype] || null,
+        delivered: r.delivered, onTime: r.onTime, review: r.review, rework: r.rework,
+        timesheetsFiled: r.timesheetsFiled, timesheetsDue: r.timesheetsDue,
+        promoted: Boolean(titles[r.archetype]),
+      }));
+    })(),
+    submitted,
+    promotions: promos.map((p) => ({ archetype: p.archetype, from: p.from_title, to: p.to_title, at: p.decided_at })),
+  };
+}
+
+function submitAppraisal(userId, entries) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) throw new Error('Appraisals are a lead and above responsibility.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  if (dayNow < APPRAISAL_OPENS_ON) {
+    throw new Error(`The appraisal window closes the month. It opens on ${DAY_NAMES[APPRAISAL_OPENS_ON]} — today is ${DAY_NAMES[dayNow] || `day ${dayNow}`}.`);
+  }
+  if (db.prepare('SELECT id FROM sim_appraisals WHERE enrollment_id = ? AND project_run_id = ?').get(enrollment.id, run.id)) {
+    throw new Error('You have already rated this cycle.');
+  }
+
+  const people = performanceOf(enrollment, run.id, dayNow);
+  const given = entries && typeof entries === 'object' ? entries : {};
+  const ratings = {};
+  for (const p of people) {
+    const e = given[p.archetype] || {};
+    const rating = String(e.rating || '').trim();
+    if (!RATINGS.includes(rating)) throw new Error(`${p.name} has no rating yet.`);
+    const why = String(e.justification || '').trim();
+    if (why.length < JUSTIFICATION_MIN) {
+      throw new Error(`${p.name}'s rating needs a reason — at least ${JUSTIFICATION_MIN} characters, and it goes to them.`);
+    }
+    // A rating with no number behind it is an opinion, and an opinion is what somebody
+    // appeals. The pack is full of numbers; use one.
+    if (!/\d/.test(why)) {
+      throw new Error(`${p.name}'s reason does not cite anything from the pack. Quote a number — deliverables, on-time, review score, reworks.`);
+    }
+    ratings[p.archetype] = { rating, justification: why.slice(0, 1200) };
+  }
+
+  const quota = appraisalQuota(people.length);
+  const counts = Object.values(ratings).reduce((m, r) => ({ ...m, [r.rating]: (m[r.rating] || 0) + 1 }), {});
+  if ((counts.Outstanding || 0) > quota.outstanding) {
+    throw new Error(`Only ${quota.outstanding} person on a board this size can be Outstanding. You have ${counts.Outstanding}.`);
+  }
+  const above = (counts.Outstanding || 0) + (counts['Exceeds expectations'] || 0);
+  if (above > quota.aboveMeets) {
+    throw new Error(`At most ${quota.aboveMeets} of ${people.length} can sit above Meets expectations. You have ${above}. Ratings are a ranking whether or not you write one.`);
+  }
+
+  const graded = gradeAppraisal(people, Object.fromEntries(Object.entries(ratings).map(([k, v]) => [k, v.rating])));
+  const iso = now();
+  db.exec('BEGIN');
+  try {
+    for (const [archetype, r] of Object.entries(ratings)) {
+      db.prepare(`INSERT INTO sim_appraisals (id, enrollment_id, project_run_id, archetype, rating, justification, score, feedback, submitted_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(cryptoRandomId(), enrollment.id, run.id, archetype, r.rating, r.justification, graded.score, graded.feedback, iso);
+    }
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+
+  addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
+    `Ratings received for this cycle.\n\n${graded.feedback}`, null,
+    'Re: Appraisal cycle — your ratings', 'people_partner');
+
+  return { ...getAppraisal(userId), justGraded: graded };
+}
+
+// Promotion is a manager's call and it is permanent. It changes the person's title
+// everywhere the roster is read -- Team, Timesheets, the attendance register -- and there
+// is no undo, which is the only version of this decision that is worth practising.
+function promotePerson(userId, archetype, justification) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.manager) throw new Error('Promotions are a manager decision.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+
+  const person = reportsForLevel(enrollment.level).find((p) => p.archetype === archetype);
+  if (!person) throw new Error('That person does not report to you.');
+
+  const rated = db.prepare('SELECT * FROM sim_appraisals WHERE enrollment_id = ? AND project_run_id = ? AND archetype = ?')
+    .get(enrollment.id, run.id, archetype);
+  if (!rated) throw new Error('Rate the board first. A promotion out of nowhere is the thing an appeal is made of.');
+  if (RATING_RANK[rated.rating] > RATING_RANK['Exceeds expectations']) {
+    throw new Error(`You rated ${firstName(person.name)} ${rated.rating.toLowerCase()} this cycle. You cannot promote somebody you have just told they are meeting the bar.`);
+  }
+  if (db.prepare('SELECT id FROM sim_promotions WHERE enrollment_id = ? AND archetype = ?').get(enrollment.id, archetype)) {
+    throw new Error(`${firstName(person.name)} has already been promoted.`);
+  }
+  if (db.prepare('SELECT id FROM sim_promotions WHERE enrollment_id = ? AND project_run_id = ?').get(enrollment.id, run.id)) {
+    throw new Error('One promotion a cycle. Budget is budget.');
+  }
+  const why = String(justification || '').trim();
+  if (why.length < JUSTIFICATION_MIN) throw new Error(`A promotion needs a case — at least ${JUSTIFICATION_MIN} characters. Vikram will read it.`);
+
+  const from = promotedTitles(enrollment.id)[archetype] || person.title;
+  const to = nextTitleFor(from);
+  db.prepare(`INSERT INTO sim_promotions (id, enrollment_id, project_run_id, archetype, from_title, to_title, justification, decided_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(cryptoRandomId(), enrollment.id, run.id, archetype, from, to, why, now());
+
+  const perf = performanceOf(enrollment, run.id, projectDayOn(run.started_at, Date.now()))
+    .find((p) => p.archetype === archetype) || {};
+  const supported = perf.rank <= 2;
+  addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
+    supported
+      ? `${person.name} is ${to} from today. The pack backs it — ${perf.delivered} deliverables at ${perf.onTime}% on time — so this will not come back at you.\n\nTell them yourself before the system does.`
+      : `${person.name} is ${to} from today. It is done and it stands.\n\nFor the file: the pack has them at ${perf.delivered} deliverables, ${perf.onTime}% on time and ${perf.rework} reworks, which is not the strongest case on your team. Somebody who ranked above them will notice. That is yours to answer, not mine.`,
+    null, `${firstName(person.name)} — promotion confirmed`, 'people_partner');
+
+  addMessage(enrollment.id, archetype, person.name,
+    `Just saw the letter. ${to}. Thank you — genuinely.`, null, 'Thank you', archetype);
+
+  return { ...getAppraisal(userId), justPromoted: { name: person.name, from, to, supported } };
+}
+
 module.exports = {
   closeDay,
   timeTravelStartProject,
@@ -18581,6 +18949,7 @@ module.exports = {
   levelsForRole,
   getTimesheets, submitTimesheet, remindTimesheet,
   getAttendance, attendanceCsv, submitAttendance,
+  getAppraisal, appraisalCsv, submitAppraisal, promotePerson,
   getCatalogue,
   recordRoleInterest,
   resetPreview,
