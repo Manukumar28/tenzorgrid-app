@@ -154,12 +154,19 @@ function CurrentAssignment({ a, onOpen, apps }) {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-3 mt-4">
         {[
-          ['Requested by', a.requestedBy && a.requestedBy.name, a.requestedBy && a.requestedBy.title],
+          // The requester comes from the assignment summary the server derived, not from
+          // the project's stakeholder -- coaching and staffing come from your manager, and
+          // getting that wrong is how a Finance stakeholder ends up being shown as asking
+          // for an HR conversation. Falls back so an older session still renders.
+          [(a.assignment && a.assignment.fromTheLine) ? 'From your manager' : 'Requested by',
+            (a.assignment && a.assignment.requestedBy) || (a.requestedBy && a.requestedBy.name),
+            (a.assignment && a.assignment.requestedByTitle) || (a.requestedBy && a.requestedBy.title)],
           ['Reviewer', a.reviewer && a.reviewer.name, a.reviewer && a.reviewer.title],
           // "about 0.1h" is six minutes and reads as a glitch. Below half an hour it is
           // minutes; below ten it is not worth saying at all.
           ['Due', a.dueLabel || '—', estimateOf(a.estHours)],
-          ['Priority', a.priorityLabel || '—', null],
+          // What they are expected to hand over beats how hard the engine thinks it is.
+          ['Deliverable', a.deliverable || null, null],
         ].filter(([, v]) => v).map(([label, value, sub]) => (
           <div key={label} className="min-w-0">
             <div className="text-[11px] font-bold tracking-wide text-slate-500 uppercase">{label}</div>

@@ -24,6 +24,7 @@ const ambientmail = require('./ambientmail');
 const roles = require('./roles');
 const company = require('./company');
 const apps = require('./apps');
+const assignments = require('./assignments');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -14681,7 +14682,7 @@ function buildActivity(tasks, messages, limit = 12) {
   return events.slice(0, limit);
 }
 
-function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex) {
+function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex, rosterList) {
   const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const projectByTaskKey = {};
   for (const p of catalog) {
@@ -14743,6 +14744,9 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       // application it opens into. Read off the authored task rather than guessed from
       // the title -- "Open in Analytics Studio" has to be true, not usually true.
       tool: def.tool || 'sql',
+      // Who asked, and the shape of the ask. Compact on purpose: a manager's board is 120
+      // rows and the prose belongs on the one task they open, not on all of them.
+      assignment: assignments.summarise(def, { brief: t.brief }, proj, rosterList),
       notYetOpen,
       opensAt: t.opens_at || null,
       // "Opens Thursday" beats a locked padlock with no date — the learner should be able
@@ -14861,20 +14865,19 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
 
   // Who the work actually comes from — real counts of who assigned and who graded,
   // not a ranking of simulated people against each other.
+  //
+  // Counted per task, off the row's own requester. This used to credit every task on a
+  // project to that project's stakeholder, so a lead whose manager personally handed her
+  // six coaching and staffing jobs still saw all thirty filed under the client. A task
+  // with no requester of its own falls back to the project stakeholder.
   const sources = {};
-  for (const p of catalog) {
-    for (const k of p.taskKeys) {
-      if (!rows.some((r) => r.projectKey === p.key)) continue;
-      const person = ROSTER.find((x) => x.archetype === p.stakeholder);
-      if (!person) continue;
-      sources[person.archetype] = sources[person.archetype] || { archetype: person.archetype, name: person.name, title: person.title, assigned: 0, graded: 0 };
-    }
-  }
   for (const r of rows) {
-    const p = catalog.find((x) => x.key === r.projectKey);
-    if (!p) continue;
-    const person = ROSTER.find((x) => x.archetype === p.stakeholder);
-    if (!person || !sources[person.archetype]) continue;
+    const proj = catalog.find((x) => x.key === r.projectKey);
+    const archetype = (r.assignment && r.assignment.requestedByArchetype) || (proj && proj.stakeholder);
+    const person = ROSTER.find((x) => x.archetype === archetype);
+    if (!person) continue;
+    sources[person.archetype] = sources[person.archetype]
+      || { archetype: person.archetype, name: person.name, title: person.title, assigned: 0, graded: 0 };
     sources[person.archetype].assigned += 1;
     if (r.status === 'graded') sources[person.archetype].graded += 1;
   }
@@ -15313,6 +15316,7 @@ function getState(userId) {
     Date.parse(enrollment.created_at),
     enrollment.level,
     dayUnlocked,
+    rosterList,
   );
 
   // Stamp the visit before anything reads it, and keep the previous stamp -- "since you
@@ -17267,11 +17271,37 @@ function getWorkbench(userId, taskId) {
   const datasetKey = datasetForTask(task.task_key);
   const def = TASKS[task.task_key] || {};
   const tool = def.tool || 'sql';
+  // The full assignment, built only here -- for the one task somebody has actually opened.
+  // Home and the board carry the compact summary instead, so opening the workspace is what
+  // costs the prose rather than every read of a 120-row board.
+  const wbProject = catalogFor(enrollment.role, enrollment.level, touchedProjectKeys(enrollment.role, []))
+    .find((p) => (p.taskKeys || []).includes(task.task_key))
+    || (PROJECT_CATALOG[enrollment.role] || []).find((p) => (p.taskKeys || []).includes(task.task_key))
+    || null;
+  const wbRoster = rosterWithAvatars(enrollment.id, enrollment.level);
+  const dsForTask = describeDataset(datasetKey);
+  const assignment = assignments.build({
+    taskDef: def,
+    task: { title: task.title, brief: task.brief },
+    project: wbProject,
+    roster: wbRoster,
+    // Only things that exist. The project brief is authored for every project and the
+    // dataset is the one this task actually queries; nothing else is offered, because a
+    // link to a document nobody wrote is worse than no link.
+    resources: [
+      wbProject && getProjectDoc(wbProject.key)
+        ? { kind: 'brief', label: `${wbProject.title} — project brief`, projectKey: wbProject.key }
+        : null,
+      dsForTask ? { kind: 'dataset', label: dsForTask.label || dsForTask.name || datasetKey, datasetKey } : null,
+    ].filter(Boolean),
+  });
+
   return {
     taskId: task.id,
     taskKey: task.task_key,
     title: task.title,
     brief: task.brief,
+    assignment,
     status: task.status,
     score: task.score,
     feedback: task.feedback,
@@ -19238,6 +19268,11 @@ function currentAssignment(state) {
     priority: pick.priority,
     priorityLabel: pick.priorityLabel,
     estHours: pick.estHours,
+    // The same compact summary every board row carries, plus what the learner is expected
+    // to hand over. Derived once in lib/assignments.js and read here -- Home does not
+    // build assignment context of its own.
+    assignment: pick.assignment || null,
+    deliverable: assignments.deliverableFor({ tool: pick.tool }),
     stage: pick.stage,
     stagePct: pick.stagePct,
   };
@@ -19404,6 +19439,10 @@ module.exports = {
   getTimesheets, submitTimesheet, remindTimesheet,
   getAttendance, attendanceCsv, submitAttendance,
   getAppraisal, appraisalCsv, submitAppraisal, promotePerson,
+  // Exposed for the assignment audit and its suite: deriving context for all 602 tasks
+  // means reading the authored definitions, and re-parsing this file with a regex to do
+  // it is how a test ends up asserting against its own parser.
+  TASKS, PROJECT_CATALOG, ROSTER, rosterWithAvatars,
   getEmployee, buildWorkday, workStateOf, greetingAt,
   getCatalogue,
   recordRoleInterest,
