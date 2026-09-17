@@ -518,6 +518,61 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/appraisal' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { appraisal: workspace.getAppraisal(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/appraisal/performance.csv' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    let csv;
+    try {
+      csv = workspace.appraisalCsv(user.id);
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Length': Buffer.byteLength(csv),
+      'Content-Disposition': 'attachment; filename="performance-pack.csv"',
+    });
+    return res.end(csv);
+  }
+
+  if (pathname === '/api/workspace/appraisal/submit' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, {
+        appraisal: workspace.submitAppraisal(user.id, body.entries),
+        state: workspace.getState(user.id),
+      });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/appraisal/promote' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, {
+        appraisal: workspace.promotePerson(user.id, body.archetype, body.justification),
+        state: workspace.getState(user.id),
+      });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/reset' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
