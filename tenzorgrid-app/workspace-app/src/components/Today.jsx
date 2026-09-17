@@ -47,7 +47,7 @@ function Via({ via }) {
 
 // ---- Activities ----------------------------------------------------------------------
 
-function Activity({ item, onDone, openByDefault }) {
+export function Activity({ item, onDone, openByDefault }) {
   const [answer, setAnswer] = useState('');
   const [picked, setPicked] = useState('');
   const [busy, setBusy] = useState(false);
@@ -165,7 +165,7 @@ const ACTIONS = [
   { key: 'escalate', label: 'Escalate', Icon: ArrowUpRight },
 ];
 
-function Situation({ item, onHandle }) {
+export function Situation({ item, onHandle }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -257,7 +257,7 @@ function Situation({ item, onHandle }) {
 // learner's first thought is "where would I even do that?", which is a fair question and
 // exactly the wrong one to be having mid-analysis. So the form comes with the email.
 
-function Chore({ item, onDone }) {
+export function Chore({ item, onDone }) {
   const [values, setValues] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -466,7 +466,7 @@ function Quiz({ quiz, onSubmit }) {
 // "TASKS 6/6", scrolled past two essays, four emails and a timesheet, and never found the
 // six pieces of work the day is actually made of, because they live on the Tasks tab.
 // That was the single biggest reason the page was hard to follow.
-function TodaysTasks({ rows, onOpen }) {
+export function TodaysTasks({ rows, onOpen }) {
   if (!rows.length) return null;
   return (
     <BentoCard hover={false}>

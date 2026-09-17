@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
 import Overview from './components/Overview.jsx';
+import WorkdayHome from './components/WorkdayHome.jsx';
 import Projects from './components/Projects.jsx';
 import Tasks from './components/Tasks.jsx';
 import CalendarTab from './components/CalendarTab.jsx';
@@ -40,7 +41,11 @@ export default function App() {
     }
     setRawState(next);
   }, []);
-  const [tab, setTab] = useState('overview');
+  // The landing page is the workday, not the dashboard. Somebody arriving should see
+  // what is happening at work before they see how they are scoring.
+  const [tab, setTab] = useState('workday');
+  // A task the Workday Home asked to open. Timestamped so asking twice still works.
+  const [openRequest, setOpenRequest] = useState(null);
   // A stand-up you can ignore is not a stand-up — it opens by itself, once a day, the
   // way a real one starts whether or not you feel like it. Closing it is one click, and
   // the banner is there all day if you want it back.
@@ -130,6 +135,7 @@ export default function App() {
         roleLabel={(state.enrollment.roleLabel || 'Data Analyst').toUpperCase()}
         levelLabel={state.enrollment.levelTitle || ''}
         level={state.enrollment.level}
+        company={state.company}
         onLogout={logout}
         unreadCount={state.inbox ? state.inbox.counts.unread : 0}
       />
@@ -148,6 +154,9 @@ export default function App() {
           name={learnerName}
           photoUrl={learnerPhotoUrl}
           roleLabel={roleLabel}
+          company={state.company}
+          employee={state.employee}
+          compact={tab === 'workday'}
           checkedIn={state.attendance.checkedInToday}
           onToggleCheckIn={toggleCheckIn}
           onLogout={logout}
@@ -169,10 +178,18 @@ export default function App() {
           </button>
         )}
 
+        {tab === 'workday' && (
+          <WorkdayHome
+            state={state}
+            onStateChange={setState}
+            onTab={setTab}
+            onOpenTask={(id) => { setOpenRequest({ id, at: Date.now() }); setTab('tasks'); }}
+          />
+        )}
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
         {tab === 'today' && <Today state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
-        {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}
+        {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} openRequest={openRequest} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}
         {tab === 'calendar' && <CalendarTab state={state} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}

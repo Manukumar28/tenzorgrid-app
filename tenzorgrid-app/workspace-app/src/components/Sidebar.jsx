@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun, Clock3, ClipboardList, Star } from 'lucide-react';
+import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun, Clock3, ClipboardList, Star, Home } from 'lucide-react';
 
 // `minLevel` hides a tab below that rung. It is a convenience only — the engine checks
 // the level on every call, because a tab you cannot see is not a permission, it is a
 // tidier menu.
 const NAV = [
+  { key: 'workday', label: 'Workday', icon: Home },
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
   { key: 'today', label: 'Today', icon: Sun },
   { key: 'projects', label: 'Projects', icon: FolderOpen },
@@ -35,7 +36,7 @@ const WEATHER_BY_HOUR = (h) => (h < 6 ? 'clear night' : h < 12 ? 'mostly clear' 
 // the page scrolled 431px sideways on a 390px device. Below `lg` it is a drawer instead:
 // off-canvas by default, slid in over a scrim when the header's menu button is pressed.
 // Above `lg` it is exactly the rail it always was, so nothing changes on a laptop.
-export default function Sidebar({ tab, onTab, roleLabel, levelLabel, level, onLogout, unreadCount = 0, open = false, onClose }) {
+export default function Sidebar({ tab, onTab, roleLabel, levelLabel, level, company, onLogout, unreadCount = 0, open = false, onClose }) {
   const rank = LEVEL_RANK[level] === undefined ? 0 : LEVEL_RANK[level];
   const nav = NAV.filter((n) => !n.minLevel || rank >= LEVEL_RANK[n.minLevel]);
   const now = useClock();
@@ -62,9 +63,27 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, level, onLo
           ${open ? 'translate-x-0' : '-translate-x-full'}
           lg:sticky lg:top-0 lg:translate-x-0 lg:z-auto`}
       >
-      <div className="px-2 mb-6 flex items-center gap-2">
-        <img src="/assets/icon.svg" alt="" className="w-7 h-7" />
-        <span className="font-extrabold text-gray-900">Tenzor<span className="text-teal-700">Grid</span></span>
+      {/* The employer is the identity inside the workspace; TenzorGrid is the platform it
+          runs on and sits underneath it. A learner should see who they work for first. */}
+      <div className="px-2 mb-6 flex items-center gap-2.5">
+        {company ? (
+          <>
+            <span className="shrink-0 w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[12px] font-extrabold tracking-tight">
+              {company.mark}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-extrabold text-gray-900 text-[14px] leading-tight truncate">{company.name}</span>
+              <span className="block text-[11px] text-gray-400 leading-tight truncate">
+                on Tenzor<span className="text-teal-700 font-semibold">Grid</span>
+              </span>
+            </span>
+          </>
+        ) : (
+          <>
+            <img src="/assets/icon.svg" alt="" className="w-7 h-7" />
+            <span className="font-extrabold text-gray-900">Tenzor<span className="text-teal-700">Grid</span></span>
+          </>
+        )}
         <button
           onClick={onClose}
           aria-label="Close the menu"

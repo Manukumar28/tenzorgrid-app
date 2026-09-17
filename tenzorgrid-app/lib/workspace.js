@@ -22,6 +22,7 @@ const tasktypes = require('./tasktypes');
 const dayitems = require('./dayitems');
 const ambientmail = require('./ambientmail');
 const roles = require('./roles');
+const company = require('./company');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -15309,6 +15310,29 @@ function getState(userId) {
     dayUnlocked,
   );
 
+  // Stamp the visit before anything reads it, and keep the previous stamp -- "since you
+  // were away" measures from the last time this person looked, not from this instant,
+  // which would always be zero seconds ago and therefore always empty.
+  const presence = db.prepare('SELECT * FROM sim_presence WHERE enrollment_id = ?').get(enrollment.id) || null;
+  const lastSeenAt = presence ? presence.last_seen_at : null;
+  const nowIso = now();
+  // Reads inside one sitting are one visit. Without the gap, tabbing between Today and
+  // Tasks would move the marker to a few seconds ago and the summary would go blank
+  // exactly when a learner went looking for it.
+  const AWAY_GAP_MS = 30 * 60 * 1000;
+  const returning = !lastSeenAt || (Date.now() - Date.parse(lastSeenAt)) > AWAY_GAP_MS;
+  // Not `|| lastSeenAt`. A returning visit writes the old mark into previous_seen_at and
+  // it then stays put for the whole sitting, so every read during that sitting measures
+  // the same gap. Falling back to last_seen_at instead made the marker chase the clock:
+  // tabbing from Today to Tasks moved it to a second ago and the summary emptied itself
+  // exactly when somebody went back to look at it.
+  const sinceIso = returning ? lastSeenAt : (presence && presence.previous_seen_at) || null;
+  db.prepare(`INSERT INTO sim_presence (enrollment_id, last_seen_at, previous_seen_at) VALUES (?, ?, ?)
+              ON CONFLICT(enrollment_id) DO UPDATE SET
+                previous_seen_at = CASE WHEN ? THEN sim_presence.last_seen_at ELSE sim_presence.previous_seen_at END,
+                last_seen_at = excluded.last_seen_at`)
+    .run(enrollment.id, nowIso, null, returning ? 1 : 0);
+
   const scoreHistory = gradedTasks.map((t) => ({ date: t.graded_at, score: t.score, title: t.title }));
   const checklistState = JSON.parse(enrollment.checklist_json || '{}');
   const checklist = (CHECKLIST_ITEMS[enrollment.role] || []).map((item) => ({ ...item, checked: Boolean(checklistState[item.key]) }));
@@ -15324,7 +15348,7 @@ function getState(userId) {
     })),
   } : null;
 
-  return {
+  const payload = {
     // The UI used to build these itself with `level === 'senior' ? 'Senior' : 'Junior'`,
     // which read "Junior Data Analyst" to a Team Lead and a Manager. The title of the job
     // somebody is doing is the engine's to state, not the template's to infer.
@@ -15469,6 +15493,14 @@ function getState(userId) {
     learningPath: LEARNING_PATH[enrollment.role] || [],
     milestone,
   };
+
+  // The three context layers, last, because every one of them reads the payload above
+  // rather than the database. Anything the Workday Home shows is therefore the same
+  // object the tab it links to is showing, and the two cannot drift.
+  payload.company = company.companyFor((roles.getRole(enrollment.role) || {}).subcategory, null);
+  payload.employee = getEmployee(enrollment, userId, rosterList);
+  payload.workday = buildWorkday(payload, new Date(), sinceIso);
+  return payload;
 }
 
 // Starts an available project by assigning its tasks. The unlock gate is enforced here,
@@ -18939,6 +18971,414 @@ function promotePerson(userId, archetype, justification) {
   return { ...getAppraisal(userId), justPromoted: { name: person.name, from, to, supported } };
 }
 
+// ---- Company, employee and workday context ---------------------------------------------
+//
+// Three layers between the simulation engine and the screen, in that order, because that
+// is the order a person experiences a job in: there is a company, you are somebody
+// specific inside it, and today is happening.
+//
+// None of this invents state. Every field below is read off something the engine already
+// persists -- the enrolment, the roster, the board, the inbox, the calendar -- so a
+// reload rebuilds the same workday rather than a plausible one. The rule is that if the
+// engine cannot support a sentence, the sentence is not shown; there are no decorative
+// alerts in here.
+
+// The learner's place in the organisation.
+//
+// Title comes from the role ladder rather than being stored, so a promotion changes it
+// everywhere at once and there is no second copy to drift. Same reasoning as the promoted
+// titles on the roster: one source, read through.
+function getEmployee(enrollment, userId, rosterList) {
+  const roleDef = roles.getRole(enrollment.role) || {};
+  const co = company.companyFor(roleDef.subcategory, null);
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId) || {};
+  const manager = (rosterList || []).find((p) => p.archetype === 'line_manager') || null;
+
+  const startedAt = enrollment.created_at;
+  const tenureDays = Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / DAY_MS));
+
+  return {
+    name: profile.name || 'there',
+    firstName: firstName(profile.name) || 'there',
+    employeeId: company.employeeIdFor(co, enrollment.id),
+    title: levelLabel(enrollment.level, enrollment.role),
+    level: enrollment.level,
+    roleKey: enrollment.role,
+    roleLabel: roleDef.label || 'Analyst',
+    businessFunction: roleDef.subcategory || null,
+    division: co.org.division,
+    department: co.org.department,
+    team: co.org.team,
+    manager: manager ? {
+      archetype: manager.archetype, name: manager.name,
+      // Asha is "Line Manager" on the roster because that is her function in the
+      // simulation. On a business card she is the manager OF something, and that is what
+      // a new joiner is told on their first day.
+      title: `${co.org.department} Manager`,
+      avatarUrl: manager.avatarUrl || null,
+    } : null,
+    startDate: startedAt,
+    tenureDays,
+    workArrangement: co.workArrangement,
+    location: co.primaryLocation.label,
+    city: co.primaryLocation.city,
+    workingHours: co.workingHours,
+  };
+}
+
+const GREETINGS = [
+  { until: 5, word: 'You are up early' },
+  { until: 12, word: 'Good morning' },
+  { until: 17, word: 'Good afternoon' },
+  { until: 22, word: 'Good evening' },
+  { until: 24, word: 'Still here' },
+];
+function greetingAt(date) {
+  const h = date.getHours();
+  return (GREETINGS.find((g) => h < g.until) || GREETINGS[1]).word;
+}
+
+// A working day, laid out. Times are the company's own hours rather than wall-clock, so
+// the timeline reads as a shift somebody works and not as a clock that has already run
+// out by the time a learner sits down in the evening.
+const WORKDAY_SHAPE = [
+  { at: '09:30', kind: 'standup', label: 'Daily stand-up', minutes: 15 },
+  { at: '10:00', kind: 'focus', label: 'Focus block', minutes: 120 },
+  { at: '12:00', kind: 'admin', label: 'Admin and correspondence', minutes: 60 },
+  { at: '13:00', kind: 'lunch', label: 'Lunch', minutes: 45 },
+  { at: '14:00', kind: 'focus', label: 'Focus block', minutes: 120 },
+  { at: '16:00', kind: 'review', label: 'Review and sign-off', minutes: 60 },
+  { at: '17:00', kind: 'wrap', label: 'Wrap up and hand over', minutes: 45 },
+];
+
+function minutesOf(hhmm) {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return h * 60 + m;
+}
+
+// What today looks like as a shift. The shape is fixed; what fills it is not -- a focus
+// block names the task you would actually be doing in it, and a slot with nothing real to
+// put in it says so rather than inventing a meeting.
+function buildTimeline(state, nowDate) {
+  const nowMin = nowDate.getHours() * 60 + nowDate.getMinutes();
+  const openTasks = ((state.taskBoard && state.taskBoard.rows) || [])
+    .filter((r) => r.status !== 'graded' && !r.notYetOpen);
+  const needsReview = ((state.taskBoard && state.taskBoard.rows) || [])
+    .filter((r) => r.sentBack || r.reviewState === 'pending');
+  const unread = state.inbox ? state.inbox.counts.unread : 0;
+  const openSituations = (state.situations || []).filter((x) => !x.handledAs);
+
+  let focusAt = 0;
+  const slots = WORKDAY_SHAPE.map((slot) => {
+    const start = minutesOf(slot.at);
+    const end = start + slot.minutes;
+    let title = slot.label;
+    let detail = null;
+    let taskId = null;
+    let empty = false;
+
+    let done = false;
+    if (slot.kind === 'standup') {
+      done = Boolean(state.standup && state.standup.done);
+      const managerName = (state.standup && state.standup.manager) || 'your manager';
+      detail = done ? 'Done — you have already stood up today' : `With ${managerName}`;
+      title = 'Daily stand-up';
+    } else if (slot.kind === 'focus') {
+      const t = openTasks[focusAt];
+      focusAt += 1;
+      if (t) { title = `Focus — ${t.title}`; detail = t.projectTitle; taskId = t.id; }
+      else { title = 'Focus block'; detail = 'Nothing outstanding — keep it or give it back'; empty = true; }
+    } else if (slot.kind === 'admin') {
+      const bits = [];
+      if (unread) bits.push(`${unread} unread`);
+      if (openSituations.length) bits.push(`${openSituations.length} to answer`);
+      detail = bits.length ? bits.join(' · ') : 'Inbox is clear';
+      empty = !bits.length;
+    } else if (slot.kind === 'review') {
+      if (needsReview.length) {
+        title = 'Review and sign-off';
+        detail = `${needsReview.length} item${needsReview.length === 1 ? '' : 's'} with ${(state.employee && state.employee.manager && state.employee.manager.name) || 'your manager'}`;
+      } else { detail = 'Nothing waiting on review'; empty = true; }
+    } else if (slot.kind === 'wrap') {
+      const day = state.day;
+      detail = day && day.readyToClose ? 'The day is ready to close' : 'Close the day when the work is in';
+    } else if (slot.kind === 'lunch') {
+      detail = null;
+    }
+
+    return {
+      at: slot.at, endsAt: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`,
+      kind: slot.kind, title, detail, taskId, empty, done,
+      now: nowMin >= start && nowMin < end,
+      past: nowMin >= end,
+    };
+  });
+
+  // Exactly one NEXT, and only when there is one -- an evening learner has nothing next
+  // today and should be told that rather than shown tomorrow's stand-up as if it were
+  // minutes away. A slot that is finished is not next either: a stand-up at 09:30 that
+  // has already happened was still being flagged NEXT at 09:26, directly above the words
+  // "you have already stood up today".
+  const next = slots.find((s) => !s.past && !s.now && !s.empty && !s.done);
+  if (next) next.next = true;
+  return slots;
+}
+
+// The headline strip: what a colleague would tell you if they caught you at the door.
+// Everything here is a count of something real, and the list is empty when nothing is
+// happening, which is a legitimate state and reads better than a manufactured alert.
+function buildHeadlines(state, timeline, nowDate) {
+  const out = [];
+  const rows = (state.taskBoard && state.taskBoard.rows) || [];
+  const managerName = (state.employee && state.employee.manager && state.employee.manager.name) || 'your manager';
+
+  const standupSlot = timeline.find((s) => s.kind === 'standup');
+  if (state.standup && !state.standup.done) {
+    const mins = minutesOf('09:30') - (nowDate.getHours() * 60 + nowDate.getMinutes());
+    out.push({
+      kind: 'standup', tone: 'indigo',
+      text: mins > 0 && mins <= 60
+        ? `Stand-up with ${firstName(managerName)} in ${mins} minute${mins === 1 ? '' : 's'}.`
+        : `Your stand-up with ${firstName(managerName)} is still open.`,
+      tab: null,
+    });
+  } else if (standupSlot) { /* stood up already; nothing to say */ }
+
+  const sentBack = rows.filter((r) => r.sentBack);
+  if (sentBack.length) {
+    out.push({
+      kind: 'returned', tone: 'rose',
+      text: sentBack.length === 1
+        ? `${firstName(managerName)} sent back "${sentBack[0].title}" for another look.`
+        : `${sentBack.length} pieces of work came back for another look.`,
+      tab: 'tasks',
+    });
+  }
+
+  const overdue = rows.filter((r) => r.overdue && r.status !== 'graded');
+  if (overdue.length) {
+    out.push({
+      kind: 'overdue', tone: 'rose',
+      text: `${overdue.length} deadline${overdue.length === 1 ? ' has' : 's have'} already passed.`,
+      tab: 'tasks',
+    });
+  }
+
+  const unread = state.inbox ? state.inbox.counts.unread : 0;
+  if (unread) {
+    out.push({
+      kind: 'mail', tone: 'sky',
+      text: `${unread} message${unread === 1 ? '' : 's'} you have not opened.`,
+      tab: 'emails',
+    });
+  }
+
+  const openSits = (state.situations || []).filter((x) => !x.handledAs && !x.deskMail);
+  if (openSits.length) {
+    out.push({
+      kind: 'situation', tone: 'amber',
+      text: `${openSits.length} thing${openSits.length === 1 ? '' : 's'} on your desk need${openSits.length === 1 ? 's' : ''} a decision.`,
+      tab: 'today',
+    });
+  }
+
+  return out.slice(0, 4);
+}
+
+// The one piece of work that should be open right now. The board is already sorted by
+// what matters -- sent back, then overdue, then priority, then deadline -- so this reads
+// the top of it rather than re-deciding, which is how the two could disagree.
+// getState hands the Projects tab an object, not an array -- the list is one field on it,
+// beside the skill totals. Reading it wrong is a TypeError rather than a wrong number,
+// which is the good kind of mistake, but only once.
+function projectList(state) {
+  const p = state.projects;
+  return Array.isArray(p) ? p : ((p && p.projects) || []);
+}
+
+function currentAssignment(state) {
+  const rows = (state.taskBoard && state.taskBoard.rows) || [];
+  const open = rows.filter((r) => r.status !== 'graded' && !r.notYetOpen);
+  const pick = open.find((r) => r.sentBack) || open.find((r) => r.overdue) || open[0];
+  if (!pick) return null;
+
+  const project = projectList(state).find((p) => p.key === pick.projectKey) || null;
+  const requester = project
+    ? (state.roster || []).find((r) => r.archetype === project.stakeholderArchetype) || null
+    : null;
+  const manager = (state.roster || []).find((r) => r.archetype === 'line_manager') || null;
+
+  return {
+    taskId: pick.id,
+    title: pick.title,
+    brief: pick.brief,
+    projectKey: pick.projectKey,
+    projectTitle: pick.projectTitle,
+    requestedBy: requester ? { name: requester.name, title: requester.title, avatarUrl: requester.avatarUrl || null } : null,
+    reviewer: manager ? { name: manager.name, title: manager.title, avatarUrl: manager.avatarUrl || null } : null,
+    dueLabel: pick.dueLabel,
+    dueAt: pick.dueAt,
+    overdue: Boolean(pick.overdue),
+    sentBack: pick.sentBack,
+    sentBackNote: pick.sentBackNote,
+    priority: pick.priority,
+    priorityLabel: pick.priorityLabel,
+    estHours: pick.estHours,
+    stage: pick.stage,
+    stagePct: pick.stagePct,
+  };
+}
+
+// The queue, in workplace language rather than coursework language. The states are the
+// ones a person would use about their own week; the numbers underneath are the same ones
+// the board has always had.
+// The order matters and it is the order a person would use about their own week: what
+// somebody has handed back first, then what is out of your hands, then what has not
+// opened, then what is late, then what is under way.
+//
+// "Needs attention" is deliberately hard to earn. Marking every high-priority task that
+// way put the same red label on four untouched tasks on a Monday morning, which says
+// nothing and trains a learner to ignore it. It means late, or urgent AND landing today.
+function workStateOf(row) {
+  if (row.sentBack === 'redo') return { key: 'returned', label: 'Returned', tone: 'rose' };
+  if (row.sentBack === 'rework') return { key: 'returned', label: 'Change requested', tone: 'rose' };
+  if (row.reviewState === 'pending') return { key: 'waiting', label: 'With your manager', tone: 'violet' };
+  if (row.status === 'submitted') return { key: 'waiting', label: 'Submitted', tone: 'violet' };
+  if (row.notYetOpen) return { key: 'blocked', label: row.opensLabel ? `Opens ${row.opensLabel}` : 'Not open yet', tone: 'slate' };
+  if (row.overdue) return { key: 'attention', label: 'Past due', tone: 'rose' };
+  const landingToday = /today/i.test(row.dueLabel || '');
+  if (row.priority === 'urgent' && landingToday) return { key: 'attention', label: 'Needs attention', tone: 'rose' };
+  if (row.stagePct > 0) return { key: 'progress', label: 'In progress', tone: 'sky' };
+  if (landingToday || /tomorrow/i.test(row.dueLabel || '')) return { key: 'soon', label: 'Due soon', tone: 'amber' };
+  return { key: 'open', label: 'Not started', tone: 'slate' };
+}
+
+function buildQueue(state, currentId) {
+  const rows = (state.taskBoard && state.taskBoard.rows) || [];
+  return rows
+    .filter((r) => r.status !== 'graded' && r.id !== currentId)
+    .slice(0, 6)
+    .map((r) => {
+      const project = projectList(state).find((p) => p.key === r.projectKey) || null;
+      const requester = project
+        ? (state.roster || []).find((x) => x.archetype === project.stakeholderArchetype) || null
+        : null;
+      return {
+        taskId: r.id, title: r.title,
+        projectTitle: r.projectTitle,
+        requestedBy: requester ? requester.name : null,
+        dueLabel: r.dueLabel,
+        estHours: r.estHours,
+        state: workStateOf(r),
+      };
+    });
+}
+
+// What happened while the learner was not looking. Real events only -- a sign-off that
+// was recorded, a message that arrived, a deadline that passed -- measured against the
+// last time they were here. A company that only exists while you are watching it is not
+// a company, and a company that invents things that did not happen is worse.
+function buildSinceAway(state, sinceIso) {
+  if (!sinceIso) return { since: null, items: [] };
+  const sinceMs = Date.parse(sinceIso);
+  const items = [];
+  const rows = (state.taskBoard && state.taskBoard.rows) || [];
+
+  for (const r of rows) {
+    if (r.gradedAt && Date.parse(r.gradedAt) > sinceMs) {
+      items.push({ kind: 'signoff', at: r.gradedAt, text: `"${r.title}" was signed off${typeof r.score === 'number' ? ` at ${r.score}` : ''}.`, tab: 'tasks' });
+    }
+    if (r.sentBack) {
+      items.push({ kind: 'returned', at: r.dueAt || null, text: `"${r.title}" came back for another look.`, tab: 'tasks' });
+    }
+  }
+  for (const m of state.messages || []) {
+    if (m.sender_archetype === 'learner') continue;
+    if (Date.parse(m.created_at) <= sinceMs) continue;
+    items.push({
+      kind: 'message', at: m.created_at,
+      text: `${m.sender_name}: ${(m.subject || (m.body || '').replace(/\s+/g, ' ')).slice(0, 90)}`,
+      tab: m.subject ? 'emails' : null,
+    });
+  }
+  for (const p of projectList(state)) {
+    // Real pressure only: the week ran past its date, or a named colleague is stuck
+    // waiting on your numbers. Both are recorded; neither is a mood.
+    if (!p.week) continue;
+    if (p.week.overdueDays > 0) {
+      items.push({ kind: 'project', at: null, text: `${p.title} is ${p.week.overdueDays} day${p.week.overdueDays === 1 ? '' : 's'} past its date.`, tab: 'projects' });
+    } else if ((p.week.blocking || []).length) {
+      items.push({ kind: 'project', at: null, text: `${p.week.blocking.join(' and ')} ${p.week.blocking.length === 1 ? 'is' : 'are'} waiting on your numbers for ${p.title}.`, tab: 'projects' });
+    }
+  }
+
+  items.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  return { since: sinceIso, items: items.slice(0, 6) };
+}
+
+// Project health, compactly. Reads the same status the Projects tab reads -- this is a
+// glance, not a second opinion.
+function buildProjectHealth(state) {
+  return projectList(state)
+    .filter((p) => p.status === 'active' || p.status === 'completed')
+    .slice(0, 3)
+    .map((p) => {
+      const w = p.week || null;
+      // "At risk" is not a mood. It is the week running past its date, or a named
+      // colleague stuck waiting on your numbers -- both of which the engine records.
+      const health = p.status === 'completed' ? 'delivered'
+        : w && w.overdueDays > 0 ? 'at risk'
+          : w && (w.blocking || []).length ? 'at risk'
+            : 'on track';
+      const due = !w ? null
+        : w.overdueDays > 0 ? `${w.overdueDays} day${w.overdueDays === 1 ? '' : 's'} over`
+          : w.allCaughtUp && w.waitingUntil ? `Next opens ${w.waitingUntil}`
+            : w.daysLeft === 0 ? 'Due today'
+              : `${w.daysLeft} day${w.daysLeft === 1 ? '' : 's'} left`;
+      return {
+        key: p.key, title: p.title,
+        status: p.status,
+        progressPct: p.progressPct,
+        phase: p.phase,
+        health,
+        due,
+        blocking: w ? (w.blocking || []) : [],
+      };
+    });
+}
+
+// The whole workday, assembled. Called from getState with the payload it has already
+// built, so nothing here re-queries and nothing can disagree with the tab it came from.
+function buildWorkday(state, nowDate, lastSeenIso) {
+  const timeline = buildTimeline(state, nowDate);
+  const assignment = currentAssignment(state);
+  const manager = (state.roster || []).find((r) => r.archetype === 'line_manager') || null;
+  // The manager's most recent word to you, whatever form it arrived in. Milestone 01
+  // establishes the hook; what she says is still the simulation's, not a new voice.
+  const fromManager = (state.messages || [])
+    .filter((m) => m.sender_archetype === 'line_manager')
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0] || null;
+
+  return {
+    greeting: greetingAt(nowDate),
+    date: nowDate.toISOString().slice(0, 10),
+    dateLabel: nowDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+    headlines: buildHeadlines(state, timeline, nowDate),
+    timeline,
+    assignment,
+    queue: buildQueue(state, assignment ? assignment.taskId : null),
+    sinceAway: buildSinceAway(state, lastSeenIso),
+    projectHealth: buildProjectHealth(state),
+    managerNote: fromManager && manager ? {
+      name: manager.name,
+      avatarUrl: manager.avatarUrl || null,
+      subject: fromManager.subject || null,
+      body: (fromManager.body || '').replace(/\s+/g, ' ').trim().slice(0, 220),
+      at: fromManager.created_at,
+    } : null,
+  };
+}
+
 module.exports = {
   closeDay,
   timeTravelStartProject,
@@ -18950,6 +19390,7 @@ module.exports = {
   getTimesheets, submitTimesheet, remindTimesheet,
   getAttendance, attendanceCsv, submitAttendance,
   getAppraisal, appraisalCsv, submitAppraisal, promotePerson,
+  getEmployee, buildWorkday, workStateOf, greetingAt,
   getCatalogue,
   recordRoleInterest,
   resetPreview,

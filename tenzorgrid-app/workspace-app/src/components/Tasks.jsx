@@ -228,7 +228,7 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
   );
 }
 
-export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange, onOpenChat }) {
+export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChange, onOpenChat, openRequest }) {
   const { taskBoard, roster, projects } = state;
 
   // Testing only, and only when the server allows it. Reaching the seventh task by
@@ -260,6 +260,16 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
     setView('workspace');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // "Continue work" on the Workday Home has to land in the editor for THAT task, not on
+  // the board with the task somewhere in it. The request carries a timestamp so asking
+  // for the same task twice still re-opens it.
+  useEffect(() => {
+    if (!openRequest || !openRequest.id) return;
+    setSelectedId(openRequest.id);
+    setView('workspace');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [openRequest]);
 
   function changeView(next) {
     setView(next);
