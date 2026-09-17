@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun, Clock3 } from 'lucide-react';
+import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun, Clock3, ClipboardList } from 'lucide-react';
 
 // `minLevel` hides a tab below that rung. It is a convenience only — the engine checks
 // the level on every call, because a tab you cannot see is not a permission, it is a
@@ -10,6 +10,7 @@ const NAV = [
   { key: 'projects', label: 'Projects', icon: FolderOpen },
   { key: 'tasks', label: 'Tasks', icon: ClipboardCheck },
   { key: 'timesheets', label: 'Timesheets', icon: Clock3 },
+  { key: 'attendance', label: 'Attendance', icon: ClipboardList, minLevel: 'lead' },
   { key: 'calendar', label: 'Calendar', icon: Calendar },
   { key: 'emails', label: 'Emails', icon: Mail },
   { key: 'team', label: 'Team', icon: Users },

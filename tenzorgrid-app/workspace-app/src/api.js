@@ -55,4 +55,11 @@ export const api = {
     jsonFetch('/api/workspace/timesheets/submit', { method: 'POST', body: JSON.stringify({ day, ...values }) }),
   remindTimesheet: (archetype, day) =>
     jsonFetch('/api/workspace/timesheets/remind', { method: 'POST', body: JSON.stringify({ archetype, day }) }),
+
+  attendance: () => jsonFetch('/api/workspace/attendance'),
+  // Not through jsonFetch: this one is a file, and the browser's own download is the
+  // point. The URL is the same origin and the session cookie rides along.
+  attendanceCsvUrl: '/api/workspace/attendance/register.csv',
+  submitAttendance: (csv) =>
+    jsonFetch('/api/workspace/attendance/submit', { method: 'POST', body: JSON.stringify({ csv }) }),
 };

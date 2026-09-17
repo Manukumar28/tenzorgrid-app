@@ -15953,7 +15953,12 @@ function mailAllowance(enrollment, run, dayIndex) {
 function mailSequence(enrollment, run, dayIndex) {
   const desk = ambientmail.deskFor(dayIndex);
   const chores = ambientmail.choresFor(dayIndex);
-  const already = emailsIssuedForDay(enrollment, run, dayIndex) + desk.length + chores.length;
+  // Leave notices are generated per learner rather than drawn from the static pool,
+  // because they name people on this learner's board. They count against the day's post
+  // like anything else -- a lead does not get eleven emails because they have a team, they
+  // get the same ten with more of it mattering.
+  const leave = leaveNoticesFor(enrollment, run.id, dayIndex);
+  const already = emailsIssuedForDay(enrollment, run, dayIndex) + desk.length + chores.length + leave.length;
   const wanted = Math.max(0, ambientmail.MIN_EMAILS_PER_DAY - already);
   const noise = ambientmail.noiseFor(dayIndex).slice(0, wanted);
 
@@ -15961,8 +15966,16 @@ function mailSequence(enrollment, run, dayIndex) {
   // The two that want an answer land early enough to be acted on — second thing you open,
   // and again a couple of tasks later. Pushing them to the back of the day would mean a
   // learner who works fast never sees them before signing off.
+  // Leave notices go first, all of them, before the interleave starts. The day's post is
+  // rationed -- two when you sit down and one every few minutes after -- so a notice
+  // anywhere but the front is a notice a learner who works fast never sees, and the
+  // monthly return is graded on having seen it. Measured: with them scattered at
+  // positions 0 and 4, five manager boards in twenty-five were being marked down for
+  // leave they had never been told about. At most three land on one day.
+  for (const mail of leave) order.push({ kind: 'leave', mail });
+
   const deskAt = new Set([1, 3]);
-  const choreAt = new Set([6]);    // the timesheet, late enough that you have hours to log
+  const choreAt = new Set([6]);    // the admin, late enough that the day has happened
   let d = 0;
   let c = 0;
   let n = 0;
@@ -16016,6 +16029,8 @@ function issueDayMail(enrollment, run, dayIndex) {
                   VALUES (?, ?, ?, ?, ?, ?, ?)`)
         .run(cryptoRandomId(), enrollment.id, run.id, mail.key, dayIndex, messageId, now());
     } else {
+      // Noise and leave notices alike: plain mail, deduped on its key so a reload does not
+      // send it twice. A leave notice's key names the person and the day it is about.
       const seen = db.prepare('SELECT id FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ? AND mail_key = ?')
         .get(enrollment.id, run.id, mail.key);
       if (seen) continue;
@@ -18227,6 +18242,335 @@ function remindTimesheet(userId, archetype, dayIndex) {
   return { ...getTimesheets(userId), lastChase: { name: person.name, filed: filesNow, reply } };
 }
 
+// ---- Attendance: the monthly return ----------------------------------------------------
+//
+// The dullest thing a line manager does and the one that gets people's pay wrong, which is
+// why it is here. The shape is deliberate and is the whole lesson:
+//
+// HR's register comes back with everybody marked Present, every day, because the badge
+// system is all HR has and it does not know about leave. Correcting it is the job. The
+// evidence is not on this tab -- it is in the mail the learner was sent during the week,
+// which is the point: attendance is not a form you fill in, it is a thing you have to have
+// been paying attention to.
+//
+// And one of the notices gets cancelled. A learner who skims the subject lines and marks
+// every leave request as leave will mark somebody absent who was at their desk, which is
+// the specific mistake that costs a real person a day's pay.
+const ATTENDANCE_STATUSES = ['Present', 'Work from home', 'Annual leave', 'Sick leave', 'Unpaid leave'];
+const ATTENDANCE_OPENS_ON = PROJECT_WEEK_DAYS;  // the month closes on the last day
+
+// How many of a learner's reports have something other than a normal week, and what.
+// Weighted so a board is mostly boring: a register where half the team is away is not a
+// register, it is a fire, and it teaches nothing about noticing one line out of thirty.
+const LEAVE_KINDS = [
+  { status: 'Annual leave', weight: 4, noticeDaysAhead: 2 },
+  { status: 'Sick leave', weight: 3, noticeDaysAhead: 0 },
+  { status: 'Work from home', weight: 2, noticeDaysAhead: 1 },
+  { status: 'Unpaid leave', weight: 1, noticeDaysAhead: 2 },
+];
+
+function pickWeighted(rng, list) {
+  const total = list.reduce((n, x) => n + x.weight, 0);
+  let r = rng() * total;
+  for (const x of list) { r -= x.weight; if (r <= 0) return x; }
+  return list[list.length - 1];
+}
+
+// Every away-day on a learner's board for one run, with the day the notice about it
+// landed. Seeded on the enrollment and the run, so the same learner reconciling the same
+// month twice gets the same answer, and a suite can assert which row was wrong.
+function leaveEvents(enrollment, runId) {
+  const people = reportsForLevel(enrollment.level);
+  const events = [];
+  for (const p of people) {
+    const rng = seededRng(`${enrollment.id}:${runId}:leave:${p.archetype}`);
+    // Most people have an ordinary week. About a third have one day off.
+    if (rng() > 0.38) continue;
+    const kind = pickWeighted(rng, LEAVE_KINDS);
+    // Never day 1: a notice has to arrive before the day it is about, or there is nothing
+    // to reconcile against and the learner is being asked to guess.
+    const day = 2 + Math.floor(rng() * (PROJECT_WEEK_DAYS - 1));
+    const noticeDay = Math.max(1, day - kind.noticeDaysAhead);
+    // One board in four carries a cancellation: the notice arrived, then it was withdrawn.
+    // This is the trap, and it is a fair one -- both mails are in the same inbox.
+    const cancelled = kind.status === 'Annual leave' && rng() < 0.35;
+    events.push({
+      archetype: p.archetype, name: p.name, day, noticeDay,
+      status: kind.status, cancelled,
+      cancelDay: cancelled ? Math.max(noticeDay, day - 1) : null,
+    });
+  }
+
+  // A month where nobody was away is a real month, and it is also a month where the
+  // exercise is "type Present thirty times". About one lead board in five would land
+  // there by chance, so the floor is deliberate: every return has at least one line on it
+  // that the register got wrong.
+  if (!events.some((e) => !e.cancelled) && people.length) {
+    const rng = seededRng(`${enrollment.id}:${runId}:leave:floor`);
+    const p = people[Math.floor(rng() * people.length) % people.length];
+    const kind = pickWeighted(rng, LEAVE_KINDS);
+    const day = 2 + Math.floor(rng() * (PROJECT_WEEK_DAYS - 1));
+    const i = events.findIndex((e) => e.archetype === p.archetype && e.day === day);
+    const forced = {
+      archetype: p.archetype, name: p.name, day,
+      noticeDay: Math.max(1, day - kind.noticeDaysAhead),
+      status: kind.status, cancelled: false, cancelDay: null,
+    };
+    if (i >= 0) events[i] = forced; else events.push(forced);
+  }
+  return events;
+}
+
+// What the register SHOULD say, once the learner has read their mail.
+function attendanceTruth(enrollment, runId) {
+  const truth = {};
+  for (const p of reportsForLevel(enrollment.level)) {
+    truth[p.archetype] = {};
+    for (let d = 1; d <= PROJECT_WEEK_DAYS; d += 1) truth[p.archetype][d] = 'Present';
+  }
+  for (const e of leaveEvents(enrollment, runId)) {
+    if (e.cancelled) continue;           // withdrawn: they were in after all
+    if (truth[e.archetype]) truth[e.archetype][e.day] = e.status;
+  }
+  return truth;
+}
+
+// The notices, as mail, on the day each one was sent. Generated per learner rather than
+// drawn from the static ambient pool, because a notice has to name a person on this
+// learner's actual board.
+function leaveNoticesFor(enrollment, runId, dayIndex) {
+  const out = [];
+  for (const e of leaveEvents(enrollment, runId)) {
+    const dayName = DAY_NAMES[e.day] || `day ${e.day}`;
+    if (e.noticeDay === dayIndex) {
+      // Every notice names its day in the subject line. "Off sick today" is what a real
+      // one says and it is unanswerable four weeks later: the return is graded on this
+      // mail, so the mail has to carry the answer without the learner reconstructing
+      // which day it landed on.
+      const body = e.status === 'Sick leave'
+        ? `${e.name} called in sick and did not work on ${dayName}. Nothing needed from you beyond marking it on the monthly return.\n\nIf it runs past two days we will pick it up with you.`
+        : e.status === 'Work from home'
+          ? `${e.name} is working from home on ${dayName}. Logged here so it reaches the return — they are working, they are just not in the building.`
+          : `${e.name}'s ${e.status.toLowerCase()} for ${dayName} is approved and in the system.\n\nThis mail is your record of it. It will not appear on the register HR sends you, so it is on you to put it there.`;
+      out.push({
+        key: `lv:${e.archetype}:${e.day}:notice`,
+        from: 'people_partner', senderName: PEOPLE_PARTNER_NAME,
+        subject: e.status === 'Sick leave'
+          ? `Off sick: ${firstName(e.name)} — ${dayName}`
+          : `Approved: ${firstName(e.name)} — ${e.status.toLowerCase()}, ${dayName}`,
+        body,
+      });
+    }
+    if (e.cancelled && e.cancelDay === dayIndex) {
+      out.push({
+        key: `lv:${e.archetype}:${e.day}:cancel`,
+        from: 'people_partner', senderName: PEOPLE_PARTNER_NAME,
+        subject: `Cancelled: ${firstName(e.name)}'s leave on ${dayName}`,
+        body: `${e.name} has withdrawn the ${e.status.toLowerCase()} request for ${dayName} and will be working as normal.\n\nMark them present. The approval mail I sent you earlier no longer applies — please do not carry it onto the return, it is the quickest way to take a day's pay off somebody who was at their desk.`,
+      });
+    }
+  }
+  return out;
+}
+
+const ATTENDANCE_HEADER = ['Employee', ...Array.from({ length: PROJECT_WEEK_DAYS }, (_, i) => DAY_NAMES[i + 1])];
+
+// A real file. The learner downloads this, edits it somewhere else, and sends it back --
+// which is the process, and is why there is no in-page grid to click through instead.
+function attendanceCsv(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) throw new Error('The attendance return is a lead and above responsibility.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+
+  const lines = [ATTENDANCE_HEADER.join(',')];
+  for (const p of reportsForLevel(enrollment.level)) {
+    lines.push([p.name, ...Array.from({ length: PROJECT_WEEK_DAYS }, () => 'Present')].join(','));
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+// Parses what came back. Refuses specifically rather than generally: "row 4" and the value
+// it did not like, because a validator that only says "invalid file" sends somebody back
+// to a spreadsheet with no idea what to look for.
+function parseAttendanceCsv(enrollment, text) {
+  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) throw new Error('That file is empty.');
+
+  const header = lines[0].split(',').map((c) => c.trim());
+  if (header.length !== ATTENDANCE_HEADER.length
+      || header.some((c, i) => c.toLowerCase() !== ATTENDANCE_HEADER[i].toLowerCase())) {
+    throw new Error(`The header row has been changed. It should read: ${ATTENDANCE_HEADER.join(', ')}`);
+  }
+
+  const people = reportsForLevel(enrollment.level);
+  const byName = Object.fromEntries(people.map((p) => [p.name.toLowerCase(), p]));
+  const rows = {};
+  for (let i = 1; i < lines.length; i += 1) {
+    const cells = lines[i].split(',').map((c) => c.trim());
+    const person = byName[(cells[0] || '').toLowerCase()];
+    if (!person) throw new Error(`Row ${i + 1}: "${cells[0] || '(blank)'}" is not one of your reports.`);
+    if (rows[person.archetype]) throw new Error(`Row ${i + 1}: ${person.name} appears twice.`);
+    if (cells.length !== ATTENDANCE_HEADER.length) {
+      throw new Error(`Row ${i + 1}: ${person.name} has ${cells.length - 1} days on it, and the month has ${PROJECT_WEEK_DAYS}.`);
+    }
+    const days = {};
+    for (let d = 1; d <= PROJECT_WEEK_DAYS; d += 1) {
+      const raw = cells[d];
+      const match = ATTENDANCE_STATUSES.find((s) => s.toLowerCase() === raw.toLowerCase());
+      if (!match) {
+        throw new Error(`Row ${i + 1}: "${raw || '(blank)'}" is not a status. Use one of: ${ATTENDANCE_STATUSES.join(', ')}.`);
+      }
+      days[d] = match;
+    }
+    rows[person.archetype] = days;
+  }
+  const missing = people.filter((p) => !rows[p.archetype]);
+  if (missing.length) throw new Error(`${missing.map((p) => p.name).join(', ')} ${missing.length === 1 ? 'is' : 'are'} missing from the file. Every report needs a row.`);
+  return rows;
+}
+
+function gradeAttendance(enrollment, runId, rows) {
+  const truth = attendanceTruth(enrollment, runId);
+  const events = leaveEvents(enrollment, runId);
+  const misses = [];
+  const invented = [];
+  let expected = 0;
+  let right = 0;
+
+  for (const [archetype, days] of Object.entries(truth)) {
+    const person = reportsForLevel(enrollment.level).find((p) => p.archetype === archetype);
+    for (let d = 1; d <= PROJECT_WEEK_DAYS; d += 1) {
+      const want = days[d];
+      const got = (rows[archetype] || {})[d] || 'Present';
+      if (want !== 'Present') {
+        expected += 1;
+        if (got === want) right += 1;
+        else misses.push(`${person.name} was on ${want.toLowerCase()} on ${DAY_NAMES[d]} and you have them down as ${got.toLowerCase()}.`);
+      } else if (got !== 'Present') {
+        const cancelled = events.find((e) => e.archetype === archetype && e.day === d && e.cancelled);
+        invented.push(cancelled
+          ? `${person.name} is down as ${got.toLowerCase()} on ${DAY_NAMES[d]}, but that request was cancelled — the second mail said so, and they were in.`
+          : `${person.name} is down as ${got.toLowerCase()} on ${DAY_NAMES[d]} and nothing said they were away.`);
+      }
+    }
+  }
+
+  // Right, out of everything you either claimed or should have claimed. Marking somebody
+  // absent who was at their desk takes a day's pay off them, so it costs the same as
+  // missing a day of leave -- but it costs a share of the return rather than all of it.
+  // Subtracting false positives from the numerator instead scored a lead 0% for getting
+  // the one real leave day right and adding one wrong day, which reads as "you got
+  // everything wrong" and is not what happened.
+  const claimed = expected + invented.length;
+  const score = claimed === 0 ? 100 : Math.round((right / claimed) * 100);
+
+  const parts = [];
+  if (!misses.length && !invented.length) {
+    parts.push(expected
+      ? `Clean return. ${expected === 1 ? 'The one day' : `All ${expected} days`} of leave on your team ${expected === 1 ? 'is' : 'are'} on it, and nobody is marked away who was not.`
+      : 'Clean return — nobody on your team was away this month, and you have not invented anybody.');
+  }
+  if (misses.length) parts.push(`Missed: ${misses.join(' ')}`);
+  if (invented.length) parts.push(`Wrong the other way: ${invented.join(' ')}`);
+  if (misses.length || invented.length) {
+    parts.push('Everything you needed was in your mail during the month. Payroll runs off this file.');
+  }
+  return { score, feedback: parts.join('\n\n'), expected, right, invented: invented.length };
+}
+
+// The guarantee behind the grading: by the time the return can be filed, every notice it
+// will be marked against is in the learner's inbox. The daily drip is a pacing device and
+// pacing must never cost somebody marks, so on the day the month closes anything still
+// held back is released. In an ordinary week this does nothing -- the notices ride in the
+// opening batch and are long since read.
+function flushLeaveNotices(enrollment, run, throughDay) {
+  for (let d = 1; d <= throughDay; d += 1) {
+    for (const mail of leaveNoticesFor(enrollment, run.id, d)) {
+      const seen = db.prepare('SELECT id FROM sim_ambient_mail WHERE enrollment_id = ? AND project_run_id = ? AND mail_key = ?')
+        .get(enrollment.id, run.id, mail.key);
+      if (seen) continue;
+      const messageId = addMessage(enrollment.id, mail.from, mail.senderName, mail.body, null, mail.subject, mail.from);
+      db.prepare(`INSERT INTO sim_ambient_mail (id, enrollment_id, project_run_id, mail_key, day_index, message_id, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(cryptoRandomId(), enrollment.id, run.id, mail.key, d, messageId, now());
+    }
+  }
+}
+
+function getAttendance(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) {
+    return { open: false, reason: 'The attendance return is filed by your line manager. You will do this yourself from Team Lead.' };
+  }
+  const run = activeRun(enrollment);
+  if (!run) return { open: false, reason: 'No project is running yet.' };
+
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  if (dayNow >= ATTENDANCE_OPENS_ON) flushLeaveNotices(enrollment, run, dayNow);
+  const filed = db.prepare('SELECT * FROM sim_attendance_returns WHERE enrollment_id = ? AND project_run_id = ?')
+    .get(enrollment.id, run.id);
+
+  return {
+    open: true,
+    statuses: ATTENDANCE_STATUSES,
+    header: ATTENDANCE_HEADER,
+    dayNow,
+    totalDays: PROJECT_WEEK_DAYS,
+    opensOn: ATTENDANCE_OPENS_ON,
+    canSubmit: dayNow >= ATTENDANCE_OPENS_ON && !filed,
+    projectTitle: (catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key) || {}).title || null,
+    people: (() => {
+      const faces = Object.fromEntries(rosterWithAvatars(enrollment.id, enrollment.level).map((r) => [r.archetype, r.avatarUrl]));
+      return reportsForLevel(enrollment.level)
+        .map((p) => ({ archetype: p.archetype, name: p.name, title: p.title, avatarUrl: faces[p.archetype] || null }));
+    })(),
+    // What HR sent, which is everybody present -- shown so the learner can see what they
+    // are correcting without it telling them what the corrections are.
+    draft: Object.fromEntries(reportsForLevel(enrollment.level).map((p) => [
+      p.archetype, Object.fromEntries(Array.from({ length: PROJECT_WEEK_DAYS }, (_, i) => [i + 1, 'Present'])),
+    ])),
+    submitted: filed ? {
+      at: filed.submitted_at,
+      score: filed.score,
+      feedback: filed.feedback,
+      rows: JSON.parse(filed.rows_json || '{}'),
+    } : null,
+  };
+}
+
+function submitAttendance(userId, csvText) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) throw new Error('The attendance return is a lead and above responsibility.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  if (dayNow < ATTENDANCE_OPENS_ON) {
+    throw new Error(`The return closes the month. It opens on ${DAY_NAMES[ATTENDANCE_OPENS_ON]} — today is ${DAY_NAMES[dayNow] || `day ${dayNow}`}.`);
+  }
+  const already = db.prepare('SELECT id FROM sim_attendance_returns WHERE enrollment_id = ? AND project_run_id = ?')
+    .get(enrollment.id, run.id);
+  if (already) throw new Error('You have already filed this month. Payroll has it.');
+
+  flushLeaveNotices(enrollment, run, dayNow);
+  const rows = parseAttendanceCsv(enrollment, csvText);
+  const graded = gradeAttendance(enrollment, run.id, rows);
+
+  db.prepare(`INSERT INTO sim_attendance_returns (id, enrollment_id, project_run_id, rows_json, score, feedback, submitted_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(cryptoRandomId(), enrollment.id, run.id, JSON.stringify(rows), graded.score, graded.feedback, now());
+
+  addMessage(enrollment.id, 'people_partner', PEOPLE_PARTNER_NAME,
+    `Got your return, thank you.\n\n${graded.feedback}`, null,
+    'Re: Monthly attendance return', 'people_partner');
+
+  return { ...getAttendance(userId), justGraded: graded };
+}
+
 module.exports = {
   closeDay,
   timeTravelStartProject,
@@ -18236,6 +18580,7 @@ module.exports = {
   ROLE_CATALOG,
   levelsForRole,
   getTimesheets, submitTimesheet, remindTimesheet,
+  getAttendance, attendanceCsv, submitAttendance,
   getCatalogue,
   recordRoleInterest,
   resetPreview,
