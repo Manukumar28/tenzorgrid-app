@@ -343,6 +343,14 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
   // loaded has not made a sound yet anyway.
   const [sound, setSound] = useState(() => soundEnabled());
   return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* The one destination that never named itself. Every other page has a heading that
+          matches the menu entry that led to it; this one opened straight onto a card. */}
+      <div className="flex items-baseline gap-2.5 flex-wrap">
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Settings</h1>
+        <span className="text-sm font-semibold text-slate-500">Your preferences on this machine</span>
+      </div>
+
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
       <BentoCard hover={false}>
         <div className="flex items-center gap-2.5 mb-1">
@@ -398,6 +406,7 @@ export default function SettingsTab({ prefs, onPrefs, timeTravel, onStateChange 
           They are listed here rather than shown as dead switches.
         </p>
       </BentoCard>
+    </div>
     </div>
   );
 }

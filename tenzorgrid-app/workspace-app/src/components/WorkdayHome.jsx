@@ -249,7 +249,7 @@ function WorkQueue({ rows, onOpen, onTab }) {
           <p className="text-xs text-slate-500 leading-snug">Who asked, when it lands, where it stands</p>
         </div>
         <button onClick={() => onTab('tasks')} className="shrink-0 text-[12px] font-bold text-indigo-700 hover:underline">
-          All work
+          My Work
         </button>
       </div>
       <ul className="divide-y divide-slate-100">
@@ -320,7 +320,7 @@ function ManagerNote({ note, manager, onTab }) {
           {note.subject && <div className="text-[13px] font-semibold text-slate-700 mt-1">{note.subject}</div>}
           <p className="text-[13px] text-slate-600 leading-relaxed mt-0.5 line-clamp-3">{note.body}</p>
           <button onClick={() => onTab('emails')} className="text-[12px] font-bold text-indigo-700 hover:underline mt-1.5">
-            Open the thread
+            Open in Inbox
           </button>
         </div>
       </div>
@@ -341,7 +341,7 @@ function ProjectHealth({ rows, onTab }) {
           <h3 className="text-base font-bold leading-tight">Projects</h3>
         </div>
         <button onClick={() => onTab('projects')} className="shrink-0 text-[12px] font-bold text-indigo-700 hover:underline">
-          Open
+          Projects
         </button>
       </div>
       <ul className="space-y-2.5">
@@ -426,7 +426,7 @@ export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask })
                 ))}
               </div>
               <button onClick={() => onTab('today')} className="text-[12px] font-bold text-indigo-700 hover:underline mt-3">
-                Everything due today
+                My Day — everything else today
               </button>
             </BentoCard>
           )}

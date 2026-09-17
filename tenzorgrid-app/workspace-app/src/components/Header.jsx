@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Menu } from 'lucide-react';
-import { Avatar } from './ui.jsx';
 
-// `compact` drops the greeting block and keeps only the controls. The Workday Home carries
-// its own header -- company, greeting, date, who you are -- and two "Welcome back, Manu"
-// lines stacked on one screen is the thing that makes a product look unfinished.
-export default function Header({ name, photoUrl, roleLabel, company, employee, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu, compact }) {
+
+// The strip above every page: where you are, and the two controls that belong to the
+// session rather than to any one screen. It used to carry a "Welcome back" h1 on every
+// tab, which Milestone 02 removed -- see below.
+export default function Header({ company, employee, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu }) {
   return (
     <div className="flex items-start justify-between gap-3 sm:gap-6 mb-6 flex-wrap">
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
@@ -18,35 +18,29 @@ export default function Header({ name, photoUrl, roleLabel, company, employee, c
         >
           <Menu size={22} />
         </button>
-        {compact ? (
-          <div className="min-w-0 flex items-center gap-2.5">
-            {company && (
-              <span className="shrink-0 w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[12px] font-extrabold tracking-tight lg:hidden">
-                {company.mark}
-              </span>
-            )}
-            <span className="text-[13px] font-bold text-slate-700 truncate lg:hidden">
+        {/* No <h1> here any more.
+            Every page owns its own heading now -- "My Work", "Inbox", "Performance" --
+            and the greeting sat above them as a second, louder h1 saying "Welcome back"
+            on a screen the learner had navigated to on purpose. Two h1s is an
+            accessibility fault and the wrong words at the top of the page. Home carries
+            its own greeting; everywhere else this strip just says where you are. */}
+        <div className="min-w-0 flex items-center gap-2.5">
+          {company && (
+            <span className="lg:hidden shrink-0 w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[12px] font-extrabold tracking-tight">
+              {company.mark}
+            </span>
+          )}
+          <div className="min-w-0">
+            <span className="block lg:hidden text-[13px] font-bold text-slate-700 truncate">
               {company ? company.name : 'Workspace'}
             </span>
+            <span className="hidden lg:block text-[13px] font-semibold text-slate-500 truncate">
+              {company && employee
+                ? `${company.name} · ${employee.department} · ${employee.team}`
+                : (company ? company.name : 'Virtual Workspace')}
+            </span>
           </div>
-        ) : (
-          <>
-            <Avatar name={name} photoUrl={photoUrl} size={52} className="ring-2 ring-white shadow-sm hidden sm:block" />
-            <div className="min-w-0">
-              {/* A 2xl heading on a 390px screen wrapped to one word per line. */}
-              <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                Welcome back, {name} <span className="hidden sm:inline">— {roleLabel}</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 sm:hidden">{roleLabel}</p>
-              {/* Where you work, rather than a line about the product you are working in. */}
-              <p className="text-sm text-gray-500 mt-1 hidden sm:block">
-                {company && employee
-                  ? `${company.name} · ${employee.department} · ${employee.team}`
-                  : "Here's how your Virtual Workspace is going."}
-              </p>
-            </div>
-          </>
-        )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

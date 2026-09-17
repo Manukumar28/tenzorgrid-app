@@ -75,6 +75,17 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
   const delta = performance.scoreDeltaToday;
 
   return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* The page had no heading at all -- it opened straight onto four score cards, which
+          is what made it read as a training dashboard rather than a place in a company.
+          It is your record now, and it says so. */}
+      <div className="flex items-baseline gap-2.5 flex-wrap">
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Performance</h1>
+        <span className="text-sm font-semibold text-slate-500">
+          Your record at {state.company ? state.company.shortName : 'the company'} — what you have delivered, and the rung above
+        </span>
+      </div>
+
     <div className="grid grid-cols-1 xl:grid-cols-16 gap-4 sm:gap-6">
       <div className="min-w-0 xl:col-span-11 space-y-4 sm:space-y-6">
 
@@ -382,6 +393,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
           </BentoCard>
         )}
       </div>
+    </div>
     </div>
   );
 }
