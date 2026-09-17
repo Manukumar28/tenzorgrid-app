@@ -431,6 +431,49 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { preview: workspace.resetPreview(user.id) });
   }
 
+  // ---- The management cycle ----
+  //
+  // No level check here: the engine does it, on every call, and that is the check that
+  // counts. getTimesheets hands a junior an empty team and remindTimesheet refuses them
+  // outright, so a forged request gets the same answer as an honest one.
+  if (pathname === '/api/workspace/timesheets' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { timesheets: workspace.getTimesheets(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/timesheets/submit' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, {
+        timesheets: workspace.submitTimesheet(user.id, body.day, body),
+        state: workspace.getState(user.id),
+      });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/timesheets/remind' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, {
+        timesheets: workspace.remindTimesheet(user.id, body.archetype, body.day),
+        state: workspace.getState(user.id),
+      });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/reset' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

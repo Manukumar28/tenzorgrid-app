@@ -60,7 +60,7 @@ const emails = (s) => s.messages.filter((m) => m.sender_archetype !== 'learner' 
   check('closing it now is refused',
     (() => { try { ws.closeDay(u); return false; } catch (e) { return /still have/.test(e.message); } })());
 
-  console.log('\n4. The timesheet has somewhere to go');
+  console.log('\n4. The company admin, which is part of the job and none of the day');
   for (const r of ws.getState(u).taskBoard.rows.filter((x) => !x.notYetOpen && x.status !== 'graded')) {
     ws.timeTravelCompleteTask(u, r.id);
   }
@@ -72,12 +72,18 @@ const emails = (s) => s.messages.filter((m) => m.sender_archetype !== 'learner' 
     chore.action.fields.some((f) => (f.options || []).some((o) => /Compensation/i.test(o))),
     JSON.stringify(chore.action.fields.map((f) => f.options)));
   check('a bad number is refused',
-    (() => { try { ws.completeChore(u, chore.key, { hours: 99, charged: 'Training' }); return false; } catch (e) { return /between/.test(e.message); } })());
-  const cr = ws.completeChore(u, chore.key, { hours: 7.5, charged: 'Training' });
+    (() => { try { ws.completeChore(u, chore.key, { amount: 999999, charged: 'Training' }); return false; } catch (e) { return /between/.test(e.message); } })());
+  const cr = ws.completeChore(u, chore.key, { amount: 1200, charged: 'Training' });
   check('a good one is accepted', cr.done === true);
-  check('and the receipt quotes it back', /7\.5/.test(cr.confirm), cr.confirm);
+  check('and the receipt quotes it back', /1200/.test(cr.confirm), cr.confirm);
   check('doing it twice is refused',
-    (() => { try { ws.completeChore(u, chore.key, { hours: 7, charged: 'Training' }); return false; } catch (e) { return /already/.test(e.message); } })());
+    (() => { try { ws.completeChore(u, chore.key, { amount: 1200, charged: 'Training' }); return false; } catch (e) { return /already/.test(e.message); } })());
+  // Hours used to be this chore. They are a tab now, so the inbox must have stopped asking
+  // for them -- otherwise a learner files the same Monday in two places and neither agrees.
+  check('and the inbox no longer asks for hours, because the Timesheets tab does',
+    !s.chores.some((c) => /timesheet/i.test(c.subject || '')
+      || (c.action && c.action.fields.some((f) => /hours/i.test(f.label || '')))),
+    JSON.stringify(s.chores.map((c) => c.subject)));
 
   console.log('\n5. Finishing everything, and being told so');
   const finishRest = (uid) => {
