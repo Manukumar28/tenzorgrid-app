@@ -474,6 +474,50 @@ async function handleApi(req, res, url) {
     }
   }
 
+  if (pathname === '/api/workspace/attendance' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { attendance: workspace.getAttendance(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  // A real file, with a real Content-Disposition, because the process is download it,
+  // open it somewhere else, fix it, send it back. A grid of dropdowns on this page would
+  // be the one-click version of a job that is not one click.
+  if (pathname === '/api/workspace/attendance/register.csv' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    let csv;
+    try {
+      csv = workspace.attendanceCsv(user.id);
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Length': Buffer.byteLength(csv),
+      'Content-Disposition': 'attachment; filename="attendance-register.csv"',
+    });
+    return res.end(csv);
+  }
+
+  if (pathname === '/api/workspace/attendance/submit' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, {
+        attendance: workspace.submitAttendance(user.id, body.csv),
+        state: workspace.getState(user.id),
+      });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/reset' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

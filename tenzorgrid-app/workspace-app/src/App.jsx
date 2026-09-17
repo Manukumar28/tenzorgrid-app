@@ -9,6 +9,7 @@ import Today from './components/Today.jsx';
 import Emails from './components/Emails.jsx';
 import Team from './components/Team.jsx';
 import Timesheets from './components/Timesheets.jsx';
+import Attendance from './components/Attendance.jsx';
 import SettingsTab from './components/SettingsTab.jsx';
 import EnrollForm from './components/EnrollForm.jsx';
 import SkillTest from './components/SkillTest.jsx';
@@ -175,6 +176,7 @@ export default function App() {
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'timesheets' && <Timesheets state={state} onStateChange={setState} />}
+        {tab === 'attendance' && <Attendance onStateChange={setState} />}
         {tab === 'settings' && <SettingsTab prefs={prefs} onPrefs={savePrefs} timeTravel={state.timeTravel} onStateChange={setState} />}
       </main>
 
