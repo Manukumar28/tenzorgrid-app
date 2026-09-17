@@ -146,12 +146,34 @@ function FocusRow({ task, person, onOpen, compact }) {
       <h4 className="text-sm font-bold text-gray-900 leading-snug">{task.title}</h4>
       {task.projectTitle && <p className="text-[12px] text-gray-500 mt-0.5 truncate">Project: {task.projectTitle}</p>}
 
-      {!compact && (
-        <div className="flex items-center gap-2 mt-2">
-          <Avatar name={person ? person.name : 'Asha Rao'} avatarUrl={person && person.avatarUrl} size={20} />
-          <span className="text-[12px] text-gray-500 truncate">{person ? person.name : 'Asha Rao'}</span>
-        </div>
-      )}
+      {/* Who this is for. The row used to show the project's stakeholder for every task on
+          that project, falling back to the line manager when there wasn't one -- so a task
+          the manager handed you personally was still captioned with the client's name. The
+          per-task requester is now on the row itself, so use it and only fall back to the
+          project stakeholder when a task has none. */}
+      {(() => {
+        const a = task.assignment || {};
+        const name = a.requestedBy || (person && person.name) || null;
+        if (!name) return null;
+        const avatarUrl = person && person.name === name ? person.avatarUrl : null;
+        const lead = a.fromTheLine ? 'From' : 'For';
+        if (compact) {
+          return (
+            <p className="text-[12px] text-gray-500 mt-1 truncate">
+              {lead} <span className="font-semibold text-gray-700">{name}</span>
+            </p>
+          );
+        }
+        return (
+          <div className="flex items-center gap-2 mt-2 min-w-0">
+            <Avatar name={name} avatarUrl={avatarUrl} size={20} />
+            <span className="text-[12px] text-gray-500 truncate">
+              {lead} <span className="font-semibold text-gray-700">{name}</span>
+              {a.requestedByTitle && <span className="text-gray-400"> · {a.requestedByTitle}</span>}
+            </span>
+          </div>
+        );
+      })()}
 
       <div className="flex items-center justify-between gap-3 mt-2.5">
         <div className="min-w-0 flex-1">
@@ -173,7 +195,7 @@ function FocusRow({ task, person, onOpen, compact }) {
   );
 }
 
-export function FocusList({ tasks, stakeholderByProject, onOpen }) {
+export function FocusList({ tasks, personFor, onOpen }) {
   if (!tasks.length) {
     return (
       <p className="text-sm text-gray-500">
@@ -184,12 +206,12 @@ export function FocusList({ tasks, stakeholderByProject, onOpen }) {
   const [first, second, ...rest] = tasks;
   return (
     <div className="space-y-3">
-      <FocusRow task={first} person={stakeholderByProject[first.projectKey]} onOpen={() => onOpen(first.id)} />
-      {second && <FocusRow task={second} person={stakeholderByProject[second.projectKey]} onOpen={() => onOpen(second.id)} />}
+      <FocusRow task={first} person={personFor(first)} onOpen={() => onOpen(first.id)} />
+      {second && <FocusRow task={second} person={personFor(second)} onOpen={() => onOpen(second.id)} />}
       {rest.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {rest.slice(0, 4).map((t) => (
-            <FocusRow key={t.id} task={t} person={stakeholderByProject[t.projectKey]} onOpen={() => onOpen(t.id)} compact />
+            <FocusRow key={t.id} task={t} person={personFor(t)} onOpen={() => onOpen(t.id)} compact />
           ))}
         </div>
       )}

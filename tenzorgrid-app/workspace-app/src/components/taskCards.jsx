@@ -14,11 +14,9 @@ export const PRIORITY_PILL = {
   low: 'bg-emerald-700 text-white',
 };
 
-const DIFFICULTY_PILL = {
-  Easy: 'bg-emerald-50 text-emerald-700',
-  Medium: 'bg-amber-50 text-amber-700',
-  Hard: 'bg-red-50 text-red-700',
-};
+// DIFFICULTY_PILL lived here. "Medium" and "Hard" are curriculum words: the engine
+// still sequences on difficulty and the graders still use it, but a colleague asking you
+// for a number does not grade the request first.
 
 function Pill({ children, className = '' }) {
   return <span className={`inline-flex items-center gap-1 text-[12px] font-bold rounded-md px-2 py-1 ${className}`}>{children}</span>;
@@ -89,7 +87,31 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
         </div>
       </div>
 
+      {/* Who asked, and what for. The card used to lead with "Medium" and "~0.4h
+          estimated" -- an estimate is a workplace fact and stays, but difficulty is a
+          curriculum word and does not belong on a request from a colleague.
+
+          The requester carries the avatar. It used to sit in the footer showing the
+          project's stakeholder for every card, so a card reading "From Asha Rao" was
+          signed off with Vikram's face. One person per card, and it is the one who
+          asked. */}
       <div className="text-xs text-gray-500 space-y-1 mb-3">
+        {task.assignment && task.assignment.requestedBy && (
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar
+              name={task.assignment.requestedBy}
+              avatarUrl={person && person.name === task.assignment.requestedBy ? person.avatarUrl : null}
+              size={22}
+            />
+            <span className="truncate">
+              {task.assignment.fromTheLine ? 'From' : 'For'}{' '}
+              <span className="font-semibold text-gray-700">{task.assignment.requestedBy}</span>
+              {task.assignment.requestedByTitle && (
+                <span className="text-gray-400"> · {task.assignment.requestedByTitle}</span>
+              )}
+            </span>
+          </div>
+        )}
         {task.projectTitle && (
           <div className="truncate">Project: <span className="font-semibold text-gray-700">{task.projectTitle}</span></div>
         )}
@@ -111,13 +133,7 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
         <ProgressBar value={task.stagePct} max={100} colorClass={STAGE_COLOR[task.stage]} />
       </div>
 
-      <div className="mt-auto flex items-center justify-between gap-3">
-        {person ? (
-          <div className="flex items-center gap-2 min-w-0">
-            <Avatar name={person.name} avatarUrl={person.avatarUrl} size={26} />
-            <span className="text-xs text-gray-500 truncate">{person.name}</span>
-          </div>
-        ) : <span />}
+      <div className="mt-auto flex items-center justify-end gap-3">
         {soon ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-bold rounded-lg px-3.5 py-2 shrink-0 bg-white border border-slate-200 text-slate-500">
             <CalendarClock size={13} /> Opens {task.opensLabel}
@@ -161,7 +177,6 @@ export function LockedTaskCard({ task, index }) {
       <div className="mt-auto space-y-2">
         <div className="text-xs text-gray-500 truncate">Project: <span className="font-semibold text-gray-500">{task.projectTitle}</span></div>
         <div className="flex flex-wrap gap-1.5">
-          <Pill className={`${DIFFICULTY_PILL[task.difficulty] || DIFFICULTY_PILL.Medium} opacity-80`}>{task.difficulty}</Pill>
           {task.estHours ? <Pill className="bg-white border border-gray-100 text-gray-500"><Clock size={11} /> ~{task.estHours}h</Pill> : null}
         </div>
       </div>

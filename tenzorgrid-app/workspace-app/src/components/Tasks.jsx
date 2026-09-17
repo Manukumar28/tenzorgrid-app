@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ClipboardCheck, Users, Gauge, MessageSquare, RotateCcw, Search, History,
   Target, ListChecks, CalendarClock, CheckCircle2, LayoutGrid, MonitorPlay } from 'lucide-react';
@@ -9,6 +9,7 @@ import { CompletionDonut, StatTile, FocusList, UpcomingTable, TaskFlow, Timeline
   ActivityFeed, ProgressBanner, tallyTasks, bucketOf } from './taskPanels.jsx';
 import { api } from '../api.js';
 import { appForTask } from '../lib/apps.js';
+import { workStateOf } from './AppShell.jsx';
 const Workbench = lazy(() => import('./Workbench.jsx'));
 
 const PRIORITY_OPTIONS = [
@@ -135,7 +136,7 @@ function SectionTitle({ children, count }) {
 // bare textarea. Graded tasks keep the compact feedback panel, since there is nothing
 // left to write. The Workbench is lazy-loaded so learners who never open the Tasks tab
 // don't pay to download a code editor.
-function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat, app, company, requestedBy, onBack }) {
+function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateChange, onOpenChat, app, company, onBack }) {
   const managerFirst = (manager ? manager.name : 'Asha Rao').split(' ')[0];
   // Work that opens in one of the company's applications gets the application's chrome
   // instead of a card: the shell already names the task, the project and who is waiting
@@ -237,8 +238,6 @@ function TaskWorkspace({ task, manager, learnerName, learnerPhotoUrl, onStateCha
               app={inApp ? app : null}
               company={company}
               task={task}
-              requestedBy={requestedBy}
-              reviewer={manager}
               onBack={onBack}
             />
           </Suspense>
@@ -366,14 +365,26 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
     [viewRows.upcoming],
   );
 
+  // Who asked, per task. Both the option list and the filter read the row's own
+  // requester and only fall back to the project's stakeholder when a row has none —
+  // filtering by "Asha Rao" used to return nothing on a lead's board even though six
+  // of her thirty tasks came from Asha personally, because every row on a project was
+  // attributed to that project's client.
+  const requesterOf = useCallback(
+    (r) => (r.assignment && r.assignment.requestedByArchetype
+      ? { archetype: r.assignment.requestedByArchetype, name: r.assignment.requestedBy }
+      : stakeholderByProject[r.projectKey] || null),
+    [stakeholderByProject],
+  );
+
   const askedByOptions = useMemo(() => {
     const seen = new Map();
     for (const r of taskBoard.rows) {
-      const who = stakeholderByProject[r.projectKey];
-      if (who && !seen.has(who.archetype)) seen.set(who.archetype, who.name);
+      const who = requesterOf(r);
+      if (who && who.archetype && !seen.has(who.archetype)) seen.set(who.archetype, who.name);
     }
     return [...seen].map(([value, label]) => ({ value, label }));
-  }, [taskBoard.rows, stakeholderByProject]);
+  }, [taskBoard.rows, requesterOf]);
 
   const visible = useMemo(() => {
     const base = viewRows[view] || viewRows.focus;
@@ -383,7 +394,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       if (projectFilter && r.projectKey !== projectFilter) return false;
       if (statusFilter && bucketOf(r) !== statusFilter) return false;
       if (askedByFilter) {
-        const who = stakeholderByProject[r.projectKey];
+        const who = requesterOf(r);
         if (!who || who.archetype !== askedByFilter) return false;
       }
       if (q && !`${r.title} ${r.projectTitle || ''}`.toLowerCase().includes(q)) return false;
@@ -401,13 +412,43 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         : (a, b) => (a.dueAt || '9999').localeCompare(b.dueAt || '9999') || (a.dayIndex || 0) - (b.dayIndex || 0);
     sorted.sort((a, b) => byOpen(a, b) || then(a, b));
     return sorted;
-  }, [viewRows, view, priorityFilter, projectFilter, statusFilter, askedByFilter, query, sortBy, stakeholderByProject]);
+  }, [viewRows, view, priorityFilter, projectFilter, statusFilter, askedByFilter, query, sortBy, requesterOf]);
 
   // Locked work is a real part of the track, but it is 90 of the 120 cards and none of
   // it can be clicked. It belongs in All, where somebody has gone looking for it.
   const filtersOn = priorityFilter || projectFilter || statusFilter || askedByFilter || query.trim();
   const lockedVisible = view === 'all' && !filtersOn ? taskBoard.locked : [];
   const selected = taskBoard.rows.find((r) => r.id === selectedId);
+  // The queue, grouped by where each piece of work actually stands.
+  //
+  // Six buckets, all of them the engine's own states -- nothing here invents a workflow
+  // step. Order is what a person would deal with first: what came back, what is late,
+  // what is under way, what somebody else is holding, what has not started, what is done.
+  const QUEUE_GROUPS = [
+    { label: 'Returned to you', note: 'someone wants another look', match: (t) => Boolean(t.sentBack) },
+    { label: 'Needs attention', note: 'past its date', match: (t) => t.overdue && !t.notYetOpen },
+    { label: 'With your manager', note: 'waiting on review', match: (t) => t.reviewState === 'pending' || t.status === 'submitted' },
+    { label: 'In progress', match: (t) => t.stagePct > 0 && t.status !== 'graded' },
+    { label: 'Not started', match: (t) => t.status !== 'graded' && !t.notYetOpen },
+    { label: 'Not open yet', note: 'their day has not arrived', match: (t) => t.notYetOpen },
+    { label: 'Signed off', match: (t) => t.status === 'graded' },
+  ];
+  const groupedVisible = useMemo(() => {
+    const left = [...visible];
+    const out = [];
+    for (const g of QUEUE_GROUPS) {
+      const rows = [];
+      for (let i = left.length - 1; i >= 0; i -= 1) {
+        if (g.match(left[i])) { rows.unshift(left[i]); left.splice(i, 1); }
+      }
+      if (rows.length) out.push({ label: g.label, note: g.note, rows });
+    }
+    // Anything no bucket claimed still has to appear. A queue that silently drops work is
+    // worse than an ugly one.
+    if (left.length) out.push({ label: 'Everything else', note: null, rows: left });
+    return out;
+  }, [visible]);
+
   // Working inside one of the company's applications, on a phone.
   //
   // The board's headline figures and its filter bar belong to BROWSING work. When a tool
@@ -486,7 +527,7 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
               <h2 className="text-base font-bold">My Focus</h2>
             </div>
             <p className="text-xs text-gray-500 mb-4">Tasks that need your attention right now</p>
-            <FocusList tasks={focusTasks} stakeholderByProject={stakeholderByProject} onOpen={openTask} />
+            <FocusList tasks={focusTasks} personFor={(t) => personByArchetype[(requesterOf(t) || {}).archetype] || stakeholderByProject[t.projectKey]} onOpen={openTask} />
             {focusTasks.length > 6 && (
               <button onClick={() => changeView('mine')} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700">
                 View all {focusTasks.length} open
@@ -556,21 +597,42 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         </SectionTitle>
         <p className="text-xs text-gray-500 -mt-2.5 mb-3.5">{VIEW_BLURB[view]}</p>
         {visible.length || lockedVisible.length ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {visible.map((t, i) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                person={stakeholderByProject[t.projectKey]}
-                index={i}
-                selected={t.id === selectedId}
-                onOpen={() => openTask(t.id)}
-                onTestComplete={state.timeTravel && state.timeTravel.enabled ? testComplete : null}
-              />
+          <div className="space-y-6">
+            {groupedVisible.map(({ label, note, rows }) => (
+              <div key={label}>
+                {/* A queue, grouped the way somebody talks about their own week. The
+                    states are the engine's own -- returned, with your manager, submitted
+                    -- read through the same helper the application shell uses, so a card
+                    and the tool it opens can never disagree about where the work stands. */}
+                {groupedVisible.length > 1 && (
+                  <div className="flex items-baseline gap-2 mb-2.5">
+                    <h3 className="text-[13px] font-extrabold text-slate-700 tracking-tight">{label}</h3>
+                    <span className="text-[12px] text-slate-400 tabular-nums">{rows.length}</span>
+                    {note && <span className="text-[12px] text-slate-400">· {note}</span>}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  {rows.map((t, i) => (
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      person={personByArchetype[(requesterOf(t) || {}).archetype] || stakeholderByProject[t.projectKey]}
+                      index={i}
+                      selected={t.id === selectedId}
+                      onOpen={() => openTask(t.id)}
+                      onTestComplete={state.timeTravel && state.timeTravel.enabled ? testComplete : null}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
-            {lockedVisible.map((t, i) => (
-              <LockedTaskCard key={t.taskKey} task={t} index={visible.length + i} />
-            ))}
+            {lockedVisible.length > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {lockedVisible.map((t, i) => (
+                  <LockedTaskCard key={t.taskKey} task={t} index={visible.length + i} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <BentoCard hover={false} className="text-center py-10">
@@ -613,7 +675,6 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
                 onStateChange={onStateChange}
                 app={appForTask(state.apps, selected)}
                 company={state.company}
-                requestedBy={stakeholderByProject[selected.projectKey] || null}
                 onBack={() => changeView('focus')}
               />
             </>

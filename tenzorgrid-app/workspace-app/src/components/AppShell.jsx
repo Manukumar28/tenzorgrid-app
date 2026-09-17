@@ -46,10 +46,19 @@ function ContextField({ label, children }) {
 }
 
 export default function AppShell({
-  app, company, task, requestedBy, reviewer, onBack, backLabel = 'My Work', right, children,
+  app, company, task, assignment, onBack, backLabel = 'My Work', right, children,
 }) {
   const Icon = iconFor(app);
   const state = workStateOf(task);
+  // Everything below is read off the assignment the server built. This component derives
+  // nothing: the same object drives Home, the board and the bench, so the story cannot
+  // change between the card somebody clicked and the tool it opened.
+  const a = assignment || {};
+  const requestedBy = a.requestedBy || null;
+  const reviewer = a.reviewer || null;
+  // 110 of the 480 live tasks are asked for AND reviewed by the manager, which is a real
+  // thing a manager does and reads as a bug when printed as two identical fields.
+  const samePerson = requestedBy && reviewer && requestedBy.archetype === reviewer.archetype;
 
   return (
     <div className="rounded-2xl border border-slate-800 overflow-hidden bg-white">
@@ -92,16 +101,18 @@ export default function AppShell({
           <div className="px-3.5 pb-3 pt-1 border-t border-slate-800/80">
             <div className="text-[14px] font-bold leading-snug">{task.title}</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-2 mt-2.5">
-              {task.projectTitle && <ContextField label="Project">{task.projectTitle}</ContextField>}
+              {(a.project ? a.project.title : task.projectTitle) && (
+                <ContextField label="Project">{a.project ? a.project.title : task.projectTitle}</ContextField>
+              )}
               {requestedBy && (
-                <ContextField label="Requested by">
+                <ContextField label={samePerson ? 'Asked and reviewed by' : 'Requested by'}>
                   <span className="inline-flex items-center gap-1.5">
                     <Avatar name={requestedBy.name} avatarUrl={requestedBy.avatarUrl} size={16} />
                     {requestedBy.name}
                   </span>
                 </ContextField>
               )}
-              {reviewer && (
+              {reviewer && !samePerson && (
                 <ContextField label="Reviewer">
                   <span className="inline-flex items-center gap-1.5">
                     <Avatar name={reviewer.name} avatarUrl={reviewer.avatarUrl} size={16} />
@@ -115,6 +126,9 @@ export default function AppShell({
                     <Clock3 size={12} /> {task.dueLabel}
                   </span>
                 </ContextField>
+              )}
+              {a.deliverable && (
+                <ContextField label="Deliverable">{a.deliverable}</ContextField>
               )}
             </div>
           </div>

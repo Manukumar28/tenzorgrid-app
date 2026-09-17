@@ -144,7 +144,77 @@ function SchemaBrowser({ dataset, onInsert }) {
 // the application's chrome and the assignment context travels with it. When it is not --
 // a judgement call, a write-up, a sign-off -- nothing changes: those are done at your
 // desk, and dressing them as an application would be inventing one.
-export default function Workbench({ taskId, onGraded, app, company, task, requestedBy, reviewer, onBack }) {
+// Why the business cares, then what is actually being asked.
+//
+// The order matters. A learner three queries deep has stopped reading the brief; what they
+// need at the top of the tool is the reason somebody is waiting, and the brief underneath
+// it. Both are authored -- the scenario comes from the project's own document, the ask is
+// the task's brief as written. Neither is generated.
+function AssignmentBrief({ wb, inApp }) {
+  const a = wb.assignment || {};
+  const [openContext, setOpenContext] = useState(false);
+  return (
+    <div className={`border-b border-slate-200 ${inApp ? 'bg-slate-50/60' : ''}`}>
+      {/* Outside an application the shell is not there to say who asked, so the brief
+          says it. Inside one it would be the same two names twice on one screen. */}
+      {!inApp && a.requestedBy && (
+        <div className="px-4 pt-2 pb-1 flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px]">
+          <span className="text-slate-500">
+            {a.source === 'line' ? 'From' : 'For'}{' '}
+            <b className="text-slate-700 font-semibold">{a.requestedBy.name}</b>
+            <span className="text-slate-400"> · {a.requestedBy.title}</span>
+          </span>
+          {a.reviewer && a.reviewer.archetype !== a.requestedBy.archetype && (
+            <span className="text-slate-500">
+              Reviewed by <b className="text-slate-700 font-semibold">{a.reviewer.name}</b>
+            </span>
+          )}
+          {a.deliverable && <span className="text-slate-500">Deliverable: {a.deliverable}</span>}
+        </div>
+      )}
+      {a.why && (
+        <div className="px-4 pt-3">
+          <div className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase mb-1">Why this matters</div>
+          <p className="text-xs text-slate-600 leading-relaxed">{a.why}</p>
+        </div>
+      )}
+      <div className="px-4 py-3">
+        <div className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase mb-1">
+          {a.requestedBy ? `What ${a.requestedBy.name.split(' ')[0]} needs from you` : 'What is needed'}
+        </div>
+        <p className="text-xs text-slate-700 leading-relaxed">{wb.brief}</p>
+
+        {(a.watchOutFor || []).length > 0 && (
+          <div className="mt-2.5">
+            <button
+              onClick={() => setOpenContext((o) => !o)}
+              aria-expanded={openContext}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+            >
+              <ChevronRight size={12} className={`transition-transform ${openContext ? 'rotate-90' : ''}`} />
+              What this project has caught people out on ({a.watchOutFor.length})
+            </button>
+            {openContext && (
+              <ul className="mt-1.5 space-y-1 pl-4">
+                {a.watchOutFor.map((w, i) => (
+                  <li key={i} className="text-[11px] text-slate-600 leading-relaxed list-disc">{w}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {(a.resources || []).length > 0 && (
+          <p className="mt-2 text-[11px] text-slate-500">
+            On this project: {a.resources.map((r) => r.label).join(' · ')}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Workbench({ taskId, onGraded, app, company, task, onBack }) {
   const [wb, setWb] = useState(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -271,17 +341,17 @@ export default function Workbench({ taskId, onGraded, app, company, task, reques
   // be the title twice on one screen. Outside one, this header IS the only title.
   const body = (
     <>
+      {/* Every assignment gets the same brief, whether or not it opens in one of the
+          company's applications. A judgement call has a requester and a reason exactly as
+          a query does; showing the context only inside a tool would have meant the third
+          of the week that is read-and-decide work went back to reading like an exercise.
+          Outside an application there is no shell, so this one carries the title too. */}
       {!app && (
-        <div className="px-4 py-3 border-b border-slate-200">
+        <div className="px-4 pt-3">
           <h3 className="text-sm font-extrabold text-slate-900">{wb.title}</h3>
-          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{wb.brief}</p>
         </div>
       )}
-      {app && (
-        <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/60">
-          <p className="text-xs text-slate-600 leading-relaxed">{wb.brief}</p>
-        </div>
-      )}
+      <AssignmentBrief wb={wb} inApp={Boolean(app)} />
 
       {/* A write-up has no schema pane, so it gets the full width rather than an empty
           220px column beside it. Same for an allocation, and for a sign-off whose exhibit
@@ -426,8 +496,7 @@ export default function Workbench({ taskId, onGraded, app, company, task, reques
       app={app}
       company={company}
       task={task}
-      requestedBy={requestedBy}
-      reviewer={reviewer}
+      assignment={wb.assignment}
       onBack={onBack}
     >
       {body}
