@@ -340,6 +340,18 @@ CREATE TABLE IF NOT EXISTS sim_days (
   UNIQUE(enrollment_id, project_run_id, day_index)
 );
 
+-- When the learner last had the workspace open.
+--
+-- "Since you were away" needs a from-when, and it has to be a real one: the last time
+-- this person actually looked, not the last calendar day. Self-paced learners come back
+-- after an hour or after a fortnight and both are ordinary. One row per enrolment,
+-- stamped on every state read, so the gap is measured rather than assumed.
+CREATE TABLE IF NOT EXISTS sim_presence (
+  enrollment_id TEXT PRIMARY KEY REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  last_seen_at TEXT NOT NULL,
+  previous_seen_at TEXT
+);
+
 -- ---- The management cycle: timesheets, attendance, appraisal -------------------------
 --
 -- All three are keyed on project_run_id, because one project week IS one month in this

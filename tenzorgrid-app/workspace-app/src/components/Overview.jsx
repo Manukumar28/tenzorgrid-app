@@ -17,13 +17,19 @@ const ROLE_TITLE = {
   learner: 'You',
 };
 
+// "On track relative to peers" claimed a comparison against other learners that does not
+// exist -- there is no cohort, no peer distribution, and nothing that could produce that
+// sentence. It read as a real benchmark and it was decoration. What this can honestly say
+// is what YOUR work has done, against the bar the work itself was set.
 function summaryNote(state) {
-  const { avgScore } = state.performance;
-  if (avgScore === null) return "No graded tasks yet — complete your first task to see how you're tracking.";
+  const { avgScore, tasksCompleted } = state.performance;
+  if (avgScore === null) return "No graded work yet — your first sign-off is what starts this.";
   const dataAxes = state.skillMatrix.filter((a) => a.hasData);
   const weakest = dataAxes.length ? [...dataAxes].sort((a, b) => a.value - b.value)[0] : null;
-  const base = avgScore >= 80 ? "Today's performance is on track relative to peers." : "Today's performance is a little behind target.";
-  const focus = weakest ? ` Focus on '${weakest.label}' for further optimization.` : ' Complete more tasks to unlock a full skill breakdown.';
+  const base = `${tasksCompleted} piece${tasksCompleted === 1 ? '' : 's'} of work signed off, averaging ${avgScore}.`;
+  const focus = weakest
+    ? ` The weakest of your marks so far is '${weakest.label}' — that is where the next point is.`
+    : ' A few more tasks and the skill breakdown fills in.';
   return base + focus;
 }
 
