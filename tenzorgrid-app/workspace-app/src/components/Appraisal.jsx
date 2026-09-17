@@ -195,7 +195,7 @@ export default function Appraisal({ onStateChange }) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-baseline gap-2.5 flex-wrap">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Appraisal</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Appraisals</h1>
         <span className="text-sm font-semibold text-slate-500">
           [{data.projectTitle || 'This cycle'} · day {data.dayNow} of {data.totalDays}]
         </span>

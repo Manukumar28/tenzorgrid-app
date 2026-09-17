@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
+import MobileNav from './components/MobileNav.jsx';
 import Header from './components/Header.jsx';
 import Overview from './components/Overview.jsx';
 import WorkdayHome from './components/WorkdayHome.jsx';
@@ -132,12 +133,13 @@ export default function App() {
         onClose={() => setMenuOpen(false)}
         tab={tab}
         onTab={setTab}
-        roleLabel={(state.enrollment.roleLabel || 'Data Analyst').toUpperCase()}
+        roleLabel={state.enrollment.roleLabel || 'Data Analyst'}
         levelLabel={state.enrollment.levelTitle || ''}
         level={state.enrollment.level}
         company={state.company}
+        employee={state.employee}
+        state={state}
         onLogout={logout}
-        unreadCount={state.inbox ? state.inbox.counts.unread : 0}
       />
       {standupOpen && state.standup && !state.standup.done && (
         <Standup
@@ -149,14 +151,12 @@ export default function App() {
           onDone={(next) => { setStandupOpen(false); setStandupSeen(true); if (next) setState(next); }}
         />
       )}
-      <main className="flex-1 min-w-0 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6">
+      {/* The bottom bar overlays the page on small screens, so the content reserves
+          room for it -- otherwise the last card on every tab sits under the nav. */}
+      <main className="flex-1 min-w-0 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 pb-24 lg:pb-6">
         <Header
-          name={learnerName}
-          photoUrl={learnerPhotoUrl}
-          roleLabel={roleLabel}
           company={state.company}
           employee={state.employee}
-          compact={tab === 'workday'}
           checkedIn={state.attendance.checkedInToday}
           onToggleCheckIn={toggleCheckIn}
           onLogout={logout}
@@ -202,6 +202,14 @@ export default function App() {
       {/* Always reachable, deliberately outside the tab system: you ask a colleague a
           question WHILE you are stuck in the workbench, not by navigating away from it. */}
       <ChatDock state={state} onStateChange={setState} enterToSend={prefs.enterToSend} openWith={chatWith} />
+
+      <MobileNav
+        tab={tab}
+        onTab={setTab}
+        onOpenMenu={() => setMenuOpen(true)}
+        level={state.enrollment.level}
+        state={state}
+      />
     </div>
   );
 }

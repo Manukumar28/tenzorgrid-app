@@ -578,7 +578,7 @@ export default function Today({ state, onStateChange, onTab }) {
   return (
     <div className="space-y-4">
       <div className="flex items-baseline gap-2.5 flex-wrap">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Today</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">My Day</h1>
         <span className="text-sm font-semibold text-slate-500">
           {day ? `Day ${day.unlocked} of ${day.totalDays}` : 'Nothing running'}
         </span>

@@ -388,8 +388,8 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
       {/* Title + metric sub-bar */}
       <div>
         <div className="flex items-baseline gap-2.5 flex-wrap mb-3">
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Tasks</h1>
-          <span className="text-sm font-semibold text-gray-500">[Track your work and stay ahead]</span>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Work</h1>
+          <span className="text-sm font-semibold text-gray-500">Everything assigned to you, and the bench you do it on</span>
         </div>
 
       </div>

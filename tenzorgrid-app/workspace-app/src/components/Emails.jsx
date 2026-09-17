@@ -259,8 +259,8 @@ export default function Emails({ state, onStateChange }) {
       {/* Title + search */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Emails</h1>
-          <span className="text-sm font-semibold text-slate-500">[Unified communications]</span>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Inbox</h1>
+          <span className="text-sm font-semibold text-slate-500">Mail from colleagues and the company</span>
         </div>
         <div className="relative flex-1 min-w-[240px] max-w-md">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -294,8 +294,13 @@ export default function Emails({ state, onStateChange }) {
         </div>
       </div>
 
-      {/* Category tabs — only categories that actually have mail */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-100 -mb-px">
+      {/* Category tabs — only categories that actually have mail.
+          It wraps rather than scrolling sideways. Measured on a manager's board: thirteen
+          folders, 2020px of strip in a 1136px container -- six of them unreachable at
+          1440px without a horizontal gesture nothing advertised, and about 900px hidden
+          on a phone. Wrapping costs a second short row and makes every folder reachable.
+          Nothing about what a folder is, or which mail lands in it, changed. */}
+      <div className="flex items-center gap-1 flex-wrap border-b border-slate-100 -mb-px">
         {tabs.map((t) => {
           const Icon = t.icon;
           const on = tab === t.key;
