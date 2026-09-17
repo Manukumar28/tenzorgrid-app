@@ -18031,6 +18031,202 @@ async function sendLearnerMessage(userId, archetype, body, subject) {
   return getState(userId);
 }
 
+// ---- The management cycle: timesheets, attendance, appraisal ---------------------------
+//
+// One project week is one month in this world, so every one of these is keyed on the
+// project run. A learner doing a project a week would otherwise meet a single calendar
+// cycle and never a second, and a process you go through once teaches nothing about
+// running it.
+//
+// The people are the learner's real reports — four at Lead, six at Manager — not the
+// fourteen rows in analytics_ops. Chasing a missing timesheet has to mean messaging Ravi
+// and having Ravi answer; a name that only exists inside a SQL exercise cannot do that.
+
+const TIMESHEET_CHARGE_CODES = [
+  'Project delivery',
+  'Line management',
+  'Internal / admin',
+  'Training',
+  'Leave',
+];
+
+// Who files on time and who does not, decided once per enrollment and then fixed.
+//
+// Seeded rather than random: a suite has to be able to assert that this learner finds
+// exactly this person missing, and a learner who reloads the page should not find a
+// different team. The shape is deliberate — most people file most days, one is reliably
+// late, one barely files at all — because a chase list where everyone is equally bad is
+// not a list, it is noise.
+const FILER_HABIT = [
+  { chance: 0.97, label: 'files daily' },
+  { chance: 0.9, label: 'usually files' },
+  { chance: 0.55, label: 'drifts' },
+  { chance: 0.2, label: 'rarely files unprompted' },
+];
+
+// seedFrom returns a hash; rngFrom turns it into the generator. Wrapped so the call sites
+// below read as what they are rather than as two nested helpers.
+function seededRng(key) {
+  return tasktypes.rngFrom(tasktypes.seedFrom(key));
+}
+
+function habitFor(enrollmentId, archetype) {
+  const rng = seededRng(`${enrollmentId}:habit:${archetype}`);
+  return FILER_HABIT[Math.floor(rng() * FILER_HABIT.length) % FILER_HABIT.length];
+}
+
+// Seeds one report's row for one day. Called lazily on read so a run that started before
+// this feature existed still gets a full grid rather than a hole.
+function ensureTeamTimesheet(enrollment, runId, archetype, dayIndex) {
+  const existing = db.prepare(
+    'SELECT * FROM sim_team_timesheets WHERE enrollment_id = ? AND project_run_id = ? AND archetype = ? AND day_index = ?',
+  ).get(enrollment.id, runId, archetype, dayIndex);
+  if (existing) return existing;
+
+  const habit = habitFor(enrollment.id, archetype);
+  const rng = seededRng(`${enrollment.id}:${runId}:${archetype}:${dayIndex}`);
+  const filed = rng() < habit.chance;
+  const hours = filed ? Math.round((6.5 + rng() * 2.5) * 2) / 2 : null;
+  const row = {
+    id: cryptoRandomId(),
+    enrollment_id: enrollment.id,
+    project_run_id: runId,
+    archetype,
+    day_index: dayIndex,
+    hours,
+    submitted_at: filed ? new Date(Date.now() - Math.floor(rng() * 6 * 3600 * 1000)).toISOString() : null,
+    reminded_at: null,
+  };
+  db.prepare(`INSERT INTO sim_team_timesheets (id, enrollment_id, project_run_id, archetype, day_index, hours, submitted_at, reminded_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(row.id, row.enrollment_id, row.project_run_id, row.archetype, row.day_index, row.hours, row.submitted_at, row.reminded_at);
+  return row;
+}
+
+// The whole Timesheets tab: your own week, and — from Lead — everybody else's.
+function getTimesheets(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const run = activeRun(enrollment);
+  if (!run) return { open: false, reason: 'No project is running yet.' };
+
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  const days = [];
+  for (let d = 1; d <= PROJECT_WEEK_DAYS; d += 1) {
+    days.push({ day: d, name: DAY_NAMES[d] || `Day ${d}`, open: d <= dayNow });
+  }
+
+  const mine = db.prepare('SELECT * FROM sim_timesheets WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id);
+  const byDay = Object.fromEntries(mine.map((r) => [r.day_index, r]));
+
+  const reports = reportsForLevel(enrollment.level);
+  const team = reports.map((p) => {
+    const rows = [];
+    for (let d = 1; d <= dayNow; d += 1) rows.push(ensureTeamTimesheet(enrollment, run.id, p.archetype, d));
+    const missing = rows.filter((r) => !r.submitted_at);
+    return {
+      archetype: p.archetype,
+      name: p.name,
+      title: p.title,
+      habit: habitFor(enrollment.id, p.archetype).label,
+      days: rows.map((r) => ({
+        day: r.day_index, hours: r.hours,
+        submitted: Boolean(r.submitted_at),
+        reminded: Boolean(r.reminded_at),
+      })),
+      missingDays: missing.map((r) => r.day_index),
+      remindedDays: rows.filter((r) => r.reminded_at && !r.submitted_at).map((r) => r.day_index),
+      complete: missing.length === 0,
+    };
+  });
+
+  return {
+    open: true,
+    chargeCodes: TIMESHEET_CHARGE_CODES,
+    dayNow,
+    totalDays: PROJECT_WEEK_DAYS,
+    projectTitle: (catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key) || {}).title || null,
+    days: days.map((d) => ({
+      ...d,
+      submitted: Boolean(byDay[d.day]),
+      hours: byDay[d.day] ? byDay[d.day].hours : null,
+      chargedTo: byDay[d.day] ? byDay[d.day].charged_to : null,
+      note: byDay[d.day] ? byDay[d.day].note : null,
+    })),
+    mineSubmitted: mine.length,
+    mineDue: dayNow,
+    // Chasing is a Lead-and-above job. A junior has nobody to chase and should not be
+    // shown an empty table implying they are failing at something.
+    canChase: LEVEL_RANK[enrollment.level] >= LEVEL_RANK.lead,
+    team: LEVEL_RANK[enrollment.level] >= LEVEL_RANK.lead ? team : [],
+    teamMissing: team.reduce((n, t) => n + t.missingDays.length, 0),
+  };
+}
+
+function submitTimesheet(userId, dayIndex, values) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+
+  const d = Number(dayIndex);
+  const dayNow = projectDayOn(run.started_at, Date.now());
+  if (!Number.isInteger(d) || d < 1 || d > PROJECT_WEEK_DAYS) throw new Error('That is not a day of this week.');
+  if (d > dayNow) throw new Error('You cannot file a timesheet for a day that has not happened yet.');
+
+  const hours = Number(values && values.hours);
+  if (!Number.isFinite(hours) || hours < 0 || hours > 24) throw new Error('Hours must be between 0 and 24.');
+  const chargedTo = String((values && values.chargedTo) || '').trim();
+  if (!TIMESHEET_CHARGE_CODES.includes(chargedTo)) throw new Error('Choose what the time was charged to.');
+
+  const iso = now();
+  db.prepare(`INSERT INTO sim_timesheets (id, enrollment_id, project_run_id, day_index, hours, charged_to, note, submitted_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(enrollment_id, project_run_id, day_index)
+              DO UPDATE SET hours = excluded.hours, charged_to = excluded.charged_to, note = excluded.note, submitted_at = excluded.submitted_at`)
+    .run(cryptoRandomId(), enrollment.id, run.id, d, hours, chargedTo, String((values && values.note) || '').slice(0, 500), iso);
+  return getTimesheets(userId);
+}
+
+// Chasing somebody is a real message to a real person, and it works — they file, most of
+// the time. A reminder that changes nothing would teach the opposite of the lesson.
+function remindTimesheet(userId, archetype, dayIndex) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const run = activeRun(enrollment);
+  if (!run) throw new Error('No project is running yet.');
+  if (LEVEL_RANK[enrollment.level] < LEVEL_RANK.lead) throw new Error('Only a lead or above chases timesheets.');
+
+  const person = reportsForLevel(enrollment.level).find((p) => p.archetype === archetype);
+  if (!person) throw new Error('That person does not report to you.');
+
+  const d = Number(dayIndex);
+  const row = db.prepare(
+    'SELECT * FROM sim_team_timesheets WHERE enrollment_id = ? AND project_run_id = ? AND archetype = ? AND day_index = ?',
+  ).get(enrollment.id, run.id, archetype, d);
+  if (!row) throw new Error('There is no timesheet row for that day.');
+  if (row.submitted_at) throw new Error(`${person.name.split(' ')[0]} has already filed that day.`);
+  if (row.reminded_at) throw new Error(`You have already chased ${person.name.split(' ')[0]} about that day.`);
+
+  const iso = now();
+  // Whether the chase lands is seeded on the person, not on chance, so somebody who
+  // rarely files unprompted stays somebody who needs chasing twice.
+  const rng = seededRng(`${enrollment.id}:${run.id}:${archetype}:${d}:chase`);
+  const habit = habitFor(enrollment.id, archetype);
+  const filesNow = rng() < 0.55 + habit.chance * 0.4;
+
+  db.prepare('UPDATE sim_team_timesheets SET reminded_at = ?, submitted_at = ?, hours = ? WHERE id = ?')
+    .run(iso, filesNow ? iso : null, filesNow ? Math.round((6.5 + rng() * 2) * 2) / 2 : null, row.id);
+
+  const reply = filesNow
+    ? `Sorry — done now. ${DAY_NAMES[row.day_index] || `Day ${row.day_index}`} is in.`
+    : "I know, I know. I'll get to it — it's been a week.";
+  addMessage(enrollment.id, archetype, person.name, reply, null, 'Timesheet', archetype);
+
+  return { ...getTimesheets(userId), lastChase: { name: person.name, filed: filesNow, reply } };
+}
+
 module.exports = {
   closeDay,
   timeTravelStartProject,
@@ -18039,6 +18235,7 @@ module.exports = {
 
   ROLE_CATALOG,
   levelsForRole,
+  getTimesheets, submitTimesheet, remindTimesheet,
   getCatalogue,
   recordRoleInterest,
   resetPreview,

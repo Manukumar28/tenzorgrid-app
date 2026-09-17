@@ -48,4 +48,11 @@ export const api = {
   // alongside the code — see the trust note in lib/workspace.js submitTask().
   submitPython: (taskId, code, result) =>
     jsonFetch(`/api/workspace/tasks/${taskId}/submit`, { method: 'POST', body: JSON.stringify({ code, result }) }),
+
+  // ---- The management cycle ----
+  timesheets: () => jsonFetch('/api/workspace/timesheets'),
+  submitTimesheet: (day, values) =>
+    jsonFetch('/api/workspace/timesheets/submit', { method: 'POST', body: JSON.stringify({ day, ...values }) }),
+  remindTimesheet: (archetype, day) =>
+    jsonFetch('/api/workspace/timesheets/remind', { method: 'POST', body: JSON.stringify({ archetype, day }) }),
 };

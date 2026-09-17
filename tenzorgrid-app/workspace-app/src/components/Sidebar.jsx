@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun } from 'lucide-react';
+import { LayoutGrid, FolderOpen, ClipboardCheck, Calendar, Mail, Users, Settings, ArrowLeft, LogOut, X, Sun, Clock3 } from 'lucide-react';
 
+// `minLevel` hides a tab below that rung. It is a convenience only — the engine checks
+// the level on every call, because a tab you cannot see is not a permission, it is a
+// tidier menu.
 const NAV = [
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
   { key: 'today', label: 'Today', icon: Sun },
   { key: 'projects', label: 'Projects', icon: FolderOpen },
   { key: 'tasks', label: 'Tasks', icon: ClipboardCheck },
+  { key: 'timesheets', label: 'Timesheets', icon: Clock3 },
   { key: 'calendar', label: 'Calendar', icon: Calendar },
   { key: 'emails', label: 'Emails', icon: Mail },
   { key: 'team', label: 'Team', icon: Users },
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
+
+const LEVEL_RANK = { junior: 0, senior: 1, lead: 2, manager: 3 };
 
 function useClock() {
   const [now, setNow] = useState(new Date());
@@ -27,7 +33,9 @@ const WEATHER_BY_HOUR = (h) => (h < 6 ? 'clear night' : h < 12 ? 'mostly clear' 
 // the page scrolled 431px sideways on a 390px device. Below `lg` it is a drawer instead:
 // off-canvas by default, slid in over a scrim when the header's menu button is pressed.
 // Above `lg` it is exactly the rail it always was, so nothing changes on a laptop.
-export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, unreadCount = 0, open = false, onClose }) {
+export default function Sidebar({ tab, onTab, roleLabel, levelLabel, level, onLogout, unreadCount = 0, open = false, onClose }) {
+  const rank = LEVEL_RANK[level] === undefined ? 0 : LEVEL_RANK[level];
+  const nav = NAV.filter((n) => !n.minLevel || rank >= LEVEL_RANK[n.minLevel]);
   const now = useClock();
   const time = now.toTimeString().slice(0, 5);
   const date = `${String(now.getDate()).padStart(2, '0')}-${now.toLocaleString('en', { month: 'short' }).toUpperCase()}-${now.getFullYear()}`;
@@ -65,7 +73,7 @@ export default function Sidebar({ tab, onTab, roleLabel, levelLabel, onLogout, u
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">
-        {NAV.map(({ key, label, icon: Icon }) => (
+        {nav.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => pick(key)}

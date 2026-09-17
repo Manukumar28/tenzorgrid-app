@@ -275,30 +275,34 @@ const NOISE = [
 
 // ---- Company admin you can actually do ------------------------------------------------
 //
-// A reminder that timesheets close on Friday is only realistic if there is somewhere to go
-// and put your hours. Without that it is a sign on a wall, and the learner's first thought
-// is "where would I even do that?" -- which is a fair question and the wrong one to be
-// thinking about mid-analysis.
+// A reminder to do something is only realistic if there is somewhere to go and do it.
+// Without that it is a sign on a wall, and the learner's first thought is "where would I
+// even do that?" -- which is a fair question and the wrong one to be thinking about
+// mid-analysis.
 //
 // So the admin mail carries the form with it. These are not graded and they do not gate
 // the day; they are the small, dull, compulsory things a job is actually made of, and
 // doing them takes fifteen seconds. Field kinds are deliberately few: a number, a choice,
 // or a tick.
+//
+// Hours used to be one of these, on Monday and again on Friday. They are not any more:
+// timesheets became a place rather than a form, because chasing other people's is half
+// the job at lead and above and you cannot chase a mail you have already replied to.
 
 const CHORES = [
   {
     key: 'ch-01', day: 1, from: 'finance_ops', senderName: 'Finance Operations',
-    subject: 'Timesheet — your hours for Monday',
-    body: "Hi {name},\n\nTime to log Monday. Hours and what you charged them to, and that is you done for the day.\n\nThe week has to be in by 5pm Friday, but doing it daily takes ten seconds and saves you reconstructing the week from memory on Friday afternoon, which is what everybody else does.",
+    subject: 'Expenses — last month closes Wednesday',
+    body: "Hi {name},\n\nIf you spent anything on the company last month, get it in by Wednesday. After that it lands in the next period and you wait another month to see it.\n\nSeparately: hours no longer come through us by mail. They live on the Timesheets tab now, and they are due daily rather than in one Friday panic.",
     action: {
-      submitLabel: 'Submit timesheet',
+      submitLabel: 'Send my claim',
       fields: [
-        { key: 'hours', label: 'Hours worked today', kind: 'number', min: 0, max: 12, step: 0.5, placeholder: '7.5', required: true },
-        { key: 'charged', label: 'Charged to', kind: 'choice', required: true,
-          options: ['{project}', 'Internal / admin', 'Training'] },
+        { key: 'amount', label: 'Amount to claim (₹)', kind: 'number', min: 0, max: 50000, step: 100, placeholder: '0', required: true },
+        { key: 'charged', label: 'Charge it to', kind: 'choice', required: true,
+          options: ['Nothing to claim', '{project}', 'Internal / admin', 'Training'] },
       ],
     },
-    confirm: 'Logged — {hours} hours against {charged}. Thanks for doing it on the day.',
+    confirm: 'Claim recorded — ₹{amount} against {charged}. It clears with the next payroll run.',
   },
   {
     key: 'ch-02', day: 2, from: 'security', senderName: 'Security Team',
@@ -342,18 +346,18 @@ const CHORES = [
     confirm: 'Got it, thank you. Results go out in a fortnight.',
   },
   {
-    key: 'ch-05', day: 5, from: 'finance_ops', senderName: 'Finance Operations',
-    subject: 'Timesheet — the week closes at 5pm',
-    body: "Last call for this week. Total hours across the five days and anything worth noting.\n\nAfter 5pm it rolls into next month, which is a fortnight of nobody being able to see what this project actually cost.",
+    key: 'ch-05', day: 5, from: 'it_ops', senderName: 'IT Service Desk',
+    subject: 'Licence true-up — are you still using these?',
+    body: "We pay per seat for a handful of tools and we are billed whether you open them or not. Once a month we ask.\n\nSay what you actually use. Nothing bad happens if you hand a licence back and want it again later — it takes an hour to reissue.",
     action: {
-      submitLabel: 'Submit the week',
+      submitLabel: 'Confirm my tools',
       fields: [
-        { key: 'total', label: 'Total hours this week', kind: 'number', min: 0, max: 60, step: 0.5, placeholder: '37.5', required: true },
-        { key: 'overtime', label: 'Did you work beyond your contracted hours?', kind: 'choice', required: true,
-          options: ['No', 'Yes — an hour or two', 'Yes — significantly'] },
+        { key: 'bi_seat', label: 'The BI dashboard seat', kind: 'choice', required: true,
+          options: ['Using it weekly', 'Using it occasionally', 'Hand it back'] },
+        { key: 'confirmed', label: 'I have checked this rather than guessed', kind: 'ack', required: true },
       ],
     },
-    confirm: 'Week submitted — {total} hours. That is the month closed at your end.',
+    confirm: 'Noted — {bi_seat}. That is the true-up done for the month.',
   },
 ];
 

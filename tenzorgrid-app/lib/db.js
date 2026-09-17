@@ -340,9 +340,90 @@ CREATE TABLE IF NOT EXISTS sim_days (
   UNIQUE(enrollment_id, project_run_id, day_index)
 );
 
--- The small compulsory things a job is made of: the timesheet, the policy tick, the desk
--- booking. Not graded and they gate nothing -- they exist because a reminder that
--- timesheets close on Friday is only realistic if there is somewhere to go and log them.
+-- ---- The management cycle: timesheets, attendance, appraisal -------------------------
+--
+-- All three are keyed on project_run_id, because one project week IS one month in this
+-- world. That is not a shortcut: a learner doing a project a week would otherwise see a
+-- single real calendar cycle and never a second one, and a process you go through once
+-- teaches nothing about running it.
+
+-- The learner's own timesheet, one row per day of the run. This is the thing every level
+-- does; the chasing on top of it is what Lead and Manager do.
+CREATE TABLE IF NOT EXISTS sim_timesheets (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT NOT NULL,
+  day_index INTEGER NOT NULL,
+  hours REAL NOT NULL,
+  charged_to TEXT,
+  note TEXT,
+  submitted_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id, day_index)
+);
+
+-- What each of the learner's reports has done about their own timesheet. Seeded rather
+-- than random so a run is reproducible and testable: the same learner always finds the
+-- same person has not filed. submitted_at NULL is the whole point of the tab — it is who
+-- you have to go and chase. reminded_at records that you did.
+CREATE TABLE IF NOT EXISTS sim_team_timesheets (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT NOT NULL,
+  archetype TEXT NOT NULL,
+  day_index INTEGER NOT NULL,
+  hours REAL,
+  submitted_at TEXT,
+  reminded_at TEXT,
+  UNIQUE(enrollment_id, project_run_id, archetype, day_index)
+);
+
+-- The monthly attendance return: one per run, submitted as a file the learner downloaded,
+-- edited and sent back. rows_json is what they actually submitted, kept so the grader can
+-- say which row was wrong rather than just refusing the lot.
+CREATE TABLE IF NOT EXISTS sim_attendance_returns (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT NOT NULL,
+  rows_json TEXT NOT NULL,
+  score INTEGER,
+  feedback TEXT,
+  submitted_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id)
+);
+
+-- One rating per report per cycle, with the reasoning. The justification is graded the way
+-- a write-up is: a rating with nothing behind it is the thing this is teaching against.
+CREATE TABLE IF NOT EXISTS sim_appraisals (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT NOT NULL,
+  archetype TEXT NOT NULL,
+  rating TEXT NOT NULL,
+  justification TEXT,
+  score INTEGER,
+  feedback TEXT,
+  submitted_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, project_run_id, archetype)
+);
+
+-- Promotions are permanent by design — the learner chose this and has to live with the
+-- team they made. No project_run_id in the unique key: you can only promote a person once.
+CREATE TABLE IF NOT EXISTS sim_promotions (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  project_run_id TEXT NOT NULL,
+  archetype TEXT NOT NULL,
+  from_title TEXT NOT NULL,
+  to_title TEXT NOT NULL,
+  justification TEXT,
+  decided_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, archetype)
+);
+
+-- The small compulsory things a job is made of: the expense claim, the policy tick, the
+-- desk booking. Not graded and they gate nothing -- they exist because a reminder to do
+-- something is only realistic if there is somewhere to go and do it. Hours used to be one
+-- of these and are now a tab of their own, above.
 CREATE TABLE IF NOT EXISTS sim_chores (
   id TEXT PRIMARY KEY,
   enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,

@@ -366,5 +366,5 @@ function presentSignoff(spec, seed) {
 module.exports = {
   gradeChoice, gradeWriteup, gradeCoach, gradeAssign, gradeSignoff,
   presentChoice, presentWriteup, presentCoach, presentAssign, presentSignoff,
-  shuffleSeeded, seedFrom,
+  shuffleSeeded, seedFrom, rngFrom,
 };
