@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Menu } from 'lucide-react';
+import AppLauncher from './AppLauncher.jsx';
 
 
 // The strip above every page: where you are, and the two controls that belong to the
 // session rather than to any one screen. It used to carry a "Welcome back" h1 on every
 // tab, which Milestone 02 removed -- see below.
-export default function Header({ company, employee, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu }) {
+export default function Header({ company, employee, apps, state, onLaunchApp, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu }) {
   return (
     <div className="flex items-start justify-between gap-3 sm:gap-6 mb-6 flex-wrap">
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
@@ -43,7 +44,10 @@ export default function Header({ company, employee, checkedIn, onToggleCheckIn, 
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2.5 sm:gap-4">
+        {/* The company's tools. A utility beside the session controls, not a sixth thing
+            competing with the navigation for what the product is shaped like. */}
+        <AppLauncher apps={apps} state={state} onLaunch={onLaunchApp} />
         <button
           onClick={onToggleCheckIn}
           disabled={checkedIn}

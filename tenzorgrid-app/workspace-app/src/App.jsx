@@ -47,6 +47,13 @@ export default function App() {
   const [tab, setTab] = useState('workday');
   // A task the Workday Home asked to open. Timestamped so asking twice still works.
   const [openRequest, setOpenRequest] = useState(null);
+  // Launching one of the employer's applications. A place just opens; a bench opens on
+  // the work it can actually carry, which the registry worked out from the board.
+  const launchApp = useCallback((target) => {
+    if (!target) return;
+    if (target.taskId) setOpenRequest({ id: target.taskId, at: Date.now() });
+    setTab(target.tab);
+  }, []);
   // A stand-up you can ignore is not a stand-up — it opens by itself, once a day, the
   // way a real one starts whether or not you feel like it. Closing it is one click, and
   // the banner is there all day if you want it back.
@@ -157,6 +164,9 @@ export default function App() {
         <Header
           company={state.company}
           employee={state.employee}
+          apps={state.apps}
+          state={state}
+          onLaunchApp={launchApp}
           checkedIn={state.attendance.checkedInToday}
           onToggleCheckIn={toggleCheckIn}
           onLogout={logout}

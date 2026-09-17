@@ -7,6 +7,7 @@ import {
 import { BentoCard, Avatar, TONE } from './ui.jsx';
 import { Situation } from './Today.jsx';
 import { api } from '../api.js';
+import { openLabelFor, appForTask, iconFor } from '../lib/apps.js';
 
 // One icon per kind of slot, so the shape of a day is legible before any of the words are
 // read. A day that is all focus blocks looks different from one that is all review.
@@ -112,7 +113,7 @@ function estimateOf(hours) {
   return `about ${Math.round(hours * 10) / 10}h`;
 }
 
-function CurrentAssignment({ a, onOpen }) {
+function CurrentAssignment({ a, onOpen, apps }) {
   if (!a) {
     return (
       <BentoCard hover={false}>
@@ -168,12 +169,18 @@ function CurrentAssignment({ a, onOpen }) {
         ))}
       </div>
 
+      {/* Names the tool when the engine actually knows which one -- SQL and Python open
+          in Analytics Studio, a chart in BI Studio. For judgement, a write-up or a
+          sign-off there is no application and the button says so plainly rather than
+          inventing a destination. */}
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={() => onOpen(a.taskId)}
-        className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-[13px] font-bold hover:bg-slate-800"
+        className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-[13px] font-bold hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
       >
-        {a.stagePct > 0 ? 'Continue work' : 'Start work'} <ArrowRight size={15} />
+        {(() => { const App = appForTask(apps, a); const I = App ? iconFor(App) : null;
+          return I ? <I size={15} /> : null; })()}
+        {openLabelFor(apps, a, a.stagePct > 0)} <ArrowRight size={15} />
       </motion.button>
     </div>
   );
@@ -404,7 +411,7 @@ export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask })
 
       <Headlines items={workday.headlines} onTab={onTab} />
 
-      <CurrentAssignment a={workday.assignment} onOpen={openTask} />
+      <CurrentAssignment a={workday.assignment} onOpen={openTask} apps={state.apps} />
 
       {/* Desktop is information-rich; on a phone this stacks in the order the spec asks
           for — what is happening, what to work on, what is next, then everything else. */}
