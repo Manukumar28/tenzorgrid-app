@@ -26,6 +26,7 @@ const company = require('./company');
 const apps = require('./apps');
 const assignments = require('./assignments');
 const events = require('./events');
+const meetings = require('./meetings');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -15097,6 +15098,22 @@ function getCalendar(enrollment, tasks, messages, nowMs) {
     });
   }
 
+  // Meetings are the only entries here that were SCHEDULED rather than derived from
+  // something that happened to a task. They carry a day and never a time, because the
+  // simulation does not know what time of day anything happens.
+  for (const m of db.prepare('SELECT * FROM sim_meetings WHERE enrollment_id = ?').all(enrollment.id)) {
+    events.push({
+      id: `${m.id}-meeting`,
+      date: m.scheduled_on,
+      at: m.completed_at || `${m.scheduled_on}T09:00:00.000Z`,
+      kind: m.status === 'completed' ? 'meeting-done' : 'meeting',
+      title: m.type === 'one_to_one' ? `1:1 with ${LINE_MANAGER_NAME}` : 'Meeting',
+      detail: m.status === 'completed' ? 'Done' : 'Due now',
+      meetingKey: m.meeting_key,
+      priority: null,
+    });
+  }
+
   events.sort((a, b) => a.at.localeCompare(b.at));
 
   return {
@@ -15573,6 +15590,30 @@ function getState(userId) {
     })),
     openCount: eventsOpen.length,
   };
+  // The meeting, compactly. Home needs to know one is due and roughly what it is about;
+  // the evidence pack is only unpacked when the learner actually opens it.
+  const dueMeeting = meetings.dueMeetings(enrollment.id)[0] || null;
+  const goalRow = meetings.activeGoal(enrollment.id);
+  payload.meetings = {
+    due: dueMeeting ? {
+      key: dueMeeting.meeting_key,
+      type: dueMeeting.type,
+      weekIndex: dueMeeting.week_index,
+      with: LINE_MANAGER_NAME,
+      scheduledOn: dueMeeting.scheduled_on,
+      agenda: meetings.parse(dueMeeting.agenda_json, []),
+    } : null,
+    completedCount: db.prepare("SELECT COUNT(*) c FROM sim_meetings WHERE enrollment_id = ? AND status = 'completed'")
+      .get(enrollment.id).c,
+  };
+  // What the learner is working on. Carried in the payload so the NEXT week knows it
+  // exists -- a development focus that lives only on a profile page is one nobody acts on.
+  payload.development = goalRow ? {
+    competency: goalRow.competency,
+    title: goalRow.title,
+    reason: goalRow.reason,
+    setInWeek: goalRow.week_index,
+  } : null;
   payload.workday = buildWorkday(payload, new Date(), sinceIso);
   return payload;
 }
@@ -16965,26 +17006,193 @@ function finishProjectIfComplete(enrollment) {
   const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === run.project_key);
   const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(enrollment.user_id);
   const learner = firstName(profile && profile.name) || 'there';
-  const bestTitle = c.best ? c.best.title || '' : '';
 
-  // Specific, because specific is the only kind that lands. "Well done on the project" is
-  // what a manager says when they have not read it.
-  const lines = [
-    `${learner} — that is Q1 Compensation Review closed out. Properly done.`,
-    '',
-    `You delivered ${c.tasks.total} pieces of work across the week, handled ${c.situations.total} things that landed on you unannounced, and got through the training alongside it${c.avgScore ? `, averaging ${c.avgScore} on the graded work` : ''}.`,
-  ];
-  if (c.quiz.taken && c.quiz.score !== null) {
-    lines.push('', `The Friday check came out at ${c.quiz.score}%. ${c.quiz.score >= 70 ? 'That is a good read on the week.' : 'Worth going back over the ones you missed — the reasons are on each of them.'}`);
-  }
-  lines.push('',
-    'What I would actually tell someone about you: you took a question that could not be answered as asked, said so early, and gave Vikram something he could use instead. That is the part people find hard.',
-    '',
-    'Next one is waiting when you are. Take a break first — you have earned the afternoon.');
+  // Anything left unanswered belongs to the week that just ended. It stays on record --
+  // the 1:1 counts it and the learner should hear about it -- but it stops being an OPEN
+  // item, or every future week would inherit the previous one's silences and Home would
+  // slowly fill with things nobody can act on any more.
+  db.prepare(`UPDATE sim_events SET state = 'noted', resolution = 'week-closed', resolved_at = ?
+              WHERE enrollment_id = ? AND project_run_id = ? AND state = 'open'
+                AND pattern IN ('unanswered', 'deferred')`)
+    .run(now(), enrollment.id, run.id);
 
-  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, lines.join('\n'), null,
-    `${def ? def.title : 'Project'} — signed off`, 'line_manager');
+  // The 1:1. This REPLACES the old wrap-up message, which told every learner on every
+  // project that they had "closed out Q1 Compensation Review" and praised them, in
+  // compensation-review-specific prose, for something most of them never did. The same
+  // ground is covered in the meeting, from evidence, about the week they actually had.
+  scheduleOneToOne(enrollment, run, def);
+
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    [`${learner} — that is ${def ? def.title : 'the project'} closed out.`,
+     '',
+     `${c.tasks.total} pieces of work across the week and ${c.situations.total} things that landed on you unannounced.`,
+     '',
+     'Put half an hour in for the two of us before you pick up the next one — I want to go through how it went properly rather than in a message.',
+    ].join('\n'),
+    null, `${def ? def.title : 'Project'} — signed off`, 'line_manager');
   return true;
+}
+
+// Everything the meeting screen needs. Evidence and observations come back off the row
+// they were frozen onto when the week closed -- not recomputed -- so a 1:1 opened today
+// and the same one opened next month are the same conversation about the same week.
+function getOneToOne(userId, meetingKey) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const row = meetingKey
+    ? meetings.meetingByKey(enrollment.id, meetingKey)
+    : meetings.dueMeetings(enrollment.id)[0];
+  if (!row) return null;
+
+  const evidence = meetings.parse(row.evidence_json, {});
+  const observations = meetings.parse(row.observations_json, []);
+  const manager = ROSTER.find((r) => r.archetype === 'line_manager') || null;
+  const profile = db.prepare('SELECT name FROM profiles WHERE user_id = ?').get(userId);
+  const def = catalogFor(enrollment.role, enrollment.level).find((p) => p.key === row.project_key);
+
+  // Last week's focus, and how it actually went. This is the part that makes the meeting
+  // feel like a manager who remembers -- and it is structured memory, read off two rows,
+  // rather than anything generative.
+  const prior = db.prepare(`SELECT * FROM sim_development_goals
+                            WHERE enrollment_id = ? AND source_meeting_id != ?
+                            ORDER BY created_at DESC LIMIT 1`)
+    .get(enrollment.id, row.id);
+  let followUp = null;
+  if (prior) {
+    const run = db.prepare('SELECT * FROM sim_project_runs WHERE id = ?').get(row.project_run_id);
+    followUp = {
+      title: prior.title,
+      competency: prior.competency,
+      setInWeek: prior.week_index,
+      progress: meetings.goalProgress(enrollment.id, prior, run, situationDef),
+    };
+  }
+
+  return {
+    key: row.meeting_key,
+    type: row.type,
+    status: row.status,
+    weekIndex: row.week_index,
+    scheduledOn: row.scheduled_on,
+    // Day granularity only. The simulation does not know what time of day anything
+    // happened, so the meeting does not pretend it does.
+    whenLabel: row.status === meetings.STATUS.COMPLETED ? 'Done' : 'Due now',
+    project: def ? { key: def.key, title: def.title } : { key: row.project_key, title: row.project_key },
+    participants: [
+      manager ? { name: manager.name, title: manager.title, avatarUrl: manager.avatarUrl || null, archetype: 'line_manager' } : null,
+      { name: (profile && profile.name) || 'You', title: roleTitleFor(enrollment), avatarUrl: null, archetype: 'learner' },
+    ].filter(Boolean),
+    evidence,
+    observations: observations.map((o) => ({ key: o.key, text: o.text })),
+    followUp,
+    // The authored options. Free text sits beside them and is never marked.
+    reflectionOptions: meetings.REFLECTIONS.map((r) => ({ key: r.key, label: r.label })),
+    reflectionChoice: row.reflection_choice || null,
+    reflectionText: row.reflection_text || null,
+    managerReply: row.manager_reply || null,
+    outcome: row.status === meetings.STATUS.COMPLETED ? developmentGoalFor(enrollment.id, row.id) : null,
+    completedAt: row.completed_at,
+  };
+}
+
+function roleTitleFor(enrollment) {
+  const r = roles.getRole(enrollment.role);
+  const lv = (r && r.levels || []).find((l) => l.key === enrollment.level);
+  return (lv && lv.title) || 'Analyst';
+}
+
+function developmentGoalFor(enrollmentId, meetingId) {
+  const g = db.prepare('SELECT * FROM sim_development_goals WHERE enrollment_id = ? AND source_meeting_id = ?')
+    .get(enrollmentId, meetingId);
+  if (!g) return null;
+  return { competency: g.competency, title: g.title, reason: g.reason, status: g.status, weekIndex: g.week_index };
+}
+
+// Finishing the conversation.
+//
+// Nothing here scores anything. The reflection is stored as written, Asha's reply is a
+// lookup against the option chosen, and the development goal is one row. A second call
+// cannot produce a second goal, because completion is guarded and the goal is keyed on
+// the meeting.
+function completeOneToOne(userId, meetingKey, reflectionChoice, reflectionText) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const row = meetings.meetingByKey(enrollment.id, meetingKey);
+  if (!row) throw new Error('No such meeting.');
+  if (row.status === meetings.STATUS.COMPLETED) throw new Error('You have already had that one.');
+
+  const chosen = meetings.reflectionByKey(reflectionChoice);
+  if (!chosen) throw new Error('Pick one of the options before finishing.');
+  // Stored exactly as written and never marked. A reflection is not a quiz answer.
+  const text = String(reflectionText || '').trim().slice(0, 2000);
+
+  const observations = meetings.parse(row.observations_json, []);
+  const goal = meetings.goalFrom(observations, chosen.key);
+
+  db.prepare(`UPDATE sim_meetings SET status = ?, reflection_choice = ?, reflection_text = ?,
+                                      manager_reply = ?, completed_at = ?
+              WHERE id = ?`)
+    .run(meetings.STATUS.COMPLETED, chosen.key, text || null, chosen.reply, now(), row.id);
+
+  if (goal) {
+    // Only one focus is ever active. The previous one is superseded rather than deleted --
+    // the history is what lets a later meeting say "you have been working on this for a
+    // fortnight" instead of starting from nothing every week.
+    db.prepare(`UPDATE sim_development_goals SET status = 'superseded', closed_at = ?
+                WHERE enrollment_id = ? AND status = 'active'`).run(now(), enrollment.id);
+    meetings.insertOnce(
+      `INSERT INTO sim_development_goals (id, enrollment_id, goal_key, competency, title, reason,
+                                          source_meeting_id, week_index, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      [cryptoRandomId(), enrollment.id, `goal:${row.meeting_key}`, goal.competency, goal.title,
+       goal.reason, row.id, row.week_index, now()],
+    );
+  }
+
+  // Her words go into the thread, so the conversation is still there next week.
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
+    [chosen.reply, goal ? `\nWhat I would like you to work on: ${goal.title}.` : ''].join('').trim(),
+    null, `Our 1:1 — week ${row.week_index}`, 'line_manager');
+
+  return { reply: chosen.reply, goal, state: getState(userId) };
+}
+
+// ---- the weekly 1:1 ---------------------------------------------------------------------
+//
+// Scheduled at the week boundary, which is AFTER the run is marked complete and day five
+// has been clocked off. That ordering is what makes it safe: the week is already over by
+// the time the meeting exists, so a 1:1 can never block day progression however it
+// behaves. Milestone 05 found that situation handling participates in the day-close gate;
+// this deliberately sits outside it.
+function scheduleOneToOne(enrollment, run, def) {
+  // Keyed on the run, because one project run IS one week here. Scheduling is therefore
+  // idempotent by construction rather than by remembering to check.
+  const key = `1to1:${run.id}`;
+  const weekIndex = db.prepare('SELECT COUNT(*) c FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NOT NULL')
+    .get(enrollment.id).c || 1;
+
+  const evidence = meetings.buildEvidence(enrollment.id, run, { taskKeys: def ? def.taskKeys : [] });
+  const observations = meetings.observationsFor(evidence);
+
+  return meetings.insertOnce(
+    `INSERT INTO sim_meetings (id, enrollment_id, meeting_key, type, project_run_id, project_key,
+                               week_index, scheduled_on, status, evidence_json, observations_json,
+                               agenda_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'due', ?, ?, ?, ?)`,
+    [cryptoRandomId(), enrollment.id, key, meetings.TYPES.ONE_TO_ONE, run.id, run.project_key,
+     weekIndex, today(), JSON.stringify(evidence), JSON.stringify(observations),
+     JSON.stringify(agendaFor(observations, evidence)), now()],
+  );
+}
+
+// What is likely to come up. Home shows this before the learner opens the meeting, so they
+// can walk in knowing what it is about -- which is what a prepared person does.
+function agendaFor(observations, evidence) {
+  const items = observations.map((o) => o.text.split(/(?<=[.?!])\s/)[0]);
+  if (!items.length && evidence.approvedCount) {
+    items.push(`${evidence.approvedCount} ${evidence.approvedCount === 1 ? 'piece' : 'pieces'} of work signed off.`);
+  }
+  return items.slice(0, 3);
 }
 
 // ---- Testing the week without waiting a week -----------------------------------------
@@ -19824,6 +20032,8 @@ function __testApproveWork(userId, taskId) {
 }
 
 module.exports = {
+  getOneToOne,
+  completeOneToOne,
   __testReturnWork,
   __testApproveWork,
   closeDay,

@@ -17,6 +17,7 @@ import SettingsTab from './components/SettingsTab.jsx';
 import EnrollForm from './components/EnrollForm.jsx';
 import SkillTest from './components/SkillTest.jsx';
 import Standup from './components/Standup.jsx';
+import OneToOne from './components/OneToOne.jsx';
 import ChatDock from './components/ChatDock.jsx';
 import { Mic } from 'lucide-react';
 import { api } from './api.js';
@@ -58,6 +59,9 @@ export default function App() {
   // way a real one starts whether or not you feel like it. Closing it is one click, and
   // the banner is there all day if you want it back.
   const [standupOpen, setStandupOpen] = useState(false);
+  // The 1:1 is opened deliberately -- from Home, My Day or the calendar -- rather than
+  // thrown at somebody the moment they log in. It is half an hour, not a notification.
+  const [meetingKey, setMeetingKey] = useState(null);
   const [standupSeen, setStandupSeen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // Lifted so the Tasks tab can open a conversation — the sign-off pointer there needs
@@ -148,6 +152,14 @@ export default function App() {
         state={state}
         onLogout={logout}
       />
+      {meetingKey && (
+        <OneToOne
+          meetingKey={meetingKey === true ? null : meetingKey}
+          manager={(state.roster || []).find((r) => r.archetype === 'line_manager')}
+          onClose={() => setMeetingKey(null)}
+          onStateChange={(next) => { if (next) setState(next); }}
+        />
+      )}
       {standupOpen && state.standup && !state.standup.done && (
         <Standup
           standup={state.standup}
@@ -194,13 +206,14 @@ export default function App() {
             onStateChange={setState}
             onTab={setTab}
             onOpenTask={(id) => { setOpenRequest({ id, at: Date.now() }); setTab('tasks'); }}
+            onOpenMeeting={(key) => setMeetingKey(key || true)}
           />
         )}
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
-        {tab === 'today' && <Today state={state} onStateChange={setState} onTab={setTab} />}
+        {tab === 'today' && <Today state={state} onStateChange={setState} onTab={setTab} onOpenMeeting={(key) => setMeetingKey(key || true)} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} openRequest={openRequest} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}
-        {tab === 'calendar' && <CalendarTab state={state} />}
+        {tab === 'calendar' && <CalendarTab state={state} onOpenMeeting={(key) => setMeetingKey(key || true)} />}
         {tab === 'emails' && <Emails state={state} onStateChange={setState} />}
         {tab === 'team' && <Team state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'timesheets' && <Timesheets state={state} onStateChange={setState} />}

@@ -731,6 +731,29 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // The weekly 1:1. Read is a GET because opening a meeting must not change it; the
+  // conversation is only recorded when the learner actually finishes it.
+  if (pathname === '/api/workspace/one-to-one' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { meeting: workspace.getOneToOne(user.id, url.searchParams.get('key')) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/one-to-one' && req.method === 'POST') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    const body = await readJsonBody(req);
+    try {
+      return sendJson(res, 200, workspace.completeOneToOne(user.id, body.key, body.reflection, body.text));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   if (pathname === '/api/workspace/standup' && req.method === 'POST') {
     const user = getCurrentUser(req);
     if (!user) return sendJson(res, 401, { error: 'Please log in first.' });

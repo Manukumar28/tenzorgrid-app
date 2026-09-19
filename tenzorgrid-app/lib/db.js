@@ -502,6 +502,63 @@ CREATE TABLE IF NOT EXISTS sim_event_effects (
   UNIQUE(enrollment_id, effect_key)
 );
 
+-- ---- Meetings and development ---------------------------------------------------------
+--
+-- The weekly 1:1 is the conversation at the end of a week, and the thing that makes the
+-- simulation continuous: what happened gets discussed, the learner reflects, and they
+-- leave with ONE thing to work on that the next week actually knows about.
+--
+-- Evidence is FROZEN onto the meeting when it is scheduled. A 1:1 is a conversation about
+-- a week that has finished; recomputing it later from live tables would let a meeting
+-- quietly change its own history, and "12 assignments completed" would read differently
+-- depending on when you opened it.
+--
+-- Keyed on the project run, because one project run IS one week in this world. That makes
+-- scheduling idempotent by construction rather than by care.
+CREATE TABLE IF NOT EXISTS sim_meetings (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  meeting_key TEXT NOT NULL,
+  type TEXT NOT NULL,
+  project_run_id TEXT,
+  project_key TEXT,
+  week_index INTEGER,
+  scheduled_on TEXT,
+  status TEXT NOT NULL DEFAULT 'due',
+  evidence_json TEXT,
+  observations_json TEXT,
+  agenda_json TEXT,
+  reflection_choice TEXT,
+  reflection_text TEXT,
+  manager_reply TEXT,
+  completed_at TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, meeting_key)
+);
+
+-- One thing to work on. Not a competency framework -- a single sentence with a reason,
+-- the meeting it came from, and whether it is still what the learner is working on.
+--
+-- The competency column reuses the skill axes the product already has rather than
+-- inventing a parallel vocabulary, so a goal can be matched against work that practises it.
+CREATE TABLE IF NOT EXISTS sim_development_goals (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  goal_key TEXT NOT NULL,
+  competency TEXT NOT NULL,
+  title TEXT NOT NULL,
+  reason TEXT,
+  source_meeting_id TEXT REFERENCES sim_meetings(id) ON DELETE CASCADE,
+  week_index INTEGER,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  closed_at TEXT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sim_goals_key ON sim_development_goals(enrollment_id, goal_key);
+CREATE INDEX IF NOT EXISTS idx_sim_meetings_status ON sim_meetings(enrollment_id, status);
+CREATE INDEX IF NOT EXISTS idx_sim_goals_status ON sim_development_goals(enrollment_id, status);
+
 CREATE INDEX IF NOT EXISTS idx_sim_events_run ON sim_events(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_events_state ON sim_events(enrollment_id, state);
 CREATE INDEX IF NOT EXISTS idx_sim_effects_kind ON sim_event_effects(enrollment_id, kind, active);
