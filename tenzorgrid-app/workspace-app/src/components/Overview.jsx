@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, Award, BarChart3, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock, Flame, GraduationCap, Quote, Target, TrendingUp, Trophy } from 'lucide-react';
 import { BentoCard, ProgressBar, CircularProgress, Pill, Avatar } from './ui.jsx';
 import { SkillRadar } from './charts.jsx';
@@ -46,6 +46,78 @@ function KpiCard({ index, icon: Icon, iconClass, label, value, corner, children 
       <div className="text-[14px] text-gray-500 font-medium mt-1.5 mb-2">{label}</div>
       <div className="mt-auto">{children}</div>
     </BentoCard>
+  );
+}
+
+// What the learner has demonstrated, and what their manager actually said.
+//
+// Fetched when this page opens rather than shipped in every state read -- the evidence
+// graph is not something every page load should carry.
+//
+// Deliberately NOT a radar chart of scores. "Consistently demonstrated" with the work
+// behind it is a more useful and more honest thing to read about yourself than
+// "Communication 72", and "Not enough evidence yet" is more credible than a confident
+// label derived from one task.
+function CapabilityRecord() {
+  const [record, setRecord] = useState(null);
+
+  useEffect(() => {
+    let live = true;
+    api.getPerformanceRecord().then((r) => { if (live) setRecord(r.record); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+
+  if (!record) return null;
+  const caps = record.capabilities || [];
+  const obs = record.observations || [];
+  if (!caps.length && !obs.length) return null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {caps.length > 0 && (
+        <BentoCard hover={false}>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Award size={17} className="text-indigo-600 shrink-0" />
+            <h3 className="text-base font-bold">What you are demonstrating</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-3.5">Drawn from the work you have delivered</p>
+          <ul className="space-y-3">
+            {caps.map((c) => (
+              <li key={c.axis}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[13px] font-bold text-slate-800">{c.label}</span>
+                  <span className="text-[12px] font-semibold text-slate-500 shrink-0">{c.state}</span>
+                </div>
+                <p className="text-[12px] text-slate-500 mt-0.5">
+                  {c.evidenceCount} {c.evidenceCount === 1 ? 'piece' : 'pieces'} of work
+                  {c.examples.length ? ` · most recently "${c.examples[0].title}"` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </BentoCard>
+      )}
+
+      {obs.length > 0 && (
+        <BentoCard hover={false}>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Quote size={17} className="text-violet-600 shrink-0" />
+            <h3 className="text-base font-bold">What your manager noticed</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-3.5">From your 1:1s</p>
+          <ul className="space-y-3">
+            {/* Never praise without the week it came from -- an observation with no
+                context is the kind of compliment nobody believes. */}
+            {obs.slice(0, 4).map((o, i) => (
+              <li key={i}>
+                <p className="text-[13px] text-slate-700 leading-relaxed">{o.text}</p>
+                <p className="text-[12px] text-slate-400 mt-0.5">Week {o.weekIndex}</p>
+              </li>
+            ))}
+          </ul>
+        </BentoCard>
+      )}
+    </div>
   );
 }
 
@@ -102,9 +174,18 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                 {state.development.reason} Set in your week {state.development.setInWeek} 1:1.
               </p>
             )}
+            {/* A theme that has come up more than once is a fact about the goals, not a
+                judgement about the person -- so it is safe and useful to say. */}
+            {state.development.recurring && state.development.recurring.times > 1 && (
+              <p className="text-[12px] font-semibold text-indigo-800 mt-1">
+                This has been your focus {state.development.recurring.times} weeks running.
+              </p>
+            )}
           </div>
         </div>
       )}
+
+      <CapabilityRecord />
 
     <div className="grid grid-cols-1 xl:grid-cols-16 gap-4 sm:gap-6">
       <div className="min-w-0 xl:col-span-11 space-y-4 sm:space-y-6">

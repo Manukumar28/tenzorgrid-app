@@ -31,6 +31,7 @@
 // you looked. So the pack is computed once, when the meeting is scheduled, and stored.
 
 const { db, cryptoRandomId } = require('./db');
+const performance = require('./performance');
 
 const now = () => new Date().toISOString();
 const dayKey = (iso) => String(iso || '').slice(0, 10);
@@ -105,11 +106,14 @@ function buildEvidence(enrollmentId, run, opts) {
 
     approvedCount: approved.length,
     totalCount: mine.length,
-    // Average grade over the week. Null rather than zero when nothing was graded -- a
-    // learner is never marked down for a signal they had no chance to produce.
-    avgScore: scored.length
-      ? Math.round(scored.reduce((s, t) => s + t.score, 0) / scored.length)
-      : null,
+    // Average grade over the week, computed by the canonical rule so the number Asha
+    // quotes can never disagree with the one on the Performance page.
+    //
+    // The RESULT is then frozen onto the meeting row. That is deliberate and is not a
+    // contradiction: the formula is shared so two surfaces agree today, and the value is
+    // stored so a future change to the formula cannot silently rewrite what a manager
+    // said to somebody three weeks ago.
+    avgScore: performance.quality(mine).value,
     onTimeCount: onTime.length,
     lateCount: late.length,
 

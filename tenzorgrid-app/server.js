@@ -731,6 +731,28 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // The performance record and the experience record. Both are GETs built on open, so
+  // the state payload stays compact.
+  if (pathname === '/api/workspace/performance' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { record: workspace.getPerformanceRecord(user.id) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
+  if (pathname === '/api/workspace/experience' && req.method === 'GET') {
+    const user = getCurrentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'Please log in first.' });
+    try {
+      return sendJson(res, 200, { experience: workspace.getExperience(user.id, url.searchParams.get('key')) });
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   // The weekly 1:1. Read is a GET because opening a meeting must not change it; the
   // conversation is only recorded when the learner actually finishes it.
   if (pathname === '/api/workspace/one-to-one' && req.method === 'GET') {
