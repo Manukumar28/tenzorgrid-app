@@ -25,6 +25,7 @@ const roles = require('./roles');
 const company = require('./company');
 const apps = require('./apps');
 const assignments = require('./assignments');
+const events = require('./events');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -14567,6 +14568,29 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
     badges,
     activeCount: projects.filter((p) => p.status === 'active').length,
     completedCount,
+    // The runs behind those projects. Event effects are recorded against a run, so
+    // anything that wants to know "what has happened to this project" needs the bridge
+    // between a project key and the week the learner actually spent on it.
+    runs: Object.values(runsByKey).map((r) => ({ id: r.id, project_key: r.project_key })),
+  };
+}
+
+// What events have changed about one piece of work.
+//
+// Thin on purpose. A board row needs to know THAT something changed and in one word what
+// -- the amendment prose belongs on the task the learner opens, not on all 120 cards.
+function assignmentUpdateFor(effects, taskId, runId) {
+  if (!effects || !effects.length) return null;
+  const overlay = events.assignmentOverlay(effects, { taskId, runId });
+  if (!overlay) return null;
+  return {
+    amendments: overlay.amendments.length,
+    note: overlay.notes.length ? overlay.notes[0].text : null,
+    coordinatedBy: overlay.coordinatedBy,
+    label: overlay.notes.length ? overlay.notes[0].text
+      : overlay.amendments.length ? 'Scope amended'
+        : overlay.coordinatedBy ? 'Manager coordinating'
+          : 'Updated',
   };
 }
 
@@ -14682,13 +14706,19 @@ function buildActivity(tasks, messages, limit = 12) {
   return events.slice(0, limit);
 }
 
-function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex, rosterList) {
+function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartMs, level, unlockedDayIndex, rosterList, eventEffects) {
   const catalog = catalogFor(role, level, touchedProjectKeys(role, tasks));
   const projectByTaskKey = {};
   for (const p of catalog) {
     for (const k of p.taskKeys) projectByTaskKey[k] = p;
   }
   const projectStatus = Object.fromEntries(projects.projects.map((p) => [p.key, p]));
+  // Effects are stored against the project RUN, because that is the thing a week of work
+  // actually belongs to. The board thinks in project keys, so bridge the two once here
+  // rather than re-querying per row.
+  const runIdByProject = Object.fromEntries(
+    (projects.runs || []).map((r) => [r.project_key, r.id]),
+  );
 
   const rows = tasks.map((t) => {
     const def = TASKS[t.task_key] || {};
@@ -14764,6 +14794,10 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
       stagePct,
       projectKey: proj ? proj.key : null,
       projectTitle: proj ? proj.title : null,
+      // What events have changed about this piece of work, if anything. Null for a learner
+      // nothing has happened to -- which is every learner until something does, and is why
+      // an untouched board behaves exactly as it did before this milestone.
+      update: assignmentUpdateFor(eventEffects, t.id, runIdByProject[proj ? proj.key : null]),
     };
   });
 
@@ -15304,6 +15338,15 @@ function getState(userId) {
     issueDayItems(enrollment, runNow, d);
     issueDayMail(enrollment, runNow, d);
   }
+  // Anything put off on an earlier day comes back on this one. Guarded by the same
+  // written-once receipt as every other generated message, so the chase arrives once
+  // however many times this runs.
+  if (runNow) onDayAdvanced(enrollment, runNow, dayUnlocked);
+
+  // Everything events have changed, read once and threaded through the payload. This is
+  // the READ side of the overlay -- no trigger fires from here.
+  const eventEffects = events.activeEffects(enrollment.id);
+  const eventsOpen = events.openEvents(enrollment.id);
 
   // The Recent Activity feed. Every event is a real recorded timestamp — a submission, a
   // sign-off, or a colleague writing about a piece of work — rather than a synthesised
@@ -15317,6 +15360,7 @@ function getState(userId) {
     enrollment.level,
     dayUnlocked,
     rosterList,
+    eventEffects,
   );
 
   // Stamp the visit before anything reads it, and keep the previous stamp -- "since you
@@ -15511,6 +15555,24 @@ function getState(userId) {
   // component, so a later role's employer can provide different ones.
   payload.apps = apps.appsForRole(enrollment.role);
   payload.employee = getEmployee(enrollment, userId, rosterList);
+  // The overlay, in the payload rather than re-queried by each builder, so Home, the
+  // board and the project card cannot disagree about what has happened.
+  payload.eventEffects = eventEffects;
+  // What is still open and wanting something from the learner. Capped, because Home is a
+  // workplace and not an alarm feed -- if six things are outstanding the answer is to show
+  // the three that matter, not to make the page longer.
+  payload.events = {
+    open: eventsOpen.slice(0, 6).map((e) => ({
+      key: e.event_key,
+      pattern: e.pattern,
+      headline: e.headline,
+      detail: e.detail,
+      situationKey: e.situation_key,
+      taskId: e.task_id,
+      at: e.occurred_at,
+    })),
+    openCount: eventsOpen.length,
+  };
   payload.workday = buildWorkday(payload, new Date(), sinceIso);
   return payload;
 }
@@ -16398,6 +16460,252 @@ function completeActivity(userId, activityKey, answer) {
 
 // ---- Situations ------------------------------------------------------------------------
 
+// ---- Workplace events: what a decision actually changes ------------------------------
+//
+// The triggers all sit at WRITE points -- a situation handled, work returned, work signed
+// off, a day advancing -- rather than on read. getState reads effective state; it does not
+// run the engine. That is deliberate: evaluating every possible event against every task
+// on every page load is how a simulation becomes slow and how duplicates creep in.
+
+// Situations where a missed answer is genuinely a project problem, not merely a rude
+// silence. A canteen notice left unread is not a risk to the analysis, and treating it as
+// one would turn Home into the alarm feed this milestone is supposed to avoid.
+const RISK_SITUATION_TYPES = new Set(['pressure', 'challenge', 'blocked', 'bad-news', 'status-chase']);
+
+function personFor(archetype) {
+  return ROSTER.find((r) => r.archetype === archetype) || null;
+}
+
+// The opening of what somebody actually said, for use as an assignment amendment. Their
+// words, attributed, appended -- never a paraphrase and never a silent edit of the brief.
+function openingOf(text, max) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return null;
+  const sentences = clean.split(/(?<=[.?!])\s/);
+  let out = '';
+  for (const part of sentences) {
+    if (out && (out + ' ' + part).length > (max || 220)) break;
+    out = out ? `${out} ${part}` : part;
+  }
+  return out || clean.slice(0, max || 220);
+}
+
+// A message generated BY an event, sent once. The effect row is the receipt: if it is
+// already there, the message already went, so a replayed trigger is silent rather than
+// duplicating Finance in the inbox.
+function eventMessageOnce(enrollment, { key, eventId, runId, taskId, fromArchetype, body, subject, senderName }) {
+  const written = events.applyEffect({
+    enrollmentId: enrollment.id, key, eventId, kind: events.EFFECTS.FOLLOW_UP,
+    runId, taskId, target: fromArchetype, value: subject || null,
+  });
+  if (!written) return false;
+  const person = personFor(fromArchetype);
+  addMessage(enrollment.id, fromArchetype, senderName || (person ? person.name : LINE_MANAGER_NAME),
+    body, taskId || null, subject || null, fromArchetype);
+  return true;
+}
+
+// ---- trigger: a workplace situation was handled ---------------------------------------
+function onSituationHandled(enrollment, run, def, situationKey, action, dayIndex) {
+  if (!run || !def) return;
+  const base = { enrollmentId: enrollment.id, runId: run.id, situationKey, source: def.from, dayIndex };
+  const who = personFor(def.from);
+  const whoName = def.senderName || (who ? who.name : 'A colleague');
+  const subject = def.subject || 'Following up';
+
+  if (action === 'defer') {
+    // Later is not done. The item still counts for the day gate -- a learner who defers
+    // both of today's situations must not be locked out of tomorrow -- but the event
+    // stays open, the situation can be picked up again, and it comes back.
+    events.recordEvent({
+      ...base, key: `${events.PATTERNS.DEFERRED}:${situationKey}`, pattern: events.PATTERNS.DEFERRED,
+      headline: `You put off ${whoName}'s message`,
+      detail: subject,
+    });
+    return;
+  }
+
+  // Re-handling something that was deferred closes the deferral, whatever else it does.
+  events.resolveEvent(enrollment.id, `${events.PATTERNS.DEFERRED}:${situationKey}`, action);
+
+  if (action === 'escalate') {
+    const ev = events.recordEvent({
+      ...base, key: `${events.PATTERNS.ESCALATED}:${situationKey}`, pattern: events.PATTERNS.ESCALATED,
+      headline: `You passed ${whoName}'s message up to ${firstName(LINE_MANAGER_NAME)}`,
+      detail: subject,
+    });
+    if (!ev.created) return;
+    // Escalation means something. The manager is now coordinating this project's work --
+    // the stakeholder still owns the outcome, which is why this is a separate field from
+    // the requester rather than an overwrite of it.
+    events.applyEffect({
+      enrollmentId: enrollment.id, key: `coord:${situationKey}`, eventId: ev.id,
+      kind: events.EFFECTS.COORDINATOR, runId: run.id, value: 'line_manager',
+      reason: `Escalated: ${subject}`,
+    });
+    eventMessageOnce(enrollment, {
+      key: `msg:escalated:${situationKey}`, eventId: ev.id, runId: run.id,
+      fromArchetype: 'line_manager', senderName: LINE_MANAGER_NAME,
+      subject: `Re: ${subject}`,
+      body: `Picked this up from you. I will take it with ${whoName} — carry on with the analysis and I will tell you if what they want changes.`,
+    });
+    events.resolveEvent(enrollment.id, `${events.PATTERNS.ESCALATED}:${situationKey}`, 'manager-coordinating');
+    return;
+  }
+
+  // If the author wrote what happens when this is ignored, then it matters -- that is the
+  // author's judgement and it is better than a type whitelist. What stays narrow is which
+  // of these can move PROJECT HEALTH; a missed meeting invite is a real consequence and
+  // not a risk to the analysis.
+  if (action === 'archive' && def.needsReply && def.ifIgnored) {
+    // Archiving something that genuinely needed an answer is a real miss, and the
+    // consequence is the one the author already wrote for it.
+    const ev = events.recordEvent({
+      ...base, key: `${events.PATTERNS.UNANSWERED}:${situationKey}`, pattern: events.PATTERNS.UNANSWERED,
+      headline: `${whoName} did not get an answer`,
+      detail: def.ifIgnored || subject,
+    });
+    if (!ev.created) return;
+    if (def.ifIgnored) {
+      eventMessageOnce(enrollment, {
+        key: `msg:unanswered:${situationKey}`, eventId: ev.id, runId: run.id,
+        fromArchetype: def.from, senderName: whoName, subject: `Re: ${subject}`,
+        body: `I did not hear back, so I have gone ahead.\n\n${def.ifIgnored}`,
+      });
+    }
+    if (RISK_SITUATION_TYPES.has(def.type)) {
+      events.applyEffect({
+        enrollmentId: enrollment.id, key: `risk:unanswered:${situationKey}`, eventId: ev.id,
+        kind: events.EFFECTS.PROJECT_HEALTH, runId: run.id, value: 'at_risk',
+        reason: `${whoName} asked about ${lowerFirst(subject)} and did not get an answer.`,
+      });
+    }
+    return;
+  }
+
+  if (action === 'reply' && events.AMENDING_TYPES.has(def.type)) {
+    // The stakeholder has changed or extended what they want. The authored brief stays
+    // exactly as written and this goes underneath it, in their words and with their name
+    // on it, so the learner can see what changed rather than wondering if they misread it.
+    const amendment = openingOf(def.body, 240);
+    if (!amendment) return;
+    const ev = events.recordEvent({
+      ...base, key: `${events.PATTERNS.REQUIREMENT_CHANGE}:${situationKey}`,
+      pattern: events.PATTERNS.REQUIREMENT_CHANGE,
+      headline: `${whoName} changed what they need`,
+      detail: subject,
+    });
+    if (!ev.created) return;
+    events.applyEffect({
+      enrollmentId: enrollment.id, key: `amend:${situationKey}`, eventId: ev.id,
+      kind: events.EFFECTS.AMENDMENT, runId: run.id, target: whoName,
+      value: amendment, reason: subject,
+    });
+    events.resolveEvent(enrollment.id, `${events.PATTERNS.REQUIREMENT_CHANGE}:${situationKey}`, 'acknowledged');
+  }
+}
+
+// ---- trigger: work came back from review -----------------------------------------------
+function onWorkReturned(enrollment, task, reason, isRework) {
+  const run = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NULL ORDER BY started_at DESC LIMIT 1')
+    .get(enrollment.id);
+  const round = (task.review_rounds || 0) + 1;
+  // Keyed on the round, so a second return of the same task is a second event -- which is
+  // true, and which a learner should feel -- while a replay of the same return is not.
+  const ev = events.recordEvent({
+    enrollmentId: enrollment.id, key: `${events.PATTERNS.WORK_RETURNED}:${task.id}:${round}`,
+    pattern: events.PATTERNS.WORK_RETURNED, runId: run ? run.id : null, taskId: task.id,
+    source: 'line_manager', dayIndex: task.day_index,
+    headline: `${firstName(LINE_MANAGER_NAME)} sent "${task.title}" back`,
+    detail: reason || null,
+  });
+  if (!ev.created) return;
+
+  events.applyEffect({
+    enrollmentId: enrollment.id, key: `note:returned:${task.id}:${round}`, eventId: ev.id,
+    kind: events.EFFECTS.ASSIGNMENT_NOTE, runId: run ? run.id : null, taskId: task.id,
+    value: isRework ? 'Change requested before this goes out' : 'Returned for another look',
+    reason: reason || null,
+  });
+  // A redo is work that was not right. That is a project problem and it says so, with the
+  // evidence attached. A rework is work that WAS right and is wanted differently -- that
+  // is an ordinary Tuesday, not a risk, and calling it one would be crying wolf.
+  if (!isRework && run) {
+    events.applyEffect({
+      enrollmentId: enrollment.id, key: `risk:returned:${task.id}`, eventId: ev.id,
+      kind: events.EFFECTS.PROJECT_HEALTH, runId: run.id,
+      // The risk belongs to the piece of work that caused it, not just to the project.
+      // Without that the recovery had nothing to aim at and the project stayed at risk
+      // forever -- a permanent mark, which is exactly what this is not supposed to be.
+      taskId: task.id, value: 'at_risk',
+      reason: `"${task.title}" was returned by ${firstName(LINE_MANAGER_NAME)} and has not been put right yet.`,
+    });
+  }
+}
+
+// ---- trigger: work was signed off ---------------------------------------------------------
+function onWorkApproved(enrollment, task) {
+  // Only interesting if it had come back. Recovery is the lesson: the learner fixed it,
+  // so the consequence lifts. The event history keeps the whole chain.
+  const returned = db.prepare(`SELECT * FROM sim_events WHERE enrollment_id = ? AND task_id = ? AND pattern = ?
+                               ORDER BY occurred_at DESC LIMIT 1`)
+    .get(enrollment.id, task.id, events.PATTERNS.WORK_RETURNED);
+  if (!returned) return;
+
+  const cleared = events.clearEffects(enrollment.id, { taskId: task.id });
+  const ev = events.recordEvent({
+    enrollmentId: enrollment.id, key: `${events.PATTERNS.WORK_RECOVERED}:${task.id}`,
+    pattern: events.PATTERNS.WORK_RECOVERED, runId: returned.project_run_id, taskId: task.id,
+    source: 'line_manager', dayIndex: task.day_index,
+    headline: `"${task.title}" was put right and signed off`,
+    detail: returned.detail || null,
+  });
+  events.resolveEvent(enrollment.id, returned.event_key, 'corrected-and-approved');
+  if (ev.created && cleared && returned.project_run_id) {
+    eventMessageOnce(enrollment, {
+      key: `msg:recovered:${task.id}`, eventId: ev.id, runId: returned.project_run_id, taskId: task.id,
+      fromArchetype: 'line_manager', senderName: LINE_MANAGER_NAME,
+      body: `That is right now — thanks for turning it round. I have taken "${task.title}" off my list of things to worry about.`,
+    });
+    events.resolveEvent(enrollment.id, `${events.PATTERNS.WORK_RECOVERED}:${task.id}`, 'closed');
+  }
+}
+
+// ---- trigger: the day moved on ---------------------------------------------------------
+//
+// Something put off yesterday comes back today. Once, from the person who asked, and only
+// while it is genuinely still unanswered.
+function onDayAdvanced(enrollment, run, dayIndex) {
+  if (!run || !dayIndex) return;
+  const deferred = db.prepare(`SELECT * FROM sim_events
+                               WHERE enrollment_id = ? AND project_run_id = ? AND pattern = ?
+                                 AND state = 'open' AND day_index < ?`)
+    .all(enrollment.id, run.id, events.PATTERNS.DEFERRED, dayIndex);
+  for (const ev of deferred) {
+    const row = itemRow('sim_situations', enrollment.id, ev.situation_key);
+    // Picked up again in the meantime -- nothing to chase.
+    if (!row || (row.handled_as && row.handled_as !== 'defer')) {
+      events.resolveEvent(enrollment.id, ev.event_key, 'handled-late');
+      continue;
+    }
+    const def = situationDef(run.project_key, ev.situation_key);
+    if (!def) continue;
+    const who = personFor(def.from);
+    const whoName = def.senderName || (who ? who.name : 'A colleague');
+    eventMessageOnce(enrollment, {
+      key: `msg:deferred:${ev.situation_key}`, eventId: ev.id, runId: run.id,
+      fromArchetype: def.from, senderName: whoName,
+      subject: def.subject ? `Re: ${def.subject}` : null,
+      body: `Following up on this — I still need an answer when you get a moment.`,
+    });
+  }
+}
+
+function lowerFirst(text) {
+  const t = String(text || '');
+  return t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+}
+
 const SITUATION_ACTIONS = ['reply', 'defer', 'archive', 'escalate'];
 
 function handleSituation(userId, situationKey, action, text) {
@@ -16406,7 +16714,9 @@ function handleSituation(userId, situationKey, action, text) {
   if (!SITUATION_ACTIONS.includes(action)) throw new Error('Unknown action.');
   const row = itemRow('sim_situations', enrollment.id, situationKey);
   if (!row) throw new Error('That has not arrived yet.');
-  if (row.handled_as) throw new Error('You have already dealt with that one.');
+  // Later is not done. A deferred item can be picked up again -- that is the whole point
+  // of putting something off -- while anything actually dealt with stays dealt with.
+  if (row.handled_as && row.handled_as !== 'defer') throw new Error('You have already dealt with that one.');
 
   const run = db.prepare('SELECT * FROM sim_project_runs WHERE id = ?').get(row.project_run_id);
   const def = situationDef(run ? run.project_key : '', situationKey);
@@ -16443,6 +16753,10 @@ function handleSituation(userId, situationKey, action, text) {
 
   db.prepare("UPDATE sim_situations SET handled_as = ?, handled_at = ?, score = ? WHERE id = ?")
     .run(action, now(), score, row.id);
+
+  // What that decision actually changed. Fired here, at the write, rather than on the next
+  // read -- so the consequence is recorded exactly once, by the thing that caused it.
+  onSituationHandled(enrollment, run, def, situationKey, action, def.day || null);
 
   if (action === 'reply' && String(text || '').trim()) {
     // The Programme Office is not on the roster — it only ever exists as mail — so an
@@ -17296,6 +17610,27 @@ function getWorkbench(userId, taskId) {
     ].filter(Boolean),
   });
 
+  // Baseline + overlay = the effective assignment. The authored brief above is untouched
+  // and still rendered in full; anything an event changed hangs off `update`, attributed
+  // and timestamped, so the learner sees what changed rather than a brief that quietly
+  // differs from the one they read this morning.
+  const wbRun = wbProject
+    ? db.prepare('SELECT id FROM sim_project_runs WHERE enrollment_id = ? AND project_key = ?')
+        .get(enrollment.id, wbProject.key)
+    : null;
+  const wbOverlay = events.assignmentOverlay(events.activeEffects(enrollment.id), {
+    taskId: task.id, runId: wbRun ? wbRun.id : null,
+  });
+  if (wbOverlay) {
+    assignment.update = {
+      amendments: wbOverlay.amendments,
+      notes: wbOverlay.notes,
+      coordinatedBy: wbOverlay.coordinatedBy
+        ? (wbRoster.find((r) => r.archetype === wbOverlay.coordinatedBy) || null)
+        : null,
+    };
+  }
+
   return {
     taskId: task.id,
     taskKey: task.task_key,
@@ -17598,10 +17933,7 @@ async function answerReview(userId, taskId, answer) {
     // Signed off. NOW the score is revealed and the task counts — 'graded' stays the
     // terminal state, so everything downstream (projects, analytics, unlocks) is
     // unchanged by the gate existing.
-    db.prepare("UPDATE sim_tasks SET status = 'graded', review_state = 'accepted', review_rounds = ?, graded_at = ? WHERE id = ?")
-      .run(round, now(), taskId);
-    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, taskId);
-    addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, task.feedback, taskId);
+    signOffTask(enrollment, task, round, reply);
     return { accepted: true, reply, score: task.score, feedback: task.feedback, state: getState(userId) };
   }
 
@@ -17680,6 +18012,21 @@ const REWORK_NOTES = [
   'This is fine as far as it goes. Break it out by hire year as well — I think the gap is a seniority story and I want to know before Vikram asks.',
 ];
 
+// Her signing it off. Extracted from answerReview so the event trigger has exactly one
+// home and a test can drive the real path rather than a copy of it.
+function signOffTask(enrollment, task, round, reply) {
+  db.prepare("UPDATE sim_tasks SET status = 'graded', review_state = 'accepted', review_rounds = ?, graded_at = ? WHERE id = ?")
+    .run(round, now(), task.id);
+  addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reply, task.id);
+  // Feedback is written when the submission is graded, so by sign-off it is always there
+  // -- but the messages table says NOT NULL and a thrown constraint at the moment of
+  // success would be the worst possible place to find out otherwise.
+  if (task.feedback) addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, task.feedback, task.id);
+  // If this piece of work had come back, it has now been put right -- which lifts
+  // whatever that return did to the project. Recovery, not a permanent mark.
+  onWorkApproved(enrollment, task);
+}
+
 function reopenTask(enrollment, task, reason, isRework) {
   // The reason is kept on the row as well as sent as a chat message. A learner who comes
   // back to the Tasks tab tomorrow should not have to go hunting through the thread to
@@ -17689,6 +18036,7 @@ function reopenTask(enrollment, task, reason, isRework) {
                      submitted_at = NULL, graded_at = NULL
                WHERE id = ?`).run(isRework ? 'rework' : 'redo', reason, task.id);
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME, reason, task.id, null, 'line_manager');
+  onWorkReturned(enrollment, task, reason, isRework);
 }
 
 function safeJson(text) {
@@ -19265,6 +19613,9 @@ function currentAssignment(state) {
     overdue: Boolean(pick.overdue),
     sentBack: pick.sentBack,
     sentBackNote: pick.sentBackNote,
+    // Whatever the workplace has changed about this since it was assigned. Read off the
+    // board row rather than rebuilt, so Home and My Work can never disagree.
+    update: pick.update || null,
     priority: pick.priority,
     priorityLabel: pick.priorityLabel,
     estHours: pick.estHours,
@@ -19350,6 +19701,15 @@ function buildSinceAway(state, sinceIso) {
       tab: m.subject ? 'emails' : null,
     });
   }
+  // What the workplace did while they were out. Real recorded events only -- each of
+  // these is a row somebody's decision or the manager's review actually wrote.
+  for (const e of ((state.events && state.events.open) || [])) {
+    if (Date.parse(e.at) <= sinceMs) continue;
+    items.push({
+      kind: 'event', at: e.at, text: e.headline,
+      tab: e.taskId ? 'tasks' : e.situationKey ? 'today' : null,
+    });
+  }
   for (const p of projectList(state)) {
     // Real pressure only: the week ran past its date, or a named colleague is stuck
     // waiting on your numbers. Both are recorded; neither is a mood.
@@ -19368,6 +19728,10 @@ function buildSinceAway(state, sinceIso) {
 // Project health, compactly. Reads the same status the Projects tab reads -- this is a
 // glance, not a second opinion.
 function buildProjectHealth(state) {
+  const runIdByProject = Object.fromEntries(
+    ((state.projects && state.projects.runs) || []).map((r) => [r.project_key, r.id]),
+  );
+  const effects = state.eventEffects || [];
   return projectList(state)
     .filter((p) => p.status === 'active' || p.status === 'completed')
     .slice(0, 3)
@@ -19375,10 +19739,21 @@ function buildProjectHealth(state) {
       const w = p.week || null;
       // "At risk" is not a mood. It is the week running past its date, or a named
       // colleague stuck waiting on your numbers -- both of which the engine records.
-      const health = p.status === 'completed' ? 'delivered'
+      const derived = p.status === 'completed' ? 'delivered'
         : w && w.overdueDays > 0 ? 'at risk'
           : w && (w.blocking || []).length ? 'at risk'
             : 'on track';
+      // An event can push a project to at risk on top of that, and unlike the derived
+      // version it arrives with a REASON attached. A status with no evidence is a colour,
+      // not information -- so nothing here can set a state without saying why.
+      const fromEvents = events.projectHealthOverlay(effects, runIdByProject[p.key]);
+      const health = p.status === 'completed' ? 'delivered'
+        : fromEvents ? fromEvents.health : derived;
+      const reason = p.status === 'completed' ? null
+        : fromEvents ? fromEvents.reason
+          : w && w.overdueDays > 0 ? `The week ran past its date by ${w.overdueDays} day${w.overdueDays === 1 ? '' : 's'}.`
+            : w && (w.blocking || []).length ? `${w.blocking.join(' and ')} ${w.blocking.length === 1 ? 'is' : 'are'} waiting on your numbers.`
+              : null;
       const due = !w ? null
         : w.overdueDays > 0 ? `${w.overdueDays} day${w.overdueDays === 1 ? '' : 's'} over`
           : w.allCaughtUp && w.waitingUntil ? `Next opens ${w.waitingUntil}`
@@ -19390,6 +19765,10 @@ function buildProjectHealth(state) {
         progressPct: p.progressPct,
         phase: p.phase,
         health,
+        // Never a status without its evidence.
+        reason,
+        reasons: fromEvents ? fromEvents.reasons : (reason ? [reason] : []),
+        riskSince: fromEvents ? fromEvents.since : null,
         due,
         blocking: w ? (w.blocking || []) : [],
       };
@@ -19428,7 +19807,25 @@ function buildWorkday(state, nowDate, lastSeenIso) {
   };
 }
 
+// ---- test-only entry points --------------------------------------------------------------
+//
+// These call the SAME functions the review flow calls, so a test exercises production
+// code rather than a reimplementation of it. They are module exports, not HTTP routes --
+// nothing in server.js reaches them and no learner can.
+function __testReturnWork(userId, taskId, reason, isRework) {
+  const enrollment = getEnrollment(userId);
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  reopenTask(enrollment, task, reason, Boolean(isRework));
+}
+function __testApproveWork(userId, taskId) {
+  const enrollment = getEnrollment(userId);
+  const task = db.prepare('SELECT * FROM sim_tasks WHERE id = ? AND enrollment_id = ?').get(taskId, enrollment.id);
+  signOffTask(enrollment, task, (task.review_rounds || 0) + 1, 'That is right now.');
+}
+
 module.exports = {
+  __testReturnWork,
+  __testApproveWork,
   closeDay,
   timeTravelStartProject,
   startNextDay,

@@ -144,6 +144,14 @@ function FocusRow({ task, person, onOpen, compact }) {
         </span>
       </div>
       <h4 className="text-sm font-bold text-gray-900 leading-snug">{task.title}</h4>
+      {/* Focus is the landing screen of My Work, so anything that changed about a piece of
+          work has to be visible HERE. It was only on the queue cards behind the second
+          tab, which is the one place a learner might never click. */}
+      {task.update && (
+        <span className="inline-flex mt-1 text-[11px] font-bold rounded px-1.5 py-0.5 bg-amber-100 text-amber-800">
+          {task.update.label}
+        </span>
+      )}
       {task.projectTitle && <p className="text-[12px] text-gray-500 mt-0.5 truncate">Project: {task.projectTitle}</p>}
 
       {/* Who this is for. The row used to show the project's stakeholder for every task on

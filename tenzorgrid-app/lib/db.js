@@ -449,6 +449,64 @@ CREATE TABLE IF NOT EXISTS sim_chores (
   UNIQUE(enrollment_id, chore_key)
 );
 
+-- ---- Workplace events ----------------------------------------------------------------
+--
+-- A workplace changes because something happened. Until now the simulation only moved
+-- when the learner finished a piece of authored work; these two tables are what lets a
+-- decision, a return or a sign-off leave a mark that is still there tomorrow.
+--
+-- The authored baseline -- tasks, project docs, situations -- is NEVER written to. These
+-- are an overlay: effective state is baseline plus whatever is recorded here.
+--
+-- Idempotency is structural rather than careful. Both tables carry a UNIQUE key derived
+-- from what caused the row, so a second attempt to record the same thing is a constraint
+-- violation rather than a duplicate. That is the same guarantee sim_situations already
+-- relies on, and it is why refreshing the page twenty times cannot produce twenty
+-- identical messages from Finance.
+CREATE TABLE IF NOT EXISTS sim_events (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  event_key TEXT NOT NULL,
+  pattern TEXT NOT NULL,
+  project_run_id TEXT,
+  task_id TEXT,
+  situation_key TEXT,
+  source_archetype TEXT,
+  day_index INTEGER,
+  headline TEXT NOT NULL,
+  detail TEXT,
+  state TEXT NOT NULL DEFAULT 'open',
+  resolution TEXT,
+  resolved_at TEXT,
+  occurred_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, event_key)
+);
+
+-- What an event actually DID. One row per distinct consequence, so "has this already been
+-- applied?" is a lookup rather than a guess, and so a later milestone can ask what the
+-- learner's decisions actually changed without replaying anything.
+CREATE TABLE IF NOT EXISTS sim_event_effects (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  effect_key TEXT NOT NULL,
+  event_id TEXT REFERENCES sim_events(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  project_run_id TEXT,
+  task_id TEXT,
+  target TEXT,
+  value TEXT,
+  reason TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  applied_at TEXT NOT NULL,
+  cleared_at TEXT,
+  UNIQUE(enrollment_id, effect_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_events_run ON sim_events(enrollment_id, project_run_id);
+CREATE INDEX IF NOT EXISTS idx_sim_events_state ON sim_events(enrollment_id, state);
+CREATE INDEX IF NOT EXISTS idx_sim_effects_kind ON sim_event_effects(enrollment_id, kind, active);
+CREATE INDEX IF NOT EXISTS idx_sim_effects_task ON sim_event_effects(enrollment_id, task_id, active);
+
 CREATE INDEX IF NOT EXISTS idx_sim_chores_run ON sim_chores(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_days_run ON sim_days(enrollment_id, project_run_id);
 CREATE INDEX IF NOT EXISTS idx_sim_ambient_run ON sim_ambient_mail(enrollment_id, project_run_id);
