@@ -159,6 +159,49 @@ function capabilityState(n, avg) {
   return EVIDENCE_STATES.EMERGING;
 }
 
+
+// ---- capability trends (M08 §29) ------------------------------------------------------------
+//
+// IMPLEMENTED, with a deliberately high bar, rather than deferred.
+//
+// "Is my SQL getting better?" is the question a career surface exists to answer, and the
+// rows can answer it: every scored task carries graded_at and the axes it touched. What
+// makes a trend dangerous is not the arithmetic, it is small n. Two pieces of work either
+// side of a midpoint will show a "trend" every time, and it will mean nothing -- which is
+// the same failure as counting an unscored task as a zero, dressed as encouragement.
+//
+// So the bar is explicit and it is high: an axis needs TREND_MIN pieces of scored work
+// before a direction is reported at all, split into two halves in time and compared. Below
+// that the answer is null, and null is shown as "not enough yet" rather than "flat".
+// TREND_MOVE stops a two-point wobble being called improvement.
+const TREND_MIN = 8;   // scored pieces touching the axis before any direction is claimed
+const TREND_MOVE = 5;  // points of movement before it counts as a direction rather than noise
+
+function trendFor(examplesInTimeOrder) {
+  const n = examplesInTimeOrder.length;
+  if (n < TREND_MIN) {
+    return { direction: null, n, reason: `Needs ${TREND_MIN} pieces of signed-off work; you have ${n}.` };
+  }
+  const half = Math.floor(n / 2);
+  const mean = (xs) => Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
+  const earlier = mean(examplesInTimeOrder.slice(0, half).map((e) => e.score));
+  const later = mean(examplesInTimeOrder.slice(n - half).map((e) => e.score));
+  const move = later - earlier;
+  return {
+    direction: Math.abs(move) < TREND_MOVE ? 'steady' : move > 0 ? 'improving' : 'slipping',
+    change: move,
+    earlier,
+    later,
+    n,
+    // The sentence, built here so three surfaces cannot word the same fact differently.
+    label: Math.abs(move) < TREND_MOVE
+      ? `Holding steady across ${n} pieces of work.`
+      : move > 0
+        ? `Up ${move} points across ${n} pieces of work.`
+        : `Down ${Math.abs(move)} points across ${n} pieces of work.`,
+  };
+}
+
 // What a learner has actually demonstrated, with the work that demonstrates it.
 //
 // `axesAvailable` is the set this level can move; anything outside it is left out entirely
@@ -181,6 +224,10 @@ function capabilities(tasks, axesAvailable) {
   }
   return Object.values(byAxis).map((c) => {
     const avg = c.n ? Math.round(c.sum / c.n) : null;
+    // Time order for the trend, strongest-first for the evidence a learner looks at. Two
+    // different questions, so two different orderings -- and the sort below used to mutate
+    // the same array both were read from.
+    const inTimeOrder = [...c.examples].sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
     return {
       axis: c.axis,
       label: CAPABILITY_LABEL[c.axis] || c.axis,
@@ -189,7 +236,12 @@ function capabilities(tasks, axesAvailable) {
       // Internal. Useful for ordering and for promotion, not for putting a number on a
       // person's communication skills on a page they read about themselves.
       averageScore: avg,
-      examples: c.examples.sort((a, b) => b.score - a.score).slice(0, 3),
+      trend: trendFor(inTimeOrder),
+      examples: [...c.examples].sort((a, b) => b.score - a.score).slice(0, 3),
+      // Named separately from `examples`, which is ordered by score. A surface that wants
+      // to say "most recently" needs the most recent one, and Overview was saying exactly
+      // that over examples[0] -- the highest-scoring piece, which is usually not the last.
+      mostRecent: inTimeOrder.length ? inTimeOrder[inTimeOrder.length - 1] : null,
     };
   }).sort((a, b) => b.evidenceCount - a.evidenceCount);
 }
@@ -221,6 +273,30 @@ function developmentHistory(enrollmentId) {
     }));
 
   const current = goals.filter((g) => g.status === 'active').slice(-1)[0] || null;
+
+  // What happened to a focus after it stopped being the focus. (M08 §31)
+  //
+  // M06 left a goal as 'active' or 'superseded', which says only that another week
+  // happened. A learner looking back at "Clarify before escalating" from three weeks ago
+  // could not tell whether they ever got anywhere with it, and neither could their
+  // manager -- so the development history was a list of intentions.
+  //
+  // The honest answer is the one the goals themselves support: a competency that came back
+  // as the focus again did NOT get resolved, and one that was set once and never returned
+  // did. That is a fact about the sequence of goals, not a judgement about the person, and
+  // it is the same standard `recurring` already meets. Anything stronger -- "you improved
+  // at this" -- would need a per-competency trend, which capabilities() reports separately
+  // and under its own evidence bar.
+  const laterFocusOn = (competency, at) => goals.some(
+    (g) => g.competency === competency && String(g.created_at) > String(at),
+  );
+  const outcomeOf = (g) => {
+    if (g.status === 'active') return { key: 'current', label: 'Current focus' };
+    return laterFocusOn(g.competency, g.created_at)
+      ? { key: 'returned', label: 'Came back as a focus later' }
+      : { key: 'moved-on', label: 'Not raised again' };
+  };
+
   return {
     current: current ? {
       competency: current.competency, title: current.title, reason: current.reason,
@@ -228,6 +304,7 @@ function developmentHistory(enrollmentId) {
     } : null,
     history: goals.map((g) => ({
       competency: g.competency, title: g.title, weekIndex: g.week_index, status: g.status,
+      outcome: outcomeOf(g),
     })),
     recurring,
   };
@@ -238,5 +315,6 @@ module.exports = {
   periodFor, quality, timeliness, delivery, metricsFor,
   CAPABILITY_LABEL, EVIDENCE_STATES, MIN_FOR_STATE, CONSISTENT_AT, CONSISTENT_SCORE,
   capabilityState, capabilities,
+  TREND_MIN, TREND_MOVE, trendFor,
   developmentHistory,
 };

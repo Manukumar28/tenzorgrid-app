@@ -49,7 +49,16 @@ const allWrong = () => Object.fromEntries(st.QUESTIONS.map((q) => [q.id, q.optio
   check('the first task is assigned', r1.state.tasks.length > 0, JSON.stringify(r1.state.tasks.map((t) => t.task_key)));
   check('the week clock started', Boolean(r1.state.projects.projects.find((p) => p.status === 'active').week));
   const ack = r1.state.messages.filter((m) => /skills check/i.test(m.body)).pop();
-  check('Asha names the strongest and weakest area', /strongest area/.test(ack.body) || /starting point/.test(ack.body), ack.body.slice(0, 100));
+  // This sheet is PERFECT -- every axis scores 100 -- so there is no weakest area to name.
+  // Asha used to say "your strongest area is SQL (100) and the one with the most room is
+  // Communication (100)", because the guard was on the axis names differing rather than
+  // the scores. A first message from your manager that argues with its own numbers is a
+  // bad first impression and a true realism leak.
+  check('Asha reacts to what the check actually showed',
+    /strongest area/.test(ack.body) || /starting point/.test(ack.body) || /level across the board/.test(ack.body),
+    ack.body.slice(0, 120));
+  check('and never calls a top mark the area with the most room',
+    !/most room is [^(]+\(100\)/.test(ack.body), ack.body.slice(0, 160));
 
   console.log('\n3. The matrix now has a line to measure from');
   const m1 = r1.state.skillMatrix.find((x) => x.axis === 'sql');

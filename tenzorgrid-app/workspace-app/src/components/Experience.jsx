@@ -112,10 +112,13 @@ function Detail({ entry, onClose }) {
           </div>
         )}
 
+        {/* Both of these arrive attributed now -- {text, voice, attribution} rather than a
+            bare string -- so whose sentence this is travels with the sentence instead of
+            being implied by which box it landed in. See lib/vault.js §26. */}
         {entry.managerObservation && (
           <div className="px-5 py-4 border-b border-slate-100">
             <div className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase mb-1.5">What your manager said</div>
-            <p className="text-sm text-slate-700 leading-relaxed">{entry.managerObservation}</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{entry.managerObservation.text}</p>
           </div>
         )}
 
@@ -123,10 +126,12 @@ function Detail({ entry, onClose }) {
             wrote about themselves as a fact it asserts on their behalf. */}
         {entry.reflection && (
           <div className="px-5 py-4 border-b border-slate-100">
-            <div className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase mb-1.5">Your reflection at the time</div>
+            <div className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase mb-1.5">
+              {entry.reflection.attribution}
+            </div>
             <div className="flex gap-2">
               <Quote size={13} className="text-slate-300 shrink-0 mt-1" />
-              <p className="text-sm text-slate-600 leading-relaxed italic">{entry.reflection}</p>
+              <p className="text-sm text-slate-600 leading-relaxed italic">{entry.reflection.text}</p>
             </div>
           </div>
         )}
@@ -162,11 +167,16 @@ export default function Experience({ state }) {
   }, []);
 
   const entries = (index && index.entries) || [];
+  // Grouped by the project each piece of work belongs to. A flat grid is fine at six
+  // entries and a wall at thirty, and "which project was that on" is the question somebody
+  // actually asks of their own history. Within a group the strongest entry leads; the
+  // groups themselves run newest first. See lib/vault.js §27/§28.
+  const groups = (index && index.groups) || [];
+  const shownGroups = filter ? groups.filter((g) => g.title === filter) : groups;
   const projects = useMemo(
-    () => [...new Set(entries.map((e) => e.project).filter(Boolean))],
-    [entries],
+    () => [...new Set(groups.map((g) => g.title).filter(Boolean))],
+    [groups],
   );
-  const shown = filter ? entries.filter((e) => e.project === filter) : entries;
 
   async function openEntry(key) {
     try {
@@ -182,6 +192,12 @@ export default function Experience({ state }) {
         <span className="text-sm font-semibold text-slate-500">
           The work you have done, and the evidence behind it
         </span>
+        {entries.length > 0 && (
+          <span className="text-sm text-slate-400">
+            {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+            {projects.length > 1 ? ` across ${projects.length} projects` : ''}
+          </span>
+        )}
       </div>
 
       {/* Said plainly and near the top rather than in a footer. This is simulated
@@ -227,8 +243,20 @@ export default function Experience({ state }) {
         </div>
       )}
 
+      {shownGroups.map((group) => (
+      <section key={group.key} className="space-y-3">
+        {groups.length > 1 && (
+          <div className="flex items-baseline gap-2.5 flex-wrap border-b border-slate-200 pb-1.5">
+            <h2 className="text-[15px] font-extrabold text-slate-800 tracking-tight">{group.title}</h2>
+            <span className="text-[12px] text-slate-400">
+              {periodLabel(group.from, group.to)}
+              {' · '}
+              {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+        )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        {shown.map((e, i) => (
+        {group.entries.map((e, i) => (
           <BentoCard key={e.key} index={i} onClick={() => openEntry(e.key)} className="cursor-pointer flex flex-col">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`text-[11px] font-extrabold uppercase tracking-wide rounded px-1.5 py-0.5 ${KIND_TONE[e.kind] || 'bg-slate-100 text-slate-700'}`}>
@@ -239,7 +267,9 @@ export default function Experience({ state }) {
               )}
             </div>
             <h3 className="text-sm font-bold text-slate-900 leading-snug">{e.title}</h3>
-            {e.project && <p className="text-[12px] text-slate-500 mt-0.5">{e.project}</p>}
+            {e.project && groups.length <= 1 && (
+              <p className="text-[12px] text-slate-500 mt-0.5">{e.project}</p>
+            )}
             {/* The card carries the outcome only. The full story is one click away --
                 a list of giant cards is not a record, it is a wall. */}
             {e.outcome && (
@@ -260,6 +290,8 @@ export default function Experience({ state }) {
           </BentoCard>
         ))}
       </div>
+      </section>
+      ))}
 
       <AnimatePresence>
         {open && <Detail entry={open} onClose={() => setOpen(null)} />}

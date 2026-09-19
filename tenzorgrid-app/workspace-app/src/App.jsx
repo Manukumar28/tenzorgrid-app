@@ -136,7 +136,15 @@ export default function App() {
   }
 
   const roleLabel = state.enrollment.levelTitle || state.enrollment.roleLabel || 'Data Analyst';
-  const pendingCount = state.tasks.filter((t) => t.status === 'assigned').length;
+  // There is no pendingCount any more, and the badge it fed is gone with it.
+  //
+  // It counted every task with status 'assigned' -- on a learner's first morning that is
+  // all thirty, Friday's work included -- and pinned the number in a red badge to the LOG
+  // OUT button. Three things wrong at once: it was attached to a control that has nothing
+  // to do with work, it counted tasks that had not opened yet, and it therefore sat on the
+  // same screen as the My Work badge reading 4, which deliberately excludes them.
+  // lib/navigation.js already says why: "A number in the navigation that disagrees with
+  // the page it points at is worse than no number."
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -183,7 +191,6 @@ export default function App() {
           checkedIn={state.attendance.checkedInToday}
           onToggleCheckIn={toggleCheckIn}
           onLogout={logout}
-          pendingCount={pendingCount}
           onOpenMenu={() => setMenuOpen(true)}
         />
 

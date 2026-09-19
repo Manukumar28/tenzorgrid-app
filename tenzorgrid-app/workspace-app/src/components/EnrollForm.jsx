@@ -517,8 +517,14 @@ export default function EnrollForm({ onEnrolled }) {
               </p>
 
               <div className="bg-indigo-50 text-indigo-700 text-xs rounded-lg px-4 py-3 mb-4">
-                Free while Virtual Workspace is in early access. A certificate becomes eligible
-                after 66 days at the desk — about three months of weekdays.
+                {/* This used to promise "a certificate ... after 66 days at the desk".
+                    Nothing in this product issues a certificate and nothing is planned to,
+                    so it was a commitment made on the first screen and quietly dropped
+                    everywhere after it. What three months here actually produces is the
+                    experience record: the work, and the evidence behind each piece of it. */}
+                Free while Virtual Workspace is in early access. Every week you work builds an
+                experience record — what you did, and the evidence behind it — which is yours
+                to take away.
               </div>
 
               {error && <div className="text-red-500 text-xs mb-3">{error}</div>}

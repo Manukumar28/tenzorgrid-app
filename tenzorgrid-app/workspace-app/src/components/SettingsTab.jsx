@@ -255,7 +255,7 @@ function ResetWorkspace({ onStateChange }) {
   }
 
   const lines = preview ? [
-    preview.gradedTasks > 0 && `${preview.gradedTasks} graded task${preview.gradedTasks === 1 ? '' : 's'}${
+    preview.gradedTasks > 0 && `${preview.gradedTasks} signed-off task${preview.gradedTasks === 1 ? '' : 's'}${
       preview.averageScore === null ? '' : `, averaging ${preview.averageScore}`}`,
     preview.projectsCompleted > 0 && `${preview.projectsCompleted} completed project${preview.projectsCompleted === 1 ? '' : 's'}`,
     preview.daysAttended > 0 && `${preview.daysAttended} day${preview.daysAttended === 1 ? '' : 's'} at the desk`,

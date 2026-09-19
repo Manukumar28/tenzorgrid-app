@@ -217,7 +217,12 @@ const openTasks = (uid) => ws.getState(uid).taskBoard.rows.filter((r) => !r.notY
   const done14 = ws.getState(u14).taskBoard.rows.find((r) => r.id === first.id);
   check('the task is signed off', done14.status === 'graded', done14.status);
   check('it carries a plausible score, not 100', done14.score === 82, String(done14.score));
-  check('and says plainly it was not graded', /not graded/i.test(done14.feedback || ''), done14.feedback);
+  // The wording moved from "not graded" to "not reviewed" when the product stopped
+  // calling sign-off "grading" everywhere. What the assertion is actually about is that
+  // the row does not pretend anybody looked at the work.
+  check('and says plainly that nobody actually reviewed it',
+    /not (graded|reviewed)/i.test(done14.feedback || '') && /stand-in/i.test(done14.feedback || ''),
+    done14.feedback);
   check('the rest are untouched', openRows().length === 5, String(openRows().length));
 
   let err14 = null;

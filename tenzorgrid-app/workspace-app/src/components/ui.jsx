@@ -6,6 +6,23 @@ export const fadeUp = {
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.35, ease: 'easeOut' } }),
 };
 
+
+// How long a piece of work should take, said the way somebody would say it.
+//
+// The estimates are stored as fractions of an hour, and five screens printed them
+// straight: "~0.25h", "~0.15h", "~0.35h". Nobody has ever described a job that way. Below
+// an hour it is minutes, rounded to the nearest five so it reads as an estimate rather
+// than a measurement; above it, hours.
+export function estimateOf(hours) {
+  if (!hours || hours <= 0) return null;
+  if (hours < 1) {
+    const mins = Math.max(5, Math.round((hours * 60) / 5) * 5);
+    return `about ${mins} min`;
+  }
+  const h = Math.round(hours * 10) / 10;
+  return `about ${h}h`;
+}
+
 export function BentoCard({ children, className = '', index = 0, hover = true, ...rest }) {
   return (
     <motion.div

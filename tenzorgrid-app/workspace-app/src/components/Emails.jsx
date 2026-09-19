@@ -58,12 +58,17 @@ function relativeTime(iso) {
 function FilterSelect({ label, value, onChange, options }) {
   const active = value !== '' && value !== 'newest';
   return (
-    <div className="relative inline-flex items-center">
+    // A fixed cap, not a percentage. A native select sizes itself to its widest OPTION, so
+    // a learner with three projects made this 417px wide inside a 390px viewport and the
+    // whole page scrolled sideways. `max-w-full` did nothing about it: the percentage
+    // resolves against a containing block that is itself sized by its content. The chosen
+    // label truncates; the dropdown still shows every option in full.
+    <div className="relative inline-flex items-center min-w-0">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
+        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors max-w-[11rem] sm:max-w-[15rem] truncate focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
           active ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
         }`}
       >

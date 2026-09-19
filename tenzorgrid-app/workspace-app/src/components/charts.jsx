@@ -14,7 +14,7 @@ export function SkillPointsBar({ data }) {
   if (!data || !data.length) {
     return (
       <div className="h-44 flex items-center justify-center text-sm text-gray-500 font-medium text-center px-4">
-        No skill points yet — they're earned when a task is graded.
+        Nothing to show yet — this fills in as Asha signs work off.
       </div>
     );
   }
@@ -34,7 +34,7 @@ export function SkillPointsBar({ data }) {
             cursor={{ fill: '#f8fafc' }}
             contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12, boxShadow: '0 6px 16px -6px rgba(15,23,42,.15)' }}
             labelStyle={{ fontWeight: 700, color: '#334155' }}
-            formatter={(v) => [`${v} pts`, 'Skill points']}
+            formatter={(v) => [`${v}`, 'Evidence weight']}
           />
           <Bar dataKey="points" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive>
             <LabelList dataKey="points" position="top" style={{ fill: '#334155', fontSize: 12, fontWeight: 700 }} />
@@ -213,15 +213,18 @@ export function MilestoneBars({ data }) {
   );
 }
 
-export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
+export function SkillRadar({ axes, learnerName, learnerPhotoUrl, hasWork }) {
   const hasAnyData = axes.some((a) => a.hasData);
   return (
-    <div className="relative h-64 -mx-2">
+    // No negative side margin. It pulled the plot eight pixels wider than the card on each
+    // side, which is exactly where the axis labels live -- "Business Logic" and
+    // "Communication" were each losing their first letter to the card's own edge.
+    <div className="relative h-64">
       <ResponsiveContainer width="100%" height="100%">
         {/* The axis labels sit outside the web, so the plot has to give them room. At
             12px labels, "Business Logic" and "Communication" were losing a character
             each side — the radius comes in and the side margins go out to pay for it. */}
-        <RadarChart data={axes} outerRadius="38%" margin={{ top: 10, right: 72, bottom: 10, left: 72 }}>
+        <RadarChart data={axes} outerRadius="36%" margin={{ top: 10, right: 78, bottom: 16, left: 78 }}>
           <PolarGrid stroke="#eef0f4" />
           <PolarAngleAxis dataKey="label" tick={{ fontSize: 12, fill: '#4b5563', fontWeight: 700 }} />
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
@@ -231,8 +234,15 @@ export function SkillRadar({ axes, learnerName, learnerPhotoUrl }) {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <Avatar name={learnerName} photoUrl={learnerPhotoUrl} size={40} className="ring-2 ring-white shadow" />
       </div>
+      {/* Two different empty states, because they mean different things. Telling somebody
+          with thirty signed-off pieces of work to "complete a task" is the product not
+          knowing what it already holds about them. */}
       {!hasAnyData && (
-        <p className="absolute bottom-0 inset-x-0 text-center text-xs text-gray-500 font-medium">Complete a task to populate your skill matrix</p>
+        <p className="absolute bottom-0 inset-x-0 text-center text-xs text-gray-500 font-medium">
+          {hasWork
+            ? 'None of your signed-off work has been attributed to these areas yet.'
+            : 'This fills in once your first piece of work is signed off.'}
+        </p>
       )}
     </div>
   );

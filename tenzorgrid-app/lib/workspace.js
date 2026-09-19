@@ -923,8 +923,8 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
         value: average,
         target: rung.minAverage,
         detail: average === null
-          ? 'No graded work yet'
-          : `${average} across ${gradedTasks.length} graded task${gradedTasks.length === 1 ? '' : 's'}`,
+          ? 'Nothing signed off yet'
+          : `${average} across ${gradedTasks.length} piece${gradedTasks.length === 1 ? '' : 's'} of signed-off work`,
       },
     ],
     // What the learner is told once the conversation is open: the number to beat, how
@@ -964,7 +964,7 @@ function runPromotionReview(enrollment, promotion, tasks) {
   // ---- Phase one: open the conversation, once, at the third project ----------------
   if (neg && neg.open && !neg.opened && !promotion.eligible) {
     const standing = neg.current === null
-      ? 'You have nothing graded yet, so there is no number I can quote you — which is its own answer: the next two weeks are the whole case.'
+      ? 'I have not signed anything of yours off yet, so there is no number I can quote you — which is its own answer: the next two weeks are the whole case.'
       : neg.current >= rung.minAverage
         ? `You're carrying ${neg.current} right now, so you're above it. Staying above it is the job — one weak project pulls an average down faster than a strong one pushes it up.`
         : `You're carrying ${neg.current} right now, which is ${rung.minAverage - neg.current} short. That's not a verdict, it's a gap with one project left to close it.`;
@@ -972,7 +972,7 @@ function runPromotionReview(enrollment, promotion, tasks) {
       `I'm opening your promotion conversation now rather than after the fact, because you should know what you're playing for while you can still do something about it.\n\n`
       + `The role is ${rung.title}. There are two conditions and both have to hold — one strong project doesn't cover a weak one.\n\n`
       + `1. All ${neg.decidesAfter} projects at this level delivered. You are on ${neg.decidesAfter - neg.projectsLeft}.\n`
-      + `2. An average of ${rung.minAverage} or above across everything I have graded.\n\n`
+      + `2. An average of ${rung.minAverage} or above across everything I have signed off.\n\n`
       + `${standing}\n\n`
       + `I'll run the review the moment your ${ordinalWord(neg.decidesAfter)} project is signed off. Nothing is decided before then, and nothing is deferred after it.`,
       null, `Promotion conversation — ${rung.title}`);
@@ -1109,19 +1109,20 @@ const SHOUTOUT_SCORE = 80;
 
 const CHECKLIST_ITEMS = {
   data_analyst: [
-    { key: 'daily-quiz-ethics', label: 'Daily quiz: Data ethics' },
+    { key: 'daily-quiz-ethics', label: 'Read the data handling policy' },
     { key: 'review-project-docs', label: 'Review project docs' },
     { key: 'set-up-profile', label: 'Set up your workspace profile' },
   ],
 };
 
-const LEARNING_PATH = {
-  data_analyst: [
-    { title: 'Advanced SQL: Window Functions', note: 'RANK, LAG/LEAD and running totals — the next step up from GROUP BY.' },
-    { title: 'Reading a P&L like an analyst', note: 'The vocabulary Vikram and other stakeholders assume you already know.' },
-    { title: 'Writing findings a stakeholder will actually read', note: 'Structuring a short written recommendation, not just a query result.' },
-  ],
-};
+// LEARNING_PATH used to live here: three fixed course titles -- "Advanced SQL: Window
+// Functions" and friends -- rendered on the Performance page under the heading "Suggested
+// learning path". Nothing measured them, nothing unlocked them, and no employer's HR system
+// recommends its staff a curriculum on their own performance record. It was the single
+// clearest tell that somebody was inside a training product rather than at work, so it is
+// gone rather than reworded. What a learner should be told about their own development is
+// what their manager actually said in the 1:1, which M06 already writes and the development
+// focus above already shows.
 
 // Real, currently-trackable milestone requirements only — no fabricated "Level 3 in
 // Python" style claims for skills we have no tasks to actually assess yet.
@@ -1130,12 +1131,18 @@ const LEARNING_PATH = {
 // learner promoted to Senior was still being told to work towards Associate. They are
 // different things and should read as different things: promotion is the job you hold,
 // the milestone is the credential you can take away.
+// Renamed, because the product does not issue a certificate and is not going to.
+// "Certificate of Simulated Experience" was a credential promised on the enrolment screen,
+// named here, and counted towards on the calendar -- and never produced anywhere. What
+// three months of this actually builds is the experience record, which already exists, is
+// already traceable to the rows behind it, and is the thing somebody can genuinely take
+// into a conversation about their work.
 const MILESTONE = {
   data_analyst: {
-    targetRole: 'Certificate of Simulated Experience',
+    targetRole: 'A full experience record',
     requirements: [
-      { key: 'tasks', label: 'Complete 5 graded tasks', target: 5, metric: 'tasksCompleted' },
-      { key: 'attendance', label: 'Reach 66 attendance days', target: 66, metric: 'attendedDays' },
+      { key: 'tasks', label: 'Have five pieces of work signed off', target: 5, metric: 'tasksCompleted' },
+      { key: 'attendance', label: 'Reach 66 days at the desk', target: 66, metric: 'attendedDays' },
     ],
   },
 };
@@ -13896,13 +13903,12 @@ function assignTask(enrollmentId, taskKey, weekStart) {
   const opensAt = weekStart && def.day
     ? addWorkingDays(weekStart, def.day).toISOString()
     : null;
-  // A real deadline, set when the work is handed over — that's what makes "due today",
-  // "overdue" and the on-time rate computable rather than decorative. Rows written
-  // before this column existed get the same deadline reconstructed at read time from
-  // assigned_at + dueInDays (see getTasksView).
-  const dueAt = def.dueInDays
-    ? new Date(Date.parse(assignedAt) + def.dueInDays * 24 * 60 * 60 * 1000).toISOString()
-    : null;
+  // A real deadline — that's what makes "due today", "overdue" and the on-time rate
+  // computable rather than decorative. Set from the week the work belongs to rather than
+  // the instant the project was handed over, so it lands on a working day the learner can
+  // actually reach; see deadlineFor. Rows written before this column existed get the same
+  // deadline reconstructed at read time (see getTasksView).
+  const dueAt = deadlineFor(def, weekStart || assignedAt);
   db.prepare(`
     INSERT INTO sim_tasks (id, enrollment_id, task_key, title, brief, status, assigned_at, est_hours, priority, due_at, day_index, opens_at, difficulty)
     VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?, ?, ?, ?, ?, ?)
@@ -14114,7 +14120,7 @@ function startEnrollment(userId, { role, level, scheduleType, scheduleDays }) {
       const graded = db.prepare("SELECT COUNT(*) c FROM sim_tasks WHERE enrollment_id = ? AND status = 'graded'")
         .get(existing.id).c;
       if (graded > 0) {
-        throw new Error(`You're already enrolled as a ${levelLabel(existing.level, existing.role)} and have graded work on record. Moving up a level happens through the promotion round, not by starting again.`);
+        throw new Error(`You're already enrolled as a ${levelLabel(existing.level, existing.role)} and have work signed off on record. Moving up a level happens through the promotion round, not by starting again.`);
       }
       // No graded work: wipe the unstarted assignment and re-issue at the new level.
       db.prepare('DELETE FROM sim_tasks WHERE enrollment_id = ?').run(existing.id);
@@ -14122,7 +14128,7 @@ function startEnrollment(userId, { role, level, scheduleType, scheduleDays }) {
       db.prepare('UPDATE sim_enrollments SET level = ? WHERE id = ?').run(level, existing.id);
       const fresh = getEnrollment(userId);
       addMessage(fresh.id, 'people_partner', PEOPLE_PARTNER_NAME,
-        `Your level has been changed to ${levelLabel(level, existing.role)}. Asha will assign work at that level — nothing was lost, you hadn't been graded on anything yet.`,
+        `Your level has been changed to ${levelLabel(level, existing.role)}. Asha will assign work at that level — nothing was lost, nothing of yours has been signed off yet.`,
         null, 'Level updated');
       if (fresh.baseline_at) beginNextProject(fresh);
       return getEnrollment(userId);
@@ -14182,6 +14188,44 @@ function addWorkingDays(fromIso, n) {
 }
 
 const PROJECT_WEEK_DAYS = 5;
+
+// ---- when a piece of work is actually due ---------------------------------------------
+//
+// This used to be `assigned_at + dueInDays` in plain calendar days, and it was wrong in
+// two ways that only showed up once somebody sat down and used the product.
+//
+// The whole project is assigned in one instant, but the work OPENS across the week --
+// opens_at walks forward through working days, correctly skipping weekends. The deadline
+// did not. So a task that opened on the Wednesday carried a deadline computed from the
+// Saturday somebody signed up, which had already passed. Measured across the catalogue:
+// 150 of 150 tasks with an opening day were recorded LATE even if the learner did them on
+// the very day they appeared, and 52 of 330 deadlines landed on a Saturday or Sunday --
+// on a weekdays schedule, printed onto a calendar that shades those same days "Weekend".
+//
+// That is not a cosmetic date bug. `outcome` here, performance.timeliness, the 1:1's
+// observations and the Experience entry's "% of deliveries met their date" all read it,
+// so the one number that says whether somebody is professional about deadlines was being
+// computed against a deadline they were never given a chance to meet.
+//
+// THE RULE: a deadline belongs to the day the work lands on your desk, not to the day the
+// project was handed over.
+//
+// `dueInDays` is read as the PROJECT DAY the work is wanted by, which is what the
+// catalogue overwhelmingly means by it (day 2 tasks say 3, day 3 say 4, day 4 say 5).
+// Where a task says less than its own opening day -- the older, relative reading -- it is
+// clamped to the day it opens, because nothing can be due before it exists. The result is
+// always a working day inside the project week, and always at the END of that day, so
+// somebody who delivers on the day it is due is on time.
+function deadlineFor(def, weekStart) {
+  if (!def || !def.dueInDays || !weekStart) return null;
+  const opensOn = def.day || 1;
+  const dueOn = Math.max(opensOn, Math.min(PROJECT_WEEK_DAYS, def.dueInDays));
+  const d = addWorkingDays(weekStart, dueOn);
+  // End of that working day. Midnight would have made "due Wednesday" mean "due Tuesday
+  // night", and everything delivered on the right day would still count as late.
+  d.setUTCHours(23, 59, 59, 999);
+  return d.toISOString();
+}
 
 function computeStreaks(days) {
   if (!days.length) return { current: 0, longest: 0 };
@@ -14557,13 +14601,11 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
   const topArchetype = Object.keys(stakeholderCounts).sort((a, b) => stakeholderCounts[b] - stakeholderCounts[a])[0] || null;
   const topStakeholder = topArchetype ? (ROSTER.find((r) => r.archetype === topArchetype) || {}).name || null : null;
 
-  const bestScore = gradedAll.reduce((best, t) => Math.max(best, t.score || 0), 0);
-  const badges = [
-    { key: 'first-delivery', label: 'First Delivery', note: 'Complete your first project', earned: completedCount >= 1 },
-    { key: 'top-marks', label: 'Top Marks', note: 'Score 90 or above on a task', earned: bestScore >= 90 },
-    { key: 'streak-keeper', label: 'Streak Keeper', note: 'Check in 5 days in a row', earned: (streaks.longest || 0) >= 5 },
-    { key: 'full-sweep', label: 'Full Sweep', note: 'Complete every project in the track', earned: catalog.length > 0 && completedCount === catalog.length },
-  ];
+  // The four badges -- First Delivery, Top Marks, Streak Keeper, Full Sweep -- were
+  // removed here rather than reworded. The Experience page states the product's own
+  // position on them in its first paragraph ("no badges, no points and no comparison to
+  // anybody else") and the Projects page was contradicting it four tiles at a time.
+  // Nothing in the engine ever read them: no gate, no promotion rule, no message.
 
   return {
     projects,
@@ -14571,7 +14613,6 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
     skillPointsTotal,
     totalImpact,
     topStakeholder,
-    badges,
     activeCount: projects.filter((p) => p.status === 'active').length,
     completedCount,
     // The runs behind those projects. Event effects are recorded against a run, so
@@ -14737,7 +14778,7 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
     // starts Tuesday at eleven rather than waiting for a product they are paying for — and
     // the deadline, which is what makes this a job, is still governed by the clock.
     const notYetOpen = !taskIsOpen(t, unlockedDayIndex, nowMs);
-    const stage = graded ? 'Graded' : t.submission ? 'Submitted' : notYetOpen ? 'Opens later' : 'Assigned';
+    const stage = graded ? 'Signed off' : t.submission ? 'Submitted' : notYetOpen ? 'Opens later' : 'Assigned';
     const stagePct = graded ? 100 : t.submission ? 50 : 0;
     const priority = t.priority || def.priority || 'medium';
 
@@ -14746,9 +14787,10 @@ function getTasksView(role, tasks, projects, nowMs, attendanceDays, enrollStartM
     // timestamp, so this reconstructs the deadline the task always had rather than
     // inventing one. Without it, every account created before that column shipped would
     // show permanently empty health and on-time cards.
-    const dueAt = t.due_at || (t.assigned_at && def.dueInDays
-      ? new Date(Date.parse(t.assigned_at) + def.dueInDays * DAY_MS).toISOString()
-      : null);
+    //
+    // Reconstructed through the same deadlineFor as the write path, so an old row and a
+    // new one cannot disagree about when the same piece of work was due.
+    const dueAt = t.due_at || (t.assigned_at ? deadlineFor(def, t.assigned_at) : null);
 
     let outcome = null; // only meaningful once there is a deadline to judge against
     if (dueAt) {
@@ -15213,7 +15255,41 @@ function getTeam(role, rosterList, projects, messages, messagesRemaining, level)
 // learner has started that is missing tasks gets them assigned now, with a message
 // explaining where the new work came from. It is a no-op for everyone already in sync,
 // and it makes every future catalog change safe by construction.
+// Deadlines written by the old rule, put right.
+//
+// Every account that existed before deadlineFor carries due dates computed as calendar
+// days from the moment the whole project was handed over, which put most of them before
+// the task's own opening day and some of them on a weekend. Those rows feed the on-time
+// rate, so leaving them alone would mean the fix only helped people who signed up after
+// it shipped while everybody else kept a permanently damaged record.
+//
+// Guarded on a row actually being wrong, so this is one cheap COUNT on a healthy account
+// rather than a rewrite on every page load, and recomputing a correct deadline twice
+// gives the same answer -- it cannot drift by running again.
+function repairDeadlines(enrollment) {
+  const broken = db.prepare(`SELECT COUNT(*) c FROM sim_tasks
+    WHERE enrollment_id = ? AND due_at IS NOT NULL AND opens_at IS NOT NULL AND due_at < opens_at`)
+    .get(enrollment.id).c;
+  if (!broken) return 0;
+
+  let fixed = 0;
+  const rows = db.prepare('SELECT id, task_key, assigned_at, due_at FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  for (const row of rows) {
+    const def = TASKS[row.task_key];
+    if (!def || !def.dueInDays) continue;
+    const run = db.prepare(`SELECT r.started_at FROM sim_project_runs r
+      WHERE r.enrollment_id = ? ORDER BY ABS(strftime('%s', r.started_at) - strftime('%s', ?)) LIMIT 1`)
+      .get(enrollment.id, row.assigned_at);
+    const want = deadlineFor(def, (run && run.started_at) || row.assigned_at);
+    if (!want || want === row.due_at) continue;
+    db.prepare('UPDATE sim_tasks SET due_at = ? WHERE id = ?').run(want, row.id);
+    fixed += 1;
+  }
+  return fixed;
+}
+
 function reconcileProjectTasks(enrollment) {
+  repairDeadlines(enrollment);
   const catalog = catalogFor(enrollment.role, enrollment.level);
   if (!catalog.length) return 0;
 
@@ -15560,7 +15636,6 @@ function getState(userId) {
     scoreHistory,
     shoutouts: getShoutouts(gradedTasks),
     checklist,
-    learningPath: LEARNING_PATH[enrollment.role] || [],
     milestone,
   };
 
@@ -15657,7 +15732,10 @@ function getPerformanceRecord(userId) {
   const meetingRows = db.prepare("SELECT * FROM sim_meetings WHERE enrollment_id = ? AND status = 'completed' ORDER BY completed_at DESC")
     .all(enrollment.id);
 
-  return {
+  // The performance record is as exportable as the experience one -- a capability state
+  // and a manager's observation are exactly the sort of thing somebody pastes into an
+  // application -- so it passes the same gate. See lib/vault.js §24.
+  return vault.assertProvenance(vault.withProvenance({
     metrics: performance.metricsFor(enrollment.id, { tasks }),
     capabilities: performance.capabilities(tasks, axes),
     development: performance.developmentHistory(enrollment.id),
@@ -15665,8 +15743,7 @@ function getPerformanceRecord(userId) {
     // the context that produced it.
     observations: meetingRows.slice(0, 5).flatMap((m) => meetings.parse(m.observations_json, [])
       .map((o) => ({ text: o.text, weekIndex: m.week_index, project: m.project_key, at: m.completed_at }))),
-    simulated: true,
-  };
+  }), 'getPerformanceRecord');
 }
 
 // The experience record: the index, or one story in full.
@@ -15675,15 +15752,50 @@ function getExperience(userId, key) {
   if (!enrollment) throw new Error('Not enrolled yet.');
   if (key) {
     const row = vault.byKey(enrollment.id, key);
-    return row ? vault.detail(row) : null;
+    if (!row) return null;
+    // What was SAID about the week this entry belongs to, joined in from the 1:1 rather
+    // than copied into the row. See lib/vault.js detail(): entries are written before the
+    // meeting happens, so the two columns for these sentences were never filled by
+    // anything, and the Experience page carried two sections that could not render.
+    const meeting = row.project_run_id
+      ? db.prepare(`SELECT * FROM sim_meetings WHERE enrollment_id = ? AND project_run_id = ?
+                    AND status = 'completed' ORDER BY completed_at DESC LIMIT 1`)
+        .get(enrollment.id, row.project_run_id)
+      : null;
+    const observations = meeting ? meetings.parse(meeting.observations_json, []) : [];
+    const voices = {
+      // The observation that actually names this piece of work where one does, and Asha's
+      // clearest remark about the week otherwise. Never a summary of several.
+      managerObservation: (observations.find((o) => o.text && row.title && o.text.includes(row.title))
+        || observations[0] || {}).text || null,
+      reflection: meeting ? meeting.reflection_text : null,
+    };
+    // One story lifted out of the index still has to say what it is -- it is the single
+    // most likely thing to be copied somewhere else.
+    return vault.assertProvenance(vault.withProvenance(vault.detail(row, voices)), `experience ${key}`);
   }
-  return {
-    entries: vault.list(enrollment.id).map(vault.summarise),
-    // Said once here and stored on every row: this is simulated professional experience.
-    // A later export must not be able to present it as paid employment.
-    simulated: true,
+  // Stamped, not annotated. vault.withProvenance is the one place that says what this
+  // record IS, and vault.assertProvenance is a gate the payload has to get through --
+  // so a future surface that assembles an experience payload by hand cannot ship it
+  // without saying it is simulated. See lib/vault.js §24.
+  // Flat, and grouped. (M08 §28)
+  //
+  // Three weeks in, a learner has eight entries; twelve weeks in they will have thirty,
+  // and a single flat grid ordered by date opens on whatever happened last -- which for
+  // most weeks is an ordinary delivery. `entries` is now ordered by significance so the
+  // first thing on the page is the thing worth seeing, and `groups` lets the page break
+  // the record up by the project each piece belongs to, which is how somebody actually
+  // remembers their own history. Nothing is hidden by either; both are the same rows.
+  const rows = vault.list(enrollment.id);
+  return vault.assertProvenance(vault.withProvenance({
+    count: rows.length,
+    entries: rows.map(vault.summarise),
+    groups: vault.grouped(enrollment.id).map((g) => ({
+      key: g.key, title: g.title, from: g.from, to: g.to,
+      entries: g.rows.map(vault.summarise),
+    })),
     label: 'Professional Simulation Experience',
-  };
+  }), 'getExperience index');
 }
 
 // Starts an available project by assigning its tasks. The unlock gate is enforced here,
@@ -15890,9 +16002,18 @@ function submitSkillTest(userId, answers) {
   const scored = Object.entries(result.skills).filter(([, v]) => typeof v === 'number');
   const sorted = [...scored].sort((a, b) => b[1] - a[1]);
   const best = sorted[0], worst = sorted[sorted.length - 1];
-  const line = best && worst && best[0] !== worst[0]
+  // Guarded on the SCORES differing, not just the axis names.
+  //
+  // It used to be `best[0] !== worst[0]`, which is true whenever there is more than one
+  // axis -- including when they all scored the same. A learner who answered every question
+  // correctly got "Your strongest area is SQL (100) and the one with the most room is
+  // Communication (100)", which is a sentence that argues with its own numbers in the
+  // first message their manager ever sends them.
+  const line = best && worst && best[1] > worst[1]
     ? `Your strongest area is ${SKILL_AXIS_LABEL[best[0]]} (${best[1]}) and the one with the most room is ${SKILL_AXIS_LABEL[worst[0]]} (${worst[1]}).`
-    : 'That gives me a starting point to measure against.';
+    : best && scored.length > 1 && best[1] === worst[1]
+      ? `It came out level across the board at ${best[1]} — which tells me the check is not stretching you, so the work will have to.`
+      : 'That gives me a starting point to measure against.';
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
     `Got your skills check — ${result.correct} of ${result.answered}. ${line}\n\nNothing here is a verdict; it's the line we measure from. Every task you deliver updates these, and in twelve weeks you'll be able to show the difference rather than assert it.`);
 
@@ -17600,7 +17721,7 @@ function completeOneTask(enrollment, row) {
                      opens_at = NULL, submitted_at = ?, graded_at = ?
                WHERE id = ?`)
     .run(TEST_COMPLETE_SCORE,
-         'Completed from the testing panel — this was not graded, and the score is a fixed stand-in.',
+         'Completed from the testing panel — this was not reviewed, and the score is a fixed stand-in.',
          '(auto-completed for testing)', now(), now(), row.id);
 }
 
@@ -18535,7 +18656,7 @@ async function submitTask(userId, taskId, code, computedResult) {
   const taskDef = TASKS[task.task_key];
   if (!taskDef) throw new Error('Unknown task definition');
   if (countTodaysAiUse(enrollment.id).submissions >= DAILY_AI_LIMITS.submissions) {
-    throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.submissions} graded submissions. Come back tomorrow — your work is saved.`);
+    throw new Error(`You've hit today's limit of ${DAILY_AI_LIMITS.submissions} submissions for review. Come back tomorrow — your work is saved.`);
   }
 
   const datasetKey = datasetForTask(task.task_key);
@@ -19821,6 +19942,11 @@ function minutesOf(hhmm) {
 // put in it says so rather than inventing a meeting.
 function buildTimeline(state, nowDate) {
   const nowMin = nowDate.getHours() * 60 + nowDate.getMinutes();
+  // On a Saturday nothing in the office shape is happening, so nothing is "now" and
+  // nothing is "next". The slots still render -- they say what a working day looks like
+  // here, which is useful -- but the timeline stops asserting that a stand-up with Asha
+  // is fifteen minutes away on a day she is not at work.
+  const officeOpen = !isWeekend(nowDate);
   const openTasks = ((state.taskBoard && state.taskBoard.rows) || [])
     .filter((r) => r.status !== 'graded' && !r.notYetOpen);
   const needsReview = ((state.taskBoard && state.taskBoard.rows) || [])
@@ -19869,10 +19995,12 @@ function buildTimeline(state, nowDate) {
     return {
       at: slot.at, endsAt: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`,
       kind: slot.kind, title, detail, taskId, empty, done,
-      now: nowMin >= start && nowMin < end,
-      past: nowMin >= end,
+      now: officeOpen && nowMin >= start && nowMin < end,
+      past: officeOpen && nowMin >= end,
     };
   });
+
+  if (!officeOpen) return slots;
 
   // Exactly one NEXT, and only when there is one -- an evening learner has nothing next
   // today and should be told that rather than shown tomorrow's stand-up as if it were
@@ -19894,10 +20022,14 @@ function buildHeadlines(state, timeline, nowDate) {
 
   const standupSlot = timeline.find((s) => s.kind === 'standup');
   if (state.standup && !state.standup.done) {
-    const mins = minutesOf('09:30') - (nowDate.getHours() * 60 + nowDate.getMinutes());
+    // "In 12 minutes" is a claim about a meeting on a working day. At the weekend the
+    // stand-up is simply waiting for you, which is true and is what the day gate does.
+    const mins = isWeekend(nowDate)
+      ? null
+      : minutesOf('09:30') - (nowDate.getHours() * 60 + nowDate.getMinutes());
     out.push({
       kind: 'standup', tone: 'indigo',
-      text: mins > 0 && mins <= 60
+      text: mins !== null && mins > 0 && mins <= 60
         ? `Stand-up with ${firstName(managerName)} in ${mins} minute${mins === 1 ? '' : 's'}.`
         : `Your stand-up with ${firstName(managerName)} is still open.`,
       tab: null,
@@ -20172,10 +20304,29 @@ function buildWorkday(state, nowDate, lastSeenIso) {
     .filter((m) => m.sender_archetype === 'line_manager')
     .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0] || null;
 
+  // Is the office actually open today?
+  //
+  // The product lets somebody work whenever they like -- a day is opened by finishing the
+  // one before it, not by the clock -- and that is deliberate. What was NOT deliberate is
+  // that Home greeted a learner with "Saturday 19 September" and then laid a 09:30
+  // stand-up, a lunch hour and a 17:00 hand-over underneath it, while the calendar on the
+  // next tab shaded that same day "Weekend". Three surfaces, three different opinions
+  // about whether anybody was at work.
+  //
+  // Saying it plainly costs nothing and removes the contradiction: the week runs Monday to
+  // Friday, you are welcome to work ahead at the weekend, and the office hours below are a
+  // weekday's shape rather than a claim about today.
+  const weekend = isWeekend(nowDate);
+
   return {
     greeting: greetingAt(nowDate),
     date: nowDate.toISOString().slice(0, 10),
-    dateLabel: nowDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+    // UTC, like every other date the simulation prints -- opens_at, due_at and the whole
+    // calendar grid are UTC, so a Home that used the device's local weekday could greet
+    // somebody with "Monday" on a day the board still called Sunday.
+    dateLabel: nowDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }),
+    officeOpen: !weekend,
+    dayNote: weekend ? 'The office is closed — anything you do today is working ahead' : null,
     headlines: buildHeadlines(state, timeline, nowDate),
     timeline,
     assignment,

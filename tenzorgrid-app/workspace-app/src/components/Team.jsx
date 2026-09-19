@@ -170,7 +170,7 @@ export default function Team({ state, onStateChange, onTab }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Team</h1>
-          <span className="text-sm font-semibold text-slate-500">[Collaboration hub]</span>
+          <span className="text-sm font-semibold text-slate-500">The people you work with, and what they do</span>
         </div>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -188,7 +188,12 @@ export default function Team({ state, onStateChange, onTab }) {
         { key: 'people', label: 'People', value: team.length, sub: 'in your org chart', tone: 'indigo', icon: Users },
         { key: 'reports', label: 'Report to you', value: team.filter((m) => m.reportsToYou).length, sub: 'direct reports', tone: 'violet', icon: UserCheck },
         { key: 'unread', label: 'Unread', value: team.reduce((s, m) => s + m.unread, 0), sub: 'waiting on you', tone: 'rose', icon: MailOpen },
-        { key: 'left', label: 'Messages left', value: messagesRemaining, sub: 'today', tone: 'emerald', icon: Send },
+        // A daily cap on AI replies is a fact about the product, not about Meridian, and it
+        // was sitting in a row of org statistics as though it were one -- "13 People, 4
+        // Report to you, 12 Unread, 19 Messages left". Nobody's employer rations their
+        // messages. The number stays, because a learner who is about to run out should know,
+        // and the label now says which kind of thing it is.
+        { key: 'left', label: 'Replies left', value: messagesRemaining, sub: 'your daily limit here', tone: 'slate', icon: Send },
       ]} />
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-5 items-start">
@@ -220,7 +225,7 @@ export default function Team({ state, onStateChange, onTab }) {
                   </span>
                   {selected.grades && (
                     <span className="inline-flex items-center gap-1 text-[12px] font-bold rounded-md px-2 py-1 bg-amber-50 text-amber-700">
-                      <Gavel size={11} /> Grades your work
+                      <Gavel size={11} /> Reviews and signs off your work
                     </span>
                   )}
                   {selected.lastContactAt && (
@@ -329,7 +334,7 @@ export default function Team({ state, onStateChange, onTab }) {
               </BentoCard>
             )}
             <p className="text-[12px] text-slate-500 mt-2.5">
-              This is the whole cast for the individual-contributor track. Direct reports appear here when the manager track ships.
+              This is everyone you work with at your level. Direct reports appear here once you are managing people.
             </p>
           </div>
 
@@ -353,7 +358,7 @@ export default function Team({ state, onStateChange, onTab }) {
 
               <div>
                 <h3 className="text-base font-bold mb-0.5">Project progress</h3>
-                <p className="text-xs text-slate-500 mb-2">Across the track's projects</p>
+                <p className="text-xs text-slate-500 mb-2">Across the projects you have worked on</p>
                 <MilestoneBars data={milestones} />
               </div>
             </div>
