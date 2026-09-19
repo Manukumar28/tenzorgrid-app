@@ -1,6 +1,6 @@
 import {
   Home, Inbox, Calendar, ClipboardCheck, Sun, FolderOpen, Users, Star,
-  TrendingUp, Clock3, ClipboardList, Settings,
+  TrendingUp, Clock3, ClipboardList, Settings, BookMarked,
 } from 'lucide-react';
 
 // The navigation, as one object.
@@ -84,7 +84,14 @@ export const NAV_ITEMS = [
 
   // ---- Career: your own record ----
   { id: 'overview', section: 'career', label: 'Performance', icon: TrendingUp,
-    hint: 'Your scores, skills and the rung above' },
+    // No longer "your scores" -- the record leads with what you have demonstrated and
+    // what your manager noticed, and the numbers stay mostly internal.
+    hint: 'What you are demonstrating, and the rung above' },
+  // Performance is longitudinal; Experience is episodic. They sit side by side under
+  // CAREER because they answer different questions, and collapsing them into one page
+  // would lose the distinction this milestone exists to draw.
+  { id: 'experience', section: 'career', label: 'Experience', icon: BookMarked,
+    hint: 'The work you have done, and the evidence behind it' },
 
   // ---- Workplace administration ----
   { id: 'timesheets', section: 'workplace', label: 'Timesheets', icon: Clock3,

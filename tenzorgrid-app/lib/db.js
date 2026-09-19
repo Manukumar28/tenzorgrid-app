@@ -556,6 +556,57 @@ CREATE TABLE IF NOT EXISTS sim_development_goals (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sim_goals_key ON sim_development_goals(enrollment_id, goal_key);
+-- ---- Experience record ------------------------------------------------------------------
+--
+-- What the learner has actually done, as a small number of professional stories rather
+-- than a log of every task. One row per STORY, not per event: a piece of work that was
+-- returned, put the project at risk, was corrected and then approved is ONE experience,
+-- not four.
+--
+-- Written only at a resolved boundary -- project completion, meeting completion -- so an
+-- entry is created once and never mutates. That makes duplicates structurally impossible
+-- and means a story is always coherent rather than a half-finished one that reads as a
+-- failure.
+--
+-- FACTUALITY IS THE WHOLE POINT. Every claim here has to be traceable to simulation state,
+-- which is what source_json is for: task ids, event ids, effect ids, meeting ids. A later
+-- Resume or Interview system must be able to follow any sentence back to the row that
+-- justifies it, and must never be able to turn "analysed retention" into "improved
+-- retention by 12%".
+--
+-- simulated is stored on every row and is always 1. It is not decoration: an export that
+-- leaves the product must be able to say this was simulated professional experience and
+-- not paid employment, and the safest place for that fact is next to the claim.
+CREATE TABLE IF NOT EXISTS sim_experiences (
+  id TEXT PRIMARY KEY,
+  enrollment_id TEXT NOT NULL REFERENCES sim_enrollments(id) ON DELETE CASCADE,
+  source_key TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  project_key TEXT,
+  project_title TEXT,
+  project_run_id TEXT,
+  role_level TEXT,
+  period_from TEXT,
+  period_to TEXT,
+  context TEXT,
+  responsibility TEXT,
+  actions_json TEXT,
+  outcome TEXT,
+  capabilities_json TEXT,
+  evidence_json TEXT,
+  source_json TEXT,
+  significance TEXT NOT NULL DEFAULT 'routine',
+  manager_observation TEXT,
+  reflection TEXT,
+  simulated INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  UNIQUE(enrollment_id, source_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_exp_run ON sim_experiences(enrollment_id, project_run_id);
+CREATE INDEX IF NOT EXISTS idx_sim_exp_sig ON sim_experiences(enrollment_id, significance);
+
 CREATE INDEX IF NOT EXISTS idx_sim_meetings_status ON sim_meetings(enrollment_id, status);
 CREATE INDEX IF NOT EXISTS idx_sim_goals_status ON sim_development_goals(enrollment_id, status);
 

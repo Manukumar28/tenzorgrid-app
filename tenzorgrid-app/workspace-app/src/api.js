@@ -19,6 +19,8 @@ export const api = {
   registerRoleInterest: (role) => jsonFetch('/api/workspace/role-interest', { method: 'POST', body: JSON.stringify({ role }) }),
   checkIn: () => jsonFetch('/api/workspace/checkin', { method: 'POST' }),
   submitSkillTest: (answers) => jsonFetch('/api/workspace/skill-test', { method: 'POST', body: JSON.stringify({ answers }) }),
+  getPerformanceRecord: () => jsonFetch('/api/workspace/performance'),
+  getExperience: (key) => jsonFetch(`/api/workspace/experience${key ? `?key=${encodeURIComponent(key)}` : ''}`),
   getOneToOne: (key) => jsonFetch(`/api/workspace/one-to-one${key ? `?key=${encodeURIComponent(key)}` : ''}`),
   completeOneToOne: (key, reflection, text) => jsonFetch('/api/workspace/one-to-one', { method: 'POST', body: JSON.stringify({ key, reflection, text }) }),
   submitStandup: (answers, spoken) => jsonFetch('/api/workspace/standup', { method: 'POST', body: JSON.stringify({ answers, spoken }) }),

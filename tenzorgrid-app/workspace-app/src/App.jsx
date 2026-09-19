@@ -18,6 +18,7 @@ import EnrollForm from './components/EnrollForm.jsx';
 import SkillTest from './components/SkillTest.jsx';
 import Standup from './components/Standup.jsx';
 import OneToOne from './components/OneToOne.jsx';
+import Experience from './components/Experience.jsx';
 import ChatDock from './components/ChatDock.jsx';
 import { Mic } from 'lucide-react';
 import { api } from './api.js';
@@ -210,6 +211,7 @@ export default function App() {
           />
         )}
         {tab === 'overview' && <Overview state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} />}
+        {tab === 'experience' && <Experience state={state} />}
         {tab === 'today' && <Today state={state} onStateChange={setState} onTab={setTab} onOpenMeeting={(key) => setMeetingKey(key || true)} />}
         {tab === 'projects' && <Projects state={state} onStateChange={setState} onTab={setTab} />}
         {tab === 'tasks' && <Tasks state={state} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} onStateChange={setState} openRequest={openRequest} onOpenChat={(a) => setChatWith({ archetype: a, at: Date.now() })} />}

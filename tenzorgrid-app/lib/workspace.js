@@ -27,6 +27,8 @@ const apps = require('./apps');
 const assignments = require('./assignments');
 const events = require('./events');
 const meetings = require('./meetings');
+const performance = require('./performance');
+const vault = require('./vault');
 
 const LINE_MANAGER_NAME = 'Asha Rao';
 const STAKEHOLDER_NAME = 'Vikram Nair';
@@ -873,9 +875,12 @@ function getPromotion(enrollment, projects, gradedTasks, tasks) {
   const opensAfter = Math.max(1, Math.min(PROMOTION_OPENS_AFTER, decideAfter - 1));
 
   const completed = projects.filter((p) => levelKeys.has(p.key) && p.status === 'completed').length;
-  const average = gradedTasks.length
-    ? Math.round(gradedTasks.reduce((s, t) => s + (t.score || 0), 0) / gradedTasks.length)
-    : null;
+  // The canonical number, not a seventh local formula. This used to count a graded task
+  // with no score as a ZERO -- inventing a failure the learner never earned, in the one
+  // calculation that decides whether they get promoted. Production cannot currently
+  // produce an unscored graded task, so the value is unchanged today; what changes is
+  // that it can no longer silently disagree with the number their manager quotes.
+  const average = performance.quality(gradedTasks).value;
 
   const trainingDone = completed >= decideAfter;
   const performanceMet = average !== null && average >= rung.minAverage;
@@ -14467,7 +14472,7 @@ function getProjects(role, tasks, streaks, enrollmentId, level) {
     const weighted = taskRows.reduce((sum, t) => sum + (t.status === 'graded' ? 1 : t.submission ? 0.5 : 0), 0);
     const progressPct = def.taskKeys.length ? Math.round((weighted / def.taskKeys.length) * 100) : 0;
 
-    const avg = graded.length ? Math.round(graded.reduce((s, t) => s + (t.score || 0), 0) / graded.length) : null;
+    const avg = performance.quality(graded).value;
     const openTask = taskRows.find((t) => t.status !== 'graded');
 
     return {
@@ -14657,9 +14662,8 @@ function consistencyAt(attendanceDays, enrollStartMs, atMs) {
 // nothing to go on at all the score is null rather than zero.
 function productivityAt(gradedUpTo, deliveriesUpTo, attendanceDays, enrollStartMs, atMs) {
   const values = {
-    quality: gradedUpTo.length
-      ? Math.round(gradedUpTo.reduce((s, t) => s + (t.score || 0), 0) / gradedUpTo.length)
-      : null,
+    // Canonical. Same rule everywhere: an unscored task is missing data, not a zero.
+    quality: performance.quality(gradedUpTo).value,
     timeliness: deliveriesUpTo.length
       ? Math.round((deliveriesUpTo.filter((d) => d.outcome === 'onTime').length / deliveriesUpTo.length) * 100)
       : null,
@@ -15275,9 +15279,7 @@ function getState(userId) {
   const milestoneDays = trainingMonthDays * 3; // 66 — first certificate eligibility
 
   const gradedTasks = tasks.filter((t) => t.status === 'graded');
-  const avgScore = gradedTasks.length
-    ? Math.round(gradedTasks.reduce((sum, t) => sum + (t.score || 0), 0) / gradedTasks.length)
-    : null;
+  const avgScore = performance.quality(gradedTasks).value;
   // Estimates are fractions of an hour now, so these sums are floating point and printed
   // straight onto the dashboard — "1.7000000000000002h" is what a learner actually saw.
   // Rounded to one decimal at the source, so every consumer gets the same clean number.
@@ -15292,9 +15294,7 @@ function getState(userId) {
   // score itself rather than being fabricated as 0.
   const todayStr = today();
   const gradedBeforeToday = gradedTasks.filter((t) => (t.graded_at || '').slice(0, 10) !== todayStr);
-  const avgScoreBeforeToday = gradedBeforeToday.length
-    ? Math.round(gradedBeforeToday.reduce((sum, t) => sum + (t.score || 0), 0) / gradedBeforeToday.length)
-    : null;
+  const avgScoreBeforeToday = performance.quality(gradedBeforeToday).value;
   const scoreDeltaToday = avgScore === null ? null : avgScore - (avgScoreBeforeToday === null ? 0 : avgScoreBeforeToday);
 
   const baseline = enrollment.baseline_json ? JSON.parse(enrollment.baseline_json) : null;
@@ -15614,8 +15614,76 @@ function getState(userId) {
     reason: goalRow.reason,
     setInWeek: goalRow.week_index,
   } : null;
+  // Compact only. The index is what Home and the nav badge need; the full record and any
+  // one story are fetched when those pages open, because shipping the whole evidence
+  // graph on every read is exactly what section 45 rules out.
+  // Learners who were here before this existed get their history written once, from what
+  // the data honestly supports. Guarded on the table being empty for them, so it is a
+  // one-time cost rather than a scan on every page load -- and idempotent underneath in
+  // any case, because every entry is keyed on what caused it.
+  if (db.prepare('SELECT COUNT(*) c FROM sim_experiences WHERE enrollment_id = ?').get(enrollment.id).c === 0
+      && db.prepare('SELECT COUNT(*) c FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NOT NULL').get(enrollment.id).c > 0) {
+    backfillExperiences(enrollment);
+  }
+  const experienceRows = vault.list(enrollment.id);
+  payload.experience = {
+    count: experienceRows.length,
+    recent: experienceRows.slice(0, 3).map(vault.summarise),
+  };
+  // The development picture, which Performance and Home both read.
+  payload.development = (() => {
+    const d = performance.developmentHistory(enrollment.id);
+    if (!d.current) return null;
+    return {
+      competency: d.current.competency,
+      title: d.current.title,
+      reason: d.current.reason,
+      setInWeek: d.current.setInWeek,
+      // "You have been working on this for three weeks" is a fact about the goals, not an
+      // inference about the person -- so it is safe to say.
+      recurring: d.recurring.find((r) => r.competency === d.current.competency) || null,
+    };
+  })();
   payload.workday = buildWorkday(payload, new Date(), sinceIso);
   return payload;
+}
+
+// The full performance record, built when the page opens rather than on every read.
+function getPerformanceRecord(userId) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const axes = SKILL_AXES.filter((a) => !LEVEL_ONLY_AXES[a] || LEVEL_ONLY_AXES[a].includes(enrollment.level));
+  const meetingRows = db.prepare("SELECT * FROM sim_meetings WHERE enrollment_id = ? AND status = 'completed' ORDER BY completed_at DESC")
+    .all(enrollment.id);
+
+  return {
+    metrics: performance.metricsFor(enrollment.id, { tasks }),
+    capabilities: performance.capabilities(tasks, axes),
+    development: performance.developmentHistory(enrollment.id),
+    // What the manager actually said, with the week it belongs to. Never praise without
+    // the context that produced it.
+    observations: meetingRows.slice(0, 5).flatMap((m) => meetings.parse(m.observations_json, [])
+      .map((o) => ({ text: o.text, weekIndex: m.week_index, project: m.project_key, at: m.completed_at }))),
+    simulated: true,
+  };
+}
+
+// The experience record: the index, or one story in full.
+function getExperience(userId, key) {
+  const enrollment = getEnrollment(userId);
+  if (!enrollment) throw new Error('Not enrolled yet.');
+  if (key) {
+    const row = vault.byKey(enrollment.id, key);
+    return row ? vault.detail(row) : null;
+  }
+  return {
+    entries: vault.list(enrollment.id).map(vault.summarise),
+    // Said once here and stored on every row: this is simulated professional experience.
+    // A later export must not be able to present it as paid employment.
+    simulated: true,
+    label: 'Professional Simulation Experience',
+  };
 }
 
 // Starts an available project by assigning its tasks. The unlock gate is enforced here,
@@ -16984,7 +17052,7 @@ function projectCompletion(enrollment, run) {
     situations: { done: sits.filter((x) => x.handled_as).length, total: totalSits },
     quiz: { taken: quizRows.length > 0, required: hasQuiz,
             score: quizRows.length ? Math.round((quizRows.filter((q) => q.correct).length / quizRows.length) * 100) : null },
-    avgScore: graded.length ? Math.round(graded.reduce((a, t) => a + t.score, 0) / graded.length) : null,
+    avgScore: performance.quality(graded).value,
     best: graded.length ? graded.slice().sort((a, b) => b.score - a.score)[0] : null,
   };
 }
@@ -17021,6 +17089,8 @@ function finishProjectIfComplete(enrollment) {
   // compensation-review-specific prose, for something most of them never did. The same
   // ground is covered in the meeting, from evidence, about the week they actually had.
   scheduleOneToOne(enrollment, run, def);
+  // The week's stories, written once now that every chain in it has resolved.
+  recordExperiences(enrollment, run, def);
 
   addMessage(enrollment.id, 'line_manager', LINE_MANAGER_NAME,
     [`${learner} — that is ${def ? def.title : 'the project'} closed out.`,
@@ -17155,6 +17225,102 @@ function completeOneToOne(userId, meetingKey, reflectionChoice, reflectionText) 
     null, `Our 1:1 — week ${row.week_index}`, 'line_manager');
 
   return { reply: chosen.reply, goal, state: getState(userId) };
+}
+
+// ---- the experience record -----------------------------------------------------------------
+//
+// Written at the week boundary, where every chain that started this week has finished.
+// One row per STORY: a piece of work returned, marked at risk, corrected and approved is
+// ONE entry, not four. Keyed on what caused it, so a replay writes nothing.
+function recordExperiences(enrollment, run, def) {
+  if (!run || !def) return 0;
+  const tasks = db.prepare('SELECT * FROM sim_tasks WHERE enrollment_id = ?').all(enrollment.id);
+  const mine = tasks.filter((t) => (def.taskKeys || []).includes(t.task_key));
+  const evRows = db.prepare('SELECT * FROM sim_events WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id);
+  const fxRows = db.prepare('SELECT * FROM sim_event_effects WHERE enrollment_id = ? AND project_run_id = ?')
+    .all(enrollment.id, run.id);
+  const project = { key: def.key, title: def.title, description: def.description };
+  const level = enrollment.level;
+  let written = 0;
+
+  const safely = (entry) => {
+    if (!entry) return;
+    try { if (vault.record(enrollment.id, entry)) written += 1; }
+    catch (e) {
+      // A refused claim is a bug in a builder, not something to paper over at runtime.
+      // It is logged loudly and the entry is dropped rather than written unverified.
+      console.error('[vault] refused an entry:', e.message, entry.sourceKey);
+    }
+  };
+
+  // 1. Returned -> recovered, collapsed into one story. M05 kept the whole chain on
+  //    record precisely so this could be assembled without guessing.
+  const recovered = evRows.filter((e) => e.pattern === 'work-recovered');
+  for (const rec of recovered) {
+    const returned = evRows.find((e) => e.pattern === 'work-returned' && e.task_id === rec.task_id);
+    const task = mine.find((t) => t.id === rec.task_id) || tasks.find((t) => t.id === rec.task_id);
+    const risk = fxRows.find((f) => f.kind === 'project_health' && f.task_id === rec.task_id);
+    safely(vault.recoveryEntry({
+      enrollmentId: enrollment.id, run, project, level, returned, recovered: rec, task, riskEffect: risk,
+    }));
+  }
+
+  // 2. A stakeholder changed what they wanted.
+  for (const ev of evRows.filter((e) => e.pattern === 'requirement-change')) {
+    const amend = fxRows.find((f) => f.kind === 'amendment' && f.event_id === ev.id);
+    safely(vault.scopeEntry({ enrollmentId: enrollment.id, run, project, level, event: ev, amendment: amend }));
+  }
+
+  // 3. A judgement about involving the manager.
+  for (const ev of evRows.filter((e) => e.pattern === 'escalated')) {
+    safely(vault.escalationEntry({ enrollmentId: enrollment.id, run, project, level, event: ev }));
+  }
+
+  // 4. The week itself. Routine on purpose -- most weeks are, and saying so plainly is
+  //    more credible than dressing every finished project as an achievement.
+  const sits = db.prepare('SELECT COUNT(*) c FROM sim_situations WHERE enrollment_id = ? AND project_run_id = ? AND handled_as IS NOT NULL')
+    .get(enrollment.id, run.id).c;
+  // Leadership work counted as itself, so a manager's record does not read like a junior
+  // analyst's with a different job title on it.
+  const leadershipCounts = { assign: 0, signoff: 0, coach: 0 };
+  for (const t of mine) {
+    if (t.status !== 'graded') continue;
+    const tool = (TASKS[t.task_key] || {}).tool;
+    if (tool && leadershipCounts[tool] !== undefined) leadershipCounts[tool] += 1;
+  }
+  safely(vault.projectEntry({
+    run, project, level, situations: sits, leadershipCounts,
+    // `mine` is ALREADY the project's work -- scoped by the project's own taskKeys, which
+    // is what actually makes a task part of a project. Filtering it again by the run's
+    // start/finish timestamps double-scopes it and silently drops work: on a time-travelled
+    // week it reported 7 pieces approved out of 30, because the graded_at stamps sit
+    // outside a window that moved. Membership is the right key here, not the clock.
+    metrics: performance.metricsFor(enrollment.id, { tasks: mine }),
+  }));
+
+  return written;
+}
+
+// Historical evidence for learners who were here before this existed.
+//
+// Only what the data honestly supports: a completed project is always safe, and the event
+// stories are written only where M05 actually persisted the events. A learner from before
+// the event engine gets their projects and no invented drama -- which is the truthful
+// outcome, not a gap to fill.
+function backfillExperiences(enrollment) {
+  const runs = db.prepare('SELECT * FROM sim_project_runs WHERE enrollment_id = ? AND completed_at IS NOT NULL ORDER BY completed_at')
+    .all(enrollment.id);
+  if (!runs.length) return 0;
+  const catalog = catalogFor(enrollment.role, enrollment.level);
+  let written = 0;
+  for (const run of runs) {
+    const def = catalog.find((p) => p.key === run.project_key)
+      || (PROJECT_CATALOG[enrollment.role] || []).find((p) => p.key === run.project_key);
+    if (!def) continue;
+    written += recordExperiences(enrollment, run, def);
+  }
+  return written;
 }
 
 // ---- the weekly 1:1 ---------------------------------------------------------------------
@@ -19918,6 +20084,17 @@ function buildSinceAway(state, sinceIso) {
       tab: e.taskId ? 'tasks' : e.situationKey ? 'today' : null,
     });
   }
+  // A professional milestone, mentioned once and quietly. Home is not a portfolio
+  // dashboard and must not become one -- this is a line, and the record is elsewhere.
+  for (const x of ((state.experience && state.experience.recent) || [])) {
+    if (!x.to || Date.parse(`${x.to}T23:59:59Z`) <= sinceMs) continue;
+    items.push({
+      kind: 'experience', at: `${x.to}T12:00:00Z`,
+      text: `"${x.title}" was added to your experience record.`,
+      tab: 'experience',
+    });
+    break;
+  }
   for (const p of projectList(state)) {
     // Real pressure only: the week ran past its date, or a named colleague is stuck
     // waiting on your numbers. Both are recorded; neither is a mood.
@@ -20032,6 +20209,8 @@ function __testApproveWork(userId, taskId) {
 }
 
 module.exports = {
+  getPerformanceRecord,
+  getExperience,
   getOneToOne,
   completeOneToOne,
   __testReturnWork,

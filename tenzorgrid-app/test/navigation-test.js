@@ -49,7 +49,13 @@ const mobilePrimary = (navSrc.match(/MOBILE_PRIMARY = \[([^\]]*)\]/) || [])[1] |
 
 console.log('\nNavigation\n');
 
-check('the config declares every destination in one place', items.length === 11, `${items.length} items`);
+// Twelve since Experience joined Performance under CAREER. The number is pinned on
+// purpose: a destination appearing or vanishing should be a deliberate edit here, not
+// something that happens quietly.
+check('the config declares every destination in one place', items.length === 12, `${items.length} items`);
+check('and Experience sits beside Performance under Career',
+  ['experience', 'overview'].every((id) => items.some((i) => i.id === id && i.section === 'career')),
+  items.filter((i) => i.section === 'career').map((i) => i.id).join(','));
 check('grouped into workplace sections rather than one flat list',
   sections.length >= 4 && sections.includes('company') && sections.includes('work'),
   sections.join(','));
@@ -88,6 +94,7 @@ const pages = [
   ['projects', 'workspace-app/src/components/Projects.jsx'],
   ['team', 'workspace-app/src/components/Team.jsx'],
   ['timesheets', 'workspace-app/src/components/Timesheets.jsx'],
+  ['experience', 'workspace-app/src/components/Experience.jsx'],
 ];
 
 // The strip above every page must not carry a heading of its own. It used to, so every

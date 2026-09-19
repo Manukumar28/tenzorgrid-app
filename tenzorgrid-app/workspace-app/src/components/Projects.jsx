@@ -136,7 +136,9 @@ export default function Projects({ state, onStateChange, onTab }) {
         <StatTiles items={[
           { key: 'active', label: 'Active', value: data.activeCount, sub: data.activeCount === 1 ? 'project underway' : 'projects underway', tone: 'indigo', icon: FolderOpen },
           { key: 'done', label: 'Completed', value: data.completedCount ?? 0, sub: 'signed off', tone: 'emerald', icon: CheckCircle2 },
-          { key: 'points', label: 'Skill points', value: data.skillPointsTotal, sub: 'earned so far', tone: 'violet', icon: Sparkles },
+          // The number is real -- it is the weighted skill attribution the engine records
+          // on graded work -- but "points earned" is the wrong frame for a career signal.
+          { key: 'points', label: 'Capability evidence', value: data.skillPointsTotal, sub: 'recorded across your work', tone: 'violet', icon: Sparkles },
           { key: 'who', label: 'Top stakeholder', value: (data.topStakeholder || '—').split(' ')[0], sub: data.topStakeholder ? 'raises most of your work' : 'nobody yet', tone: 'amber', icon: UserRound },
         ]} />
 
@@ -238,9 +240,13 @@ export default function Projects({ state, onStateChange, onTab }) {
           </BentoCard>
 
           <BentoCard index={2}>
-            <h3 className="text-base font-bold mb-0.5">Achievements</h3>
+            {/* "Achievements ... earned" is game language on a page about work. The four
+                underneath are genuine professional milestones -- a first delivery, a high
+                mark, consistent attendance, a finished track -- so they keep their place
+                and lose the trophy-cabinet framing. Nothing in the engine reads these. */}
+            <h3 className="text-base font-bold mb-0.5">Milestones</h3>
             <p className="text-xs text-gray-500 mb-4">
-              {data.badges.filter((b) => b.earned).length} of {data.badges.length} earned
+              {data.badges.filter((b) => b.earned).length} of {data.badges.length} reached
             </p>
             <div className="grid grid-cols-4 gap-2">
               {data.badges.map((b) => <Badge key={b.key} badge={b} />)}
