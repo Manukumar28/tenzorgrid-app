@@ -210,7 +210,18 @@ export default function Timesheets({ state, onStateChange }) {
 
   if (error) return <p className="text-sm text-rose-700 font-semibold">{error}</p>;
   if (!data) return <p className="text-sm text-slate-500">Loading…</p>;
-  if (!data.open) return <p className="text-sm text-slate-500">{data.reason}</p>;
+  // Between projects the timesheet has nothing to show -- but a page somebody navigated
+  // to on purpose still owns its heading. Without this it was the one destination in the
+  // product with no h1, which the weekly 1:1 made far easier to land on, because the
+  // meeting sits in exactly this gap between one week and the next.
+  if (!data.open) {
+    return (
+      <div className="space-y-3">
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Timesheets</h1>
+        <p className="text-sm text-slate-500">{data.reason}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, CalendarCheck, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Flag, Lock, Mail, Search, Star, X as XIcon } from 'lucide-react';
+import { AlertTriangle, CalendarCheck, CalendarDays, Check, ChevronLeft, ChevronRight, ClipboardCheck, Flag, Lock, Mail, Search, Star, Users, X as XIcon } from 'lucide-react';
 import { Avatar, BentoCard, StatTiles } from './ui.jsx';
 import { REGIONS, holidaysForYear, loadRegion, saveRegion } from '../lib/holidays.js';
 
@@ -17,6 +17,10 @@ const KIND = {
   assigned: { dot: 'bg-indigo-500', chip: 'border-l-indigo-500', label: 'Assigned', icon: ClipboardCheck },
   graded: { dot: 'bg-teal-500', chip: 'border-l-teal-500', label: 'Graded', icon: Check },
   message: { dot: 'bg-amber-500', chip: 'border-l-amber-400', label: 'Message', icon: Mail },
+  // The only entries here that were SCHEDULED rather than derived from something that
+  // happened to a task. Three states, not seven: it is coming, it is due, or it is done.
+  meeting: { dot: 'bg-violet-500', chip: 'border-l-violet-500', label: 'Meeting', icon: Users },
+  'meeting-done': { dot: 'bg-slate-400', chip: 'border-l-slate-400', label: 'Meeting done', icon: Check },
 };
 
 const PRIORITY_PILL = {
@@ -33,7 +37,7 @@ function StatusPill({ tone, icon: Icon, children }) {
   );
 }
 
-export default function CalendarTab({ state }) {
+export default function CalendarTab({ state, onOpenMeeting }) {
   const { calendar, attendance, roster } = state;
   const todayKey = calendar.today;
 
@@ -238,6 +242,8 @@ export default function CalendarTab({ state }) {
             <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Deadline</span>
             <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Assigned</span>
             <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Message</span>
+            {/* A dot on a day with nothing in the key to explain it is just a dot. */}
+            <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> Meeting</span>
           </div>
           {region === 'NONE' && (
             <p className="text-[12px] text-slate-500 mt-2">
@@ -289,12 +295,30 @@ export default function CalendarTab({ state }) {
                       <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wide">
                         <Icon size={11} /> {k.label}
                       </span>
+                      {/* A task event carries the real moment it happened, so the clock is
+                          truthful. A MEETING is scheduled against a day and the simulation
+                          has no time-of-day for it -- printing 09:00 would be inventing
+                          precision, so meetings show their state instead. */}
                       <span className="text-[12px] text-slate-500 shrink-0">
-                        {new Date(e.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        {e.kind === 'meeting' || e.kind === 'meeting-done'
+                          ? e.detail
+                          : new Date(e.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     <div className="text-sm font-bold leading-snug mb-0.5">{e.title}</div>
-                    {e.detail && <p className="text-xs text-slate-500 leading-snug">{e.detail}</p>}
+                    {e.detail && e.kind !== 'meeting' && e.kind !== 'meeting-done' && (
+                      <p className="text-xs text-slate-500 leading-snug">{e.detail}</p>
+                    )}
+                    {/* A meeting on the calendar can be opened. The brief is explicit that
+                        a meeting you cannot open should not be shown at all. */}
+                    {e.meetingKey && onOpenMeeting && (
+                      <button
+                        onClick={() => onOpenMeeting(e.meetingKey)}
+                        className="mt-1 text-[12px] font-bold text-indigo-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+                      >
+                        {e.kind === 'meeting-done' ? 'Look back at it' : 'Open the 1:1'} →
+                      </button>
+                    )}
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {person && (
                         <span className="inline-flex items-center gap-1.5">

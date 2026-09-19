@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Clock3, ArrowRight, Mail, MessageSquare, AlertTriangle, CornerUpLeft, CalendarClock,
-  Building2, ChevronRight, Coffee, Target, PenLine, CheckCircle2, Moon,
+  Building2, ChevronRight, Coffee, Target, PenLine, CheckCircle2, Moon, Users,
 } from 'lucide-react';
 import { BentoCard, Avatar, TONE } from './ui.jsx';
 import { Situation } from './Today.jsx';
@@ -403,8 +403,69 @@ function ProjectHealth({ rows, onTab }) {
   );
 }
 
+// The 1:1 that is waiting, and the thing the learner is working on.
+//
+// Compact on purpose. Home is where you find out a meeting is due and roughly what it is
+// about; the evidence, the conversation and the reflection all live in the meeting itself.
+// A full agenda here would be the meeting twice.
+function NextMeeting({ due, development, manager, onOpenMeeting }) {
+  if (!due && !development) return null;
+  return (
+    <BentoCard hover={false}>
+      {due && (
+        <div className={development ? 'pb-3.5 mb-3.5 border-b border-slate-100' : ''}>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Users size={15} className="text-violet-600 shrink-0" />
+            <h3 className="text-base font-bold leading-tight">Next</h3>
+          </div>
+          <p className="text-sm font-bold text-slate-900 mt-1.5">
+            Weekly 1:1 with {due.with}
+          </p>
+          {/* Day granularity, never a time -- the simulation does not know one. */}
+          <p className="text-[12px] text-slate-500">Due now · week {due.weekIndex}</p>
+          {(due.agenda || []).length > 0 && (
+            <>
+              <div className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase mt-3 mb-1.5">
+                Likely to come up
+              </div>
+              <ul className="space-y-1">
+                {due.agenda.map((a, i) => (
+                  <li key={i} className="text-[13px] text-slate-600 leading-snug flex gap-1.5">
+                    <span className="text-slate-300">•</span><span>{a}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onOpenMeeting && onOpenMeeting(due.key)}
+            className="mt-3.5 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-[13px] font-bold hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            Open the 1:1 <ArrowRight size={14} />
+          </motion.button>
+        </div>
+      )}
+      {development && (
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Target size={14} className="text-indigo-600 shrink-0" />
+            <span className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase">
+              What you are working on
+            </span>
+          </div>
+          <p className="text-sm font-bold text-slate-900">{development.title}</p>
+          {development.reason && (
+            <p className="text-[12px] text-slate-500 mt-0.5 leading-snug">{development.reason}</p>
+          )}
+        </div>
+      )}
+    </BentoCard>
+  );
+}
+
 // ---- The page --------------------------------------------------------------------------------
-export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask }) {
+export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask, onOpenMeeting }) {
   const { company, employee, workday } = state;
   const [busy, setBusy] = useState(false);
 
@@ -472,6 +533,12 @@ export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask })
         </div>
 
         <div className="space-y-4 sm:space-y-5 min-w-0">
+          <NextMeeting
+            due={state.meetings && state.meetings.due}
+            development={state.development}
+            manager={employee.manager}
+            onOpenMeeting={onOpenMeeting}
+          />
           <Timeline slots={workday.timeline} onOpen={openTask} />
           <ManagerNote note={workday.managerNote} manager={employee.manager} onTab={onTab} />
           <ProjectHealth rows={workday.projectHealth} onTab={onTab} />

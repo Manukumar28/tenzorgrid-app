@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Archive, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, Clock, GraduationCap, Mail, MessageSquare, Moon, PartyPopper, Send, Sunrise, Timer } from 'lucide-react';
+import { AlertTriangle, Archive, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, Clock, GraduationCap, Mail, MessageSquare, Moon, PartyPopper, Send, Sunrise, Timer, Users } from 'lucide-react';
 import { BentoCard } from './ui.jsx';
 import { api } from '../api.js';
 
@@ -513,7 +513,7 @@ export function TodaysTasks({ rows, onOpen }) {
   );
 }
 
-export default function Today({ state, onStateChange, onTab }) {
+export default function Today({ state, onStateChange, onTab, onOpenMeeting }) {
   const { day, activities, situations, quiz, projectCompletion, taskBoard } = state;
   const [filter, setFilter] = useState('today');
 
@@ -583,6 +583,31 @@ export default function Today({ state, onStateChange, onTab }) {
           {day ? `Day ${day.unlocked} of ${day.totalDays}` : 'Nothing running'}
         </span>
       </div>
+
+      {/* A 1:1 waiting is the single most important thing on a learner's day, so it sits
+          above the day's work. Only the invitation and the button -- the evidence pack
+          belongs in the meeting, not duplicated onto this page. */}
+      {state.meetings && state.meetings.due && (
+        <BentoCard hover={false} className="border-violet-300 bg-violet-50/50">
+          <div className="flex items-start gap-3">
+            <Users size={20} className="text-violet-700 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-bold text-slate-900 mb-0.5">
+                Your 1:1 with {state.meetings.due.with} is due
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Half an hour on how week {state.meetings.due.weekIndex} went, before you pick up the next project.
+              </p>
+              <button
+                onClick={() => onOpenMeeting && onOpenMeeting(state.meetings.due.key)}
+                className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-[13px] font-bold hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              >
+                Open the 1:1
+              </button>
+            </div>
+          </div>
+        </BentoCard>
+      )}
 
       {finished && (
         <BentoCard hover={false} className="border-emerald-300 bg-emerald-50/50">

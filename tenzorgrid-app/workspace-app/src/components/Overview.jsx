@@ -86,6 +86,26 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         </span>
       </div>
 
+      {/* Development, compactly. Performance is the longitudinal record and the 1:1 is the
+          conversation -- they are deliberately not the same page, so this is a line and a
+          link rather than the meeting again. */}
+      {state.development && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 flex items-start gap-2.5">
+          <Target size={15} className="text-indigo-700 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold tracking-[0.12em] text-indigo-700 uppercase">
+              What you are working on
+            </div>
+            <p className="text-sm font-bold text-slate-900 mt-0.5">{state.development.title}</p>
+            {state.development.reason && (
+              <p className="text-[12px] text-slate-600 mt-0.5 leading-snug">
+                {state.development.reason} Set in your week {state.development.setInWeek} 1:1.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
     <div className="grid grid-cols-1 xl:grid-cols-16 gap-4 sm:gap-6">
       <div className="min-w-0 xl:col-span-11 space-y-4 sm:space-y-6">
 
