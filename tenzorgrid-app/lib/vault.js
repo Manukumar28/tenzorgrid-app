@@ -204,10 +204,20 @@ function recoveryEntry({ enrollmentId, run, project, level, returned, recovered,
 // A stakeholder changed what they wanted, and the learner absorbed it.
 function scopeEntry({ enrollmentId, run, project, level, event, amendment }) {
   if (!event) return null;
+  // Two amendments on one project produced two cards reading "Scope change on Q1
+  // Compensation Review" with identical outcome text -- not duplicates in the data, but
+  // indistinguishable on screen, which is the same problem as far as a reader is
+  // concerned. The title now carries what actually changed.
+  const what = amendment && amendment.value
+    ? String(amendment.value).replace(/\s+/g, ' ').trim()
+    : null;
+  const shortWhat = what
+    ? (what.length > 64 ? `${what.slice(0, 61).replace(/[\s,;:.]+\S*$/, '')}…` : what)
+    : null;
   return {
     sourceKey: `scope:${event.id}`,
     kind: KIND.STAKEHOLDER,
-    title: `Scope change on ${project.title}`,
+    title: shortWhat ? `Scope change: ${shortWhat}` : `Scope change on ${project.title}`,
     projectKey: project.key, projectTitle: project.title, runId: run.id, level,
     from: day(run.started_at), to: day(run.completed_at || now()),
     context: `Part-way through ${project.title}, the person who had asked for the work changed what they needed.`,
