@@ -46,7 +46,7 @@ function TheWeek({ e }) {
       {e.avgScore !== null && e.avgScore !== undefined && (
         <div>
           <span className="text-lg font-extrabold text-slate-900 tabular-nums">{e.avgScore}</span>{' '}
-          <span className="text-[13px] text-slate-500">average on graded work</span>
+          <span className="text-[13px] text-slate-500">average on work signed off</span>
         </div>
       )}
     </div>

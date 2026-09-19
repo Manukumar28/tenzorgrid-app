@@ -12,7 +12,14 @@ function useClock() {
   return now;
 }
 
-const WEATHER_BY_HOUR = (h) => (h < 6 ? 'clear night' : h < 12 ? 'mostly clear' : h < 17 ? 'partly cloudy' : h < 20 ? 'mostly clear' : 'clear night');
+// There was a WEATHER_BY_HOUR here, and it did not know the weather.
+//
+// It mapped the hour of the day to a phrase -- "partly cloudy" between noon and five --
+// and printed it beside the clock as if the product had looked outside. Somebody reading
+// "partly cloudy" during a thunderstorm learns one thing about this product, and it is the
+// thing Milestone 08 exists to stop them learning. The line now carries the working day
+// the office is in, which the simulation genuinely knows.
+const isWeekendDay = (d) => d.getUTCDay() === 0 || d.getUTCDay() === 6;
 
 const BADGE_TONE = {
   rose: 'bg-rose-600 text-white',
@@ -68,8 +75,11 @@ export default function Sidebar({
   const sections = navigationFor(level);
   const now = useClock();
   const time = now.toTimeString().slice(0, 5);
-  const date = `${String(now.getDate()).padStart(2, '0')}-${now.toLocaleString('en', { month: 'short' }).toUpperCase()}-${now.getFullYear()}`;
-  const weather = WEATHER_BY_HOUR(now.getHours());
+  // Same spelling of a date as Home and the calendar use, rather than a third one. The
+  // rail used to read "19-SEP-2026" while Home read "Saturday 19 September" six inches to
+  // the right.
+  const date = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const officeNote = isWeekendDay(now) ? 'office closed' : 'office open';
 
   // Picking a tab on a phone should close the drawer — leaving it open over the thing you
   // just asked to see is the classic mobile-nav mistake.
@@ -170,7 +180,7 @@ export default function Sidebar({
             </div>
           </div>
           <div className="px-2 text-[11px] text-slate-400 font-medium">
-            {time} · {date} · {weather}
+            {time} · {date} · {officeNote}
           </div>
           <div className="flex flex-col gap-0.5">
             <a

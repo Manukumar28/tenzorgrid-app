@@ -183,7 +183,10 @@ const OBSERVATION_RULES = [
     key: 'scope',
     when: (e) => e.amendmentCount >= 1,
     competency: COMPETENCY.BUSINESS,
-    say: (e) => `The ask changed under you ${e.amendmentCount === 1 ? 'once' : `${e.amendmentCount} times`} and you picked it up rather than delivering what was originally written.`,
+    // "twice", not "2 times". A manager speaking out loud does not read a counter.
+    say: (e) => `The ask changed under you ${
+      e.amendmentCount === 1 ? 'once' : e.amendmentCount === 2 ? 'twice' : `${e.amendmentCount} times`
+    } and you picked it up rather than delivering what was originally written.`,
     goal: { title: 'Confirm what changed, in writing, when scope moves', reason: 'The request was amended mid-week.' },
   },
   {

@@ -11,11 +11,18 @@ function pad(n) { return String(n).padStart(2, '0'); }
 function key(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
 
 // Event kinds carry a colour and a dot so a day's contents read at a glance.
+// One spelling of a date. This page printed three of them at once: "2026-09-19" on a
+// tile, "09-19" in the Coming up list and "September 19, 2026" over the day itself.
+const shortDay = (iso) => (iso
+  ? new Date(`${String(iso).slice(0, 10)}T00:00:00Z`)
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  : '—');
+
 const KIND = {
   due: { dot: 'bg-red-500', chip: 'border-l-red-500', label: 'Deadline', icon: AlertTriangle },
   'due-done': { dot: 'bg-emerald-500', chip: 'border-l-emerald-500', label: 'Deadline met', icon: Check },
   assigned: { dot: 'bg-indigo-500', chip: 'border-l-indigo-500', label: 'Assigned', icon: ClipboardCheck },
-  graded: { dot: 'bg-teal-500', chip: 'border-l-teal-500', label: 'Graded', icon: Check },
+  graded: { dot: 'bg-teal-500', chip: 'border-l-teal-500', label: 'Signed off', icon: Check },
   message: { dot: 'bg-amber-500', chip: 'border-l-amber-400', label: 'Message', icon: Mail },
   // The only entries here that were SCHEDULED rather than derived from something that
   // happened to a task. Three states, not seven: it is coming, it is due, or it is done.
@@ -125,7 +132,7 @@ export default function CalendarTab({ state, onOpenMeeting }) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Calendar</h1>
-          <span className="text-sm font-semibold text-slate-500">[Work schedule]</span>
+          <span className="text-sm font-semibold text-slate-500">Deadlines, sign-offs and what landed when</span>
         </div>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -141,9 +148,9 @@ export default function CalendarTab({ state, onOpenMeeting }) {
 
       {/* Stats bar */}
       <StatTiles items={[
-        { key: 'att', label: 'Attendance', value: `${attendance.attendedDays}/${attendance.milestoneDays}`, sub: 'toward your first certificate', tone: 'indigo', icon: CalendarCheck },
+        { key: 'att', label: 'Attendance', value: `${attendance.attendedDays}/${attendance.milestoneDays}`, sub: 'days worked here', tone: 'indigo', icon: CalendarCheck },
         { key: 'month', label: 'This month', value: monthAttended, sub: monthAttended === 1 ? 'day checked in' : 'days checked in', tone: 'emerald', icon: CalendarDays },
-        { key: 'joined', label: 'Joined', value: calendar.joinedOn, sub: 'your first day', tone: 'violet', icon: Flag },
+        { key: 'joined', label: 'Joined', value: shortDay(calendar.joinedOn), sub: 'your first day', tone: 'violet', icon: Flag },
       ]} />
 
       <div className="flex items-center justify-end gap-4 flex-wrap pt-1">
@@ -363,7 +370,7 @@ export default function CalendarTab({ state, onOpenMeeting }) {
                     className="w-full text-left flex items-center gap-2 text-xs hover:bg-slate-50 rounded px-1.5 py-1"
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${KIND[e.kind]?.dot || 'bg-slate-400'}`} />
-                    <span className="text-slate-500 shrink-0 w-16">{e.date.slice(5)}</span>
+                    <span className="text-slate-500 shrink-0 w-14">{shortDay(e.date)}</span>
                     <span className="font-semibold text-slate-700 truncate">{e.title}</span>
                   </button>
                 ))}

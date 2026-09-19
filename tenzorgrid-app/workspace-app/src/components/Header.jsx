@@ -7,7 +7,7 @@ import AppLauncher from './AppLauncher.jsx';
 // The strip above every page: where you are, and the two controls that belong to the
 // session rather than to any one screen. It used to carry a "Welcome back" h1 on every
 // tab, which Milestone 02 removed -- see below.
-export default function Header({ company, employee, apps, state, onLaunchApp, checkedIn, onToggleCheckIn, onLogout, pendingCount, onOpenMenu }) {
+export default function Header({ company, employee, apps, state, onLaunchApp, checkedIn, onToggleCheckIn, onLogout, onOpenMenu }) {
   return (
     <div className="flex items-start justify-between gap-3 sm:gap-6 mb-6 flex-wrap">
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
@@ -67,21 +67,15 @@ export default function Header({ company, employee, apps, state, onLaunchApp, ch
           <span className={`text-xs font-bold ${checkedIn ? 'text-teal-600' : 'text-gray-500'}`}>{checkedIn ? 'Checked In' : 'Check in'}</span>
         </button>
 
-        {/* The badge overhangs by 6px, and this sits at the right edge of the page — that
-            overhang was enough to make the whole document scroll sideways on a phone. */}
-        <div className="relative mr-1.5">
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm"
-          >
-            <LogOut size={17} /> Log out
-          </button>
-          {pendingCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 min-w-[18px] px-1 rounded-full bg-red-600 text-white text-[12px] font-bold flex items-center justify-center border-2 border-gray-50">
-              {pendingCount}
-            </span>
-          )}
-        </div>
+        {/* No badge here. A red count of outstanding work used to hang off this button,
+            which read either as a rendering fault or as the product counting reasons not
+            to leave. Work is counted in the navigation, beside the page that shows it. */}
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 shadow-sm"
+        >
+          <LogOut size={17} /> Log out
+        </button>
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ const VIEWS = [
   { key: 'mine', label: 'My Tasks', Icon: ListChecks },
   { key: 'upcoming', label: 'Upcoming', Icon: CalendarClock },
   { key: 'completed', label: 'Completed', Icon: CheckCircle2 },
-  { key: 'all', label: 'All', Icon: LayoutGrid },
+  { key: 'all', label: 'All in this role', Icon: LayoutGrid },
   { key: 'workspace', label: 'Workspace', Icon: MonitorPlay },
 ];
 
@@ -105,12 +105,17 @@ function ViewTabs({ view, onView, counts }) {
 function FilterSelect({ label, value, onChange, options }) {
   const active = value !== '';
   return (
-    <div className="relative inline-flex items-center">
+    // A fixed cap, not a percentage. A native select sizes itself to its widest OPTION, so
+    // a learner with three projects made this 417px wide inside a 390px viewport and the
+    // whole page scrolled sideways. `max-w-full` did nothing about it: the percentage
+    // resolves against a containing block that is itself sized by its content. The chosen
+    // label truncates; the dropdown still shows every option in full.
+    <div className="relative inline-flex items-center min-w-0">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
+        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors max-w-[11rem] sm:max-w-[15rem] truncate focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
           active ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
         }`}
       >
@@ -479,10 +484,10 @@ export default function Tasks({ state, learnerName, learnerPhotoUrl, onStateChan
         </BentoCard>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatTile index={0} bucket="completed" value={tally.by.completed}
-            sub={`${tally.trackPct}% of the whole track`} />
+            sub={`${tally.trackPct}% of everything in this role`} />
           <StatTile index={1} bucket="inProgress" value={tally.by.inProgress} sub="Submitted or in review" />
           <StatTile index={2} bucket="upcoming" value={tally.by.upcoming}
-            sub={tally.by.upcoming ? 'Later this week' : 'Nothing waiting'} />
+            sub={tally.by.upcoming ? 'Opens later in the week' : 'Nothing waiting'} />
           <StatTile index={3} bucket="overdue" value={tally.by.overdue}
             sub={tally.by.overdue ? 'Needs attention' : 'All on time'} />
         </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Award, BarChart3, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock, Flame, GraduationCap, Quote, Target, TrendingUp, Trophy } from 'lucide-react';
+import { ArrowRight, Award, BarChart3, BookMarked, CalendarDays, CheckCircle2, Circle, ClipboardList, Clock, Quote, Target, ThumbsUp, TrendingUp } from 'lucide-react';
 import { BentoCard, ProgressBar, CircularProgress, Pill, Avatar } from './ui.jsx';
 import { SkillRadar } from './charts.jsx';
 import { api } from '../api.js';
@@ -23,7 +23,7 @@ const ROLE_TITLE = {
 // is what YOUR work has done, against the bar the work itself was set.
 function summaryNote(state) {
   const { avgScore, tasksCompleted } = state.performance;
-  if (avgScore === null) return "No graded work yet — your first sign-off is what starts this.";
+  if (avgScore === null) return "Nothing signed off yet — your first sign-off is what starts this.";
   const dataAxes = state.skillMatrix.filter((a) => a.hasData);
   const weakest = dataAxes.length ? [...dataAxes].sort((a, b) => a.value - b.value)[0] : null;
   const base = `${tasksCompleted} piece${tasksCompleted === 1 ? '' : 's'} of work signed off, averaging ${avgScore}.`;
@@ -88,10 +88,23 @@ function CapabilityRecord() {
                   <span className="text-[13px] font-bold text-slate-800">{c.label}</span>
                   <span className="text-[12px] font-semibold text-slate-500 shrink-0">{c.state}</span>
                 </div>
+                {/* `mostRecent`, not `examples[0]`. examples is ordered by score, and this
+                    line said "most recently" over the highest-scoring piece of work --
+                    which is usually not the last one. */}
                 <p className="text-[12px] text-slate-500 mt-0.5">
                   {c.evidenceCount} {c.evidenceCount === 1 ? 'piece' : 'pieces'} of work
-                  {c.examples.length ? ` · most recently "${c.examples[0].title}"` : ''}
+                  {c.mostRecent ? ` · most recently "${c.mostRecent.title}"` : ''}
                 </p>
+                {/* The direction, only where there is enough work behind it to mean
+                    anything. Below the bar the record says what it needs rather than
+                    drawing a line through four points. See lib/performance.js §29. */}
+                {c.trend && (
+                  <p className={`text-[12px] mt-0.5 font-semibold ${
+                    c.trend.direction === 'improving' ? 'text-emerald-700'
+                      : c.trend.direction === 'slipping' ? 'text-amber-700' : 'text-slate-400'}`}>
+                    {c.trend.direction ? c.trend.label : c.trend.reason}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
@@ -122,7 +135,7 @@ function CapabilityRecord() {
 }
 
 export default function Overview({ state, learnerName, learnerPhotoUrl, onStateChange }) {
-  const { performance, attendance, tasks, skillMatrix, shoutouts, checklist, learningPath, milestone, promotion, messages, roster } = state;
+  const { performance, attendance, tasks, skillMatrix, shoutouts, checklist, milestone, promotion, messages, roster } = state;
   const streak = attendance.streak;
   const personalBest = performance.personalBest;
 
@@ -201,10 +214,15 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
           </KpiCard>
           <KpiCard
             index={1} icon={BarChart3} iconClass="bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500"
-            label="Performance Score" value={performance.avgScore === null ? '—' : `${performance.avgScore}%`}
+            label="Quality of work" value={performance.avgScore === null ? '—' : `${performance.avgScore}%`}
           >
+            {/* "Performance Score" and "Avg Grade" are a school report, and they sat one
+                above the other saying the same thing twice. One number, named after what it
+                measures: the average across work your manager has signed off. */}
             <div className="text-xs text-gray-500 font-medium">
-              Avg Grade: <span className="text-gray-700 font-semibold">{performance.avgGrade === null ? '—' : `${performance.avgGrade}%`}</span>
+              {performance.avgGrade === null
+                ? 'Nothing signed off yet'
+                : `Across work Asha has signed off`}
             </div>
             {delta !== null && (
               <div className={`text-xs font-bold mt-0.5 ${delta > 0 ? 'text-emerald-700' : delta < 0 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -225,7 +243,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
           </KpiCard>
         </div>
 
-        {/* Middle row — the skill radar needs the widest slot, its axis labels clip below ~300px */}
+        {/* Middle row. The skill radar is NOT in here any more — see below. */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* An overview summarises; it does not re-list the Tasks tab. This card used to
               print every assigned task — thirty of them at manager level, each wrapping to
@@ -233,7 +251,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
               tall as its tallest cell, it also stretched the two cards beside it to 1,912px
               and left about 1,500px of white in each. It now shows the shape of the week
               and the few things actually open, and points at the tab that holds the rest. */}
-          <BentoCard index={4} className="lg:col-span-4">
+          <BentoCard index={4} className="lg:col-span-7">
             <h3 className="text-base font-bold mb-1">Task progress</h3>
             <p className="text-xs text-gray-500 mb-3.5">
               {performance.tasksCompleted} of {performance.tasksTotal} signed off
@@ -279,49 +297,67 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
             )}
           </BentoCard>
 
-          <BentoCard index={5} className="lg:col-span-5">
-            <h3 className="text-base font-bold mb-1">Skill matrix</h3>
-            <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} />
-          </BentoCard>
-
-          <BentoCard index={6} className="lg:col-span-3 flex flex-col">
-            <h3 className="text-base font-bold mb-3.5">Momentum</h3>
+          <BentoCard index={6} className="lg:col-span-5 flex flex-col">
+            {/* This was "Momentum": a flame, a big streak number, and "check in today to
+                keep it alive". The underlying figures are real -- days checked in, the
+                longest unbroken run -- but a streak you are nudged to protect is a game
+                mechanic, and it was sitting on the page where somebody reads about their own
+                professional record. Same data, named after what it is: attendance, which is
+                a thing every workplace keeps. */}
+            <h3 className="text-base font-bold mb-3.5">Attendance</h3>
 
             <div className="flex items-center gap-3.5">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shrink-0">
-                <Flame size={26} className="text-white" strokeWidth={2.1} />
+              <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                <CalendarDays size={24} className="text-slate-600" strokeWidth={2} />
               </div>
               <div className="min-w-0">
                 <div className="text-3xl font-extrabold leading-none">{streak.current}</div>
                 <div className="text-[14px] text-gray-500 font-medium mt-1">
-                  {streak.current === 1 ? 'day streak' : 'day streak'}
+                  {streak.current === 1 ? 'day in a row' : 'days in a row'}
                 </div>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-3">
               {streak.current === 0
-                ? 'Check in today to start a streak.'
+                ? 'You have not checked in yet today.'
                 : attendance.checkedInToday
-                  ? `Longest streak: ${streak.longest} ${streak.longest === 1 ? 'day' : 'days'}.`
-                  : "Check in today to keep it alive."}
+                  ? `Longest run so far: ${streak.longest} ${streak.longest === 1 ? 'day' : 'days'}.`
+                  : 'You have not checked in yet today.'}
             </p>
 
             <div className="border-t border-gray-100 mt-4 pt-4">
               <div className="flex items-center gap-2.5 mb-2">
-                <Award size={20} className="text-teal-500" strokeWidth={2.3} />
-                <span className="text-sm font-bold">Personal best</span>
+                <ThumbsUp size={19} className="text-slate-500" strokeWidth={2.1} />
+                <span className="text-sm font-bold">Best received so far</span>
               </div>
+              {/* Was "Personal best", with the score set in 2xl above the task. A person's
+                  strongest piece of work is worth knowing; a high score is not a trophy. The
+                  work leads, the mark is a footnote. */}
               {personalBest ? (
                 <>
-                  <div className="text-2xl font-extrabold leading-none">{personalBest.score}%</div>
-                  <p className="text-xs text-gray-500 mt-1.5 leading-snug">{personalBest.title}</p>
+                  <p className="text-sm text-gray-700 leading-snug font-semibold">{personalBest.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">Signed off at {personalBest.score}.</p>
                 </>
               ) : (
-                <p className="text-xs text-gray-500">Complete a task to set your first best score.</p>
+                <p className="text-xs text-gray-500">Nothing signed off yet.</p>
               )}
             </div>
           </BentoCard>
         </div>
+
+
+        {/* The skill radar, on its own row.
+            It used to share a twelve-column row and get five of them, which at 1280px is a
+            212px-wide chart. "Communication" is 105px of text anchored to the left vertex,
+            so it started at x = -10 and the card clipped it: every screenshot of this page
+            showed "ommunication" and "usiness Logic". No margin setting fixes that -- a
+            label wider than the space either side of the centre cannot fit however small
+            the web is drawn. Full width is the only honest place for it. */}
+        <BentoCard index={10} hover={false}>
+          <h3 className="text-base font-bold mb-1">Skill matrix</h3>
+          <p className="text-xs text-gray-500 mb-1">Where your signed-off work has counted</p>
+          <SkillRadar axes={skillMatrix} learnerName={learnerName} learnerPhotoUrl={learnerPhotoUrl} hasWork={performance.tasksCompleted > 0} />
+        </BentoCard>
 
         {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -351,14 +387,6 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
           </BentoCard>
 
           <div className="space-y-6">
-            <BentoCard index={8}>
-              <div className="flex items-center gap-2.5 mb-2.5">
-                <Target size={22} className="text-indigo-600" />
-                <h3 className="text-base font-bold">Weekly goal: 80% performance score</h3>
-              </div>
-              <ProgressBar value={performance.avgScore || 0} max={80} colorClass="from-indigo-500 to-teal-400" />
-              <p className="text-xs text-gray-500 mt-2.5">{performance.avgScore === null ? 'No graded tasks yet.' : `Currently at ${performance.avgScore}.`}</p>
-            </BentoCard>
             <BentoCard index={9} hover={false} className="bg-gradient-to-br from-indigo-50 to-teal-50 border-0">
               <p className="text-sm text-indigo-900 leading-relaxed">{summaryNote(state)}</p>
             </BentoCard>
@@ -371,7 +399,7 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         <BentoCard index={2}>
           <div className="flex items-center gap-2.5 mb-3.5">
             <ClipboardList size={22} className="text-indigo-600" />
-            <h3 className="text-base font-bold">Quick tasks</h3>
+            <h3 className="text-base font-bold">Onboarding checklist</h3>
           </div>
           <div className="space-y-3">
             {checklist.map((item) => (
@@ -386,7 +414,10 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         <BentoCard index={3}>
           <div className="flex items-center gap-2.5 mb-3.5">
             <Quote size={22} className="text-amber-500" />
-            <h3 className="text-base font-bold">Manager shoutouts</h3>
+            {/* "Shoutouts" is a leaderboard word, and the score pill beside Asha's
+                face turned her feedback into a mark. This is what your manager said about
+                a piece of your work; the words are the point. */}
+            <h3 className="text-base font-bold">What your manager said</h3>
           </div>
           {shoutouts.length ? (
             <div className="space-y-4">
@@ -396,31 +427,20 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
                   <div className="flex items-center gap-2 mt-2">
                     <Avatar name={s.from} avatarUrl={rosterByArchetype.line_manager?.avatarUrl} size={22} />
                     <span className="text-xs font-semibold text-gray-600">{s.from}</span>
-                    <Pill className="bg-amber-50 text-amber-700">{s.score}%</Pill>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 truncate">{s.title}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 leading-snug">Score 80% or higher on a task and your manager's feedback shows up here.</p>
+            <p className="text-sm text-gray-500 leading-snug">When Asha has something to say about a piece of your work, it appears here.</p>
           )}
         </BentoCard>
 
-        <BentoCard index={4}>
-          <div className="flex items-center gap-2.5 mb-3.5">
-            <GraduationCap size={22} className="text-teal-500" />
-            <h3 className="text-base font-bold">Suggested learning path</h3>
-          </div>
-          <div className="space-y-3.5">
-            {learningPath.map((m) => (
-              <div key={m.title}>
-                <div className="text-sm font-semibold text-gray-700">{m.title}</div>
-                <div className="text-xs text-gray-500 leading-snug mt-0.5">{m.note}</div>
-              </div>
-            ))}
-          </div>
-        </BentoCard>
+        {/* The "Suggested learning path" card stood here: a mortarboard icon over three
+            fixed course titles. See lib/workspace.js where LEARNING_PATH was removed —
+            nothing measured it, and a curriculum recommendation is the one thing a real
+            employer's system would never put on your performance record. */}
 
         {/* Promotion. The two criteria are shown separately with their real numbers,
             because "you were not promoted" is a sentence that has to come with the
@@ -478,15 +498,18 @@ export default function Overview({ state, learnerName, learnerPhotoUrl, onStateC
         {milestone && (
           <BentoCard index={6}>
             <div className="flex items-center gap-2.5 mb-1.5">
-              <Trophy size={22} className="text-amber-500" />
-              <h3 className="text-base font-bold">Career milestones</h3>
+              {/* No trophy. The two things counted here are real -- pieces of work signed
+                  off, and days at the desk -- and what they build towards is the experience
+                  record, not a prize. */}
+              <BookMarked size={20} className="text-slate-500" />
+              <h3 className="text-base font-bold">Building towards</h3>
             </div>
-            <p className="text-sm text-gray-500 mb-2.5">Working towards: <span className="font-semibold text-gray-700">{milestone.targetRole}</span></p>
-            <ProgressBar value={milestonePct} max={100} colorClass="from-amber-500 to-orange-400" />
+            <p className="text-sm text-gray-500 mb-2.5"><span className="font-semibold text-gray-700">{milestone.targetRole}</span></p>
+            <ProgressBar value={milestonePct} max={100} colorClass="from-slate-500 to-slate-400" />
             <div className="space-y-2.5 mt-3.5">
               {milestone.requirements.map((r) => (
                 <div key={r.key} className="flex items-center gap-2.5">
-                  <CheckCircle2 size={20} className={r.done ? 'text-amber-500' : 'text-gray-200'} strokeWidth={2.3} />
+                  <CheckCircle2 size={20} className={r.done ? 'text-emerald-600' : 'text-gray-200'} strokeWidth={2.3} />
                   <span className="text-sm text-gray-700">{r.label} <span className="text-gray-500">({r.current}/{r.target})</span></span>
                 </div>
               ))}

@@ -5,6 +5,7 @@ import {
   Terminal, Database, Mail, MessagesSquare, FileCode2, Contact, ShieldCheck, Play,
 } from 'lucide-react';
 import { api } from '../api.js';
+import { estimateOf } from './ui.jsx';
 
 // Tool icons are named as strings by the backend registry (lib/projectdocs.js) so that
 // file stays free of frontend imports. This is the one place the mapping lives.
@@ -239,14 +240,14 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-bold text-slate-800">{t.title}</div>
                         <div className="text-[12px] text-slate-500 font-medium mt-0.5">
-                          {t.estHours ? `~${t.estHours}h` : 'Unestimated'} · {t.priority} priority
+                          {estimateOf(t.estHours) || 'Unestimated'} · {t.priority} priority
                         </div>
                       </div>
                       <span className={`text-[12px] font-bold px-2 py-1 rounded-md shrink-0 ${
                         t.status === 'graded' ? 'bg-emerald-50 text-emerald-700'
                           : t.status === 'not-started' ? 'bg-slate-100 text-slate-500'
                           : 'bg-indigo-50 text-indigo-700'}`}>
-                        {t.status === 'graded' ? `Graded · ${t.score}` : t.status === 'not-started' ? 'Not started' : t.status}
+                        {t.status === 'graded' ? `Signed off · ${t.score}` : t.status === 'not-started' ? 'Not started' : t.status}
                       </span>
                     </div>
                   ))}
@@ -261,7 +262,7 @@ export default function ProjectBrief({ projectKey, onClose, onStarted }) {
             {!brief.unlocked ? (
               <p className="text-xs text-slate-500 font-medium flex items-center gap-2">
                 <Lock size={14} className="text-slate-500" />
-                Unlocks after {brief.unlockAfter} graded task{brief.unlockAfter === 1 ? '' : 's'} — you have {brief.gradedCount}.
+                Unlocks after {brief.unlockAfter} signed-off task{brief.unlockAfter === 1 ? '' : 's'} — you have {brief.gradedCount}.
               </p>
             ) : brief.started ? (
               <p className="text-xs text-emerald-700 font-semibold">You have already started this project.</p>

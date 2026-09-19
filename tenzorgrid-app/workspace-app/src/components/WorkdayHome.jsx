@@ -4,7 +4,7 @@ import {
   Clock3, ArrowRight, Mail, MessageSquare, AlertTriangle, CornerUpLeft, CalendarClock,
   Building2, ChevronRight, Coffee, Target, PenLine, CheckCircle2, Moon, Users,
 } from 'lucide-react';
-import { BentoCard, Avatar, TONE } from './ui.jsx';
+import { BentoCard, Avatar, TONE, estimateOf } from './ui.jsx';
 import { Situation } from './Today.jsx';
 import { api } from '../api.js';
 import { openLabelFor, appForTask, iconFor } from '../lib/apps.js';
@@ -34,7 +34,16 @@ function WorkdayHeader({ company, employee, workday }) {
             <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
               {workday.greeting}, {employee.firstName}.
             </h1>
-            <p className="text-[13px] sm:text-sm text-slate-500 mt-1">{workday.dateLabel}</p>
+            {/* The date, and whether anybody is actually in. Home used to print a Saturday
+                and then lay a 09:30 stand-up underneath it while the calendar on the next
+                tab shaded the same day as a weekend. Working ahead is allowed here and
+                always has been — saying so is what stops the three screens disagreeing. */}
+            <p className="text-[13px] sm:text-sm text-slate-500 mt-1">
+              {workday.dateLabel}
+              {workday.dayNote && (
+                <span className="text-slate-400"> · {workday.dayNote}</span>
+              )}
+            </p>
           </div>
           <div className="flex items-start gap-3 min-w-0">
             <span className="shrink-0 w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-[13px] font-extrabold tracking-tight">
@@ -107,20 +116,22 @@ function Headlines({ items, onTab }) {
 //
 // The single loudest thing on the page, because on a real day there is one thing you are
 // supposed to be doing and everything else is noise about it.
-function estimateOf(hours) {
-  if (!hours || hours < 0.17) return null;
-  if (hours < 1) return `about ${Math.round(hours * 60)} min`;
-  return `about ${Math.round(hours * 10) / 10}h`;
-}
+// estimateOf lives in ui.jsx now -- five screens were formatting the same number three
+// different ways, and the other four were printing "~0.25h".
 
-function CurrentAssignment({ a, onOpen, apps }) {
+function CurrentAssignment({ a, onOpen, apps, nextUp }) {
   if (!a) {
     return (
       <BentoCard hover={false}>
         <div className="text-[11px] font-bold tracking-[0.12em] text-slate-400 uppercase mb-2">Current assignment</div>
+        {/* It used to say "the timeline below says which". The timeline is in the right
+            column, and between projects there is nothing below at all, so the sentence
+            pointed a learner at an empty space. Say which of the two it is instead of
+            telling them to go and look. */}
         <p className="text-sm text-slate-600">
-          Nothing is open. Either the day is done or the next piece has not landed yet — the
-          timeline below says which.
+          {nextUp
+            ? `Nothing is open right now. ${nextUp}`
+            : 'Nothing is open right now — everything that has landed is dealt with.'}
         </p>
       </BentoCard>
     );
@@ -211,7 +222,7 @@ function CurrentAssignment({ a, onOpen, apps }) {
 }
 
 // ---- My day --------------------------------------------------------------------------------
-function Timeline({ slots, onOpen }) {
+function Timeline({ slots, onOpen, officeOpen = true }) {
   return (
     <BentoCard hover={false}>
       <div className="flex items-center gap-2 mb-3.5">
@@ -220,7 +231,12 @@ function Timeline({ slots, onOpen }) {
         </span>
         <div className="min-w-0">
           <h3 className="text-base font-bold leading-tight">My day</h3>
-          <p className="text-xs text-slate-500 leading-snug">Office hours, and what is in them</p>
+          {/* On a day the office is shut this is the shape of a working day rather than
+              a claim about today, and it says so instead of quietly highlighting a
+              stand-up nobody is holding. */}
+          <p className="text-xs text-slate-500 leading-snug">
+            {officeOpen ? 'Office hours, and what is in them' : 'What a working day here looks like'}
+          </p>
         </div>
       </div>
       <ol className="relative">
@@ -496,13 +512,26 @@ export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask, o
     else onTab('tasks');
   };
 
+  // What is actually next, said rather than gestured at. Read off the same board rows the
+  // My Work page reads, so the two cannot disagree about when the next piece opens.
+  const rows = (state.taskBoard && state.taskBoard.rows) || [];
+  const waiting = rows.filter((r) => r.status !== 'graded' && r.notYetOpen);
+  const complete = state.projectCompletion && state.projectCompletion.complete;
+  const nextUp = waiting.length
+    ? (waiting[0].opensLabel
+      ? `The next piece opens ${waiting[0].opensLabel}.`
+      : `${waiting.length} more ${waiting.length === 1 ? 'piece' : 'pieces'} to come this week.`)
+    : complete
+      ? 'This project is finished — the next one is waiting in Projects.'
+      : null;
+
   return (
     <div className="space-y-4 sm:space-y-5">
       <WorkdayHeader company={company} employee={employee} workday={workday} />
 
       <Headlines items={workday.headlines} onTab={onTab} />
 
-      <CurrentAssignment a={workday.assignment} onOpen={openTask} apps={state.apps} />
+      <CurrentAssignment a={workday.assignment} onOpen={openTask} apps={state.apps} nextUp={nextUp} />
 
       {/* Desktop is information-rich; on a phone this stacks in the order the spec asks
           for — what is happening, what to work on, what is next, then everything else. */}
@@ -539,7 +568,7 @@ export default function WorkdayHome({ state, onStateChange, onTab, onOpenTask, o
             manager={employee.manager}
             onOpenMeeting={onOpenMeeting}
           />
-          <Timeline slots={workday.timeline} onOpen={openTask} />
+          <Timeline slots={workday.timeline} onOpen={openTask} officeOpen={workday.officeOpen !== false} />
           <ManagerNote note={workday.managerNote} manager={employee.manager} onTab={onTab} />
           <ProjectHealth rows={workday.projectHealth} onTab={onTab} />
         </div>

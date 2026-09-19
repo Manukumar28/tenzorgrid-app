@@ -341,7 +341,7 @@ export default function PythonNotebook({ wb, onGraded }) {
         <div className="border-t border-slate-200 p-4 bg-emerald-50/50">
           <div className="flex items-center gap-2 mb-1.5">
             <CheckCircle2 size={15} className="text-emerald-700" />
-            <span className="text-sm font-extrabold text-slate-900">Graded — {graded ? graded.score : wb.score}/100</span>
+            <span className="text-sm font-extrabold text-slate-900">Signed off — {graded ? graded.score : wb.score}/100</span>
           </div>
           <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{graded ? graded.feedback : wb.feedback}</p>
         </div>

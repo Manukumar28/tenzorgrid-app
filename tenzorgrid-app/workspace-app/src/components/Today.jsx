@@ -1,7 +1,31 @@
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, Archive, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, Clock, GraduationCap, Mail, MessageSquare, Moon, PartyPopper, Send, Sunrise, Timer, Users } from 'lucide-react';
-import { BentoCard } from './ui.jsx';
+import { BentoCard, estimateOf } from './ui.jsx';
 import { api } from '../api.js';
+
+// What an item is, said in workplace words.
+//
+// The authored `type` on a day item is an authoring category -- 'learning', 'noise',
+// 'drill' -- and it was being uppercased straight onto the card. A learner opening My Day
+// saw an email from Rahul badged "LEARNING", which is the product telling them, on the one
+// screen that is supposed to feel most like a working morning, that they are on a course.
+// The keys stay exactly as authored (lib/events.js keys consequences off them); only the
+// word on the badge changes.
+const TYPE_LABEL = {
+  learning: 'Background',
+  noise: 'FYI',
+  drill: 'Practice',
+  shadow: 'Shadowing',
+  'tool-tip': 'How-to',
+  judgement: 'Decision',
+  'status-chase': 'Chase',
+  'side-request': 'Side request',
+  'scope-creep': 'Scope',
+  'bad-news': 'Bad news',
+  'peer-help': 'Peer help',
+};
+const typeLabel = (t) => TYPE_LABEL[t] || t;
+
 
 // Today: the day in all three currencies.
 //
@@ -77,7 +101,7 @@ export function Activity({ item, onDone, openByDefault }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             <Via via={item.via} />
-            <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{item.type}</span>
+            <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{typeLabel(item.type)}</span>
             <span className="inline-flex items-center gap-1 text-[12px] text-slate-500"><Timer size={10} />{item.minutes} min</span>
             {done && typeof item.score === 'number' && (
               <span className="text-[12px] font-extrabold text-emerald-700">{item.score}%</span>
@@ -184,7 +208,7 @@ export function Situation({ item, onHandle }) {
     <div className={`rounded-xl border p-4 ${done ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/30'}`}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
         <Via via={item.via} />
-        <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{item.type}</span>
+        <span className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{typeLabel(item.type)}</span>
         {done && (
           <span className="text-[12px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
             {item.handledAs}
@@ -503,7 +527,7 @@ export function TodaysTasks({ rows, onOpen }) {
               <span className={`text-[13px] font-semibold leading-snug min-w-0 flex-1 ${
                 done ? 'text-slate-500 line-through' : 'text-slate-800'}`}>{t.title}</span>
               <span className="shrink-0 text-[12px] font-semibold text-slate-500 tabular-nums">
-                {done && t.score !== null && t.score !== undefined ? `${t.score}%` : `~${t.estHours}h`}
+                {done && t.score !== null && t.score !== undefined ? `${t.score}%` : estimateOf(t.estHours)}
               </span>
             </button>
           );
@@ -720,7 +744,7 @@ export default function Today({ state, onStateChange, onTab, onOpenMeeting }) {
               mail that has to be dealt with, so each says so in one line. */}
           <div>
             <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-500">Activities</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Short reading, each with a question at the end</p>
+            <p className="text-xs text-slate-500 mt-0.5">Things to read, and one question on each</p>
           </div>
           {acts.length === 0 && <p className="text-sm text-slate-500">Nothing yet.</p>}
           {/* The first one still to do opens itself, so the column always offers something

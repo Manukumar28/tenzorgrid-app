@@ -1,18 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Award, CheckCircle2, ChevronDown, Flame, FolderOpen, Medal, Sparkles, Trophy, UserRound } from 'lucide-react';
+import { CheckCircle2, ChevronDown, FolderOpen, Sparkles, UserRound } from 'lucide-react';
 import { BentoCard, StatTiles } from './ui.jsx';
 import { SkillPointsBar } from './charts.jsx';
 import { ActiveProjectCard, AvailableProjectCard, LockedProjectCard, CompletedProjectCard, money } from './projectCards.jsx';
 import { api } from '../api.js';
 import ProjectBrief from './ProjectBrief.jsx';
-
-const BADGE_ICON = {
-  'first-delivery': Medal,
-  'top-marks': Award,
-  'streak-keeper': Flame,
-  'full-sweep': Trophy,
-};
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -24,12 +17,17 @@ const STATUS_OPTIONS = [
 function FilterSelect({ label, value, onChange, options }) {
   const active = value !== '';
   return (
-    <div className="relative inline-flex items-center">
+    // A fixed cap, not a percentage. A native select sizes itself to its widest OPTION, so
+    // a learner with three projects made this 417px wide inside a 390px viewport and the
+    // whole page scrolled sideways. `max-w-full` did nothing about it: the percentage
+    // resolves against a containing block that is itself sized by its content. The chosen
+    // label truncates; the dropdown still shows every option in full.
+    <div className="relative inline-flex items-center min-w-0">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
+        className={`appearance-none text-xs font-semibold rounded-full pl-3.5 pr-8 py-1.5 cursor-pointer border transition-colors max-w-[11rem] sm:max-w-[15rem] truncate focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
           active ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
         }`}
       >
@@ -50,29 +48,13 @@ function SectionTitle({ children, count }) {
   );
 }
 
-function Badge({ badge }) {
-  const Icon = BADGE_ICON[badge.key] || Medal;
-  return (
-    <div className="relative group flex flex-col items-center gap-1.5">
-      <div
-        className={`w-14 h-14 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${
-          badge.earned ? 'bg-gradient-to-br from-amber-400 to-orange-400 shadow-sm' : 'bg-gray-100'
-        }`}
-      >
-        <Icon size={24} className={badge.earned ? 'text-white' : 'text-gray-500'} strokeWidth={2.1} />
-      </div>
-      <span className={`text-[12px] font-bold text-center leading-tight ${badge.earned ? 'text-gray-700' : 'text-gray-500'}`}>
-        {badge.label}
-      </span>
-      <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 w-40">
-        <div className="bg-gray-900 text-white text-[12px] font-medium rounded-lg px-2.5 py-1.5 text-center leading-snug shadow-lg">
-          {badge.note}
-          {!badge.earned && <div className="text-gray-500 mt-0.5">Not earned yet</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
+// The Badge component stood here: a gold-gradient tile per trophy, with a hover tip
+// reading "Not earned yet". Four of them sat on this page — First Delivery, Top Marks,
+// Streak Keeper, Full Sweep — while Experience.jsx opened with "Nothing here is a trophy
+// case. There are no badges, no points and no comparison to anybody else." Both statements
+// could not be true, and the one on the Experience page is the one this product means.
+// Nothing in the engine ever read them.
+
 
 export default function Projects({ state, onStateChange, onTab }) {
   const { projects: data, roster, enrollment } = state;
@@ -122,7 +104,7 @@ export default function Projects({ state, onStateChange, onTab }) {
   // The engine sends the real title for the role and level. Deriving it here got a Team
   // Lead and a Manager both labelled "Junior Data Analyst track" — the same bug that was
   // fixed in the header, still living in this one.
-  const trackLabel = `${enrollment.levelTitle || 'Junior Data Analyst'} track`;
+  const roleLabel = enrollment.levelTitle || 'Junior Data Analyst';
 
   return (
     <div className="space-y-6">
@@ -130,7 +112,7 @@ export default function Projects({ state, onStateChange, onTab }) {
       <div>
         <div className="flex items-baseline gap-2.5 flex-wrap mb-3">
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Projects</h1>
-          <span className="text-sm font-semibold text-gray-500">[{trackLabel}]</span>
+          <span className="text-sm font-semibold text-gray-500">The initiatives your work belongs to, as a {roleLabel}</span>
         </div>
 
         <StatTiles items={[
@@ -205,7 +187,7 @@ export default function Projects({ state, onStateChange, onTab }) {
         <BentoCard hover={false} className="text-center py-10">
           <FolderOpen size={30} className="text-gray-500 mx-auto mb-3" />
           <p className="text-sm text-gray-500 font-medium">
-            {filtersOn ? 'No projects match these filters.' : 'No projects in this track yet.'}
+            {filtersOn ? 'No projects match these filters.' : 'No projects at this level yet.'}
           </p>
           {filtersOn && (
             <motion.button
@@ -219,38 +201,39 @@ export default function Projects({ state, onStateChange, onTab }) {
         </BentoCard>
       )}
 
-      {/* Section 3 — analytics and achievements */}
+      {/* Section 3 — what the work adds up to */}
       <section>
-        <SectionTitle>Progress &amp; achievements</SectionTitle>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <SectionTitle>What the work adds up to</SectionTitle>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <BentoCard index={0}>
-            <h3 className="text-base font-bold mb-0.5">Skill points earned</h3>
-            <p className="text-xs text-gray-500 mb-2">From graded project tasks</p>
+            {/* "Skill points earned ... from graded project tasks" is an XP counter. The
+                data underneath is real -- which capabilities the work you have had signed
+                off actually touched -- and that is what it now says. */}
+            <h3 className="text-base font-bold mb-0.5">Where your work has been</h3>
+            <p className="text-xs text-gray-500 mb-2">Weighted by the work Asha has signed off</p>
             <SkillPointsBar data={data.skillPoints} />
           </BentoCard>
 
           <BentoCard index={1} className="flex flex-col justify-center">
-            <h3 className="text-base font-bold mb-3">Total project impact</h3>
+            {/* This said "Total project impact" over a four-times-bold pound figure, with
+                "Business impact from 3 completed projects" underneath it, in a section
+                headed "achievements". Read plainly, that is the product telling a learner
+                they personally delivered £116,400 of value — and it is the exact sentence
+                lib/vault.js REFUSES to write into an Experience entry, because the
+                simulation never established any such outcome. One page cannot enforce a
+                rule the next page breaks in bold.
+
+                The figure itself is legitimate and worth keeping: a real project charter
+                carries a value, and knowing the work you are on matters to the business is
+                part of understanding a workplace. It belongs to the PROJECT. So it is
+                framed as the project's worth, not as something the learner banked. */}
+            <h3 className="text-base font-bold mb-3">What this work is worth to Meridian</h3>
             <div className="text-4xl font-extrabold text-gray-900 leading-none">{money(data.totalImpact)}</div>
             <p className="text-xs text-gray-500 mt-2.5 leading-relaxed">
               {data.completedCount > 0
-                ? `Business impact from ${data.completedCount} completed project${data.completedCount === 1 ? '' : 's'}.`
-                : 'Impact is banked when a project is delivered — nothing counted yet.'}
+                ? `The value the business put on the ${data.completedCount} project${data.completedCount === 1 ? '' : 's'} you have finished. It is what the work was worth to them, not a result you delivered.`
+                : 'Each project carries a value to the business. This fills in as you finish them.'}
             </p>
-          </BentoCard>
-
-          <BentoCard index={2}>
-            {/* "Achievements ... earned" is game language on a page about work. The four
-                underneath are genuine professional milestones -- a first delivery, a high
-                mark, consistent attendance, a finished track -- so they keep their place
-                and lose the trophy-cabinet framing. Nothing in the engine reads these. */}
-            <h3 className="text-base font-bold mb-0.5">Milestones</h3>
-            <p className="text-xs text-gray-500 mb-4">
-              {data.badges.filter((b) => b.earned).length} of {data.badges.length} reached
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {data.badges.map((b) => <Badge key={b.key} badge={b} />)}
-            </div>
           </BentoCard>
         </div>
       </section>

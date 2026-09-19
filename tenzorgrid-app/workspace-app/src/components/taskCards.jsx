@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Database, Lock, Clock, ArrowRight, CheckCircle2, AlertTriangle, CalendarClock, FlaskConical } from 'lucide-react';
-import { BentoCard, ProgressBar, Avatar } from './ui.jsx';
+import { BentoCard, ProgressBar, Avatar, estimateOf } from './ui.jsx';
 
 // Keyed on every spelling the task definitions actually use, not just the three the
 // filter dropdown offers. A task marked `urgent` or `normal` used to fall through to
@@ -126,7 +126,7 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
           </div>
         )}
         {task.estHours ? (
-          <div className="flex items-center gap-1"><Clock size={12} /> ~{task.estHours}h estimated</div>
+          <div className="flex items-center gap-1"><Clock size={12} /> {estimateOf(task.estHours)}</div>
         ) : null}
       </div>
 
