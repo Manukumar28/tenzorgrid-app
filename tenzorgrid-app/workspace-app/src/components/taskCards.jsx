@@ -81,6 +81,11 @@ export function TaskCard({ task, person, index, selected, onOpen, onTestComplete
             {task.overdue && !soon && (
               <Pill className="bg-red-50 text-red-700"><AlertTriangle size={11} /> Overdue</Pill>
             )}
+            {/* Something happened to this work after it was assigned. One concise pill --
+                the amendment itself is on the task you open, not on all 120 cards. */}
+            {task.update && (
+              <Pill className="bg-amber-100 text-amber-800">{task.update.label}</Pill>
+            )}
             {graded && <Pill className="bg-emerald-50 text-emerald-700">{task.score}%</Pill>}
           </div>
           <h3 className={`text-sm font-bold leading-snug ${soon ? 'text-slate-600' : ''}`}>{task.title}</h3>

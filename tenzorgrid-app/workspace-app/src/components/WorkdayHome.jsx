@@ -152,6 +152,23 @@ function CurrentAssignment({ a, onOpen, apps }) {
         <p className="text-[13px] text-slate-600 mt-2.5 leading-relaxed line-clamp-3">{a.brief}</p>
       )}
 
+      {/* The job changed after it was handed over. Home is where somebody looks to find
+          out what is going on, so it says so here rather than waiting for them to open
+          the tool and be surprised. */}
+      {a.update && a.update.label && (
+        <div className="mt-2.5 flex items-start gap-2">
+          <span className="shrink-0 inline-flex text-[11px] font-extrabold uppercase tracking-wide rounded px-1.5 py-0.5 bg-amber-100 text-amber-800">
+            {a.update.label}
+          </span>
+          {/* The note only earns its place when it says something the pill does not. For a
+              returned task both are "Returned for another look", and printing it twice in
+              a row reads as a rendering bug. */}
+          {a.update.note && a.update.note !== a.update.label && (
+            <span className="text-[12px] text-slate-600 leading-snug">{a.update.note}</span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-3 mt-4">
         {[
           // The requester comes from the assignment summary the server derived, not from
@@ -370,6 +387,12 @@ function ProjectHealth({ rows, onTab }) {
             <div className="text-[12px] text-slate-500 mt-0.5">
               {[p.phase, p.due].filter(Boolean).join(' · ')}
             </div>
+            {/* Never a status without its evidence. "At risk" on its own is a colour;
+                a learner has to be able to see what made it that and therefore what
+                would put it back. */}
+            {p.health === 'at risk' && p.reason && (
+              <p className="text-[12px] text-rose-700 mt-1 leading-snug">{p.reason}</p>
+            )}
             <div className="h-1 rounded-full bg-slate-100 mt-1.5 overflow-hidden">
               <div className="h-full rounded-full bg-slate-800" style={{ width: `${p.progressPct}%` }} />
             </div>

@@ -184,6 +184,41 @@ function AssignmentBrief({ wb, inApp }) {
         </div>
         <p className="text-xs text-slate-700 leading-relaxed">{wb.brief}</p>
 
+        {/* What the workplace changed after this was assigned.
+            The original request above is never edited. An amendment goes UNDERNEATH it
+            with the name of whoever asked, because "Priya later said to exclude trial
+            accounts" is a different and far more useful fact than a brief that quietly
+            differs from the one you read this morning -- and because you should not have
+            to go back to Home to find out the job changed. */}
+        {(a.update && (a.update.amendments || []).length > 0) && (
+          <div className="mt-3 space-y-2">
+            {a.update.amendments.map((am, i) => (
+              <div key={i} className="border-l-2 border-amber-400 bg-amber-50/70 rounded-r px-3 py-2">
+                <div className="text-[10px] font-bold tracking-[0.1em] text-amber-700 uppercase mb-0.5">
+                  Update{am.from ? ` · ${am.from}` : ''}
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed">{am.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {(a.update && (a.update.notes || []).length > 0) && (
+          <div className="mt-3 space-y-2">
+            {a.update.notes.map((n, i) => (
+              <div key={i} className="border-l-2 border-rose-400 bg-rose-50/70 rounded-r px-3 py-2">
+                <div className="text-[10px] font-bold tracking-[0.1em] text-rose-700 uppercase mb-0.5">{n.text}</div>
+                {n.reason && <p className="text-xs text-slate-700 leading-relaxed">{n.reason}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+        {a.update && a.update.coordinatedBy && (
+          <p className="mt-3 text-[11px] text-slate-500">
+            <b className="text-slate-700 font-semibold">{a.update.coordinatedBy.name}</b> is coordinating this
+            after you passed it up.
+          </p>
+        )}
+
         {(a.watchOutFor || []).length > 0 && (
           <div className="mt-2.5">
             <button
